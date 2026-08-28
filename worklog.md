@@ -508,3 +508,66 @@ Task: QA test, add more quizzes + labs, styling polish, verify leaderboards + co
 - student@guardianx.io / student123
 - instructor@guardianx.io / instructor123
 - admin@guardianx.io / admin123
+
+---
+Task ID: 14 (cron review round 8)
+Agent: cron-web-dev-reviewer
+Task: QA test, add achievement badges on profile, lab hint cost system, course recommendations, more course content, styling polish
+
+## Current Project Status Assessment
+- Platform stable from round 7: 25 labs, 16 quizzes, leaderboards, lab time tracking, instructor content editor.
+- QA: both services running (dev 3000, signaling 3003). ESLint clean. Dev log clean. DOM has 0 nested buttons. Console clean.
+- No bugs found — platform is stable. Proceeded with new feature development.
+
+## Completed Modifications (New Features)
+1. **Achievement Badges on Profile** (NEW)
+   - Profile page now shows gamification info in header: level badge, rank, XP, streak (flame icon)
+   - New "Achievements" section: earned badges grid (tier-colored rings: bronze/silver/gold/platinum) with icons + titles, locked placeholder badges for not-yet-earned, "X / 14 unlocked" counter, "View all achievements" button
+   - Fetches achievements via `/api/achievements` with TanStack Query
+
+2. **Lab Hint Cost System** (NEW — enhanced existing)
+   - `/api/labs/[slug]/submit` hint action now returns: hintPenalty (10), potentialXp, baseXp, hintsUsed
+   - HintsPanel: shows "Each hint deducts 10 XP from your lab reward" warning, "-10 XP" on reveal button, potential XP display with penalty breakdown, toast shows XP impact
+   - XP deduction already existed in completion calculation; now it's visible to the user before they use hints
+
+3. **Course Recommendation Engine** (NEW)
+   - `/api/me/recommendations` endpoint: scores non-enrolled courses by category match (+30), level progression (+25), rating bonus, popularity, user level match
+   - Returns top 4 recommendations with score %, reasons ("Matches your Networking interest", "Natural next step", "Highly rated")
+   - Dashboard "Recommended For You" section: 4-card grid with match % badges, reason tags, course preview
+   - Verified: CCNP 64% match, CISSP 45% match with reasons
+
+4. **More Course Content** (NEW — 3 modules, 6 lessons)
+   - CCNP: Module 03 — Advanced BGP & Route Manipulation (BGP Path Attributes, Route Reflectors & Confederations)
+   - WAPT: Module 04 — Business Logic & Race Conditions (Business Logic Vulnerabilities, Race Conditions & TOCTOU)
+   - CyberArk: Module 04 — Conjur & Secrets Management for DevOps (CyberArk Conjur Open Source, CI/CD Secret Management)
+
+5. **Styling Polish**
+   - Profile achievement badges with tier-colored rings, hover-lift animation, locked placeholders
+   - Recommendation cards with match % badges and reason tags
+   - Hint panel with red XP deduction warning and potential XP display
+
+## Verification Results
+- agent-browser QA: dashboard "Recommended For You" shows CCNP 64% + CISSP 45% with reasons, profile shows "3/14 unlocked" with earned bronze badges + locked placeholders + gamification info (Lv 2, Apprentice, 440 XP, streak), lab hint panel shows "-10 XP" warning and "Each hint deducts 10 XP".
+- ESLint: clean (0 errors, 0 warnings)
+- APIs: homepage 200, recommendations 200, achievements 200 (in browser)
+- Dev log: no errors
+- Signaling server: running on port 3003
+
+## Unresolved Issues / Risks
+- agent-browser Radix component clicks still require pointerdown event dispatch (code is correct).
+- WebRTC two-way media requires 2 browsers + permissions (inherent).
+
+## Priority Recommendations for Next Phase
+1. Performance: add Suspense boundaries + lazy loading for heavy views.
+2. Email digest / weekly summary notifications.
+3. Student-to-student messaging / study groups.
+4. Dark/light mode — high-contrast accessibility theme.
+5. Course difficulty recommendation refinement (ML-based).
+6. Lab walkthrough/solution videos.
+7. Study group / cohort features.
+8. Instructor course analytics — per-lesson completion funnel.
+
+## Demo Accounts (unchanged)
+- student@guardianx.io / student123
+- instructor@guardianx.io / instructor123
+- admin@guardianx.io / admin123

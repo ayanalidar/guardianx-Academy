@@ -64,9 +64,14 @@ export function DashboardView() {
     queryKey: ["me", "resume"],
     queryFn: () => api("/api/me/resume"),
   })
+  const { data: recData } = useQuery<{ recommendations: any[] }>({
+    queryKey: ["me", "recommendations"],
+    queryFn: () => api("/api/me/recommendations"),
+  })
 
   const enrolled = coursesData?.courses ?? []
   const featured = allCourses?.courses?.slice(0, 4) ?? []
+  const recommendations = recData?.recommendations ?? []
   const liveSessions = liveData?.sessions ?? []
   const completedLabs = labs?.labs?.filter((l) => l.progress?.status === "completed") ?? []
 
@@ -281,6 +286,65 @@ export function DashboardView() {
           )}
         </div>
       </div>
+
+      {/* Recommended for you */}
+      {recommendations.length > 0 && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-violet-400" /> Recommended For You
+              </h2>
+              <p className="text-sm text-muted-foreground">Based on your progress and interests</p>
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => navigate({ name: "catalog" })}>
+              Browse all <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {recommendations.map((c) => {
+              const col = colorFor(c.color)
+              return (
+                <div
+                  key={c.id}
+                  onClick={() => navigate({ name: "course", courseId: c.id })}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigate({ name: "course", courseId: c.id }) } }}
+                  className="text-left group cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 rounded-xl"
+                >
+                  <Card className="overflow-hidden card-hover h-full flex flex-col">
+                    <div className={`relative h-20 bg-gradient-to-br ${col.gradient} flex items-center justify-center`}>
+                      <div className="absolute inset-0 bg-grid opacity-40" />
+                      <span className={`relative font-mono font-bold text-xl ${col.text}`}>{c.shortName}</span>
+                      <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded-full bg-violet-500/20 text-violet-400 text-[8px] font-mono border border-violet-500/30">
+                        {c.score}% match
+                      </div>
+                    </div>
+                    <div className="p-3 flex-1 flex flex-col">
+                      <h3 className="font-semibold text-xs mb-1 group-hover:text-emerald-400 transition-colors line-clamp-1">{c.title}</h3>
+                      <p className="text-[10px] text-muted-foreground line-clamp-2 mb-2 flex-1">{c.description}</p>
+                      {c.reasons && c.reasons.length > 0 && (
+                        <div className="space-y-0.5 mb-2">
+                          {c.reasons.map((r: string, i: number) => (
+                            <div key={i} className="flex items-center gap-1 text-[9px] text-violet-400">
+                              <Sparkles className="h-2 w-2" /> {r}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between text-[9px] text-muted-foreground pt-2 border-t border-border">
+                        <span className="flex items-center gap-0.5"><span className="text-amber-400">★</span>{c.rating}</span>
+                        <span>{c.durationHours}h</span>
+                      </div>
+                    </div>
+                  </Card>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Featured courses */}
       <div className="space-y-4">

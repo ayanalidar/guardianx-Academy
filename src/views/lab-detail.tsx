@@ -131,7 +131,7 @@ export function LabDetailView() {
 
         {/* Right: hints + flag submission + tools */}
         <div className="space-y-4">
-          <HintsPanel slug={slug} hintsString={lab.hints} hintsUsed={progress?.hintsUsed ?? 0} />
+          <HintsPanel slug={slug} hintsString={lab.hints} hintsUsed={progress?.hintsUsed ?? 0} difficulty={lab.difficulty} />
 
           {/* Available commands */}
           <Card className="p-5">
@@ -157,17 +157,22 @@ export function LabDetailView() {
 }
 
 // ---- Hints panel ----
-function HintsPanel({ slug, hintsString, hintsUsed }: { slug: string; hintsString: string; hintsUsed: number }) {
+function HintsPanel({ slug, hintsString, hintsUsed, difficulty }: { slug: string; hintsString: string; hintsUsed: number; difficulty: string }) {
   const qc = useQueryClient()
   const hints = hintsString.split("|").filter(Boolean)
   const [revealed, setRevealed] = React.useState(hintsUsed)
+  const [potentialXp, setPotentialXp] = React.useState<number | null>(null)
+  const HINT_PENALTY = 10
 
   const hintMutation = useMutation({
     mutationFn: () => api(`/api/labs/${slug}/submit`, { method: "POST", body: JSON.stringify({ action: "hint" }) }),
     onSuccess: (data) => {
       setRevealed((r) => r + 1)
+      setPotentialXp(data.potentialXp)
       qc.invalidateQueries({ queryKey: ["lab", slug] })
-      toast.info(`Hint ${revealed + 1}: ${data.hint}`)
+      toast.info(`Hint ${revealed + 1}: ${data.hint}`, {
+        description: `-${HINT_PENALTY} XP on completion. Potential XP: ${data.potentialXp}`,
+      })
     },
   })
 
@@ -181,11 +186,26 @@ function HintsPanel({ slug, hintsString, hintsUsed }: { slug: string; hintsStrin
             <span>{h}</span>
           </div>
         ))}
-        {revealed === 0 && <p className="text-xs text-muted-foreground">Stuck? Reveal hints one at a time. Each hint costs nothing but tracks your usage.</p>}
+        {revealed === 0 && (
+          <div className="space-y-2">
+            <p className="text-xs text-muted-foreground">Stuck? Reveal hints one at a time.</p>
+            <div className="flex items-center gap-1.5 p-2 rounded-lg bg-red-500/5 border border-red-500/20 text-[10px] text-red-400">
+              <Zap className="h-3 w-3" />
+              <span>Each hint deducts {HINT_PENALTY} XP from your lab reward.</span>
+            </div>
+          </div>
+        )}
       </div>
+      {potentialXp !== null && revealed > 0 && (
+        <div className="mb-3 p-2 rounded-lg bg-muted/30 text-[10px] text-center">
+          <span className="text-muted-foreground">Potential XP on completion: </span>
+          <span className={cn("font-mono font-bold", potentialXp < 100 ? "text-amber-400" : "text-emerald-400")}>{potentialXp} XP</span>
+          {revealed > 0 && <span className="text-red-400 ml-1">(-{revealed * HINT_PENALTY} penalty)</span>}
+        </div>
+      )}
       {revealed < hints.length ? (
         <Button variant="outline" size="sm" className="w-full border-amber-500/30 text-amber-400 hover:bg-amber-500/10" onClick={() => hintMutation.mutate()} disabled={hintMutation.isPending}>
-          <Lightbulb className="h-3.5 w-3.5 mr-1.5" /> Reveal Hint ({revealed}/{hints.length})
+          <Lightbulb className="h-3.5 w-3.5 mr-1.5" /> Reveal Hint ({revealed}/{hints.length}) <span className="ml-1 text-[9px] text-red-400">-{HINT_PENALTY} XP</span>
         </Button>
       ) : (
         <p className="text-xs text-muted-foreground text-center">All hints revealed.</p>

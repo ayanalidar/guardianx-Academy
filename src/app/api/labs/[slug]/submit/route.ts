@@ -37,7 +37,17 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
       data: { hintsUsed: { increment: 1 } },
     })
     const hints = lab.hints.split("|").filter(Boolean)
-    return NextResponse.json({ hint: hints[Math.min(progress.hintsUsed - 1, hints.length - 1)] ?? "No more hints available." })
+    const hintIndex = Math.min(progress.hintsUsed - 1, hints.length - 1)
+    const hintPenalty = 10 // XP deducted per hint on lab completion
+    const baseXp = (XP_REWARDS.lab_solved as any)[lab.difficulty] ?? 100
+    const remainingXp = Math.max(baseXp - progress.hintsUsed * hintPenalty, Math.floor(baseXp / 2))
+    return NextResponse.json({
+      hint: hints[hintIndex] ?? "No more hints available.",
+      hintsUsed: progress.hintsUsed,
+      hintPenalty,
+      potentialXp: remainingXp,
+      baseXp,
+    })
   }
 
   if (action === "submit") {

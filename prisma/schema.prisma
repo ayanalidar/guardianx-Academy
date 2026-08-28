@@ -40,6 +40,7 @@ model User {
   activities      UserActivity[]
   notifications   Notification[]
   reviews         CourseReview[]
+  bookmarks       Bookmark[]
 }
 
 model Achievement {
@@ -107,6 +108,7 @@ model Course {
   labs          Lab[]
   liveSessions  LiveSession[]
   reviews       CourseReview[]
+  bookmarks     Bookmark[]
 }
 
 model Module {
@@ -343,6 +345,17 @@ model CourseReview {
   rating      Int      // 1-5 stars
   title       String   @default("")
   content     String   @default("")
+  createdAt   DateTime @default(now())
+
+  @@unique([userId, courseId])
+}
+
+model Bookmark {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
 
   @@unique([userId, courseId])

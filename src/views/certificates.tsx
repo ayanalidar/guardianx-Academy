@@ -9,8 +9,9 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Award, Shield, Download, Share2, Calendar, CheckCircle2, Lock, Sparkles } from "lucide-react"
+import { Award, Shield, Download, Share2, Calendar, CheckCircle2, Lock, Sparkles, Printer } from "lucide-react"
 import { toast } from "sonner"
+import { downloadCertificatePDF } from "@/lib/certificate-pdf"
 
 interface CertItem {
   id: string; certificateId: string; issuedAt: string; score: number
@@ -26,8 +27,9 @@ export function CertificatesView() {
 
   const certs = data?.certificates ?? []
 
-  function download(cert: CertItem) {
-    toast.success(`Certificate ${cert.certificateId} readied for download`)
+  async function download(cert: CertItem) {
+    toast.info("Preparing certificate PDF...")
+    await downloadCertificatePDF(cert.id)
   }
 
   return (
@@ -107,8 +109,8 @@ export function CertificatesView() {
                       <span className="text-xs text-muted-foreground">{cert.course.instructor.name}</span>
                     </div>
                     <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => download(cert)}>
-                        <Download className="h-3.5 w-3.5" />
+                      <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={() => download(cert)}>
+                        <Download className="h-3.5 w-3.5" /> PDF
                       </Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => toast.success("Share link copied!")}>
                         <Share2 className="h-3.5 w-3.5" />

@@ -14,8 +14,12 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import {
+  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
+  BarChart, Bar, PieChart, Pie, Cell, Legend,
+} from "recharts"
+import {
   Presentation, Users, BookOpen, TrendingUp, Star, Clock, ChevronRight,
-  GraduationCap, Award, Activity, ArrowRight, BarChart3, CheckCircle2,
+  GraduationCap, Award, Activity, ArrowRight, BarChart3, CheckCircle2, LineChart as LineChartIcon,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -116,6 +120,9 @@ export function InstructorDashboardView() {
           </Card>
         ))}
       </div>
+
+      {/* Analytics charts */}
+      <AnalyticsCharts />
 
       {/* Course performance table */}
       <div>
@@ -247,5 +254,126 @@ function InstructorCourseCard({ course, col, onOpen }: {
         </div>
       )}
     </Card>
+  )
+}
+
+// ---- Analytics Charts ----
+const CHART_COLORS = ["#10b981", "#06b6d4", "#8b5cf6", "#f59e0b", "#f97316", "#ef4444", "#14b8a6"]
+
+function AnalyticsCharts() {
+  const { data, isLoading } = useQuery<any>({
+    queryKey: ["instructor", "analytics"],
+    queryFn: () => api("/api/instructor/analytics"),
+  })
+
+  if (isLoading) {
+    return (
+      <div className="grid lg:grid-cols-2 gap-4">
+        <Skeleton className="h-72" />
+        <Skeleton className="h-72" />
+      </div>
+    )
+  }
+  if (!data) return null
+
+  const { enrollmentSeries, courseBreakdown, progressDistribution, totals } = data
+
+  return (
+    <div className="grid lg:grid-cols-2 gap-4">
+      {/* Enrollment over time */}
+      <Card className="p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="font-semibold flex items-center gap-2 text-sm">
+              <TrendingUp className="h-4 w-4 text-emerald-400" /> Enrollment Trend
+            </h3>
+            <p className="text-[10px] text-muted-foreground">Last 30 days</p>
+          </div>
+          <Badge variant="outline" className="text-[10px] text-emerald-400 border-emerald-500/30">
+            {totals.enrollments} total
+          </Badge>
+        </div>
+        <ResponsiveContainer width="100%" height={220}>
+          <AreaChart data={enrollmentSeries} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
+            <defs>
+              <linearGradient id="enrollGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#10b981" stopOpacity={0.4} />
+                <stop offset="100%" stopColor="#10b981" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.3 0.02 190 / 0.3)" />
+            <XAxis dataKey="label" tick={{ fill: "#6b7d75", fontSize: 9 }} interval={5} axisLine={{ stroke: "#334155" }} />
+            <YAxis tick={{ fill: "#6b7d75", fontSize: 10 }} allowDecimals={false} axisLine={{ stroke: "#334155" }} />
+            <Tooltip
+              contentStyle={{ background: "oklch(0.2 0.014 195)", border: "1px solid oklch(0.3 0.02 190)", borderRadius: 8, fontSize: 12 }}
+              labelStyle={{ color: "#e8f5ee" }}
+            />
+            <Area type="monotone" dataKey="count" stroke="#10b981" strokeWidth={2} fill="url(#enrollGrad)" name="Enrollments" />
+          </AreaChart>
+        </ResponsiveContainer>
+      </Card>
+
+      {/* Student progress distribution */}
+      <Card className="p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="font-semibold flex items-center gap-2 text-sm">
+              <Activity className="h-4 w-4 text-cyan-400" /> Student Progress
+            </h3>
+            <p className="text-[10px] text-muted-foreground">Distribution across all courses</p>
+          </div>
+          <Badge variant="outline" className="text-[10px] text-cyan-400 border-cyan-500/30">
+            Avg {totals.avgProgress}%
+          </Badge>
+        </div>
+        <ResponsiveContainer width="100%" height={220}>
+          <BarChart data={progressDistribution} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.3 0.02 190 / 0.3)" />
+            <XAxis dataKey="range" tick={{ fill: "#6b7d75", fontSize: 9 }} axisLine={{ stroke: "#334155" }} />
+            <YAxis tick={{ fill: "#6b7d75", fontSize: 10 }} allowDecimals={false} axisLine={{ stroke: "#334155" }} />
+            <Tooltip
+              contentStyle={{ background: "oklch(0.2 0.014 195)", border: "1px solid oklch(0.3 0.02 190)", borderRadius: 8, fontSize: 12 }}
+              cursor={{ fill: "oklch(0.3 0.02 190 / 0.2)" }}
+            />
+            <Bar dataKey="count" name="Students" radius={[4, 4, 0, 0]}>
+              {progressDistribution.map((_: any, i: number) => (
+                <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </Card>
+
+      {/* Course breakdown */}
+      {courseBreakdown.length > 0 && (
+        <Card className="p-5 lg:col-span-2">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="font-semibold flex items-center gap-2 text-sm">
+                <BarChart3 className="h-4 w-4 text-violet-400" /> Course Breakdown
+              </h3>
+              <p className="text-[10px] text-muted-foreground">Enrolled vs Active vs Completed per course</p>
+            </div>
+            <Badge variant="outline" className="text-[10px] text-violet-400 border-violet-500/30">
+              {totals.courses} courses
+            </Badge>
+          </div>
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={courseBreakdown} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.3 0.02 190 / 0.3)" />
+              <XAxis dataKey="shortName" tick={{ fill: "#6b7d75", fontSize: 10 }} axisLine={{ stroke: "#334155" }} />
+              <YAxis tick={{ fill: "#6b7d75", fontSize: 10 }} allowDecimals={false} axisLine={{ stroke: "#334155" }} />
+              <Tooltip
+                contentStyle={{ background: "oklch(0.2 0.014 195)", border: "1px solid oklch(0.3 0.02 190)", borderRadius: 8, fontSize: 12 }}
+                cursor={{ fill: "oklch(0.3 0.02 190 / 0.2)" }}
+              />
+              <Legend wrapperStyle={{ fontSize: 11 }} />
+              <Bar dataKey="active" stackId="a" fill="#06b6d4" name="Active" radius={[0, 0, 0, 0]} />
+              <Bar dataKey="completed" stackId="a" fill="#10b981" name="Completed" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </Card>
+      )}
+    </div>
   )
 }

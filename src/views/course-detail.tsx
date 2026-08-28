@@ -18,10 +18,11 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import {
   Star, Clock, Users, BookOpen, ChevronLeft, CheckCircle2, Circle, PlayCircle,
   FileText, Lock, Award, BarChart3, FlaskConical, MessageSquare, GraduationCap, ShieldCheck,
-  PenLine, ThumbsUp,
+  PenLine, ThumbsUp, Bookmark, BookmarkCheck,
 } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
+import { useBookmarks } from "@/hooks/use-bookmarks"
 
 interface CourseDetail {
   course: any
@@ -171,6 +172,7 @@ export function CourseDetailView() {
                 <Button className="w-full" onClick={() => enrollMutation.mutate()} disabled={enrollMutation.isPending}>
                   <GraduationCap className="h-4 w-4 mr-1.5" /> {enrollMutation.isPending ? "Enrolling..." : "Enroll Now"}
                 </Button>
+                <BookmarkButton courseId={course.id} />
                 <div className="space-y-2 text-xs text-muted-foreground">
                   <div className="flex items-center gap-2"><ShieldCheck className="h-3.5 w-3.5 text-emerald-400" /> Full lifetime access</div>
                   <div className="flex items-center gap-2"><FileText className="h-3.5 w-3.5 text-emerald-400" /> PDF study materials</div>
@@ -480,5 +482,28 @@ function ReviewsSection({ courseId, isEnrolled }: { courseId: string; isEnrolled
         </div>
       )}
     </Card>
+  )
+}
+
+// ---- Bookmark Button ----
+function BookmarkButton({ courseId }: { courseId: string }) {
+  const { isBookmarked, toggleAsync } = useBookmarks()
+  const bookmarked = isBookmarked(courseId)
+
+  return (
+    <Button
+      variant="outline"
+      className="w-full"
+      onClick={async () => {
+        await toggleAsync(courseId)
+        toast.success(bookmarked ? "Removed from wishlist" : "Added to wishlist")
+      }}
+    >
+      {bookmarked ? (
+        <><BookmarkCheck className="h-4 w-4 mr-1.5 text-amber-400" /> Bookmarked</>
+      ) : (
+        <><Bookmark className="h-4 w-4 mr-1.5" /> Add to Wishlist</>
+      )}
+    </Button>
   )
 }

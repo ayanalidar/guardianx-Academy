@@ -434,6 +434,8 @@ function CourseModulesEditor({ courseId }: { courseId: string }) {
   const course = data?.course
   const [editingLesson, setEditingLesson] = React.useState<string | null>(null)
   const [newLessonModuleId, setNewLessonModuleId] = React.useState<string | null>(null)
+  const [editingModuleId, setEditingModuleId] = React.useState<string | null>(null)
+  const [showNewModule, setShowNewModule] = React.useState(false)
 
   const deleteLesson = useMutation({
     mutationFn: (lessonId: string) => api(`/api/instructor/lessons/${lessonId}`, { method: "DELETE" }),
@@ -441,6 +443,16 @@ function CourseModulesEditor({ courseId }: { courseId: string }) {
       qc.invalidateQueries({ queryKey: ["course", courseId] })
       qc.invalidateQueries({ queryKey: ["instructor", "courses"] })
       toast.success("Lesson deleted")
+    },
+    onError: (e: any) => toast.error(e.message),
+  })
+
+  const deleteModule = useMutation({
+    mutationFn: (moduleId: string) => api(`/api/instructor/modules/${moduleId}`, { method: "DELETE" }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["course", courseId] })
+      qc.invalidateQueries({ queryKey: ["instructor", "courses"] })
+      toast.success("Module deleted")
     },
     onError: (e: any) => toast.error(e.message),
   })
@@ -462,9 +474,19 @@ function CourseModulesEditor({ courseId }: { courseId: string }) {
                   <div className="font-medium text-sm truncate">{m.title}</div>
                   <div className="text-xs text-muted-foreground">{m.lessons.length} lesson{m.lessons.length !== 1 ? "s" : ""}</div>
                 </div>
-                <Button size="sm" variant="outline" onClick={() => setNewLessonModuleId(newLessonModuleId === m.id ? null : m.id)}>
-                  <Plus className="h-3.5 w-3.5 mr-1" /> Add Lesson
+                <Button size="sm" variant="outline" onClick={() => setEditingModuleId(editingModuleId === m.id ? null : m.id)}>
+                  <Pencil className="h-3.5 w-3.5 mr-1" /> Edit
                 </Button>
+                <Button size="sm" variant="outline" onClick={() => setNewLessonModuleId(newLessonModuleId === m.id ? null : m.id)}>
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Lesson
+                </Button>
+                <button
+                  onClick={() => { if (confirm(`Delete module "${m.title}" and all its lessons?`)) deleteModule.mutate(m.id) }}
+                  className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                  title="Delete module"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
               </div>
             </div>
             <div className="divide-y divide-border">
@@ -497,11 +519,96 @@ function CourseModulesEditor({ courseId }: { courseId: string }) {
               {newLessonModuleId === m.id && (
                 <NewLessonForm moduleId={m.id} courseId={courseId} onClose={() => setNewLessonModuleId(null)} />
               )}
+              {editingModuleId === m.id && (
+                <ModuleEditor moduleId={m.id} courseId={courseId} currentTitle={m.title} currentDescription={m.description} onClose={() => setEditingModuleId(null)} />
+              )}
             </div>
           </Card>
         )
       })}
+      {/* New Module button + form */}
+      {showNewModule ? (
+        <NewModuleForm courseId={courseId} onClose={() => setShowNewModule(false)} />
+      ) : (
+        <Button variant="outline" className="w-full border-dashed" onClick={() => setShowNewModule(true)}>
+          <Plus className="h-4 w-4 mr-1.5" /> Add Module
+        </Button>
+      )}
     </div>
+  )
+}
+
+// ---- Module Editor (edit existing module) ----
+function ModuleEditor({ moduleId, courseId, currentTitle, currentDescription, onClose }: {
+  moduleId: string; courseId: string; currentTitle: string; currentDescription?: string; onClose: () => void
+}) {
+  const qc = useQueryClient()
+  const [title, setTitle] = React.useState(currentTitle)
+  const [description, setDescription] = React.useState(currentDescription || "")
+
+  const save = useMutation({
+    mutationFn: () => api(`/api/instructor/modules/${moduleId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ title, description }),
+    }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["course", courseId] })
+      qc.invalidateQueries({ queryKey: ["instructor", "courses"] })
+      toast.success("Module saved")
+      onClose()
+    },
+    onError: (e: any) => toast.error(e.message),
+  })
+
+  return (
+    <div className="p-4 bg-emerald-500/[0.03] space-y-3 animate-fade-in-up">
+      <div className="flex items-center gap-2">
+        <Pencil className="h-4 w-4 text-emerald-400" />
+        <span className="text-sm font-semibold">Edit Module</span>
+        <Button size="sm" variant="ghost" className="ml-auto h-7" onClick={onClose}><X className="h-3.5 w-3.5" /></Button>
+      </div>
+      <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Module title" />
+      <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Description (optional)" />
+      <Button size="sm" onClick={() => save.mutate()} disabled={!title.trim() || save.isPending}>
+        <Save className="h-3.5 w-3.5 mr-1" /> {save.isPending ? "Saving..." : "Save Module"}
+      </Button>
+    </div>
+  )
+}
+
+// ---- New Module Form ----
+function NewModuleForm({ courseId, onClose }: { courseId: string; onClose: () => void }) {
+  const qc = useQueryClient()
+  const [title, setTitle] = React.useState("")
+  const [description, setDescription] = React.useState("")
+
+  const create = useMutation({
+    mutationFn: () => api(`/api/instructor/courses/${courseId}/modules`, {
+      method: "POST",
+      body: JSON.stringify({ title, description }),
+    }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["course", courseId] })
+      qc.invalidateQueries({ queryKey: ["instructor", "courses"] })
+      toast.success("Module created")
+      onClose()
+    },
+    onError: (e: any) => toast.error(e.message),
+  })
+
+  return (
+    <Card className="p-4 bg-cyan-500/[0.03] border-cyan-500/20 space-y-3 animate-fade-in-up">
+      <div className="flex items-center gap-2">
+        <Plus className="h-4 w-4 text-cyan-400" />
+        <span className="text-sm font-semibold">New Module</span>
+        <Button size="sm" variant="ghost" className="ml-auto h-7" onClick={onClose}><X className="h-3.5 w-3.5" /></Button>
+      </div>
+      <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Module title (e.g. Module 09 — Cloud Security)" />
+      <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Description (optional)" />
+      <Button size="sm" onClick={() => create.mutate()} disabled={!title.trim() || create.isPending}>
+        <Plus className="h-3.5 w-3.5 mr-1" /> {create.isPending ? "Creating..." : "Create Module"}
+      </Button>
+    </Card>
   )
 }
 

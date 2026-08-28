@@ -14,6 +14,7 @@ export type View =
   | { name: "lab"; labSlug: string }
   | { name: "certificates" }
   | { name: "achievements" }
+  | { name: "leaderboard" }
   | { name: "instructor" }
   | { name: "community" }
   | { name: "profile" }

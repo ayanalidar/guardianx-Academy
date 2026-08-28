@@ -8,6 +8,7 @@ export async function GET(req: NextRequest) {
   const level = searchParams.get("level")
   const q = searchParams.get("q")
   const enrolledOnly = searchParams.get("enrolled") === "true"
+  const status = searchParams.get("status") || "all" // all | not-started | in-progress | completed
   const userIdParam = searchParams.get("userId")
 
   const currentUser = await getCurrentUser()
@@ -24,9 +25,21 @@ export async function GET(req: NextRequest) {
       { tags: { contains: q } },
     ]
   }
+
+  // Status-based filtering (requires auth)
+  // Always include enrollments for the current user so we can show progress badges
+  const includeEnrollments = !!userId
   if (enrolledOnly) {
     if (!userId) return NextResponse.json({ courses: [] })
     where.enrollments = { some: { userId } }
+  } else if (status !== "all" && userId) {
+    if (status === "not-started") {
+      where.enrollments = { none: { userId } }
+    } else if (status === "in-progress") {
+      where.enrollments = { some: { userId, completed: false } }
+    } else if (status === "completed") {
+      where.enrollments = { some: { userId, completed: true } }
+    }
   }
 
   const courses = await db.course.findMany({
@@ -35,7 +48,7 @@ export async function GET(req: NextRequest) {
       instructor: { select: { id: true, name: true, title: true, avatar: true } },
       modules: { select: { id: true, lessons: { select: { id: true } } } },
       _count: { select: { enrollments: true } },
-      ...(enrolledOnly && userId
+      ...(includeEnrollments
         ? { enrollments: { where: { userId }, select: { progress: true, completed: true, lastAccessed: true, enrolledAt: true } } }
         : {}),
     },
@@ -44,7 +57,7 @@ export async function GET(req: NextRequest) {
 
   const result = courses.map((c) => {
     const lessonCount = c.modules.reduce((acc, m) => acc + m.lessons.length, 0)
-    const enrollment = enrolledOnly ? c.enrollments?.[0] : null
+    const enrollment = includeEnrollments ? (c as any).enrollments?.[0] : null
     return {
       id: c.id,
       slug: c.slug,

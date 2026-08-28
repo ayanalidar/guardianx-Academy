@@ -41,6 +41,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Live Sessions", icon: Radio, view: { name: "live" } },
   { label: "Cyber Labs", icon: FlaskConical, view: { name: "labs" } },
   { label: "Achievements", icon: Trophy, view: { name: "achievements" } },
+  { label: "Leaderboards", icon: Crown, view: { name: "leaderboard" } },
   { label: "Certificates", icon: Award, view: { name: "certificates" } },
   { label: "Community", icon: Users, view: { name: "community" } },
 ]

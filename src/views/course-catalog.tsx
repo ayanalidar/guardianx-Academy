@@ -22,6 +22,7 @@ interface CourseItem {
   studentsCount: number; color: string; tags: string; certBody: string
   instructor: { id: string; name: string; title: string | null }
   lessonCount: number; moduleCount: number
+  enrollment?: { progress: number; completed: boolean; lastAccessed: string | null; enrolledAt: string } | null
 }
 
 const CATEGORIES = ["All", "Ethical Hacking", "Networking", "Web Security", "System Administration", "Security Management", "Identity & Access"]
@@ -32,14 +33,16 @@ export function CourseCatalogView() {
   const [q, setQ] = React.useState("")
   const [category, setCategory] = React.useState("All")
   const [level, setLevel] = React.useState("All")
+  const [status, setStatus] = React.useState("all")
 
   const { data, isLoading } = useQuery<{ courses: CourseItem[] }>({
-    queryKey: ["courses", q, category, level],
+    queryKey: ["courses", q, category, level, status],
     queryFn: () => {
       const params = new URLSearchParams()
       if (q) params.set("q", q)
       if (category !== "All") params.set("category", category)
       if (level !== "All") params.set("level", level)
+      if (status !== "all") params.set("status", status)
       return api(`/api/courses?${params.toString()}`)
     },
   })
@@ -110,6 +113,17 @@ export function CourseCatalogView() {
                 {LEVELS.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}
               </SelectContent>
             </Select>
+            <Select value={status} onValueChange={setStatus}>
+              <SelectTrigger className="w-full sm:w-[160px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Courses</SelectItem>
+                <SelectItem value="not-started">Not Started</SelectItem>
+                <SelectItem value="in-progress">In Progress</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="text-sm text-muted-foreground">
@@ -154,9 +168,15 @@ export function CourseCatalogView() {
                         </span>
                       </div>
                       <div className="p-5 flex-1 flex flex-col">
-                        <div className="flex items-center gap-2 mb-2">
+                        <div className="flex items-center gap-2 mb-2 flex-wrap">
                           <Badge variant="outline" className={`text-[10px] ${LEVEL_COLORS[c.level]}`}>{c.level}</Badge>
                           <Badge variant="outline" className="text-[10px]">{c.category}</Badge>
+                          {c.enrollment?.completed && (
+                            <Badge className="text-[9px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">✓ Completed</Badge>
+                          )}
+                          {c.enrollment && !c.enrollment.completed && (
+                            <Badge className="text-[9px] bg-cyan-500/15 text-cyan-400 border border-cyan-500/30">{c.enrollment.progress}%</Badge>
+                          )}
                         </div>
                         <h3 className="font-semibold mb-1 group-hover:text-emerald-400 transition-colors line-clamp-1">{c.title}</h3>
                         <p className="text-sm text-muted-foreground line-clamp-2 mb-3 flex-1">{c.description}</p>

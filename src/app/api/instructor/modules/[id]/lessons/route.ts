@@ -11,9 +11,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
 
-  const module = await db.module.findUnique({ where: { id }, include: { course: { select: { instructorId: true } } } })
-  if (!module) return NextResponse.json({ error: "Module not found" }, { status: 404 })
-  if (user.role !== "ADMIN" && module.course.instructorId !== user.id) {
+  const moduleData = await db.module.findUnique({ where: { id }, include: { course: { select: { instructorId: true } } } })
+  if (!moduleData) return NextResponse.json({ error: "Module not found" }, { status: 404 })
+  if (user.role !== "ADMIN" && moduleData.course.instructorId !== user.id) {
     return NextResponse.json({ error: "Not your course" }, { status: 403 })
   }
 

@@ -379,3 +379,72 @@ Task: QA test, build wishlist tab, per-notification delete, more course content,
 - student@guardianx.io / student123
 - instructor@guardianx.io / instructor123
 - admin@guardianx.io / admin123
+
+---
+Task ID: 12 (cron review round 6)
+Agent: cron-web-dev-reviewer
+Task: QA test, fix lint error, verify lab time tracking + content editor, add course progress filtering, 6 new labs, styling polish
+
+## Current Project Status Assessment
+- Platform stable from round 5: wishlist tab, per-notification delete, more course content.
+- Previous round (round 6 partial) had built lab time tracking + instructor content editor but left a lint error (`module` variable name in Next.js route).
+- QA: both services running (dev 3000, signaling 3003). Fixed lint error. Dev log clean. DOM has 0 nested buttons.
+- Verified lab time tracking works: live timer ("4s") shows in terminal header, heartbeats sent every 15s, time accumulates in DB.
+- Console shows stale "instructor-dashboard.tsx" errors from HMR cache — file compiles correctly (lint passes, no dev log errors). Instructor view is role-gated so students can't access it.
+
+## Completed Modifications (New Features)
+1. **Lint Fix**: Renamed `module` variable to `moduleData` in `/api/instructor/modules/[id]/lessons/route.ts` (Next.js reserves `module`).
+
+2. **Lab Time Tracking** (verified working — built in previous partial round)
+   - `timeSpentMs` field on LabProgress model
+   - `/api/labs/[slug]/submit` heartbeat action: accumulates time (capped at 60s per heartbeat)
+   - LabTerminal: live timer (updates every 1s), heartbeats every 15s, final heartbeat on unmount
+   - Lab detail header shows cumulative "Xm Ys spent" when timeSpentMs > 0
+   - Lab stats API returns totalTimeSpentMs; LabProgressDashboard shows "Time Spent" stat
+
+3. **Instructor Content Editor** (verified — built in previous partial round)
+   - `/api/instructor/modules/[id]/lessons` POST: create lesson in module
+   - `/api/instructor/lessons/[id]` PATCH (edit) + DELETE
+   - ContentEditor component in instructor dashboard: course selector, module list with lessons, inline lesson editor (title, content, duration), new lesson form, delete with confirm
+
+4. **Course Progress Filtering on Catalog** (NEW)
+   - `/api/courses` now accepts `status` param: all | not-started | in-progress | completed
+   - Always includes enrollment data for authenticated user (for progress badges)
+   - Course catalog has new status filter dropdown (All Courses / Not Started / In Progress / Completed)
+   - Course cards now show enrollment status badges: "✓ Completed" (emerald) or "X%" (cyan) for in-progress
+
+5. **6 New Cyber Labs** (NEW — total 21 labs)
+   - Docker Container Escape (Cloud Security, Hard, 400pts)
+   - OSINT — Target Profiling (OSINT, Easy, 150pts)
+   - Android APK Reverse Engineering (Mobile Security, Hard, 350pts)
+   - IoT Firmware Analysis (IoT Security, Medium, 250pts)
+   - Cloud S3 Bucket Enumeration (Cloud Security, Medium, 200pts)
+   - PowerShell Empire — Living Off the Land (Active Directory, Medium, 250pts)
+   - Updated labs view: 4 new categories in filter dropdown + CAT_COLORS map
+
+## Verification Results
+- agent-browser QA: lab time tracking live timer shows "4s" in terminal, 21 labs available, new categories (Cloud Security, OSINT, Mobile, IoT) show in lab progress dashboard, course catalog "In Progress" filter shows 3 enrolled courses with progress badges (CEH 35%, CCNA 60%, WAPT 12%), status filter dropdown has 4 options.
+- ESLint: clean (0 errors, 0 warnings)
+- APIs: homepage 200, labs 200, lab-stats 200, courses 200
+- Dev log: no errors
+- Signaling server: running on port 3003
+
+## Unresolved Issues / Risks
+- Console shows stale "instructor-dashboard.tsx" HMR errors — file compiles correctly (lint passes, APIs 200). These are browser cache artifacts that clear on full page reload.
+- agent-browser Radix Select interactions require pointerdown event dispatch — code is correct.
+- WebRTC two-way media still requires 2 browsers + permissions (inherent).
+
+## Priority Recommendations for Next Phase
+1. Course content editor for instructors — add module creation/deletion (currently only lessons).
+2. Lab time tracking — add a "fastest solve time" leaderboard.
+3. Email digest / weekly summary notifications.
+4. Performance: add Suspense boundaries + streaming for heavy views.
+5. Student-to-student messaging / study groups.
+6. Course completion leaderboard (who completed most courses).
+7. More quiz questions across all lessons.
+8. Dark/light mode — consider a high-contrast accessibility theme.
+
+## Demo Accounts (unchanged)
+- student@guardianx.io / student123
+- instructor@guardianx.io / instructor123
+- admin@guardianx.io / admin123

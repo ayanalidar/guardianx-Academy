@@ -34,7 +34,7 @@ interface LabItem {
   color: string; progress?: { status: string; flagFound: boolean } | null
 }
 
-const CATEGORIES = ["All", "Web Security", "Network", "Privilege Escalation", "Cryptography", "Forensics", "Reverse Engineering", "Active Directory"]
+const CATEGORIES = ["All", "Web Security", "Network", "Privilege Escalation", "Cryptography", "Forensics", "Reverse Engineering", "Active Directory", "Cloud Security", "OSINT", "Mobile Security", "IoT Security"]
 const DIFFICULTIES = ["All", "Easy", "Medium", "Hard", "Insane"]
 
 const CATEGORY_ICONS: Record<string, any> = {
@@ -45,6 +45,10 @@ const CATEGORY_ICONS: Record<string, any> = {
   "Forensics": Target,
   "Reverse Engineering": FlaskConical,
   "Active Directory": Shield,
+  "Cloud Security": Shield,
+  "OSINT": Target,
+  "Mobile Security": FlaskConical,
+  "IoT Security": Terminal,
 }
 
 export function LabsView() {
@@ -196,6 +200,10 @@ function LabProgressDashboard() {
     "Forensics": "text-teal-400 bg-teal-500/10 border-teal-500/30",
     "Reverse Engineering": "text-rose-400 bg-rose-500/10 border-rose-500/30",
     "Active Directory": "text-orange-400 bg-orange-500/10 border-orange-500/30",
+    "Cloud Security": "text-sky-400 bg-sky-500/10 border-sky-500/30",
+    "OSINT": "text-lime-400 bg-lime-500/10 border-lime-500/30",
+    "Mobile Security": "text-fuchsia-400 bg-fuchsia-500/10 border-fuchsia-500/30",
+    "IoT Security": "text-indigo-400 bg-indigo-500/10 border-indigo-500/30",
   }
 
   return (

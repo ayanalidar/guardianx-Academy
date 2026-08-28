@@ -318,3 +318,76 @@
     oklch(0.72 0.17 155 / 0.015) 4px
   );
 }
+
+/* Shimmer skeleton loading */
+@keyframes shimmer {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--muted) 0%,
+    oklch(0.3 0.02 190 / 0.5) 50%,
+    var(--muted) 100%
+  );
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite linear;
+}
+
+/* Slide-in for dropdowns/panels */
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.animate-slide-in-right {
+  animation: slide-in-right 0.2s ease-out;
+}
+
+/* Scale-in for popovers/modals */
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+.animate-scale-in {
+  animation: scale-in 0.15s ease-out;
+}
+
+/* Subtle bounce for badges/pulses */
+@keyframes bounce-subtle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+.animate-bounce-subtle {
+  animation: bounce-subtle 2s ease-in-out infinite;
+}
+
+/* Progress bar animated stripes for active progress */
+.progress-active {
+  background-image: linear-gradient(
+    45deg,
+    oklch(0.72 0.17 155 / 0.15) 25%,
+    transparent 25%,
+    transparent 50%,
+    oklch(0.72 0.17 155 / 0.15) 50%,
+    oklch(0.72 0.17 155 / 0.15) 75%,
+    transparent 75%,
+    transparent
+  );
+  background-size: 1rem 1rem;
+  animation: progress-stripes 1s linear infinite;
+}
+@keyframes progress-stripes {
+  from { background-position: 1rem 0; }
+  to { background-position: 0 0; }
+}
+
+/* Glow pulse for live indicators */
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 oklch(0.65 0.22 25 / 0.4); }
+  50% { box-shadow: 0 0 0 6px oklch(0.65 0.22 25 / 0); }
+}
+.animate-glow-pulse {
+  animation: glow-pulse 2s ease-out infinite;
+}
+

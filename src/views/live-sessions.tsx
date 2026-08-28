@@ -172,7 +172,7 @@ function SessionCard({ session, onJoin, ended }: { session: LiveSessionItem; onJ
   return (
     <Card className="p-5 card-hover relative overflow-hidden">
       {session.status === "live" && (
-        <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 rounded-full bg-red-500/15 text-red-400 text-[10px] font-mono border border-red-500/30">
+        <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 rounded-full bg-red-500/15 text-red-400 text-[10px] font-mono border border-red-500/30 animate-glow-pulse">
           <span className="h-1.5 w-1.5 rounded-full bg-red-400 pulse-dot" /> LIVE
         </div>
       )}

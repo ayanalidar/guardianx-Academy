@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query"
 import {
   Shield, BookOpen, GraduationCap, FlaskConical, Award, StickyNote,
   Radio, TrendingUp, Clock, ChevronRight, Flame, Target, Zap, Users,
-  ArrowRight, Terminal, Lock, CheckCircle2,
+  ArrowRight, Terminal, Lock, CheckCircle2, PlayCircle, Sparkles,
 } from "lucide-react"
 import { useAppStore } from "@/store/app-store"
 import { useUser } from "@/hooks/use-user"
@@ -59,6 +59,10 @@ export function DashboardView() {
   const { data: platformStats } = useQuery({
     queryKey: ["stats"],
     queryFn: () => api("/api/stats"),
+  })
+  const { data: resumeData } = useQuery<{ resume: any }>({
+    queryKey: ["me", "resume"],
+    queryFn: () => api("/api/me/resume"),
   })
 
   const enrolled = coursesData?.courses ?? []
@@ -114,6 +118,9 @@ export function DashboardView() {
           </div>
         </div>
       </div>
+
+      {/* Continue where you left off */}
+      {resumeData?.resume && <ResumeCard resume={resumeData.resume} />}
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -334,5 +341,56 @@ export function DashboardView() {
         ))}
       </div>
     </div>
+  )
+}
+
+// ---- Continue where you left off ----
+function ResumeCard({ resume }: { resume: any }) {
+  const { navigate } = useAppStore()
+  const col = colorFor(resume.courseColor || "emerald")
+  const LESSON_ICONS: Record<string, any> = { reading: BookOpen, pdf: BookOpen, video: PlayCircle, lab: Terminal }
+  const Icon = LESSON_ICONS[resume.lessonType] ?? BookOpen
+
+  return (
+    <Card
+      className="p-5 lg:p-6 relative overflow-hidden border-emerald-500/30 cursor-pointer group animate-fade-in-up"
+      onClick={() => navigate({ name: "lesson", lessonId: resume.lessonId, courseId: resume.courseId })}
+    >
+      <div className={`absolute inset-0 bg-gradient-to-r ${col.gradient} opacity-20`} />
+      <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-emerald-500/10 blur-2xl group-hover:bg-emerald-500/20 transition-colors" />
+      <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+        <div className="relative shrink-0">
+          <div className={`flex h-14 w-14 items-center justify-center rounded-2xl ${col.bg} ${col.border} border`}>
+            <PlayCircle className={`h-7 w-7 ${col.text}`} />
+          </div>
+          <div className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-emerald-950">
+            <Sparkles className="h-3 w-3" />
+          </div>
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-400 px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
+              {resume.reason === "in-progress" ? "Continue" : "Start Next"}
+            </span>
+            <span className={`text-[10px] font-mono ${col.text}`}>{resume.courseShortName}</span>
+            <span className="text-[10px] text-muted-foreground">· {resume.moduleTitle}</span>
+          </div>
+          <h3 className="font-semibold text-base sm:text-lg group-hover:text-emerald-400 transition-colors line-clamp-1">
+            {resume.lessonTitle}
+          </h3>
+          <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1"><Icon className="h-3 w-3" />{resume.lessonType}</span>
+            <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{resume.durationMin} min</span>
+            <span className="truncate">{resume.courseTitle}</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 shrink-0 self-stretch sm:self-center">
+          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500 text-emerald-950 text-xs font-medium group-hover:bg-emerald-400 transition-colors">
+            <PlayCircle className="h-3.5 w-3.5" /> Resume
+          </div>
+          <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-emerald-400 group-hover:translate-x-1 transition-all" />
+        </div>
+      </div>
+    </Card>
   )
 }

@@ -16,6 +16,7 @@ import { LabsView } from "@/views/labs"
 import { LabDetailView } from "@/views/lab-detail"
 import { CertificatesView } from "@/views/certificates"
 import { AchievementsView } from "@/views/achievements"
+import { InstructorDashboardView } from "@/views/instructor-dashboard"
 import { CommunityView } from "@/views/community"
 import { ProfileView } from "@/views/profile"
 
@@ -35,6 +36,7 @@ function ViewRouter() {
       {view.name === "lab" && <LabDetailView />}
       {view.name === "certificates" && <CertificatesView />}
       {view.name === "achievements" && <AchievementsView />}
+      {view.name === "instructor" && <InstructorDashboardView />}
       {view.name === "community" && <CommunityView />}
       {view.name === "profile" && <ProfileView />}
     </div>

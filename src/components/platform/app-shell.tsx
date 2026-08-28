@@ -7,7 +7,7 @@ import {
   Shield, LayoutDashboard, BookOpen, GraduationCap, StickyNote,
   Radio, FlaskConical, Award, Users, User, LogOut, Menu, X,
   Search, Sun, Moon, Bell, Terminal, ChevronRight, Settings,
-  Trophy, Zap, Flame, Crown, CheckCheck, Sparkles,
+  Trophy, Zap, Flame, Crown, CheckCheck, Sparkles, Presentation,
 } from "lucide-react"
 import { useAppStore, type View } from "@/store/app-store"
 import { useUser } from "@/hooks/use-user"
@@ -93,11 +93,18 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
       })}
       {user?.role === "INSTRUCTOR" || user?.role === "ADMIN" ? (
         <button
-          onClick={() => { navigate({ name: "catalog" }); onNavigate?.() }}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 border border-transparent"
+          onClick={() => { navigate({ name: "instructor" }); onNavigate?.() }}
+          className={cn(
+            "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group relative border",
+            view.name === "instructor"
+              ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/20"
+              : "text-muted-foreground hover:text-foreground hover:bg-accent/50 border-transparent"
+          )}
         >
-          <Terminal className="h-4 w-4" />
-          <span>Instructor Tools</span>
+          {view.name === "instructor" && <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-0.5 bg-cyan-400 rounded-r" />}
+          <Presentation className="h-4 w-4 shrink-0" />
+          <span className="flex-1 text-left">Instructor</span>
+          {view.name === "instructor" && <ChevronRight className="h-3.5 w-3.5" />}
         </button>
       ) : null}
     </nav>
@@ -320,11 +327,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
   const { navigate } = useAppStore()
   const [q, setQ] = React.useState("")
-  const [results, setResults] = React.useState<{ courses: any[]; labs: any[] }>({ courses: [], labs: [] })
+  const [results, setResults] = React.useState<{ courses: any[]; labs: any[]; notes: any[] }>({ courses: [], labs: [], notes: [] })
 
   React.useEffect(() => {
     if (!q.trim()) {
-      setResults({ courses: [], labs: [] })
+      setResults({ courses: [], labs: [], notes: [] })
       return
     }
     const t = setTimeout(async () => {
@@ -393,7 +400,7 @@ function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenChange: (
             </div>
           ) : (
             <div className="space-y-3 p-2">
-              {results.courses.length === 0 && results.labs.length === 0 && (
+              {results.courses.length === 0 && results.labs.length === 0 && results.notes.length === 0 && (
                 <div className="text-center py-8 text-sm text-muted-foreground">
                   <Search className="h-6 w-6 mx-auto mb-2 opacity-50" />
                   No results for "{q}"
@@ -427,6 +434,25 @@ function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenChange: (
                       <Terminal className="h-4 w-4 text-violet-400 shrink-0" />
                       <span className="flex-1 truncate">{l.title}</span>
                       <Badge variant="outline" className="text-[9px]">{l.difficulty}</Badge>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {results.notes.length > 0 && (
+                <div>
+                  <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-2 py-1.5">My Notes</div>
+                  {results.notes.map((n) => (
+                    <button
+                      key={n.id}
+                      onClick={() => n.lesson ? go({ name: "lesson", lessonId: n.lesson.id, courseId: n.lesson.courseId }) : go({ name: "notes" })}
+                      className="w-full flex items-start gap-3 px-2 py-2 rounded-lg hover:bg-accent/50 text-sm text-left transition-colors"
+                    >
+                      <StickyNote className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+                      <div className="flex-1 min-w-0">
+                        <div className="truncate font-medium">{n.title}</div>
+                        {n.content && <div className="truncate text-xs text-muted-foreground">{n.content}</div>}
+                      </div>
+                      {n.lesson && <Badge variant="outline" className="text-[9px] shrink-0">{n.lesson.courseShortName}</Badge>}
                     </button>
                   ))}
                 </div>

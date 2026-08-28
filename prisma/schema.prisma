@@ -259,6 +259,7 @@ model LabProgress {
   status      String   @default("not_started") // not_started | in_progress | completed
   flagFound   Boolean  @default(false)
   hintsUsed    Int      @default(0)
+  timeSpentMs Int      @default(0) // cumulative time spent in the lab terminal (ms)
   startedAt   DateTime?
   completedAt DateTime?
   updatedAt   DateTime @updatedAt

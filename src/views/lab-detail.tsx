@@ -19,6 +19,17 @@ import {
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 
+// Format milliseconds as Mm Ss or Hh Mm
+function formatDuration(ms: number): string {
+  const totalSec = Math.floor(ms / 1000)
+  const h = Math.floor(totalSec / 3600)
+  const m = Math.floor((totalSec % 3600) / 60)
+  const s = totalSec % 60
+  if (h > 0) return `${h}h ${m}m`
+  if (m > 0) return `${m}m ${s}s`
+  return `${s}s`
+}
+
 interface LabData {
   lab: {
     id: string; slug: string; title: string; description: string; longDescription: string
@@ -76,6 +87,9 @@ export function LabDetailView() {
             <span className="flex items-center gap-1"><Clock className="h-4 w-4" />{lab.durationMin} min</span>
             <span className="flex items-center gap-1 text-violet-400 font-medium"><Target className="h-4 w-4" />{lab.points} points</span>
             <span className="flex items-center gap-1"><Lightbulb className="h-4 w-4" />{progress?.hintsUsed ?? 0} hints used</span>
+            {progress?.timeSpentMs ? (
+              <span className="flex items-center gap-1 text-cyan-400 font-mono"><Clock className="h-4 w-4" />{formatDuration(progress.timeSpentMs)} spent</span>
+            ) : null}
           </div>
         </div>
       </div>
@@ -194,10 +208,53 @@ function LabTerminal({ labSlug, commands, flag, started, done, onStart }: {
   const [flagInput, setFlagInput] = React.useState("")
   const [cmdHistory, setCmdHistory] = React.useState<string[]>([])
   const [histIdx, setHistIdx] = React.useState(-1)
+  const [elapsedMs, setElapsedMs] = React.useState(0) // live timer for display
   const endRef = React.useRef<HTMLDivElement>(null)
   const inputRef = React.useRef<HTMLInputElement>(null)
+  const sessionStartRef = React.useRef<number>(0)
+  const lastHeartbeatRef = React.useRef<number>(0)
 
   React.useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }) }, [history])
+
+  // Time tracking: start timer when lab starts, send heartbeats every 15s
+  React.useEffect(() => {
+    if (!started || done) return
+    sessionStartRef.current = Date.now()
+    lastHeartbeatRef.current = Date.now()
+
+    const tickInterval = setInterval(() => {
+      setElapsedMs(Date.now() - sessionStartRef.current)
+    }, 1000)
+
+    const heartbeatInterval = setInterval(async () => {
+      const now = Date.now()
+      const elapsed = now - lastHeartbeatRef.current
+      lastHeartbeatRef.current = now
+      try {
+        await fetch(`/api/labs/${labSlug}/submit`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "heartbeat", timeSpentMs: elapsed }),
+          credentials: "include",
+        })
+      } catch {}
+    }, 15000)
+
+    return () => {
+      clearInterval(tickInterval)
+      clearInterval(heartbeatInterval)
+      // final heartbeat on unmount/leave
+      const finalElapsed = Date.now() - lastHeartbeatRef.current
+      if (finalElapsed > 2000) {
+        fetch(`/api/labs/${labSlug}/submit`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "heartbeat", timeSpentMs: finalElapsed }),
+          credentials: "include",
+        }).catch(() => {})
+      }
+    }
+  }, [started, done, labSlug])
 
   const submitMutation = useMutation({
     mutationFn: (flagValue: string) => api(`/api/labs/${labSlug}/submit`, { method: "POST", body: JSON.stringify({ action: "submit", flag: flagValue }) }),
@@ -368,9 +425,16 @@ function LabTerminal({ labSlug, commands, flag, started, done, onStart }: {
           <div className="h-3 w-3 rounded-full bg-emerald-500/70" />
         </div>
         <span className="text-xs font-mono text-muted-foreground ml-2">guardian@guardianx-lab: ~/labs/{labSlug}</span>
-        <span className="ml-auto text-[10px] font-mono text-emerald-400 flex items-center gap-1">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 pulse-dot" /> CONNECTED
-        </span>
+        <div className="ml-auto flex items-center gap-3">
+          {started && !done && (
+            <span className="text-[10px] font-mono text-cyan-400 flex items-center gap-1 tabular-nums" title="Session time">
+              <Clock className="h-3 w-3" /> {formatDuration(elapsedMs)}
+            </span>
+          )}
+          <span className="text-[10px] font-mono text-emerald-400 flex items-center gap-1">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 pulse-dot" /> CONNECTED
+          </span>
+        </div>
       </div>
       <div
         className="p-4 font-mono text-xs h-80 overflow-y-auto bg-[oklch(0.1_0.015_200)] cursor-text"

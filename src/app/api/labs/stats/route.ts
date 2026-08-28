@@ -26,13 +26,16 @@ export async function GET() {
 
   let completedLabs: string[] = []
   let earnedPoints = 0
+  let totalTimeSpentMs = 0
   if (user) {
     const progress = await db.labProgress.findMany({
-      where: { userId: user.id, status: "completed" },
+      where: { userId: user.id },
       include: { lab: { select: { category: true, difficulty: true, points: true } } },
     })
-    completedLabs = progress.map((p) => p.labId)
+    completedLabs = progress.filter((p) => p.status === "completed").map((p) => p.labId)
+    totalTimeSpentMs = progress.reduce((sum, p) => sum + (p.timeSpentMs ?? 0), 0)
     for (const p of progress) {
+      if (p.status !== "completed") continue
       earnedPoints += p.lab.points
       if (byCategory[p.lab.category]) byCategory[p.lab.category].completed++
       if (byCategory[p.lab.category]) byCategory[p.lab.category].earnedPoints += p.lab.points
@@ -48,6 +51,7 @@ export async function GET() {
     completed: completedLabs.length,
     totalPoints,
     earnedPoints,
+    totalTimeSpentMs,
     overallPct: allLabs.length ? Math.round((completedLabs.length / allLabs.length) * 100) : 0,
     categories: categoryStats.sort((a, b) => b.total - a.total),
     difficulties: difficultyStats,

@@ -11,14 +11,24 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
   const lab = await db.lab.findUnique({ where: { slug } })
   if (!lab) return NextResponse.json({ error: "Lab not found" }, { status: 404 })
 
-  const { flag, action } = await req.json()
+  const { flag, action, timeSpentMs } = await req.json()
 
-  // start / hint / submit
+  // start / hint / submit / heartbeat
   let progress = await db.labProgress.findUnique({ where: { userId_labId: { userId: user.id, labId: lab.id } } })
   if (!progress) {
     progress = await db.labProgress.create({
       data: { userId: user.id, labId: lab.id, status: "in_progress", startedAt: new Date() },
     })
+  }
+
+  if (action === "heartbeat") {
+    // accumulate time spent (client sends elapsed ms since last heartbeat)
+    const addMs = Math.min(Number(timeSpentMs) || 0, 60000) // cap at 60s per heartbeat
+    progress = await db.labProgress.update({
+      where: { id: progress.id },
+      data: { timeSpentMs: { increment: addMs } },
+    })
+    return NextResponse.json({ ok: true, totalTimeSpentMs: progress.timeSpentMs })
   }
 
   if (action === "hint") {
@@ -43,7 +53,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
       const xp = Math.max(baseXp - progress.hintsUsed * 10, baseXp / 2)
       gamification = await awardXp(user.id, "lab_solved", xp, lab.id)
     }
-    return NextResponse.json({ correct, flag: correct ? lab.flag : null, gamification })
+    return NextResponse.json({ correct, flag: correct ? lab.flag : null, gamification, timeSpentMs: progress.timeSpentMs })
   }
 
   return NextResponse.json({ progress })

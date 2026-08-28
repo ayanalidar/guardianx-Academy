@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { api } from "@/lib/api"
 import { useAppStore } from "@/store/app-store"
 import { colorFor, LEVEL_COLORS } from "@/lib/colors"
@@ -13,6 +13,9 @@ import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Textarea } from "@/components/ui/textarea"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   BarChart, Bar, PieChart, Pie, Cell, Legend,
@@ -20,8 +23,10 @@ import {
 import {
   Presentation, Users, BookOpen, TrendingUp, Star, Clock, ChevronRight,
   GraduationCap, Award, Activity, ArrowRight, BarChart3, CheckCircle2, LineChart as LineChartIcon,
+  Plus, Pencil, Trash2, Save, X, FileText, FolderOpen,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { toast } from "sonner"
 
 interface InstructorCourse {
   id: string; slug: string; title: string; shortName: string; color: string
@@ -150,6 +155,9 @@ export function InstructorDashboardView() {
           </div>
         )}
       </div>
+
+      {/* Content Editor */}
+      <ContentEditor />
     </div>
   )
 }
@@ -374,6 +382,239 @@ function AnalyticsCharts() {
           </ResponsiveContainer>
         </Card>
       )}
+    </div>
+  )
+}
+
+// ---- Content Editor (instructors can edit lesson content) ----
+function ContentEditor() {
+  const { data: coursesData } = useQuery<{ courses: InstructorCourse[] }>({
+    queryKey: ["instructor", "courses"],
+    queryFn: () => api("/api/instructor/courses"),
+  })
+  const courses = coursesData?.courses ?? []
+  const [selectedCourseId, setSelectedCourseId] = React.useState("")
+  const qc = useQueryClient()
+
+  React.useEffect(() => {
+    if (!selectedCourseId && courses[0]) setSelectedCourseId(courses[0].id)
+  }, [courses, selectedCourseId])
+
+  if (courses.length === 0) return null
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h2 className="text-xl font-bold flex items-center gap-2">
+            <FileText className="h-5 w-5 text-emerald-400" /> Content Editor
+          </h2>
+          <p className="text-sm text-muted-foreground">Add and edit lessons in your courses</p>
+        </div>
+        {courses.length > 0 && (
+          <Select value={selectedCourseId} onValueChange={setSelectedCourseId}>
+            <SelectTrigger className="w-[240px]"><SelectValue placeholder="Select course" /></SelectTrigger>
+            <SelectContent>
+              {courses.map((c) => <SelectItem key={c.id} value={c.id}>{c.shortName} — {c.title}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        )}
+      </div>
+      {selectedCourseId && <CourseModulesEditor courseId={selectedCourseId} />}
+    </div>
+  )
+}
+
+function CourseModulesEditor({ courseId }: { courseId: string }) {
+  const qc = useQueryClient()
+  const { data } = useQuery<any>({
+    queryKey: ["course", courseId],
+    queryFn: () => api(`/api/courses/${courseId}`),
+  })
+  const course = data?.course
+  const [editingLesson, setEditingLesson] = React.useState<string | null>(null)
+  const [newLessonModuleId, setNewLessonModuleId] = React.useState<string | null>(null)
+
+  const deleteLesson = useMutation({
+    mutationFn: (lessonId: string) => api(`/api/instructor/lessons/${lessonId}`, { method: "DELETE" }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["course", courseId] })
+      qc.invalidateQueries({ queryKey: ["instructor", "courses"] })
+      toast.success("Lesson deleted")
+    },
+    onError: (e: any) => toast.error(e.message),
+  })
+
+  if (!course) return <Skeleton className="h-64" />
+
+  return (
+    <div className="space-y-4">
+      {course.modules.map((m: any, mi: number) => {
+        const col = colorFor(course.color)
+        return (
+          <Card key={m.id} className="overflow-hidden">
+            <div className="p-4 border-b border-border bg-muted/20">
+              <div className="flex items-center gap-3">
+                <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-lg font-mono text-sm font-bold", col.bg, col.border, "border", col.text)}>
+                  {String(mi + 1).padStart(2, "0")}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-sm truncate">{m.title}</div>
+                  <div className="text-xs text-muted-foreground">{m.lessons.length} lesson{m.lessons.length !== 1 ? "s" : ""}</div>
+                </div>
+                <Button size="sm" variant="outline" onClick={() => setNewLessonModuleId(newLessonModuleId === m.id ? null : m.id)}>
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Add Lesson
+                </Button>
+              </div>
+            </div>
+            <div className="divide-y divide-border">
+              {m.lessons.map((l: any) => (
+                <div key={l.id} className="p-3 flex items-center gap-3 hover:bg-accent/20 transition-colors">
+                  <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium truncate">{l.title}</div>
+                    <div className="text-[10px] text-muted-foreground">{l.type} · {l.durationMin}m</div>
+                  </div>
+                  <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setEditingLesson(editingLesson === l.id ? null : l.id)}>
+                    <Pencil className="h-3 w-3 mr-1" /> Edit
+                  </Button>
+                  <button
+                    onClick={() => { if (confirm(`Delete "${l.title}"?`)) deleteLesson.mutate(l.id) }}
+                    className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                    title="Delete lesson"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))}
+              {editingLesson && m.lessons.some((l: any) => l.id === editingLesson) && (
+                <LessonEditor
+                  lessonId={editingLesson}
+                  courseId={courseId}
+                  onClose={() => setEditingLesson(null)}
+                />
+              )}
+              {newLessonModuleId === m.id && (
+                <NewLessonForm moduleId={m.id} courseId={courseId} onClose={() => setNewLessonModuleId(null)} />
+              )}
+            </div>
+          </Card>
+        )
+      })}
+    </div>
+  )
+}
+
+function LessonEditor({ lessonId, courseId, onClose }: { lessonId: string; courseId: string; onClose: () => void }) {
+  const qc = useQueryClient()
+  const { data } = useQuery<any>({
+    queryKey: ["lesson", lessonId],
+    queryFn: () => api(`/api/lessons/${lessonId}`),
+  })
+  const lesson = data?.lesson
+  const [title, setTitle] = React.useState("")
+  const [content, setContent] = React.useState("")
+  const [durationMin, setDurationMin] = React.useState(15)
+
+  React.useEffect(() => {
+    if (lesson) {
+      setTitle(lesson.title)
+      setContent(lesson.content)
+      setDurationMin(lesson.durationMin)
+    }
+  }, [lesson?.id])
+
+  const save = useMutation({
+    mutationFn: () => api(`/api/instructor/lessons/${lessonId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ title, content, durationMin: Number(durationMin) }),
+    }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["course", courseId] })
+      qc.invalidateQueries({ queryKey: ["lesson", lessonId] })
+      qc.invalidateQueries({ queryKey: ["instructor", "courses"] })
+      toast.success("Lesson saved")
+      onClose()
+    },
+    onError: (e: any) => toast.error(e.message),
+  })
+
+  if (!lesson) return <div className="p-4"><Skeleton className="h-32" /></div>
+
+  return (
+    <div className="p-4 bg-emerald-500/[0.03] space-y-3 animate-fade-in-up">
+      <div className="flex items-center gap-2">
+        <Pencil className="h-4 w-4 text-emerald-400" />
+        <span className="text-sm font-semibold">Edit Lesson</span>
+        <Button size="sm" variant="ghost" className="ml-auto h-7" onClick={onClose}><X className="h-3.5 w-3.5" /></Button>
+      </div>
+      <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Lesson title" />
+      <Textarea
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
+        placeholder="Lesson content (Markdown supported)..."
+        className="min-h-[180px] font-mono text-xs"
+      />
+      <div className="flex items-center gap-3">
+        <label className="text-xs text-muted-foreground">Duration (min):</label>
+        <Input type="number" value={durationMin} onChange={(e) => setDurationMin(Number(e.target.value))} className="w-24 h-8" />
+        <Button size="sm" className="ml-auto" onClick={() => save.mutate()} disabled={save.isPending}>
+          <Save className="h-3.5 w-3.5 mr-1" /> {save.isPending ? "Saving..." : "Save"}
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+function NewLessonForm({ moduleId, courseId, onClose }: { moduleId: string; courseId: string; onClose: () => void }) {
+  const qc = useQueryClient()
+  const [title, setTitle] = React.useState("")
+  const [type, setType] = React.useState("reading")
+  const [content, setContent] = React.useState("")
+  const [durationMin, setDurationMin] = React.useState(15)
+
+  const create = useMutation({
+    mutationFn: () => api(`/api/instructor/modules/${moduleId}/lessons`, {
+      method: "POST",
+      body: JSON.stringify({ title, type, content, durationMin: Number(durationMin) }),
+    }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["course", courseId] })
+      qc.invalidateQueries({ queryKey: ["instructor", "courses"] })
+      toast.success("Lesson created")
+      onClose()
+    },
+    onError: (e: any) => toast.error(e.message),
+  })
+
+  return (
+    <div className="p-4 bg-cyan-500/[0.03] space-y-3 animate-fade-in-up">
+      <div className="flex items-center gap-2">
+        <Plus className="h-4 w-4 text-cyan-400" />
+        <span className="text-sm font-semibold">New Lesson</span>
+        <Button size="sm" variant="ghost" className="ml-auto h-7" onClick={onClose}><X className="h-3.5 w-3.5" /></Button>
+      </div>
+      <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Lesson title" />
+      <Select value={type} onValueChange={setType}>
+        <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+        <SelectContent>
+          <SelectItem value="reading">Reading</SelectItem>
+          <SelectItem value="pdf">PDF Document</SelectItem>
+        </SelectContent>
+      </Select>
+      <Textarea
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
+        placeholder="Lesson content (Markdown supported)..."
+        className="min-h-[120px] font-mono text-xs"
+      />
+      <div className="flex items-center gap-3">
+        <label className="text-xs text-muted-foreground">Duration (min):</label>
+        <Input type="number" value={durationMin} onChange={(e) => setDurationMin(Number(e.target.value))} className="w-24 h-8" />
+        <Button size="sm" className="ml-auto" onClick={() => create.mutate()} disabled={!title.trim() || create.isPending}>
+          <Plus className="h-3.5 w-3.5 mr-1" /> {create.isPending ? "Creating..." : "Create Lesson"}
+        </Button>
+      </div>
     </div>
   )
 }

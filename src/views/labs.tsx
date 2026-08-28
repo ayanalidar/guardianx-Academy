@@ -17,6 +17,17 @@ import {
   CheckCircle2, Circle, PlayCircle, Flame, Zap, Lock, TrendingUp, Trophy,
 } from "lucide-react"
 
+// Format milliseconds as Mm Ss or Hh Mm
+function formatDuration(ms: number): string {
+  const totalSec = Math.floor(ms / 1000)
+  const h = Math.floor(totalSec / 3600)
+  const m = Math.floor((totalSec % 3600) / 60)
+  const s = totalSec % 60
+  if (h > 0) return `${h}h ${m}m`
+  if (m > 0) return `${m}m ${s}s`
+  return `${s}s`
+}
+
 interface LabItem {
   id: string; slug: string; title: string; description: string; longDescription: string
   category: string; difficulty: string; durationMin: number; points: number; tags: string
@@ -209,6 +220,12 @@ function LabProgressDashboard() {
             <div className="text-xl font-bold text-violet-400 tabular-nums">{data.overallPct}%</div>
             <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Overall</div>
           </div>
+          {data.totalTimeSpentMs > 0 && (
+            <div className="text-center">
+              <div className="text-xl font-bold text-cyan-400 tabular-nums">{formatDuration(data.totalTimeSpentMs)}</div>
+              <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Time Spent</div>
+            </div>
+          )}
         </div>
       </div>
 

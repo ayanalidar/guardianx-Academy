@@ -33,6 +33,11 @@ export function useNotifications() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["notifications"] }),
   })
 
+  const deleteNotif = useMutation({
+    mutationFn: (id: string) => api(`/api/notifications/${id}`, { method: "DELETE" }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["notifications"] }),
+  })
+
   return {
     notifications: data?.notifications ?? [],
     unreadCount: data?.unreadCount ?? 0,
@@ -40,5 +45,6 @@ export function useNotifications() {
     refetch,
     markAllRead,
     markRead,
+    deleteNotif,
   }
 }

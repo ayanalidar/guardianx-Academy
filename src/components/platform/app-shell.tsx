@@ -160,6 +160,7 @@ function ThemeToggle() {
       className="h-9 w-9"
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
       title="Toggle theme"
+      aria-label="Toggle dark/light theme"
     >
       {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
     </Button>
@@ -493,7 +494,7 @@ function timeAgo(date: string): string {
 
 function NotificationsButton() {
   const { navigate } = useAppStore()
-  const { notifications, unreadCount, markAllRead, markRead } = useNotifications()
+  const { notifications, unreadCount, markAllRead, markRead, deleteNotif } = useNotifications()
   const [open, setOpen] = React.useState(false)
 
   function handleClick(n: AppNotification) {
@@ -545,13 +546,13 @@ function NotificationsButton() {
                 const Icon = NOTIF_ICONS[n.icon] ?? Bell
                 const colorClass = NOTIF_COLORS[n.color] ?? NOTIF_COLORS.emerald
                 return (
-                  <button
+                  <div
                     key={n.id}
-                    onClick={() => handleClick(n)}
                     className={cn(
-                      "w-full flex items-start gap-3 px-3 py-3 hover:bg-accent/50 text-left transition-colors",
+                      "group/n relative w-full flex items-start gap-3 px-3 py-3 hover:bg-accent/50 text-left transition-colors cursor-pointer",
                       !n.read && "bg-emerald-500/[0.03]",
                     )}
+                    onClick={() => handleClick(n)}
                   >
                     <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border", colorClass)}>
                       <Icon className="h-4 w-4" />
@@ -564,7 +565,15 @@ function NotificationsButton() {
                       <p className="text-[11px] text-muted-foreground line-clamp-2 mt-0.5">{n.message}</p>
                       <p className="text-[9px] text-muted-foreground/70 font-mono mt-1">{timeAgo(n.createdAt)}</p>
                     </div>
-                  </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); deleteNotif.mutate(n.id) }}
+                      className="absolute right-2 top-2 opacity-0 group-hover/n:opacity-100 transition-opacity p-1 rounded hover:bg-red-500/15 text-muted-foreground hover:text-red-400"
+                      title="Delete notification"
+                      aria-label="Delete notification"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
                 )
               })}
             </div>

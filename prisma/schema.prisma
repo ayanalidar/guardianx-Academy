@@ -1,0 +1,278 @@
+// GuardianX LMS — Prisma schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  name          String
+  passwordHash  String
+  role          String   @default("STUDENT") // STUDENT | INSTRUCTOR | ADMIN
+  avatar        String?
+  bio           String?
+  title         String? // e.g. "Senior Security Engineer"
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  enrollments     Enrollment[]
+  progress        LessonProgress[]
+  notes           Note[]
+  quizAttempts    QuizAttempt[]
+  taughtCourses   Course[]
+  labProgress     LabProgress[]
+  certificates    Certificate[]
+  liveSessionsHost LiveSession[] @relation("hostedSessions")
+  liveSessionMembers LiveSessionMember[]
+  discussions     Discussion[]
+  replies         DiscussionReply[]
+}
+
+model Course {
+  id            String   @id @default(cuid())
+  slug          String   @unique
+  title         String
+  shortName     String // e.g. "CEH"
+  description   String
+  longDescription String
+  category      String // Certification / Networking / Cloud Security / etc.
+  level         String // Beginner | Intermediate | Advanced
+  durationHours Int      @default(40)
+  price         Float    @default(0)
+  rating        Float    @default(4.5)
+  studentsCount Int      @default(0)
+  thumbnail     String?
+  color         String   @default("emerald") // theme accent
+  tags          String   @default("") // comma separated
+  certBody      String? // e.g. "EC-Council"
+  published     Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  instructorId  String
+  instructor    User     @relation(fields: [instructorId], references: [id])
+
+  modules       Module[]
+  enrollments   Enrollment[]
+  certificates  Certificate[]
+  discussions   Discussion[]
+  labs          Lab[]
+  liveSessions  LiveSession[]
+}
+
+model Module {
+  id          String   @id @default(cuid())
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  order       Int      @default(0)
+  lessons     Lesson[]
+}
+
+model Lesson {
+  id          String   @id @default(cuid())
+  moduleId    String
+  module      Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  title       String
+  type        String   @default("reading") // reading | pdf | video | lab
+  content     String   @default("") // markdown / html text content
+  pdfUrl      String?
+  pdfPages    Int      @default(0)
+  durationMin Int      @default(15)
+  order       Int      @default(0)
+  preview     Boolean  @default(false) // free preview
+
+  progress    LessonProgress[]
+  notes       Note[]
+  quiz        Quiz?
+}
+
+model Enrollment {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  progress    Float    @default(0) // percentage 0-100
+  completed   Boolean  @default(false)
+  enrolledAt  DateTime @default(now())
+  lastAccessed DateTime?
+
+  @@unique([userId, courseId])
+}
+
+model LessonProgress {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonId    String
+  lesson      Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  completed   Boolean  @default(false)
+  position    Int      @default(0) // pdf page or video position
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, lessonId])
+}
+
+model Note {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonId    String?
+  lesson      Lesson?  @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  courseId    String?
+  title       String   @default("Untitled note")
+  content     String   @default("")
+  color       String   @default("default")
+  pinned      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Quiz {
+  id          String   @id @default(cuid())
+  lessonId    String   @unique
+  lesson      Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  questions   Question[]
+  attempts    QuizAttempt[]
+}
+
+model Question {
+  id          String   @id @default(cuid())
+  quizId      String
+  quiz        Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  text        String
+  options     String   @default("") // pipe separated options
+  answerIndex Int      @default(0)
+  explanation String?
+}
+
+model QuizAttempt {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quizId      String
+  quiz        Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  score       Int      @default(0) // percentage
+  answers     String   @default("[]") // JSON
+  passed      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
+
+model Certificate {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  certificateId String @unique
+  issuedAt    DateTime @default(now())
+  score       Int      @default(0)
+}
+
+model Lab {
+  id            String   @id @default(cuid())
+  courseId      String?
+  course        Course?  @relation(fields: [courseId], references: [id])
+  title         String
+  slug          String   @unique
+  description   String
+  longDescription String
+  category      String // Web Security | Network | Privilege Escalation | Cryptography | Forensics | Reverse Engineering
+  difficulty    String   @default("Easy") // Easy | Medium | Hard | Insane
+  durationMin   Int      @default(30)
+  points        Int      @default(100)
+  tags          String   @default("")
+  scenario      String   @default("") // markdown scenario/instructions
+  objectives    String   @default("") // pipe separated objectives
+  hints         String   @default("") // pipe separated hints
+  flag          String   @default("FLAG{}") // CTF flag
+  commands      String   @default("") // pipe separated available commands
+  virtualEnv    String   @default("linux") // simulated env type
+  color         String   @default("emerald")
+  published     Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  progress      LabProgress[]
+}
+
+model LabProgress {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  labId       String
+  lab         Lab      @relation(fields: [labId], references: [id], onDelete: Cascade)
+  status      String   @default("not_started") // not_started | in_progress | completed
+  flagFound   Boolean  @default(false)
+  hintsUsed    Int      @default(0)
+  startedAt   DateTime?
+  completedAt DateTime?
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, labId])
+}
+
+model LiveSession {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  hostId      String
+  host        User     @relation("hostedSessions", fields: [hostId], references: [id])
+  courseId    String?
+  course      Course?  @relation(fields: [courseId], references: [id])
+  roomId      String   @unique // socket.io room
+  status      String   @default("scheduled") // scheduled | live | ended
+  scheduledAt DateTime
+  startedAt   DateTime?
+  endedAt     DateTime?
+  maxStudents Int      @default(50)
+  createdAt   DateTime @default(now())
+
+  members     LiveSessionMember[]
+}
+
+model LiveSessionMember {
+  id          String   @id @default(cuid())
+  sessionId   String
+  session     LiveSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role        String   @default("viewer") // host | cohost | viewer
+  canShare    Boolean  @default(false)
+  joinedAt    DateTime @default(now())
+
+  @@unique([sessionId, userId])
+}
+
+model Discussion {
+  id          String   @id @default(cuid())
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  content     String
+  pinned      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  replies     DiscussionReply[]
+}
+
+model DiscussionReply {
+  id          String   @id @default(cuid())
+  discussionId String
+  discussion  Discussion @relation(fields: [discussionId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content     String
+  createdAt   DateTime @default(now())
+}

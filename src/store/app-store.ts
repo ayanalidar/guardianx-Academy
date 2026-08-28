@@ -13,6 +13,7 @@ export type View =
   | { name: "labs" }
   | { name: "lab"; labSlug: string }
   | { name: "certificates" }
+  | { name: "achievements" }
   | { name: "community" }
   | { name: "profile" }
   | { name: "auth" }

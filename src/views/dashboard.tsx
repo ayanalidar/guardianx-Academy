@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query"
 import {
   Shield, BookOpen, GraduationCap, FlaskConical, Award, StickyNote,
   Radio, TrendingUp, Clock, ChevronRight, Flame, Target, Zap, Users,
-  ArrowRight, Terminal, Lock,
+  ArrowRight, Terminal, Lock, CheckCircle2,
 } from "lucide-react"
 import { useAppStore } from "@/store/app-store"
 import { useUser } from "@/hooks/use-user"
@@ -24,6 +24,7 @@ interface CourseListItem {
   studentsCount: number; color: string; tags: string; certBody: string
   instructor: { id: string; name: string; title: string | null }
   lessonCount: number; moduleCount: number
+  enrollment?: { progress: number; completed: boolean; lastAccessed: string | null; enrolledAt: string } | null
 }
 
 interface LiveSessionItem {
@@ -35,7 +36,7 @@ interface LiveSessionItem {
 
 export function DashboardView() {
   const { navigate } = useAppStore()
-  const { user, stats } = useUser()
+  const { user, stats, gamification } = useUser()
 
   const { data: coursesData } = useQuery<{ courses: CourseListItem[] }>({
     queryKey: ["courses", "dashboard"],
@@ -158,11 +159,16 @@ export function DashboardView() {
             <div className="space-y-3">
               {enrolled.slice(0, 4).map((c) => {
                 const col = colorFor(c.color)
+                const progress = c.enrollment?.progress ?? 0
+                const completed = c.enrollment?.completed ?? false
                 return (
-                  <button
+                  <div
                     key={c.id}
                     onClick={() => navigate({ name: "course", courseId: c.id })}
-                    className="w-full text-left group"
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigate({ name: "course", courseId: c.id }) } }}
+                    className="w-full text-left group cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 rounded-xl"
                   >
                     <Card className="p-4 card-hover overflow-hidden relative">
                       <div className={`absolute inset-0 bg-gradient-to-r ${col.gradient} opacity-50`} />
@@ -174,6 +180,7 @@ export function DashboardView() {
                           <div className="flex items-center gap-2 mb-1">
                             <h3 className="font-semibold truncate">{c.title}</h3>
                             <Badge variant="outline" className={`text-[10px] ${LEVEL_COLORS[c.level]}`}>{c.level}</Badge>
+                            {completed && <Badge className="text-[10px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"><CheckCircle2 className="h-2.5 w-2.5 mr-0.5" />Done</Badge>}
                           </div>
                           <div className="flex items-center gap-3 text-xs text-muted-foreground mb-2">
                             <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{c.durationHours}h</span>
@@ -181,14 +188,14 @@ export function DashboardView() {
                             <span>by {c.instructor.name}</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <Progress value={0} className="h-1.5" />
-                            <span className="text-xs text-muted-foreground font-mono">0%</span>
+                            <Progress value={progress} className="h-1.5" />
+                            <span className={`text-xs font-mono ${progress > 0 ? "text-emerald-400" : "text-muted-foreground"}`}>{progress}%</span>
                           </div>
                         </div>
                         <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-emerald-400 transition-colors" />
                       </div>
                     </Card>
-                  </button>
+                  </div>
                 )
               })}
             </div>
@@ -232,16 +239,39 @@ export function DashboardView() {
             </div>
           )}
 
-          <Card className="p-4 bg-gradient-to-br from-violet-950/30 to-transparent border-violet-500/20">
-            <div className="flex items-center gap-2 mb-2">
-              <Zap className="h-4 w-4 text-violet-400" />
-              <span className="text-sm font-medium">Daily Challenge</span>
-            </div>
-            <p className="text-xs text-muted-foreground mb-3">Solve a new lab every day to keep your streak alive.</p>
-            <Button size="sm" variant="outline" className="w-full border-violet-500/30 text-violet-400 hover:bg-violet-500/10" onClick={() => navigate({ name: "labs" })}>
-              <Flame className="h-3.5 w-3.5 mr-1" /> Start Challenge
-            </Button>
-          </Card>
+          {/* Gamification / streak widget */}
+          {gamification && (
+            <Card className="p-4 bg-gradient-to-br from-emerald-950/30 to-transparent border-emerald-500/20 relative overflow-hidden">
+              <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-emerald-500/10 blur-2xl" />
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm font-medium flex items-center gap-2">
+                    <Flame className="h-4 w-4 text-orange-400" fill={gamification.streak > 0 ? "currentColor" : "none"} /> Daily Streak
+                  </span>
+                  <Badge variant="outline" className="text-[10px] text-emerald-400 border-emerald-500/30">Lv {gamification.level}</Badge>
+                </div>
+                <div className="flex items-end gap-2 mb-3">
+                  <span className="text-4xl font-bold text-orange-400 tabular-nums leading-none">{gamification.streak}</span>
+                  <span className="text-xs text-muted-foreground mb-1">day{gamification.streak !== 1 ? "s" : ""}</span>
+                </div>
+                <div className="flex gap-1 mb-3">
+                  {Array.from({ length: 7 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className={`flex-1 h-1.5 rounded-full ${i < Math.min(gamification.streak, 7) ? "bg-orange-400" : "bg-muted"}`}
+                    />
+                  ))}
+                </div>
+                <div className="flex items-center justify-between text-xs mb-3">
+                  <span className="text-muted-foreground">{gamification.rank}</span>
+                  <span className="text-emerald-400 font-mono">{gamification.xp.toLocaleString()} XP</span>
+                </div>
+                <Button size="sm" variant="outline" className="w-full border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10" onClick={() => navigate({ name: "achievements" })}>
+                  <Award className="h-3.5 w-3.5 mr-1" /> View Achievements
+                </Button>
+              </div>
+            </Card>
+          )}
         </div>
       </div>
 

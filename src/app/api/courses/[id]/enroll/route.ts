@@ -22,5 +22,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     where: { id },
     data: { studentsCount: { increment: 1 } },
   })
+  const { awardXp } = await import("@/lib/gamification")
+  await awardXp(user.id, "course_enrolled", 25, id)
   return NextResponse.json({ enrollment })
 }

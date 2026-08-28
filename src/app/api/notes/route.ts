@@ -37,5 +37,7 @@ export async function POST(req: NextRequest) {
       color: body.color || "default",
     },
   })
+  const { awardXp } = await import("@/lib/gamification")
+  await awardXp(user.id, "note_created", 5, note.id)
   return NextResponse.json({ note })
 }

@@ -22,6 +22,7 @@ interface CourseItem {
   category: string; level: string; durationHours: number; rating: number
   studentsCount: number; color: string; instructor: { id: string; name: string; title: string | null }
   lessonCount: number; moduleCount: number
+  enrollment?: { progress: number; completed: boolean; lastAccessed: string | null; enrolledAt: string } | null
 }
 
 export function MyLearningView() {
@@ -63,18 +64,28 @@ export function MyLearningView() {
         <div className="space-y-4">
           {courses.map((c) => {
             const col = colorFor(c.color)
+            const progress = c.enrollment?.progress ?? 0
+            const completed = c.enrollment?.completed ?? false
             return (
-              <button key={c.id} onClick={() => navigate({ name: "course", courseId: c.id })} className="w-full text-left group">
+              <div
+                key={c.id}
+                onClick={() => navigate({ name: "course", courseId: c.id })}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigate({ name: "course", courseId: c.id }) } }}
+                className="w-full text-left group cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 rounded-xl"
+              >
                 <Card className="p-5 card-hover overflow-hidden relative">
                   <div className={`absolute inset-0 bg-gradient-to-r ${col.gradient} opacity-30`} />
                   <div className="relative z-10 flex flex-col sm:flex-row items-start gap-5">
                     <div className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-xl ${col.bg} ${col.border} border font-mono font-bold text-xl ${col.text}`}>
                       {c.shortName}
                     </div>
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 w-full">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <h3 className="font-semibold group-hover:text-emerald-400 transition-colors">{c.title}</h3>
                         <Badge variant="outline" className={`text-[10px] ${LEVEL_COLORS[c.level]}`}>{c.level}</Badge>
+                        {completed && <Badge className="text-[10px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">Completed</Badge>}
                       </div>
                       <p className="text-sm text-muted-foreground mb-3 line-clamp-1">{c.description}</p>
                       <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground mb-3">
@@ -82,14 +93,19 @@ export function MyLearningView() {
                         <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{c.durationHours}h</span>
                         <span>by {c.instructor.name}</span>
                       </div>
-                      <Button size="sm" className={col.text + " " + col.bg + " " + col.border + " border hover:opacity-90"} variant="ghost">
-                        <PlayCircle className="h-3.5 w-3.5 mr-1" /> Continue
-                      </Button>
+                      <div className="flex items-center gap-3 mb-3">
+                        <Progress value={progress} className="h-2 flex-1" />
+                        <span className={`text-xs font-mono font-bold ${progress > 0 ? col.text : "text-muted-foreground"}`}>{progress}%</span>
+                      </div>
+                      <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 group-hover:bg-emerald-500/20 transition-colors">
+                        <PlayCircle className="h-3.5 w-3.5" />
+                        {progress > 0 ? "Continue" : "Start"}
+                      </div>
                     </div>
                     <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-emerald-400 transition-colors hidden sm:block self-center" />
                   </div>
                 </Card>
-              </button>
+              </div>
             )
           })}
         </div>

@@ -7,6 +7,7 @@ import {
   Shield, LayoutDashboard, BookOpen, GraduationCap, StickyNote,
   Radio, FlaskConical, Award, Users, User, LogOut, Menu, X,
   Search, Sun, Moon, Bell, Terminal, ChevronRight, Settings,
+  Trophy, Zap, Flame, Crown,
 } from "lucide-react"
 import { useAppStore, type View } from "@/store/app-store"
 import { useUser } from "@/hooks/use-user"
@@ -19,6 +20,7 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { useTheme } from "next-themes"
 import { cn } from "@/lib/utils"
 
@@ -36,6 +38,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Notes", icon: StickyNote, view: { name: "notes" } },
   { label: "Live Sessions", icon: Radio, view: { name: "live" } },
   { label: "Cyber Labs", icon: FlaskConical, view: { name: "labs" } },
+  { label: "Achievements", icon: Trophy, view: { name: "achievements" } },
   { label: "Certificates", icon: Award, view: { name: "certificates" } },
   { label: "Community", icon: Users, view: { name: "community" } },
 ]
@@ -156,7 +159,20 @@ function ThemeToggle() {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { sidebarOpen, setSidebarOpen, navigate } = useAppStore()
-  const { user, stats } = useUser()
+  const { user, stats, gamification } = useUser()
+  const [commandOpen, setCommandOpen] = React.useState(false)
+
+  // ⌘K / Ctrl+K to open command palette
+  React.useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault()
+        setCommandOpen((o) => !o)
+      }
+    }
+    window.addEventListener("keydown", handler)
+    return () => window.removeEventListener("keydown", handler)
+  }, [])
 
   return (
     <div className="min-h-screen flex bg-background bg-grid">
@@ -195,21 +211,40 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Menu className="h-5 w-5" />
           </Button>
 
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search courses, labs, notes..."
-              className="pl-9 h-9 bg-muted/50 border-transparent focus-visible:border-border"
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  const q = (e.target as HTMLInputElement).value
-                  if (q.trim()) navigate({ name: "catalog" })
-                }
-              }}
-            />
-          </div>
+          <button
+            onClick={() => setCommandOpen(true)}
+            className="relative flex-1 max-w-md flex items-center gap-2 h-9 px-3 rounded-lg bg-muted/50 border border-transparent hover:border-border text-muted-foreground text-sm transition-colors group"
+          >
+            <Search className="h-4 w-4 shrink-0" />
+            <span className="flex-1 text-left">Search courses, labs, notes...</span>
+            <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded border border-border bg-background/60 text-[10px] font-mono">⌘K</kbd>
+          </button>
 
           <div className="flex items-center gap-2 ml-auto">
+            {/* XP / Level widget */}
+            {gamification && (
+              <button
+                onClick={() => navigate({ name: "achievements" })}
+                className="hidden md:flex items-center gap-3 px-3 py-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/10 transition-colors group"
+                title={`${gamification.rank} · ${gamification.xp} XP`}
+              >
+                <div className="flex items-center gap-1.5">
+                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-bold font-mono">
+                    {gamification.level}
+                  </div>
+                  <span className="text-xs font-mono text-emerald-400">{gamification.xp.toLocaleString()} XP</span>
+                </div>
+                <div className="h-1 w-12 rounded-full bg-muted overflow-hidden">
+                  <div className="h-full bg-emerald-400 rounded-full transition-all" style={{ width: `${gamification.levelInfo.progress}%` }} />
+                </div>
+                {gamification.streak > 0 && (
+                  <div className="flex items-center gap-0.5 text-orange-400" title={`${gamification.streak}-day streak`}>
+                    <Flame className="h-3.5 w-3.5" fill="currentColor" />
+                    <span className="text-xs font-mono">{gamification.streak}</span>
+                  </div>
+                )}
+              </button>
+            )}
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/5 text-xs">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 pulse-dot" />
               <span className="text-emerald-400 font-mono">SECURE</span>
@@ -267,7 +302,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="max-w-[1400px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
             <div className="flex items-center gap-2">
               <Shield className="h-3.5 w-3.5 text-emerald-400" />
-              <span className="font-mono">GuardianX LMS · v1.0.0</span>
+              <span className="font-mono">GuardianX LMS · v1.1.0</span>
             </div>
             <div className="flex items-center gap-4">
               <span>© 2025 GuardianX Security Education</span>
@@ -277,6 +312,130 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </footer>
       </div>
+      <CommandPalette open={commandOpen} onOpenChange={setCommandOpen} />
     </div>
+  )
+}
+
+// ---- Command Palette (⌘K) ----
+function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
+  const { navigate } = useAppStore()
+  const [q, setQ] = React.useState("")
+  const [results, setResults] = React.useState<{ courses: any[]; labs: any[] }>({ courses: [], labs: [] })
+
+  React.useEffect(() => {
+    if (!q.trim()) {
+      setResults({ courses: [], labs: [] })
+      return
+    }
+    const t = setTimeout(async () => {
+      try {
+        const r = await fetch(`/api/search?q=${encodeURIComponent(q)}`)
+        const data = await r.json()
+        setResults(data)
+      } catch {}
+    }, 150)
+    return () => clearTimeout(t)
+  }, [q])
+
+  React.useEffect(() => {
+    if (!open) setQ("")
+  }, [open])
+
+  const navItems = [
+    { label: "Dashboard", icon: LayoutDashboard, view: { name: "dashboard" } as const },
+    { label: "Course Catalog", icon: BookOpen, view: { name: "catalog" } as const },
+    { label: "My Learning", icon: GraduationCap, view: { name: "learning" } as const },
+    { label: "Cyber Labs", icon: FlaskConical, view: { name: "labs" } as const },
+    { label: "Achievements", icon: Trophy, view: { name: "achievements" } as const },
+    { label: "Live Sessions", icon: Radio, view: { name: "live" } as const },
+    { label: "My Notes", icon: StickyNote, view: { name: "notes" } as const },
+    { label: "Certificates", icon: Award, view: { name: "certificates" } as const },
+    { label: "Community", icon: Users, view: { name: "community" } as const },
+    { label: "Profile", icon: User, view: { name: "profile" } as const },
+  ]
+
+  const go = (view: any) => {
+    navigate(view)
+    onOpenChange(false)
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="p-0 gap-0 max-w-xl overflow-hidden">
+        <DialogTitle className="sr-only">Command Palette</DialogTitle>
+        <DialogDescription className="sr-only">Search courses, labs, and navigate the platform.</DialogDescription>
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
+          <Search className="h-4 w-4 text-muted-foreground" />
+          <input
+            autoFocus
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search courses, labs, or jump to..."
+            className="flex-1 bg-transparent outline-none text-sm placeholder:text-muted-foreground"
+          />
+          <kbd className="text-[10px] font-mono text-muted-foreground px-1.5 py-0.5 rounded border border-border">ESC</kbd>
+        </div>
+        <div className="max-h-[400px] overflow-y-auto p-2">
+          {!q.trim() ? (
+            <div className="p-2">
+              <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-2 py-1.5">Quick Navigation</div>
+              {navItems.map((item) => (
+                <button
+                  key={item.label}
+                  onClick={() => go(item.view)}
+                  className="w-full flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-accent/50 text-sm text-left transition-colors"
+                >
+                  <item.icon className="h-4 w-4 text-emerald-400" />
+                  <span className="flex-1">{item.label}</span>
+                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-3 p-2">
+              {results.courses.length === 0 && results.labs.length === 0 && (
+                <div className="text-center py-8 text-sm text-muted-foreground">
+                  <Search className="h-6 w-6 mx-auto mb-2 opacity-50" />
+                  No results for "{q}"
+                </div>
+              )}
+              {results.courses.length > 0 && (
+                <div>
+                  <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-2 py-1.5">Courses</div>
+                  {results.courses.map((c) => (
+                    <button
+                      key={c.id}
+                      onClick={() => go({ name: "course", courseId: c.id })}
+                      className="w-full flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-accent/50 text-sm text-left transition-colors"
+                    >
+                      <BookOpen className="h-4 w-4 text-emerald-400 shrink-0" />
+                      <span className="flex-1 truncate">{c.title}</span>
+                      <Badge variant="outline" className="text-[9px]">{c.shortName}</Badge>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {results.labs.length > 0 && (
+                <div>
+                  <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-2 py-1.5">Labs</div>
+                  {results.labs.map((l) => (
+                    <button
+                      key={l.id}
+                      onClick={() => go({ name: "lab", labSlug: l.slug })}
+                      className="w-full flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-accent/50 text-sm text-left transition-colors"
+                    >
+                      <Terminal className="h-4 w-4 text-violet-400 shrink-0" />
+                      <span className="flex-1 truncate">{l.title}</span>
+                      <Badge variant="outline" className="text-[9px]">{l.difficulty}</Badge>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }

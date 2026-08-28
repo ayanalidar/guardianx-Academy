@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/session"
+import { awardXp } from "@/lib/gamification"
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -16,11 +17,24 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   })
   if (!enrollment) return NextResponse.json({ error: "Not enrolled" }, { status: 403 })
 
+  // fetch existing progress to detect transition
+  const existing = await db.lessonProgress.findUnique({
+    where: { userId_lessonId: { userId: user.id, lessonId: id } },
+  })
+  const wasCompleted = existing?.completed ?? false
+  const nowCompleted = completed ?? wasCompleted
+
   const progress = await db.lessonProgress.upsert({
     where: { userId_lessonId: { userId: user.id, lessonId: id } },
-    update: { completed: completed ?? undefined, position: position ?? undefined },
-    create: { userId: user.id, lessonId: id, completed: completed ?? false, position: position ?? 0 },
+    update: { completed: nowCompleted, position: position ?? existing?.position ?? 0 },
+    create: { userId: user.id, lessonId: id, completed: nowCompleted, position: position ?? 0 },
   })
+
+  // award XP only on transition from incomplete -> complete
+  let xpAwarded: { newAchievements: any[]; leveledUp: boolean; newLevel: number } | null = null
+  if (nowCompleted && !wasCompleted) {
+    xpAwarded = await awardXp(user.id, "lesson_completed", 15, lesson.id)
+  }
 
   // recompute course progress %
   const courseLessons = await db.lesson.findMany({
@@ -36,10 +50,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     data: { progress: pct, completed: pct === 100, lastAccessed: new Date() },
   })
 
-  // Auto-issue certificate at 100%
+  // Auto-issue certificate at 100% + award cert XP
   if (pct === 100) {
-    const existing = await db.certificate.findFirst({ where: { userId: user.id, courseId: lesson.module.courseId } })
-    if (!existing) {
+    const existingCert = await db.certificate.findFirst({ where: { userId: user.id, courseId: lesson.module.courseId } })
+    if (!existingCert) {
       await db.certificate.create({
         data: {
           userId: user.id,
@@ -48,8 +62,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
           score: pct,
         },
       })
+      xpAwarded = await awardXp(user.id, "cert_earned", 300, lesson.module.courseId)
     }
   }
 
-  return NextResponse.json({ progress, courseProgress: pct })
+  return NextResponse.json({ progress, courseProgress: pct, gamification: xpAwarded })
 }

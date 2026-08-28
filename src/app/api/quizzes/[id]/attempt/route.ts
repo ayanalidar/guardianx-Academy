@@ -49,5 +49,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     },
   })
 
-  return NextResponse.json({ attempt, score, passed, breakdown })
+  let gamification = null
+  if (passed) {
+    const { awardXp } = await import("@/lib/gamification")
+    gamification = await awardXp(user.id, "quiz_passed", 50, quiz.id)
+  }
+
+  return NextResponse.json({ attempt, score, passed, breakdown, gamification })
 }

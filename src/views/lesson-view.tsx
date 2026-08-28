@@ -79,6 +79,11 @@ export function LessonView() {
       if (vars.completed) {
         toast.success("Lesson marked complete!")
         qc.invalidateQueries({ queryKey: ["me"] })
+        qc.invalidateQueries({ queryKey: ["achievements"] })
+      }
+      // surface gamification events (XP, achievements, level-ups)
+      if (_data?.gamification) {
+        import("@/components/providers/gamification-toaster").then((m) => m.showGamification(_data.gamification))
       }
     },
   })

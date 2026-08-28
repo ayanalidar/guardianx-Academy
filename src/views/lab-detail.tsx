@@ -207,6 +207,11 @@ function LabTerminal({ labSlug, commands, flag, started, done, onStart }: {
         toast.success("🎉 Flag captured! Lab complete!")
         qc.invalidateQueries({ queryKey: ["lab", labSlug] })
         qc.invalidateQueries({ queryKey: ["me"] })
+        qc.invalidateQueries({ queryKey: ["achievements"] })
+        qc.invalidateQueries({ queryKey: ["lab-stats"] })
+        if (data.gamification) {
+          import("@/components/providers/gamification-toaster").then((m) => m.showGamification(data.gamification))
+        }
       } else {
         setHistory((h) => [...h, { type: "err", text: "✗ Incorrect flag. Try again." }])
         toast.error("Incorrect flag")

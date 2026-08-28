@@ -18,6 +18,10 @@ model User {
   avatar        String?
   bio           String?
   title         String? // e.g. "Senior Security Engineer"
+  xp            Int      @default(0)
+  level         Int      @default(1)
+  streak        Int      @default(0)
+  lastActiveDate String? // YYYY-MM-DD for streak tracking
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -32,6 +36,42 @@ model User {
   liveSessionMembers LiveSessionMember[]
   discussions     Discussion[]
   replies         DiscussionReply[]
+  achievements    UserAchievement[]
+  activities      UserActivity[]
+}
+
+model Achievement {
+  id          String   @id @default(cuid())
+  code        String   @unique // e.g. FIRST_LAB, STREAK_7
+  title       String
+  description String
+  icon        String   @default("award") // lucide icon name
+  color       String   @default("emerald")
+  xp          Int      @default(50)
+  tier        String   @default("bronze") // bronze | silver | gold | platinum
+  userAchievements UserAchievement[]
+}
+
+model UserAchievement {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievementId String
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+  earnedAt      DateTime @default(now())
+
+  @@unique([userId, achievementId])
+}
+
+model UserActivity {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String   // lesson_completed | lab_solved | quiz_passed | note_created | course_enrolled | cert_earned
+  xp          Int      @default(0)
+  meta        String   @default("") // JSON-ish metadata
+  date        String   // YYYY-MM-DD (for daily aggregation / streaks)
+  createdAt   DateTime @default(now())
 }
 
 model Course {

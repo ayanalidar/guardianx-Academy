@@ -9,11 +9,12 @@ import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   Search, FlaskConical, Clock, Target, ChevronRight, Terminal, Shield,
-  CheckCircle2, Circle, PlayCircle, Flame, Zap, Lock, TrendingUp,
+  CheckCircle2, Circle, PlayCircle, Flame, Zap, Lock, TrendingUp, Trophy,
 } from "lucide-react"
 
 interface LabItem {
@@ -89,6 +90,9 @@ export function LabsView() {
         </div>
       </div>
 
+      {/* Progress tracking dashboard */}
+      <LabProgressDashboard />
+
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
@@ -160,5 +164,97 @@ export function LabsView() {
         </div>
       )}
     </div>
+  )
+}
+
+// ---- Lab progress dashboard (category + difficulty breakdown) ----
+function LabProgressDashboard() {
+  const { data, isLoading } = useQuery<any>({
+    queryKey: ["lab-stats"],
+    queryFn: () => api("/api/labs/stats"),
+  })
+
+  if (isLoading) return <Skeleton className="h-40" />
+  if (!data) return null
+
+  const CAT_COLORS: Record<string, string> = {
+    "Web Security": "text-violet-400 bg-violet-500/10 border-violet-500/30",
+    "Network": "text-cyan-400 bg-cyan-500/10 border-cyan-500/30",
+    "Privilege Escalation": "text-emerald-400 bg-emerald-500/10 border-emerald-500/30",
+    "Cryptography": "text-amber-400 bg-amber-500/10 border-amber-500/30",
+    "Forensics": "text-teal-400 bg-teal-500/10 border-teal-500/30",
+    "Reverse Engineering": "text-rose-400 bg-rose-500/10 border-rose-500/30",
+    "Active Directory": "text-orange-400 bg-orange-500/10 border-orange-500/30",
+  }
+
+  return (
+    <Card className="p-5 lg:p-6">
+      <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
+        <div>
+          <h2 className="text-lg font-bold flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-violet-400" /> Your Lab Progress
+          </h2>
+          <p className="text-xs text-muted-foreground mt-0.5">Track completion across categories and difficulties</p>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="text-center">
+            <div className="text-xl font-bold text-emerald-400 tabular-nums">{data.completed}/{data.total}</div>
+            <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Solved</div>
+          </div>
+          <div className="text-center">
+            <div className="text-xl font-bold text-amber-400 tabular-nums">{data.earnedPoints.toLocaleString()}</div>
+            <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Points</div>
+          </div>
+          <div className="text-center">
+            <div className="text-xl font-bold text-violet-400 tabular-nums">{data.overallPct}%</div>
+            <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Overall</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Overall progress bar */}
+      <div className="mb-5">
+        <Progress value={data.overallPct} className="h-2" />
+      </div>
+
+      <div className="grid lg:grid-cols-2 gap-6">
+        {/* By category */}
+        <div>
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">By Category</h3>
+          <div className="space-y-2.5">
+            {data.categories.map((cat: any) => (
+              <div key={cat.name} className="space-y-1">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="flex items-center gap-2">
+                    <span className={`inline-block h-2 w-2 rounded-full ${CAT_COLORS[cat.name]?.split(" ")[0] ?? "bg-muted-foreground"}`} />
+                    <span className="font-medium">{cat.name}</span>
+                  </span>
+                  <span className="text-muted-foreground font-mono">{cat.completed}/{cat.total}</span>
+                </div>
+                <Progress value={cat.progressPct} className="h-1.5" />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* By difficulty */}
+        <div>
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">By Difficulty</h3>
+          <div className="grid grid-cols-2 gap-3">
+            {data.difficulties.map((diff: any) => (
+              <div key={diff.name} className={`p-3 rounded-lg border ${DIFFICULTY_COLORS[diff.name] ?? "border-border"}`}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-semibold">{diff.name}</span>
+                  <Trophy className="h-3.5 w-3.5 opacity-50" />
+                </div>
+                <div className="text-lg font-bold tabular-nums">{diff.completed}<span className="text-xs text-muted-foreground font-normal">/{diff.total}</span></div>
+                <Progress value={diff.progressPct} className="h-1 mt-2" />
+                <div className="text-[10px] text-muted-foreground mt-1">{diff.points} pts available</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </Card>
   )
 }

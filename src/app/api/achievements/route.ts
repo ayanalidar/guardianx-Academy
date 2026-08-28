@@ -1,0 +1,88 @@
+import { NextResponse } from "next/server"
+import { db } from "@/lib/db"
+import { getCurrentUser } from "@/lib/session"
+import { levelFromXp, rankTitle, ACHIEVEMENT_DEFS, checkAchievements } from "@/lib/gamification"
+
+export async function GET() {
+  const user = await getCurrentUser()
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+  // make sure achievements are up to date
+  await checkAchievements(user.id)
+
+  const [fullUser, earned, activities] = await Promise.all([
+    db.user.findUnique({ where: { id: user.id }, select: { xp: true, level: true, streak: true, lastActiveDate: true } }),
+    db.userAchievement.findMany({
+      where: { userId: user.id },
+      include: { achievement: true },
+      orderBy: { earnedAt: "desc" },
+    }),
+    db.userActivity.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+    }),
+  ])
+
+  const xp = fullUser?.xp ?? 0
+  const levelInfo = levelFromXp(xp)
+  const rank = rankTitle(levelInfo.level)
+
+  // build full achievement list (earned + locked)
+  const allAchievements = ACHIEVEMENT_DEFS.map((d) => {
+    const e = earned.find((x) => x.achievement.code === d.code)
+    return {
+      code: d.code,
+      title: d.title,
+      description: d.description,
+      icon: d.icon,
+      color: d.color,
+      xp: d.xp,
+      tier: d.tier,
+      earned: !!e,
+      earnedAt: e?.earnedAt ?? null,
+    }
+  })
+
+  // last 7 days activity heatmap
+  const today = new Date()
+  const heatmap: { date: string; count: number; xp: number }[] = []
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today)
+    d.setDate(d.getDate() - i)
+    const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+    const dayActs = activities.filter((a) => a.date === ds)
+    heatmap.push({
+      date: ds,
+      count: dayActs.length,
+      xp: dayActs.reduce((a, b) => a + b.xp, 0),
+    })
+  }
+
+  // leaderboard (top 10 by XP)
+  const topUsers = await db.user.findMany({
+    orderBy: { xp: "desc" },
+    take: 10,
+    select: { id: true, name: true, title: true, avatar: true, xp: true, level: true },
+  })
+  const leaderboard = topUsers.map((u, i) => ({
+    rank: i + 1,
+    ...u,
+    rankTitle: rankTitle(levelFromXp(u.xp).level),
+    isMe: u.id === user.id,
+  }))
+
+  return NextResponse.json({
+    xp,
+    level: levelInfo.level,
+    levelInfo,
+    rank,
+    streak: fullUser?.streak ?? 0,
+    achievements: allAchievements,
+    earnedCount: earned.length,
+    totalCount: ACHIEVEMENT_DEFS.length,
+    activities: activities.slice(0, 10).map((a) => ({ type: a.type, xp: a.xp, date: a.date, createdAt: a.createdAt })),
+    heatmap,
+    leaderboard,
+  })
+}

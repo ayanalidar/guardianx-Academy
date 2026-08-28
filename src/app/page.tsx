@@ -25,7 +25,7 @@ function ViewRouter() {
   const { view } = useAppStore()
   // key forces remount + fade-in on navigation
   return (
-    <div key={JSON.stringify(view)} className="animate-fade-in-up">
+    <div key={JSON.stringify(view)} className="page-transition">
       {view.name === "dashboard" && <DashboardView />}
       {view.name === "catalog" && <CourseCatalogView />}
       {view.name === "course" && <CourseDetailView />}

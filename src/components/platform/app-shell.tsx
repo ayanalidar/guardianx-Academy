@@ -7,7 +7,7 @@ import {
   Shield, LayoutDashboard, BookOpen, GraduationCap, StickyNote,
   Radio, FlaskConical, Award, Users, User, LogOut, Menu, X,
   Search, Sun, Moon, Bell, Terminal, ChevronRight, Settings,
-  Trophy, Zap, Flame, Crown,
+  Trophy, Zap, Flame, Crown, CheckCheck, Sparkles,
 } from "lucide-react"
 import { useAppStore, type View } from "@/store/app-store"
 import { useUser } from "@/hooks/use-user"
@@ -21,7 +21,9 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { useTheme } from "next-themes"
+import { useNotifications, type AppNotification } from "@/hooks/use-notifications"
 import { cn } from "@/lib/utils"
 
 interface NavItem {
@@ -250,10 +252,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <span className="text-emerald-400 font-mono">SECURE</span>
             </div>
             <ThemeToggle />
-            <Button variant="ghost" size="icon" className="h-9 w-9 relative">
-              <Bell className="h-4 w-4" />
-              <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-amber-400" />
-            </Button>
+            <NotificationsButton />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-2 rounded-full hover:bg-accent p-1 pr-2">
@@ -437,5 +436,115 @@ function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenChange: (
         </div>
       </DialogContent>
     </Dialog>
+  )
+}
+
+// ---- Notifications Button + Dropdown ----
+const NOTIF_ICONS: Record<string, any> = {
+  trophy: Trophy, award: Award, crown: Crown, flame: Flame, zap: Zap,
+  book: BookOpen, terminal: Terminal, shield: Shield, sparkles: Sparkles, bell: Bell,
+}
+const NOTIF_COLORS: Record<string, string> = {
+  emerald: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30",
+  amber: "bg-amber-500/10 text-amber-400 border-amber-500/30",
+  cyan: "bg-cyan-500/10 text-cyan-400 border-cyan-500/30",
+  violet: "bg-violet-500/10 text-violet-400 border-violet-500/30",
+  orange: "bg-orange-500/10 text-orange-400 border-orange-500/30",
+  red: "bg-red-500/10 text-red-400 border-red-500/30",
+}
+
+function timeAgo(date: string): string {
+  const diff = Date.now() - new Date(date).getTime()
+  const m = Math.floor(diff / 60000)
+  if (m < 1) return "just now"
+  if (m < 60) return `${m}m ago`
+  const h = Math.floor(m / 60)
+  if (h < 24) return `${h}h ago`
+  const d = Math.floor(h / 24)
+  if (d < 7) return `${d}d ago`
+  return new Date(date).toLocaleDateString()
+}
+
+function NotificationsButton() {
+  const { navigate } = useAppStore()
+  const { notifications, unreadCount, markAllRead, markRead } = useNotifications()
+  const [open, setOpen] = React.useState(false)
+
+  function handleClick(n: AppNotification) {
+    markRead.mutate(n.id)
+    if (n.link) navigate(n.link as View)
+    setOpen(false)
+  }
+
+  return (
+    <DropdownMenu open={open} onOpenChange={setOpen}>
+      <DropdownMenuTrigger asChild>
+        <button className="relative h-9 w-9 inline-flex items-center justify-center rounded-md hover:bg-accent transition-colors" aria-label="Notifications">
+          <Bell className="h-4 w-4" />
+          {unreadCount > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-1 flex items-center justify-center rounded-full bg-red-500 text-white text-[9px] font-bold font-mono border-2 border-background">
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </span>
+          )}
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-80 p-0">
+        <div className="flex items-center justify-between px-3 py-2.5 border-b border-border">
+          <div className="flex items-center gap-2">
+            <Bell className="h-3.5 w-3.5 text-emerald-400" />
+            <span className="text-sm font-semibold">Notifications</span>
+            {unreadCount > 0 && (
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-red-500/15 text-red-400">{unreadCount} new</span>
+            )}
+          </div>
+          {unreadCount > 0 && (
+            <button
+              onClick={() => markAllRead.mutate()}
+              className="text-[10px] text-muted-foreground hover:text-emerald-400 flex items-center gap-1 transition-colors"
+            >
+              <CheckCheck className="h-3 w-3" /> Mark all read
+            </button>
+          )}
+        </div>
+        <ScrollArea className="h-[360px]">
+          {notifications.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
+              <Bell className="h-8 w-8 text-muted-foreground/50 mb-2" />
+              <p className="text-xs text-muted-foreground">No notifications yet</p>
+              <p className="text-[10px] text-muted-foreground/70 mt-1">Achievements, level-ups, and updates will appear here</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-border">
+              {notifications.map((n) => {
+                const Icon = NOTIF_ICONS[n.icon] ?? Bell
+                const colorClass = NOTIF_COLORS[n.color] ?? NOTIF_COLORS.emerald
+                return (
+                  <button
+                    key={n.id}
+                    onClick={() => handleClick(n)}
+                    className={cn(
+                      "w-full flex items-start gap-3 px-3 py-3 hover:bg-accent/50 text-left transition-colors",
+                      !n.read && "bg-emerald-500/[0.03]",
+                    )}
+                  >
+                    <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border", colorClass)}>
+                      <Icon className="h-4 w-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className={cn("text-xs font-medium leading-snug line-clamp-2", !n.read && "text-foreground")}>{n.title}</p>
+                        {!n.read && <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shrink-0 mt-1" />}
+                      </div>
+                      <p className="text-[11px] text-muted-foreground line-clamp-2 mt-0.5">{n.message}</p>
+                      <p className="text-[9px] text-muted-foreground/70 font-mono mt-1">{timeAgo(n.createdAt)}</p>
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+        </ScrollArea>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }

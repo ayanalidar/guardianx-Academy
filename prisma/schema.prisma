@@ -38,6 +38,8 @@ model User {
   replies         DiscussionReply[]
   achievements    UserAchievement[]
   activities      UserActivity[]
+  notifications   Notification[]
+  reviews         CourseReview[]
 }
 
 model Achievement {
@@ -104,6 +106,7 @@ model Course {
   discussions   Discussion[]
   labs          Lab[]
   liveSessions  LiveSession[]
+  reviews       CourseReview[]
 }
 
 model Module {
@@ -315,4 +318,32 @@ model DiscussionReply {
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   content     String
   createdAt   DateTime @default(now())
+}
+
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String   // achievement | level_up | course_update | live_start | reply | streak | welcome | certificate
+  title       String
+  message     String
+  icon        String   @default("bell") // lucide icon name
+  color       String   @default("emerald")
+  link        String?  // optional view target, JSON-encoded e.g. {"name":"achievements"}
+  read        Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
+
+model CourseReview {
+  id          String   @id @default(cuid())
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rating      Int      // 1-5 stars
+  title       String   @default("")
+  content     String   @default("")
+  createdAt   DateTime @default(now())
+
+  @@unique([userId, courseId])
 }

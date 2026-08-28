@@ -91,6 +91,19 @@ export async function awardXp(
   // check achievements
   const newAchievements = await checkAchievements(userId, type)
 
+  // fire notifications (non-blocking, best-effort)
+  try {
+    const { notifyAchievement, notifyLevelUp } = await import("@/lib/notifications")
+    for (const ach of newAchievements) {
+      await notifyAchievement(userId, ach)
+    }
+    if (leveledUp) {
+      await notifyLevelUp(userId, newLevel, rankTitle(newLevel))
+    }
+  } catch (e) {
+    console.error("[gamification] notification failed:", e)
+  }
+
   return { newAchievements, leveledUp, newLevel }
 }
 

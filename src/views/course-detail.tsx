@@ -11,13 +11,17 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Textarea } from "@/components/ui/textarea"
+import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import {
   Star, Clock, Users, BookOpen, ChevronLeft, CheckCircle2, Circle, PlayCircle,
   FileText, Lock, Award, BarChart3, FlaskConical, MessageSquare, GraduationCap, ShieldCheck,
+  PenLine, ThumbsUp,
 } from "lucide-react"
 import { toast } from "sonner"
+import { cn } from "@/lib/utils"
 
 interface CourseDetail {
   course: any
@@ -251,6 +255,9 @@ export function CourseDetailView() {
               </div>
             )}
           </Card>
+
+          {/* Reviews */}
+          <ReviewsSection courseId={course.id} isEnrolled={isEnrolled} />
         </div>
 
         {/* Sidebar: instructor + labs */}
@@ -312,5 +319,166 @@ export function CourseDetailView() {
         </div>
       </div>
     </div>
+  )
+}
+
+// ---- Reviews Section ----
+interface Review {
+  id: string
+  rating: number
+  title: string
+  content: string
+  createdAt: string
+  user: { id: string; name: string; title: string | null; avatar: string | null }
+}
+
+function ReviewsSection({ courseId, isEnrolled }: { courseId: string; isEnrolled: boolean }) {
+  const { user } = useUser()
+  const qc = useQueryClient()
+  const [showForm, setShowForm] = React.useState(false)
+  const [rating, setRating] = React.useState(5)
+  const [hoverRating, setHoverRating] = React.useState(0)
+  const [title, setTitle] = React.useState("")
+  const [content, setContent] = React.useState("")
+
+  const { data, isLoading } = useQuery<{ reviews: Review[]; avgRating: number; totalReviews: number; distribution: { star: number; count: number }[] }>({
+    queryKey: ["reviews", courseId],
+    queryFn: () => api(`/api/courses/${courseId}/reviews`),
+  })
+
+  const submitMutation = useMutation({
+    mutationFn: () => api(`/api/courses/${courseId}/reviews`, {
+      method: "POST",
+      body: JSON.stringify({ rating, title, content }),
+    }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["reviews", courseId] })
+      setShowForm(false); setTitle(""); setContent(""); setRating(5)
+      toast.success("Review submitted! Thanks for your feedback.")
+    },
+    onError: (e: any) => toast.error(e.message),
+  })
+
+  const reviews = data?.reviews ?? []
+  const avg = data?.avgRating ?? 0
+  const total = data?.totalReviews ?? 0
+  const distribution = data?.distribution ?? []
+  const myReview = reviews.find((r) => r.user.id === user?.id)
+
+  return (
+    <Card className="p-6">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-semibold flex items-center gap-2"><Star className="h-4 w-4 text-amber-400" fill="currentColor" /> Student Reviews</h3>
+        {isEnrolled && !myReview && (
+          <Button size="sm" variant="outline" onClick={() => setShowForm((s) => !s)}>
+            <PenLine className="h-3.5 w-3.5 mr-1.5" /> {showForm ? "Cancel" : "Write a Review"}
+          </Button>
+        )}
+        {myReview && (
+          <Badge variant="outline" className="text-[10px] text-emerald-400 border-emerald-500/30 bg-emerald-500/10">
+            <CheckCircle2 className="h-3 w-3 mr-1" /> You reviewed this
+          </Badge>
+        )}
+      </div>
+
+      {/* Rating summary */}
+      <div className="flex flex-col sm:flex-row items-center gap-6 mb-5 p-4 rounded-lg bg-muted/30">
+        <div className="text-center">
+          <div className="text-4xl font-bold text-amber-400 tabular-nums">{avg.toFixed(1)}</div>
+          <div className="flex gap-0.5 justify-center my-1">
+            {[1, 2, 3, 4, 5].map((s) => (
+              <Star key={s} className={cn("h-3.5 w-3.5", s <= Math.round(avg) ? "text-amber-400 fill-amber-400" : "text-muted-foreground/40")} />
+            ))}
+          </div>
+          <div className="text-[10px] text-muted-foreground">{total} review{total !== 1 ? "s" : ""}</div>
+        </div>
+        <div className="flex-1 w-full space-y-1">
+          {distribution.slice().reverse().map((d) => (
+            <div key={d.star} className="flex items-center gap-2 text-xs">
+              <span className="w-3 text-muted-foreground font-mono">{d.star}</span>
+              <Star className="h-2.5 w-2.5 text-amber-400 fill-amber-400" />
+              <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+                <div className="h-full bg-amber-400 rounded-full transition-all" style={{ width: `${total ? (d.count / total) * 100 : 0}%` }} />
+              </div>
+              <span className="w-6 text-right text-muted-foreground font-mono">{d.count}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Review form */}
+      {showForm && (
+        <div className="mb-5 p-4 rounded-lg border border-emerald-500/20 bg-emerald-500/[0.03] space-y-3 animate-fade-in-up">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium">Your rating:</span>
+            <div className="flex gap-1">
+              {[1, 2, 3, 4, 5].map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onMouseEnter={() => setHoverRating(s)}
+                  onMouseLeave={() => setHoverRating(0)}
+                  onClick={() => setRating(s)}
+                  className="transition-transform hover:scale-110"
+                >
+                  <Star className={cn("h-5 w-5", s <= (hoverRating || rating) ? "text-amber-400 fill-amber-400" : "text-muted-foreground/40")} />
+                </button>
+              ))}
+            </div>
+          </div>
+          <Input placeholder="Review title (optional)..." value={title} onChange={(e) => setTitle(e.target.value)} />
+          <Textarea placeholder="Share your experience with this course..." value={content} onChange={(e) => setContent(e.target.value)} className="min-h-[100px]" />
+          <Button size="sm" onClick={() => submitMutation.mutate()} disabled={submitMutation.isPending}>
+            {submitMutation.isPending ? "Submitting..." : "Submit Review"}
+          </Button>
+        </div>
+      )}
+
+      {/* Reviews list */}
+      {isLoading ? (
+        <div className="space-y-3">
+          {Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-24" />)}
+        </div>
+      ) : reviews.length === 0 ? (
+        <div className="text-center py-8">
+          <Star className="h-8 w-8 text-muted-foreground/50 mx-auto mb-2" />
+          <p className="text-sm text-muted-foreground">No reviews yet. Be the first to review!</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {reviews.slice(0, 5).map((r) => (
+            <div key={r.id} className="p-3 rounded-lg border border-border hover:border-emerald-500/20 transition-colors">
+              <div className="flex items-start gap-3">
+                <Avatar className="h-8 w-8 shrink-0">
+                  <AvatarFallback className="bg-amber-500/10 text-amber-400 text-[10px]">
+                    {r.user.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                    <span className="text-sm font-medium">{r.user.name}</span>
+                    {r.user.title && <span className="text-[10px] text-muted-foreground">· {r.user.title}</span>}
+                    <div className="flex gap-0.5 ml-auto">
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <Star key={s} className={cn("h-3 w-3", s <= r.rating ? "text-amber-400 fill-amber-400" : "text-muted-foreground/40")} />
+                      ))}
+                    </div>
+                  </div>
+                  {r.title && <p className="text-sm font-medium mb-0.5">{r.title}</p>}
+                  {r.content && <p className="text-xs text-muted-foreground leading-relaxed">{r.content}</p>}
+                  <div className="flex items-center gap-3 mt-1.5 text-[10px] text-muted-foreground">
+                    <span>{new Date(r.createdAt).toLocaleDateString()}</span>
+                    {r.user.id === user?.id && <span className="text-emerald-400">· Your review</span>}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+          {reviews.length > 5 && (
+            <p className="text-xs text-center text-muted-foreground py-2">+ {reviews.length - 5} more review{reviews.length - 5 !== 1 ? "s" : ""}</p>
+          )}
+        </div>
+      )}
+    </Card>
   )
 }

@@ -123,3 +123,71 @@ Task: QA test with agent-browser, fix bugs, add achievement/streak system, lab p
 - student@guardianx.io / student123
 - instructor@guardianx.io / instructor123
 - admin@guardianx.io / admin123
+
+---
+Task ID: 8 (cron review round 2)
+Agent: cron-web-dev-reviewer
+Task: QA test, fix any bugs, build notifications panel, course review system, seed demo students, lesson preview overlay, styling polish
+
+## Current Project Status Assessment
+- Platform stable from round 1: gamification, command palette, lab progress tracking all working.
+- QA with agent-browser found: bell icon did nothing (no notifications), no course rating/review UI, leaderboard sparse (only Jamie had real XP).
+- All services running: dev (port 3000), signaling (port 3003, pid 2354). Dev log clean. ESLint clean.
+- Verified DOM has 0 nested buttons (console hydration errors are stale React DevTools artifacts).
+
+## Completed Modifications (New Features)
+1. **Notifications System** (NEW — addressed "bell icon does nothing")
+   - Prisma `Notification` model (type, title, message, icon, color, link JSON, read flag)
+   - `src/lib/notifications.ts` helper: `createNotification`, `notifyAchievement`, `notifyLevelUp`, `notifyCertificate`
+   - Wired into gamification (`awardXp` fires achievement + level-up notifications) and lesson progress route (certificate notification) and quiz attempt route (perfect-score notification)
+   - `/api/notifications` GET (auto-seeds welcome notification for first-time users) + PATCH (mark all read)
+   - `/api/notifications/[id]/read` PATCH (mark single read)
+   - `useNotifications` hook (polls every 30s)
+   - `NotificationsButton` component in app shell header: bell icon with unread count badge, dropdown panel with icon-colored notification cards, time-ago timestamps, "Mark all read", click-to-navigate + mark-read, empty state
+   - Seeded 5 demo notifications for student (welcome, 2 achievements, new lab, live session)
+
+2. **Course Rating/Review System** (NEW)
+   - Prisma `CourseReview` model (rating 1-5, title, content, unique per user+course)
+   - `/api/courses/[id]/reviews` GET (reviews + avg rating + star distribution) + POST (create/update, requires enrollment)
+   - Auto-recomputes course average rating on new review
+   - `ReviewsSection` component in course detail: rating summary (big avg + stars + count + distribution bars), interactive star-rating form with hover, review cards with avatar/name/title/stars/date, "You reviewed this" badge
+   - Seeded 10 course reviews across all courses from demo students
+
+3. **8 Demo Students Seeded** (richer leaderboard)
+   - Aisha Khan (Lv5), Marcus Webb (Lv8), Priya Sharma (Lv3), Diego Santos (Lv11), Yuki Tanaka (Lv6), Lena Müller (Lv2), Omar Hassan (Lv7), Sofia Rossi (Lv13)
+   - Each with XP, level, streak, title, bio, and activity history
+   - Leaderboard now shows 10+ ranked users with real XP
+
+4. **Lesson Preview Overlay** (NEW)
+   - Locked (non-enrolled) lessons now show blurred content preview + gradient fade + centered "This lesson is locked" card with Enroll CTA, instead of a bare empty page
+   - Breadcrumb + lesson title + "Locked" badge + duration shown above preview
+
+5. **Welcome notification auto-seed** — first-time users get a personalized welcome notification on first notifications fetch
+
+## Verification Results
+- agent-browser QA: notifications dropdown (5 notifications, badge "5", mark all read clears badge), course reviews (CEH: 4.5 avg, 2 reviews, distribution bars, review cards from Marcus & Aisha), leaderboard (Sofia Lv13 6800XP #1, Diego Lv11 5100XP #2, etc.), lesson preview overlay, solved lab (flag accepted, XP awarded). All 200 OK.
+- ESLint: clean (0 errors, 0 warnings)
+- Dev log: no errors
+- APIs: homepage 200, notifications 200, achievements 200 (in browser), lab-stats 200, reviews 200
+- Signaling server: running on port 3003
+
+## Unresolved Issues / Risks
+- WebRTC two-way media still requires 2 browsers + permissions (inherent).
+- Notifications poll every 30s (could move to WebSocket push later for real-time).
+- Demo student passwords are all "student123" (fine for demo).
+- React DevTools console shows stale hydration/nested-button warnings but actual DOM is clean (verified via querySelectorAll).
+
+## Priority Recommendations for Next Phase
+1. Instructor dashboard (create/upload courses, view student progress) — instructors currently have no admin tools.
+2. Certificate PDF export (currently just a visual card).
+3. Lab time tracking (actual time spent, not just completion).
+4. Course content editor for instructors (rich markdown editor for lessons).
+5. Discussion/reply notifications (when someone replies to your discussion).
+6. "Continue where you left off" smart resume (last accessed lesson).
+7. Dark/light mode persistence already works; consider a high-contrast accessibility theme.
+8. Search across notes too (command palette currently searches courses + labs only).
+
+## Demo Accounts (unchanged)
+- student@guardianx.io / student123
+- instructor@guardianx.io / instructor123
+- admin@guardianx.io / admin123

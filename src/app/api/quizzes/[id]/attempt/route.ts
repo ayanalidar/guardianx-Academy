@@ -53,6 +53,19 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (passed) {
     const { awardXp } = await import("@/lib/gamification")
     gamification = await awardXp(user.id, "quiz_passed", 50, quiz.id)
+    // notify on perfect score
+    if (score === 100) {
+      const { createNotification } = await import("@/lib/notifications")
+      await createNotification({
+        userId: user.id,
+        type: "quiz_passed",
+        title: "Perfect Quiz Score!",
+        message: `You aced "${quiz.title}" with 100%. +50 XP earned.`,
+        icon: "zap",
+        color: "cyan",
+        link: JSON.stringify({ name: "achievements" }),
+      })
+    }
   }
 
   return NextResponse.json({ attempt, score, passed, breakdown, gamification })

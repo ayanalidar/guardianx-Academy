@@ -18,7 +18,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import {
   ChevronLeft, ChevronRight, CheckCircle2, StickyNote, FileText, BookOpen,
   PenLine, Trash2, Plus, Save, ChevronUp, ChevronDown, Hash, Clock, Lock,
-  Award, AlertCircle, Lightbulb, Terminal,
+  Award, AlertCircle, Lightbulb, Terminal, GraduationCap,
 } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
@@ -136,13 +136,56 @@ export function LessonView() {
 
   if (!lesson.hasAccess) {
     return (
-      <div className="max-w-2xl mx-auto text-center py-20">
-        <Lock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-        <h2 className="text-xl font-bold mb-2">This lesson is locked</h2>
-        <p className="text-sm text-muted-foreground mb-6">Enroll in this course to access all lesson materials.</p>
-        <Button onClick={() => navigate({ name: "course", courseId: lesson.module.courseId })}>
-          View course
-        </Button>
+      <div className="space-y-4">
+        {/* Breadcrumb */}
+        <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-0">
+          <button onClick={() => navigate({ name: "course", courseId: lesson.module.courseId })} className="hover:text-emerald-400 flex items-center gap-1">
+            <ChevronLeft className="h-4 w-4" /> {lesson.module.course.shortName}
+          </button>
+          <span>/</span>
+          <span className="truncate">{lesson.module.title}</span>
+        </div>
+
+        <div>
+          <h1 className="text-2xl font-bold mb-2">{lesson.title}</h1>
+          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <Badge variant="outline" className="text-[10px] uppercase">
+              <Lock className="h-3 w-3 mr-1" /> Locked
+            </Badge>
+            <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{lesson.durationMin} min</span>
+          </div>
+        </div>
+
+        {/* Blurred preview of content */}
+        <div className="relative rounded-2xl border border-border overflow-hidden">
+          <Card className="p-6 lg:p-8">
+            <div className="prose-guardianx max-w-none select-none blur-sm pointer-events-none" style={{ maxHeight: 360, overflow: "hidden" }}>
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {(lesson.content || "Lesson content preview").slice(0, 800) + "\n\n... (continue learning to read the full lesson)"}
+              </ReactMarkdown>
+            </div>
+          </Card>
+          {/* Gradient fade + overlay */}
+          <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-background to-transparent pointer-events-none" />
+          <div className="absolute inset-0 flex items-center justify-center bg-background/60 backdrop-blur-[2px]">
+            <div className="text-center max-w-md p-6 rounded-2xl border border-emerald-500/30 bg-card/95 shadow-2xl">
+              <div className="relative inline-block mb-3">
+                <div className="absolute inset-0 bg-emerald-500/30 blur-xl rounded-full" />
+                <Lock className="relative h-10 w-10 text-emerald-400 mx-auto" />
+              </div>
+              <h2 className="text-lg font-bold mb-1">This lesson is locked</h2>
+              <p className="text-xs text-muted-foreground mb-4">Enroll in <span className="font-medium text-foreground">{lesson.module.course.title}</span> to unlock this lesson and all course materials.</p>
+              <div className="flex gap-2 justify-center">
+                <Button onClick={() => navigate({ name: "course", courseId: lesson.module.courseId })}>
+                  <GraduationCap className="h-4 w-4 mr-1.5" /> Enroll Now
+                </Button>
+                <Button variant="outline" onClick={() => navigate({ name: "course", courseId: lesson.module.courseId })}>
+                  View Course
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     )
   }

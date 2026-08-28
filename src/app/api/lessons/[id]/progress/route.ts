@@ -63,6 +63,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         },
       })
       xpAwarded = await awardXp(user.id, "cert_earned", 300, lesson.module.courseId)
+      // notify about certificate
+      const course = await db.course.findUnique({ where: { id: lesson.module.courseId }, select: { title: true } })
+      const { notifyCertificate } = await import("@/lib/notifications")
+      await notifyCertificate(user.id, course?.title ?? "Course", lesson.module.courseId)
     }
   }
 

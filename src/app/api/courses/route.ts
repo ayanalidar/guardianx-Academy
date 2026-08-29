@@ -71,6 +71,7 @@ export async function GET(req: NextRequest) {
       rating: c.rating,
       studentsCount: c.studentsCount,
       color: c.color,
+      thumbnail: c.thumbnail,
       tags: c.tags,
       certBody: c.certBody,
       instructor: c.instructor,

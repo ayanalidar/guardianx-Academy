@@ -41,6 +41,35 @@ export async function POST(req: NextRequest) {
   if (!title) return NextResponse.json({ error: "Title required" }, { status: 400 })
 
   const roomId = `room-${Date.now().toString(36)}`
+
+  // Determine scheduled time + status
+  // If scheduledAt is in the future, status = "scheduled"; otherwise start "live".
+  const now = new Date()
+  let scheduledAt = now
+  let status: "scheduled" | "live" = "live"
+  let startedAt: Date | null = null
+
+  if (body.scheduledAt) {
+    const parsed = new Date(body.scheduledAt)
+    if (!isNaN(parsed.getTime())) {
+      scheduledAt = parsed
+      if (parsed.getTime() > now.getTime() + 60_000) {
+        status = "scheduled"
+      } else {
+        startedAt = now
+      }
+    }
+  } else {
+    startedAt = now
+  }
+
+  // If instructor explicitly requests to start now (startNow=true), force live
+  if (body.startNow) {
+    status = "live"
+    scheduledAt = now
+    startedAt = now
+  }
+
   const session = await db.liveSession.create({
     data: {
       title,
@@ -48,17 +77,22 @@ export async function POST(req: NextRequest) {
       courseId: body.courseId || null,
       hostId: user.id,
       roomId,
-      status: "live",
-      scheduledAt: new Date(),
-      startedAt: new Date(),
+      status,
+      scheduledAt,
+      startedAt,
       maxStudents: body.maxStudents || 50,
     },
     include: {
       host: { select: { id: true, name: true, title: true, avatar: true } },
+      course: { select: { id: true, title: true, shortName: true } },
     },
   })
-  await db.liveSessionMember.create({
-    data: { sessionId: session.id, userId: user.id, role: "host", canShare: true },
-  })
+
+  // Auto-add host as a member only if live (so they can manage it)
+  if (status === "live") {
+    await db.liveSessionMember.create({
+      data: { sessionId: session.id, userId: user.id, role: "host", canShare: true },
+    })
+  }
   return NextResponse.json({ session })
 }

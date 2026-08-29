@@ -110,9 +110,15 @@ export function CourseDetailView() {
               )}
             </div>
             <div className="flex items-start gap-4">
-              <div className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-xl ${col.bg} ${col.border} border font-mono font-bold text-2xl ${col.text}`}>
-                {course.shortName}
-              </div>
+              {course.thumbnail ? (
+                <div className="h-16 w-16 shrink-0 rounded-xl overflow-hidden border border-border">
+                  <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }} />
+                </div>
+              ) : (
+                <div className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-xl ${col.bg} ${col.border} border font-mono font-bold text-2xl ${col.text}`}>
+                  {course.shortName}
+                </div>
+              )}
               <div>
                 <h1 className="text-2xl lg:text-3xl font-bold">{course.title}</h1>
                 <p className="text-sm text-muted-foreground mt-1">{course.description}</p>

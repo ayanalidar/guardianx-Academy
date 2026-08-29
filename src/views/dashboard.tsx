@@ -6,11 +6,13 @@ import {
   Shield, BookOpen, GraduationCap, FlaskConical, Award, StickyNote,
   Radio, TrendingUp, Clock, ChevronRight, Flame, Target, Zap, Users,
   ArrowRight, Terminal, Lock, CheckCircle2, PlayCircle, Sparkles,
+  Calendar as CalendarIcon,
 } from "lucide-react"
 import { useAppStore } from "@/store/app-store"
 import { useUser } from "@/hooks/use-user"
 import { api } from "@/lib/api"
 import { colorFor, LEVEL_COLORS } from "@/lib/colors"
+import { CalendarWidget } from "@/components/platform/calendar-widget"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -21,7 +23,8 @@ import { Skeleton } from "@/components/ui/skeleton"
 interface CourseListItem {
   id: string; slug: string; title: string; shortName: string; description: string
   category: string; level: string; durationHours: number; rating: number
-  studentsCount: number; color: string; tags: string; certBody: string
+  studentsCount: number; color: string; thumbnail: string | null
+  tags: string; certBody: string
   instructor: { id: string; name: string; title: string | null }
   lessonCount: number; moduleCount: number
   enrollment?: { progress: number; completed: boolean; lastAccessed: string | null; enrolledAt: string } | null
@@ -185,9 +188,15 @@ export function DashboardView() {
                     <Card className="p-4 card-hover overflow-hidden relative">
                       <div className={`absolute inset-0 bg-gradient-to-r ${col.gradient} opacity-50`} />
                       <div className="relative z-10 flex items-center gap-4">
-                        <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-xl ${col.bg} ${col.border} border font-mono font-bold ${col.text}`}>
-                          {c.shortName.slice(0, 4)}
-                        </div>
+                        {c.thumbnail ? (
+                          <div className="h-14 w-14 shrink-0 rounded-xl overflow-hidden border border-border">
+                            <img src={c.thumbnail} alt={c.title} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }} />
+                          </div>
+                        ) : (
+                          <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-xl ${col.bg} ${col.border} border font-mono font-bold ${col.text}`}>
+                            {c.shortName.slice(0, 4)}
+                          </div>
+                        )}
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2 mb-1">
                             <h3 className="font-semibold truncate">{c.title}</h3>
@@ -287,6 +296,66 @@ export function DashboardView() {
         </div>
       </div>
 
+      {/* Calendar + upcoming sessions */}
+      <div className="grid lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <CalendarIcon className="h-5 w-5 text-emerald-400" /> My Calendar
+              </h2>
+              <p className="text-sm text-muted-foreground">Upcoming sessions, lessons, and deadlines</p>
+            </div>
+          </div>
+          <CalendarWidget />
+        </div>
+        <div className="space-y-4">
+          <Card className="p-5">
+            <h3 className="font-semibold text-sm flex items-center gap-2 mb-3">
+              <Radio className="h-4 w-4 text-red-400" /> Upcoming Sessions
+            </h3>
+            {liveSessions.length === 0 ? (
+              <div className="text-center py-4">
+                <p className="text-xs text-muted-foreground mb-2">No live sessions right now.</p>
+                <Button variant="ghost" size="sm" onClick={() => navigate({ name: "live" })}>
+                  View all <ArrowRight className="h-3 w-3 ml-1" />
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {liveSessions.slice(0, 3).map((s) => (
+                  <button key={s.id} onClick={() => navigate({ name: "live" })} className="w-full text-left">
+                    <div className="p-2 rounded-lg border border-border hover:border-red-500/30 hover:bg-red-500/5 transition-colors">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="h-1.5 w-1.5 rounded-full bg-red-400 pulse-dot" />
+                        <span className="text-xs font-medium truncate flex-1">{s.title}</span>
+                      </div>
+                      <div className="text-[10px] text-muted-foreground flex items-center gap-2">
+                        <span className="flex items-center gap-1"><Clock className="h-2.5 w-2.5" />{new Date(s.scheduledAt).toLocaleString([], { hour: "2-digit", minute: "2-digit", month: "short", day: "numeric" })}</span>
+                        <span>·</span>
+                        <span>by {s.host.name}</span>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </Card>
+
+          <Card className="p-5 bg-gradient-to-br from-cyan-950/30 to-transparent border-cyan-500/20">
+            <h3 className="font-semibold text-sm flex items-center gap-2 mb-3">
+              <Sparkles className="h-4 w-4 text-cyan-400" /> Stay on Track
+            </h3>
+            <p className="text-xs text-muted-foreground mb-3">
+              Keep your streak alive by completing at least one lesson or lab every day.
+            </p>
+            <Button variant="outline" size="sm" className="w-full border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10" onClick={() => navigate({ name: "learning" })}>
+              <PlayCircle className="h-3.5 w-3.5 mr-1" /> Continue Learning
+            </Button>
+          </Card>
+        </div>
+      </div>
+
       {/* Recommended for you */}
       {recommendations.length > 0 && (
         <div className="space-y-4">
@@ -314,9 +383,15 @@ export function DashboardView() {
                   className="text-left group cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 rounded-xl"
                 >
                   <Card className="overflow-hidden card-hover h-full flex flex-col">
-                    <div className={`relative h-20 bg-gradient-to-br ${col.gradient} flex items-center justify-center`}>
-                      <div className="absolute inset-0 bg-grid opacity-40" />
-                      <span className={`relative font-mono font-bold text-xl ${col.text}`}>{c.shortName}</span>
+                    <div className={`relative h-20 ${c.thumbnail ? "" : `bg-gradient-to-br ${col.gradient}`} flex items-center justify-center overflow-hidden`}>
+                      {c.thumbnail ? (
+                        <img src={c.thumbnail} alt={c.title} className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }} />
+                      ) : (
+                        <>
+                          <div className="absolute inset-0 bg-grid opacity-40" />
+                          <span className={`relative font-mono font-bold text-xl ${col.text}`}>{c.shortName}</span>
+                        </>
+                      )}
                       <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded-full bg-violet-500/20 text-violet-400 text-[8px] font-mono border border-violet-500/30">
                         {c.score}% match
                       </div>
@@ -365,9 +440,15 @@ export function DashboardView() {
             return (
               <button key={c.id} onClick={() => navigate({ name: "course", courseId: c.id })} className="text-left group">
                 <Card className="overflow-hidden card-hover h-full">
-                  <div className={`relative h-24 bg-gradient-to-br ${col.gradient} flex items-center justify-center`}>
-                    <div className="absolute inset-0 bg-grid opacity-40" />
-                    <span className={`relative font-mono font-bold text-2xl ${col.text}`}>{c.shortName}</span>
+                  <div className={`relative h-24 ${c.thumbnail ? "" : `bg-gradient-to-br ${col.gradient}`} flex items-center justify-center overflow-hidden`}>
+                    {c.thumbnail ? (
+                      <img src={c.thumbnail} alt={c.title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }} />
+                    ) : (
+                      <>
+                        <div className="absolute inset-0 bg-grid opacity-40" />
+                        <span className={`relative font-mono font-bold text-2xl ${col.text}`}>{c.shortName}</span>
+                      </>
+                    )}
                     <Badge variant="outline" className={`absolute top-2 right-2 text-[10px] ${LEVEL_COLORS[c.level]}`}>{c.level}</Badge>
                   </div>
                   <div className="p-4">

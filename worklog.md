@@ -571,3 +571,69 @@ Task: QA test, add achievement badges on profile, lab hint cost system, course r
 - student@guardianx.io / student123
 - instructor@guardianx.io / instructor123
 - admin@guardianx.io / admin123
+
+---
+Task ID: 27 (user request: instructor dashboard, calendar, whiteboard, quiz creator)
+Agent: orchestrator + subagent
+Task: Build dedicated instructor dashboard, calendar, whiteboard, quiz creator, course images
+
+## Completed Modifications
+
+### 1. Dedicated Instructor Dashboard (`src/views/instructor-dashboard.tsx`)
+- **5 tabs**: My Courses, Live Sessions, My Students, Calendar, Analytics
+- **My Courses tab**: Create/edit/delete courses, add modules/lessons, thumbnail URL field, quiz creator
+- **Live Sessions tab**: Schedule and manage live sessions
+- **My Students tab**: View students enrolled in instructor's courses with progress
+- **Calendar tab**: Monthly calendar widget showing sessions and deadlines
+- **Analytics tab**: Charts showing student engagement and course performance
+- **Hero**: "Welcome back, Dr." with instructor name and stats
+
+### 2. Auth Routing Fixed
+- INSTRUCTOR login → `navigate({ name: "instructor" })` → Instructor Dashboard
+- ADMIN login → `navigate({ name: "admin" })` → Admin Dashboard
+- STUDENT login → `navigate({ name: "dashboard" })` → Student Dashboard
+- `quickLogin` function fixed: signs in directly with provided credentials (no state timing issues)
+
+### 3. Calendar Widget (`src/components/platform/calendar-widget.tsx`)
+- Monthly view with day grid (SUN-SAT headers)
+- Previous/Today/Next month navigation
+- Event dots on days with sessions
+- Click a day to see events
+- Added to both instructor dashboard and student dashboard
+
+### 4. Collaborative Whiteboard
+- **Mini-service**: `mini-services/whiteboard-service/` (port 3006)
+  - Socket.io server for real-time drawing relay
+  - Rooms per live session
+  - Events: join-board, draw, clear, board-state
+- **Frontend**: `src/components/platform/whiteboard.tsx`
+  - Canvas-based drawing surface
+  - Toolbar: pen colors, pen sizes, eraser, clear button
+  - Mouse/touch drawing support
+  - Real-time sync via Socket.io
+  - Instructor can draw; students view (read-only)
+
+### 5. Quiz Creator API
+- `POST /api/instructor/lessons/[id]/quiz` — Create quiz for a lesson
+- `POST /api/instructor/quizzes/[id]/questions` — Add question to quiz
+- `PATCH /api/instructor/questions/[id]` — Update question
+- `DELETE /api/instructor/questions/[id]` — Delete question
+
+### 6. Branding Fixed
+- Auth screen left panel: "GuardianX Academy" + "Building Tomorrow's Cyber Guardians"
+- Logo image replaces Shield icon on auth screen
+
+## Verification Results
+- ESLint: clean (0 errors, 0 warnings)
+- Instructor login: Lands on Instructor Dashboard with 5 tabs
+- Calendar: Monthly grid with navigation (August 2026)
+- Whiteboard service: Running on port 3006
+- All 4 services running: dev(3000), orchestrator(3004), terminal(3005), whiteboard(3006)
+- Signaling: port 3003
+
+## Demo Flow
+1. Login as `instructor@guardianx.io` / `instructor123` → Instructor Dashboard
+2. Click "My Courses" → "Create Course" → fill form with thumbnail URL
+3. Click "Calendar" → see monthly calendar
+4. Click "Live Sessions" → schedule a session
+5. Start a live session → whiteboard available during the session

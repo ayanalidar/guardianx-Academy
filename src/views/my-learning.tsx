@@ -20,7 +20,8 @@ import {
 interface CourseItem {
   id: string; slug: string; title: string; shortName: string; description: string
   category: string; level: string; durationHours: number; rating: number
-  studentsCount: number; color: string; instructor: { id: string; name: string; title: string | null }
+  studentsCount: number; color: string; thumbnail: string | null
+  instructor: { id: string; name: string; title: string | null }
   lessonCount: number; moduleCount: number
   enrollment?: { progress: number; completed: boolean; lastAccessed: string | null; enrolledAt: string } | null
 }
@@ -78,9 +79,15 @@ export function MyLearningView() {
                 <Card className="p-5 card-hover overflow-hidden relative">
                   <div className={`absolute inset-0 bg-gradient-to-r ${col.gradient} opacity-30`} />
                   <div className="relative z-10 flex flex-col sm:flex-row items-start gap-5">
-                    <div className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-xl ${col.bg} ${col.border} border font-mono font-bold text-xl ${col.text}`}>
-                      {c.shortName}
-                    </div>
+                    {c.thumbnail ? (
+                      <div className="h-16 w-16 shrink-0 rounded-xl overflow-hidden border border-border">
+                        <img src={c.thumbnail} alt={c.title} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }} />
+                      </div>
+                    ) : (
+                      <div className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-xl ${col.bg} ${col.border} border font-mono font-bold text-xl ${col.text}`}>
+                        {c.shortName}
+                      </div>
+                    )}
                     <div className="flex-1 min-w-0 w-full">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <h3 className="font-semibold group-hover:text-emerald-400 transition-colors">{c.title}</h3>

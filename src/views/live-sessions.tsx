@@ -7,6 +7,7 @@ import { useAppStore } from "@/store/app-store"
 import { useUser } from "@/hooks/use-user"
 import { colorFor } from "@/lib/colors"
 import { WebRTCSession, type PeerMeta } from "@/lib/webrtc"
+import { Whiteboard } from "@/components/platform/whiteboard"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -19,7 +20,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import {
   Radio, Video, Mic, MicOff, ScreenShare, ScreenShareOff, PhoneOff, Users,
   MessageSquare, Send, Hand, VideoOff, Monitor, Plus, ChevronLeft, Clock,
-  ShieldAlert, Volume2, CircleDot, RadioTower,
+  ShieldAlert, Volume2, CircleDot, RadioTower, PenLine, Presentation,
 } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
@@ -217,6 +218,7 @@ function LiveRoom({ session, onLeave, userName, userId, isHost }: {
   const [chatInput, setChatInput] = React.useState("")
   const [showChat, setShowChat] = React.useState(true)
   const [activePresenterName, setActivePresenterName] = React.useState<string | null>(null)
+  const [stageMode, setStageMode] = React.useState<"screen" | "whiteboard">("screen")
 
   // remote video elements
   const screenVideoRef = React.useRef<HTMLVideoElement>(null)
@@ -355,35 +357,72 @@ function LiveRoom({ session, onLeave, userName, userId, isHost }: {
       <div className="grid lg:grid-cols-4 gap-4">
         {/* Main stage */}
         <div className="lg:col-span-3 space-y-4">
-          <Card className="overflow-hidden relative bg-black/40 border-border min-h-[400px] flex items-center justify-center">
-            <div className="absolute top-3 left-3 z-10 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/60 backdrop-blur text-xs">
-              <span className="h-1.5 w-1.5 rounded-full bg-red-400 pulse-dot" />
-              <span className="font-mono text-red-400">REC</span>
-              <span className="text-muted-foreground">·</span>
-              <Video className="h-3 w-3 text-emerald-400" />
-              <span className="text-emerald-400">{sharing ? "Presenting" : activePresenterName ? "Viewing" : "No presentation"}</span>
+          {/* Stage mode switcher (Screen Share / Whiteboard) */}
+          <div className="flex items-center gap-2">
+            <Button
+              variant={stageMode === "screen" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setStageMode("screen")}
+              className={stageMode === "screen" ? "bg-emerald-500 text-emerald-950 hover:bg-emerald-400" : ""}
+            >
+              <Monitor className="h-3.5 w-3.5 mr-1.5" /> Screen Share
+            </Button>
+            <Button
+              variant={stageMode === "whiteboard" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setStageMode("whiteboard")}
+              className={stageMode === "whiteboard" ? "bg-cyan-500 text-cyan-950 hover:bg-cyan-400" : ""}
+            >
+              <PenLine className="h-3.5 w-3.5 mr-1.5" /> Whiteboard
+            </Button>
+            <div className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
+              {stageMode === "whiteboard" && (
+                <Badge variant="outline" className="text-[10px] text-cyan-400 border-cyan-500/30 bg-cyan-500/10">
+                  <Presentation className="h-2.5 w-2.5 mr-1" /> Live collaborative whiteboard
+                </Badge>
+              )}
             </div>
-            <video
-              ref={screenVideoRef}
-              autoPlay
-              playsInline
-              muted={sharing} // mute local preview to avoid echo
-              className={cn("w-full h-full max-h-[500px] object-contain", !sharing && !activePresenterName && "hidden")}
+          </div>
+
+          {stageMode === "whiteboard" ? (
+            <Whiteboard
+              roomId={session.roomId}
+              userId={userId}
+              userName={userName}
+              role={isHost ? "host" : "viewer"}
+              height={500}
             />
-            {!sharing && !activePresenterName && (
-              <div className="text-center p-8">
-                <Monitor className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                <p className="text-sm text-muted-foreground mb-2">No one is presenting yet.</p>
-                {isHost ? (
-                  <Button onClick={toggleShare} variant="outline"><ScreenShare className="h-4 w-4 mr-1.5" /> Share Your Screen</Button>
-                ) : (
-                  <Button onClick={requestPresent} variant="outline"><Hand className="h-4 w-4 mr-1.5" /> Request to Present</Button>
-                )}
+          ) : (
+            <Card className="overflow-hidden relative bg-black/40 border-border min-h-[400px] flex items-center justify-center">
+              <div className="absolute top-3 left-3 z-10 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/60 backdrop-blur text-xs">
+                <span className="h-1.5 w-1.5 rounded-full bg-red-400 pulse-dot" />
+                <span className="font-mono text-red-400">REC</span>
+                <span className="text-muted-foreground">·</span>
+                <Video className="h-3 w-3 text-emerald-400" />
+                <span className="text-emerald-400">{sharing ? "Presenting" : activePresenterName ? "Viewing" : "No presentation"}</span>
               </div>
-            )}
-            {/* hidden voice container */}
-            <div ref={voiceContainerRef} className="hidden" />
-          </Card>
+              <video
+                ref={screenVideoRef}
+                autoPlay
+                playsInline
+                muted={sharing} // mute local preview to avoid echo
+                className={cn("w-full h-full max-h-[500px] object-contain", !sharing && !activePresenterName && "hidden")}
+              />
+              {!sharing && !activePresenterName && (
+                <div className="text-center p-8">
+                  <Monitor className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                  <p className="text-sm text-muted-foreground mb-2">No one is presenting yet.</p>
+                  {isHost ? (
+                    <Button onClick={toggleShare} variant="outline"><ScreenShare className="h-4 w-4 mr-1.5" /> Share Your Screen</Button>
+                  ) : (
+                    <Button onClick={requestPresent} variant="outline"><Hand className="h-4 w-4 mr-1.5" /> Request to Present</Button>
+                  )}
+                </div>
+              )}
+              {/* hidden voice container */}
+              <div ref={voiceContainerRef} className="hidden" />
+            </Card>
+          )}
 
           {/* Controls */}
           <Card className="p-3 flex items-center justify-center gap-2">

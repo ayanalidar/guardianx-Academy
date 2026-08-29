@@ -19,7 +19,8 @@ import { toast } from "sonner"
 interface CourseItem {
   id: string; slug: string; title: string; shortName: string; description: string
   category: string; level: string; durationHours: number; rating: number
-  studentsCount: number; color: string; tags: string; certBody: string
+  studentsCount: number; color: string; thumbnail: string | null
+  tags: string; certBody: string
   instructor: { id: string; name: string; title: string | null }
   lessonCount: number; moduleCount: number
   enrollment?: { progress: number; completed: boolean; lastAccessed: string | null; enrolledAt: string } | null
@@ -158,14 +159,36 @@ export function CourseCatalogView() {
                 return (
                   <button key={c.id} onClick={() => navigate({ name: "course", courseId: c.id })} className="text-left group">
                     <Card className="overflow-hidden card-hover h-full flex flex-col">
-                      <div className={`relative h-28 bg-gradient-to-br ${col.gradient} flex items-center justify-center overflow-hidden`}>
-                        <div className="absolute inset-0 bg-grid opacity-40" />
+                      <div className={`relative h-28 ${c.thumbnail ? "" : `bg-gradient-to-br ${col.gradient}`} flex items-center justify-center overflow-hidden`}>
+                        {c.thumbnail ? (
+                          <img
+                            src={c.thumbnail}
+                            alt={c.title}
+                            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            onError={(e) => {
+                              const img = e.target as HTMLImageElement
+                              img.style.display = "none"
+                              const parent = img.parentElement
+                              if (parent && !parent.classList.contains("bg-gradient-to-br")) {
+                                parent.classList.add("bg-gradient-to-br", col.gradient)
+                                const fallback = document.createElement("span")
+                                fallback.className = `relative font-mono font-bold text-3xl ${col.text}`
+                                fallback.textContent = c.shortName
+                                parent.appendChild(fallback)
+                              }
+                            }}
+                          />
+                        ) : (
+                          <>
+                            <div className="absolute inset-0 bg-grid opacity-40" />
+                            <span className={`relative font-mono font-bold text-3xl ${col.text} group-hover:scale-110 transition-transform`}>
+                              {c.shortName}
+                            </span>
+                          </>
+                        )}
                         <div className="absolute top-0 right-0 px-2 py-1 bg-background/60 backdrop-blur text-[10px] font-mono text-muted-foreground rounded-bl-lg">
                           {c.certBody}
                         </div>
-                        <span className={`relative font-mono font-bold text-3xl ${col.text} group-hover:scale-110 transition-transform`}>
-                          {c.shortName}
-                        </span>
                       </div>
                       <div className="p-5 flex-1 flex flex-col">
                         <div className="flex items-center gap-2 mb-2 flex-wrap">
@@ -239,9 +262,20 @@ function WishlistTab({ bookmarks }: { bookmarks: any[] }) {
           return (
             <Card key={b.id} className="overflow-hidden card-hover h-full flex flex-col relative group">
               <button onClick={() => navigate({ name: "course", courseId: c.id })} className="text-left flex-1 flex flex-col">
-                <div className={`relative h-28 bg-gradient-to-br ${col.gradient} flex items-center justify-center overflow-hidden`}>
-                  <div className="absolute inset-0 bg-grid opacity-40" />
-                  <span className={`relative font-mono font-bold text-3xl ${col.text}`}>{c.shortName}</span>
+                <div className={`relative h-28 ${c.thumbnail ? "" : `bg-gradient-to-br ${col.gradient}`} flex items-center justify-center overflow-hidden`}>
+                  {c.thumbnail ? (
+                    <img
+                      src={c.thumbnail}
+                      alt={c.title}
+                      className="absolute inset-0 w-full h-full object-cover"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
+                    />
+                  ) : (
+                    <>
+                      <div className="absolute inset-0 bg-grid opacity-40" />
+                      <span className={`relative font-mono font-bold text-3xl ${col.text}`}>{c.shortName}</span>
+                    </>
+                  )}
                   <Badge variant="outline" className={`absolute top-2 right-2 text-[10px] ${LEVEL_COLORS[c.level]}`}>{c.level}</Badge>
                 </div>
                 <div className="p-5 flex-1 flex flex-col">

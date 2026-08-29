@@ -47,5 +47,21 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     await db.liveSession.update({ where: { id }, data: { status: "ended", endedAt: new Date() } })
     return NextResponse.json({ ok: true })
   }
+  if (action === "start") {
+    if (session.hostId !== user.id) return NextResponse.json({ error: "Only host can start" }, { status: 403 })
+    await db.liveSession.update({ where: { id }, data: { status: "live", startedAt: new Date() } })
+    // ensure host is a member
+    if (!session.members.some((m) => m.userId === user.id)) {
+      await db.liveSessionMember.create({
+        data: { sessionId: id, userId: user.id, role: "host", canShare: true },
+      })
+    }
+    return NextResponse.json({ ok: true })
+  }
+  if (action === "cancel") {
+    if (session.hostId !== user.id) return NextResponse.json({ error: "Only host can cancel" }, { status: 403 })
+    await db.liveSession.update({ where: { id }, data: { status: "ended", endedAt: new Date() } })
+    return NextResponse.json({ ok: true })
+  }
   return NextResponse.json({ error: "Unknown action" }, { status: 400 })
 }

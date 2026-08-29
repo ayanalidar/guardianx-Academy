@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { api } from "@/lib/api"
+import { useAppStore } from "@/store/app-store"
 import { toast } from "sonner"
 
 const DEMO_ACCOUNTS = [
@@ -21,6 +22,7 @@ const DEMO_ACCOUNTS = [
 
 export function AuthScreen() {
   const router = useRouter()
+  const { navigate } = useAppStore()
   const [loading, setLoading] = React.useState(false)
   const [showPass, setShowPass] = React.useState(false)
   const [loginEmail, setLoginEmail] = React.useState("student@guardianx.io")
@@ -28,6 +30,23 @@ export function AuthScreen() {
   const [regName, setRegName] = React.useState("")
   const [regEmail, setRegEmail] = React.useState("")
   const [regPass, setRegPass] = React.useState("")
+
+  // After successful auth, fetch the user's role and route accordingly.
+  // Instructors and admins go to the Instructor dashboard; everyone else to the student dashboard.
+  async function routeByRole() {
+    try {
+      const data = await api<{ user: { role: string } | null }>("/api/me")
+      const role = data?.user?.role
+      if (role === "INSTRUCTOR" || role === "ADMIN") {
+        navigate({ name: "instructor" })
+      } else {
+        navigate({ name: "dashboard" })
+      }
+    } catch {
+      // fall back to default dashboard
+      navigate({ name: "dashboard" })
+    }
+  }
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -44,6 +63,8 @@ export function AuthScreen() {
     }
     toast.success("Welcome back, Guardian!")
     router.refresh()
+    // route by role after refresh
+    setTimeout(routeByRole, 200)
   }
 
   async function handleRegister(e: React.FormEvent) {
@@ -59,16 +80,37 @@ export function AuthScreen() {
       if (res?.error) throw new Error(res.error)
       toast.success("Account created! Welcome to GuardianX.")
       router.refresh()
+      setTimeout(routeByRole, 200)
     } catch (err: any) {
       setLoading(false)
       toast.error(err.message || "Registration failed")
     }
   }
 
-  function quickLogin(email: string, password: string) {
-    setLoginEmail(email)
-    setLoginPass(password)
-    setTimeout(() => handleLogin(new Event("submit") as any), 0)
+  async function quickLogin(email: string, password: string) {
+    setLoading(true)
+    const res = await signIn("credentials", { email, password, redirect: false })
+    setLoading(false)
+    if (res?.error) {
+      toast.error("Invalid credentials")
+      return
+    }
+    toast.success("Welcome back, Guardian!")
+    try {
+      const r = await fetch("/api/auth/session")
+      const session = await r.json()
+      const role = session?.user?.role
+      if (role === "ADMIN") {
+        navigate({ name: "admin" })
+      } else if (role === "INSTRUCTOR") {
+        navigate({ name: "instructor" })
+      } else {
+        navigate({ name: "dashboard" })
+      }
+    } catch {
+      navigate({ name: "dashboard" })
+    }
+    router.refresh()
   }
 
   return (
@@ -79,14 +121,14 @@ export function AuthScreen() {
         <div className="relative z-10">
           <div className="flex items-center gap-3">
             <div className="relative">
-              <Shield className="h-10 w-10 text-emerald-400" strokeWidth={1.5} />
-              <div className="absolute -inset-1 bg-emerald-500/20 blur-lg rounded-full" />
+              <img src="/guardianx-academy-logo.png" alt="GuardianX Academy" className="h-10 w-10 rounded-lg object-cover logo-img logo-animated logo-glow" />
+              <div className="absolute inset-0 bg-emerald-500/20 blur-lg rounded-full" />
             </div>
             <div>
               <h1 className="text-2xl font-bold tracking-tight">
-                Guardian<span className="text-emerald-400">X</span>
+                Guardian<span className="text-emerald-400">X</span> Academy
               </h1>
-              <p className="text-xs text-muted-foreground font-mono">SECURE.LEARN.DEFEND</p>
+              <p className="text-xs text-muted-foreground font-mono">Building Tomorrow&apos;s Cyber Guardians</p>
             </div>
           </div>
         </div>

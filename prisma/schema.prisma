@@ -41,6 +41,21 @@ model User {
   notifications   Notification[]
   reviews         CourseReview[]
   bookmarks       Bookmark[]
+  // New relations
+  assignmentsCreated   Assignment[]
+  submissions          AssignmentSubmission[]
+  rubricsCreated       GradingRubric[]
+  officeHourSlots      OfficeHourSlot[]
+  officeHourBookings   OfficeHourBooking[]
+  messageThreadsA      MessageThread[] @relation("threadUserA")
+  messageThreadsB      MessageThread[] @relation("threadUserB")
+  messages             Message[]
+  studyGroupsCreated   StudyGroup[]
+  studyGroupMemberships StudyGroupMember[]
+  peerReviewsGiven     PeerReview[]
+  peerReviewsReceived  PeerReview[] @relation("reviewedSubmissions")
+  attendanceRecords    AttendanceRecord[]
+  emailsReceived       EmailLog[]
 }
 
 model Achievement {
@@ -95,6 +110,8 @@ model Course {
   tags          String   @default("") // comma separated
   certBody      String? // e.g. "EC-Council"
   published     Boolean  @default(true)
+  prerequisiteIds String @default("") // comma-separated course IDs (Course Prerequisites feature)
+  certificateTemplateId String? // optional template override
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -109,6 +126,11 @@ model Course {
   liveSessions  LiveSession[]
   reviews       CourseReview[]
   bookmarks     Bookmark[]
+  // New relations
+  assignments   Assignment[]
+  rubrics       GradingRubric[]
+  attendanceRecords AttendanceRecord[]
+  studyGroups   StudyGroup[]
 }
 
 model Module {
@@ -222,6 +244,9 @@ model Certificate {
   certificateId String @unique
   issuedAt    DateTime @default(now())
   score       Int      @default(0)
+  templateId  String?
+  template    CertificateTemplate? @relation("certificateTemplate", fields: [templateId], references: [id])
+  verificationHash String? // tamper-evident hash for verification
 }
 
 model Lab {
@@ -245,6 +270,9 @@ model Lab {
   virtualEnv    String   @default("linux") // simulated env type
   color         String   @default("emerald")
   published     Boolean  @default(true)
+  autoGrade     Boolean  @default(true) // auto-grade submission when flag matches
+  xpReward      Int      @default(100) // XP awarded on completion
+  passingScore  Int      @default(100) // minimum score to pass (auto-graded labs)
   createdAt     DateTime @default(now())
 
   progress      LabProgress[]
@@ -360,4 +388,230 @@ model Bookmark {
   createdAt   DateTime @default(now())
 
   @@unique([userId, courseId])
+}
+
+// ============================================================
+// NEW MODELS — GuardianX Academy feature expansion
+// ============================================================
+
+// --- Assignment System + Grading Rubric + Peer Review ---
+model Assignment {
+  id            String   @id @default(cuid())
+  courseId      String
+  course        Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  moduleId      String?  // optional module link
+  title         String
+  description   String   @default("")
+  instructions  String   @default("") // markdown
+  pointsPossible Int     @default(100)
+  dueDate       DateTime
+  allowLate     Boolean  @default(true)
+  latePenalty   Int      @default(10) // percent per day
+  submissionType String  @default("text") // text | file | url
+  enablePeerReview Boolean @default(false)
+  peerReviewCount Int    @default(2) // how many peers review each submission
+  peerReviewDueDate DateTime?
+  rubricId      String?
+  rubric        GradingRubric? @relation("assignmentRubric", fields: [rubricId], references: [id])
+  published     Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  submissions   AssignmentSubmission[]
+  instructorId  String
+  instructor    User     @relation(fields: [instructorId], references: [id])
+}
+
+model AssignmentSubmission {
+  id            String   @id @default(cuid())
+  assignmentId  String
+  assignment    Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content       String   @default("") // text submission
+  fileUrl       String?  // file or URL submission
+  submittedAt   DateTime @default(now())
+  late          Boolean  @default(false)
+  grade         Int?     // final grade 0-100
+  gradedAt      DateTime?
+  gradedBy      String?
+  feedback      String   @default("") // instructor feedback
+  rubricScores  String   @default("[]") // JSON array of per-criterion scores
+  status        String   @default("submitted") // submitted | graded | returned | resubmitted
+
+  peerReviews   PeerReview[]
+
+  @@unique([assignmentId, userId])
+}
+
+model GradingRubric {
+  id            String   @id @default(cuid())
+  title         String
+  description   String   @default("")
+  courseId      String?
+  course        Course?  @relation(fields: [courseId], references: [id])
+  createdBy     String
+  creator       User     @relation(fields: [createdBy], references: [id])
+  criteria      RubricCriterion[]
+  assignments   Assignment[] @relation("assignmentRubric")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model RubricCriterion {
+  id            String   @id @default(cuid())
+  rubricId      String
+  rubric        GradingRubric @relation(fields: [rubricId], references: [id], onDelete: Cascade)
+  label         String   // e.g. "Technical Accuracy"
+  description   String   @default("")
+  points        Int      @default(25) // max points for this criterion
+  order         Int      @default(0)
+}
+
+model PeerReview {
+  id            String   @id @default(cuid())
+  submissionId  String
+  submission    AssignmentSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  reviewerId    String
+  reviewer      User     @relation(fields: [reviewerId], references: [id], onDelete: Cascade)
+  reviewedUserId String
+  reviewedUser  User     @relation("reviewedSubmissions", fields: [reviewedUserId], references: [id], onDelete: Cascade)
+  rating        Int      @default(0) // 1-5
+  feedback      String   @default("")
+  rubricScores  String   @default("[]") // JSON
+  submittedAt   DateTime @default(now())
+
+  @@unique([submissionId, reviewerId])
+}
+
+// --- Office Hours Scheduler ---
+model OfficeHourSlot {
+  id            String   @id @default(cuid())
+  instructorId  String
+  instructor    User     @relation(fields: [instructorId], references: [id], onDelete: Cascade)
+  courseId      String?  // optional course-specific
+  startAt       DateTime
+  endAt         DateTime
+  mode          String   @default("video") // video | in-person | chat
+  location      String   @default("") // meeting link or room
+  maxBookings   Int      @default(1)
+  bookings      OfficeHourBooking[]
+  createdAt     DateTime @default(now())
+}
+
+model OfficeHourBooking {
+  id            String   @id @default(cuid())
+  slotId        String
+  slot          OfficeHourSlot @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  studentId     String
+  student       User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  topic         String   @default("")
+  notes         String   @default("")
+  status        String   @default("booked") // booked | completed | cancelled
+  createdAt     DateTime @default(now())
+
+  @@unique([slotId, studentId])
+}
+
+// --- Student Messaging ---
+model MessageThread {
+  id            String   @id @default(cuid())
+  userAId       String
+  userA         User     @relation("threadUserA", fields: [userAId], references: [id], onDelete: Cascade)
+  userBId       String
+  userB         User     @relation("threadUserB", fields: [userBId], references: [id], onDelete: Cascade)
+  lastMessageAt DateTime @default(now())
+  messages      Message[]
+
+  @@unique([userAId, userBId])
+}
+
+model Message {
+  id            String   @id @default(cuid())
+  threadId      String
+  thread        MessageThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  senderId      String
+  sender        User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  content       String
+  read          Boolean  @default(false)
+  createdAt     DateTime @default(now())
+}
+
+// --- Study Groups ---
+model StudyGroup {
+  id            String   @id @default(cuid())
+  title         String
+  description   String   @default("")
+  courseId      String?  // optional course link
+  course        Course?  @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  creatorId     String
+  creator       User     @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  maxMembers    Int      @default(10)
+  isPrivate     Boolean  @default(false)
+  joinCode      String?  // required if private
+  meetingLink   String?  // optional video/chat link
+  tags          String   @default("")
+  createdAt     DateTime @default(now())
+  members       StudyGroupMember[]
+}
+
+model StudyGroupMember {
+  id            String   @id @default(cuid())
+  groupId       String
+  group         StudyGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role          String   @default("member") // owner | member
+  joinedAt      DateTime @default(now())
+
+  @@unique([groupId, userId])
+}
+
+// --- Attendance Tracking ---
+model AttendanceRecord {
+  id            String   @id @default(cuid())
+  courseId      String
+  course        Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date          String   // YYYY-MM-DD
+  sessionType   String   @default("live") // live | in-person | exam
+  status        String   @default("present") // present | absent | late | excused
+  notes         String   @default("")
+  recordedAt    DateTime @default(now())
+
+  @@unique([courseId, userId, date, sessionType])
+}
+
+// --- Certificate Templates ---
+model CertificateTemplate {
+  id            String   @id @default(cuid())
+  name          String
+  description   String   @default("")
+  // Visual config (JSON-encoded)
+  primaryColor  String   @default("#10b981") // emerald
+  accentColor   String   @default("#06b6d4") // cyan
+  fontFamily    String   @default("serif")
+  borderStyle   String   @default("classic") // classic | modern | minimal | holographic
+  logoUrl       String?
+  signatureText String   @default("Director, GuardianX Academy")
+  sealStyle     String   @default("emerald") // emerald | gold | cyan | holographic
+  backgroundPattern String @default("grid") // grid | particles | none | circuit
+  isDefault     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  certificates  Certificate[] @relation("certificateTemplate")
+}
+
+// --- Email Notifications (log + stub) ---
+model EmailLog {
+  id            String   @id @default(cuid())
+  userId        String?
+  user          User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  toEmail       String
+  subject       String
+  body          String
+  type          String   @default("notification") // notification | certificate | assignment | reminder | welcome
+  status        String   @default("sent") // sent | failed | queued
+  sentAt        DateTime @default(now())
 }

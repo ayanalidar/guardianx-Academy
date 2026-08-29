@@ -18,11 +18,20 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import {
   Star, Clock, Users, BookOpen, ChevronLeft, CheckCircle2, Circle, PlayCircle,
   FileText, Lock, Award, BarChart3, FlaskConical, MessageSquare, GraduationCap, ShieldCheck,
-  PenLine, ThumbsUp, Bookmark, BookmarkCheck,
+  PenLine, ThumbsUp, Bookmark, BookmarkCheck, AlertTriangle, Link2,
 } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { useBookmarks } from "@/hooks/use-bookmarks"
+
+interface Prerequisite {
+  id: string
+  title: string
+  shortName: string
+  level: string
+  thumbnail: string | null
+  completed?: boolean
+}
 
 interface CourseDetail {
   course: any
@@ -62,6 +71,14 @@ export function CourseDetailView() {
     },
     onError: (e: any) => toast.error(e.message),
   })
+
+  // Fetch prerequisites for this course
+  const { data: prereqData } = useQuery<{ prerequisites: Prerequisite[] }>({
+    queryKey: ["course-prerequisites", courseId],
+    queryFn: () => api(`/api/courses/${courseId}/enroll`),
+    enabled: !!courseId,
+  })
+  const prerequisites = prereqData?.prerequisites ?? []
 
   if (isLoading) {
     return (
@@ -175,6 +192,25 @@ export function CourseDetailView() {
                   <div className={`text-3xl font-bold ${col.text}`}>${course.price}</div>
                   <div className="text-xs text-muted-foreground">one-time payment</div>
                 </div>
+                {prerequisites.length > 0 && (
+                  <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
+                    <div className="flex items-center gap-1.5 text-xs font-medium text-amber-400 mb-2">
+                      <AlertTriangle className="h-3.5 w-3.5" /> Prerequisites Required
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mb-2">
+                      Complete these courses first to unlock enrollment:
+                    </p>
+                    <div className="space-y-1.5">
+                      {prerequisites.map((p) => (
+                        <div key={p.id} className="flex items-center gap-2 text-xs">
+                          <Link2 className="h-3 w-3 text-amber-400/70 shrink-0" />
+                          <span className="font-medium truncate flex-1">{p.title}</span>
+                          <Badge variant="outline" className="text-[9px] py-0 h-4">{p.shortName}</Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <Button className="w-full" onClick={() => enrollMutation.mutate()} disabled={enrollMutation.isPending}>
                   <GraduationCap className="h-4 w-4 mr-1.5" /> {enrollMutation.isPending ? "Enrolling..." : "Enroll Now"}
                 </Button>

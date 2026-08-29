@@ -15,6 +15,37 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
   })
   if (existing) return NextResponse.json({ enrollment: existing })
 
+  // Course Prerequisites: verify the student has completed all prerequisite courses
+  const prereqIds = course.prerequisiteIds
+    ? course.prerequisiteIds.split(",").map((s) => s.trim()).filter(Boolean)
+    : []
+  if (prereqIds.length > 0) {
+    const completedPrereqs = await db.enrollment.findMany({
+      where: {
+        userId: user.id,
+        courseId: { in: prereqIds },
+        completed: true,
+      },
+      select: { courseId: true },
+    })
+    const completedIds = new Set(completedPrereqs.map((e) => e.courseId))
+    const missing = prereqIds.filter((pid) => !completedIds.has(pid))
+    if (missing.length > 0) {
+      const missingCourses = await db.course.findMany({
+        where: { id: { in: missing } },
+        select: { title: true, shortName: true },
+      })
+      return NextResponse.json(
+        {
+          error: "Prerequisites not met",
+          prerequisites: missingCourses,
+          message: `Complete these prerequisite courses first: ${missingCourses.map((c) => c.title).join(", ")}`,
+        },
+        { status: 403 }
+      )
+    }
+  }
+
   const enrollment = await db.enrollment.create({
     data: { userId: user.id, courseId: id, lastAccessed: new Date() },
   })
@@ -24,5 +55,34 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
   })
   const { awardXp } = await import("@/lib/gamification")
   await awardXp(user.id, "course_enrolled", 25, id)
+
+  // Welcome email on enrollment
+  const { sendEmail } = await import("@/lib/email")
+  const enrollUser = await db.user.findUnique({ where: { id: user.id }, select: { email: true, name: true } })
+  if (enrollUser) {
+    await sendEmail({
+      to: enrollUser.email,
+      subject: `📚 Enrolled — ${course.title}`,
+      body: `Hi ${enrollUser.name},\n\nYou've successfully enrolled in "${course.title}" on GuardianX Academy.\n\nDive in and start learning. Your journey to becoming a cyber guardian starts now!\n\nThe GuardianX Team`,
+      type: "notification",
+      userId: user.id,
+    })
+  }
   return NextResponse.json({ enrollment })
+}
+
+// GET endpoint to fetch prerequisites for a course (for UI display)
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const course = await db.course.findUnique({ where: { id }, select: { prerequisiteIds: true } })
+  if (!course) return NextResponse.json({ error: "Course not found" }, { status: 404 })
+  const prereqIds = course.prerequisiteIds
+    ? course.prerequisiteIds.split(",").map((s) => s.trim()).filter(Boolean)
+    : []
+  if (prereqIds.length === 0) return NextResponse.json({ prerequisites: [] })
+  const prerequisites = await db.course.findMany({
+    where: { id: { in: prereqIds } },
+    select: { id: true, title: true, shortName: true, level: true, thumbnail: true },
+  })
+  return NextResponse.json({ prerequisites })
 }

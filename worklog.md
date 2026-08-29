@@ -637,3 +637,344 @@ Task: Build dedicated instructor dashboard, calendar, whiteboard, quiz creator, 
 3. Click "Calendar" → see monthly calendar
 4. Click "Live Sessions" → schedule a session
 5. Start a live session → whiteboard available during the session
+
+---
+Task ID: 6a
+Agent: full-stack-developer
+Task: Build Assignment System + Grading Rubric + Peer Review APIs
+
+Work Log:
+- Read worklog + Prisma schema (Assignment, AssignmentSubmission, GradingRubric, RubricCriterion, PeerReview models already defined and pushed)
+- Reviewed existing API patterns: `api/instructor/courses/route.ts`, `api/courses/[id]/enroll/route.ts`, `api/instructor/modules/[id]/lessons/route.ts`, `api/instructor/lessons/[id]/route.ts`, `api/me/route.ts`
+- Reviewed lib helpers: `db`, `session` (getCurrentUser), `email` (sendEmail), `notifications` (createNotification)
+- Created 12 API route files covering all 6 task areas:
+  1. Instructor assignment CRUD: `api/instructor/courses/[id]/assignments/route.ts` (GET list + POST create) and `api/instructor/assignments/[id]/route.ts` (GET with counts + PATCH + DELETE)
+  2. Student assignment access: `api/assignments/[id]/route.ts` (GET details, enrollment-gated), `api/assignments/[id]/submit/route.ts` (POST submit/resubmit with late detection + confirmation email), `api/assignments/[id]/my-submission/route.ts` (GET own submission)
+  3. Instructor grading: `api/instructor/assignments/[id]/submissions/route.ts` (GET list with user info + stats + status filter), `api/instructor/submissions/[id]/grade/route.ts` (POST grade 0-100 + feedback + rubricScores, email + notification to student)
+  4. Rubric CRUD: `api/instructor/rubrics/route.ts` (GET list + POST create with criteria) and `api/instructor/rubrics/[id]/route.ts` (GET + PATCH with criteria replacement + DELETE with assignment detach)
+  5. Peer review: `api/assignments/[id]/peer-reviews/route.ts` (GET lazy-assigns random other-student submissions, dedupes by existing PeerReview records, requires student's own submission first) and `api/submissions/[id]/peer-review/route.ts` (POST review, unique-constraint dedupe, deadline check, notify reviewed user)
+  6. Student dashboard: `api/me/assignments/route.ts` (GET all assignments across enrolled courses with submitted/graded/missing status + due-soon/overdue flags + aggregated stats)
+- Auth pattern: every write endpoint checks `getCurrentUser()`; instructor endpoints verify INSTRUCTOR/ADMIN role + resource ownership (admin bypasses). Students must be enrolled to access assignment data.
+- Used Next.js 16 async params pattern (`params: Promise<{ id: string }>` with `await params`) consistently.
+- Resubmission flow: updates content/fileUrl, sets status `resubmitted`, resets grade/gradedAt/gradedBy/feedback so instructor knows to re-grade.
+- Peer-review lazy assignment: picks `(peerReviewCount - completedReviews.length)` random unreviewed submissions from other students (excluding own + already-reviewed). Returns `toReview`, `completed`, and `progress` objects.
+- Rubric criteria replacement on PATCH: deleteMany old + createMany new, then re-fetch with include.
+- Rubric deletion: detaches from assignments (sets rubricId=null) before delete since field is nullable.
+- Emails use `sendEmail({ to, subject, body, type: "assignment", userId })`; notifications use `createNotification({ userId, type, title, message, icon, color, link })`. Failures caught + logged, don't break requests.
+- Wrote work record to `/home/z/my-project/agent-ctx/6a-full-stack-developer.md`.
+
+Stage Summary:
+- 12 API route files created, all following existing project conventions (typed params, NextResponse.json, consistent error shapes `{ error: string }` with 401/403/404/400/409 status codes).
+- No Prisma schema changes (as instructed — schema already had the 5 models).
+- No `"use client"` directives — all server route handlers.
+- TypeScript strict-compatible: ownership helper uses discriminated-union narrowing via `in` operator.
+- Files compile conceptually; lint intentionally NOT run per task instructions (parent will run it).
+- Ready for frontend integration: assignment creation UI (instructor), assignment list/submission UI (student), grading interface (instructor), rubric builder (instructor), peer-review panel (student), dashboard assignments widget (student).
+
+---
+Task ID: 6b
+Agent: full-stack-developer
+Task: Build Office Hours + Student Messaging + Study Group APIs
+
+Work Log:
+- Read worklog.md and prisma/schema.prisma to confirm models already exist (OfficeHourSlot, OfficeHourBooking, MessageThread, Message, StudyGroup, StudyGroupMember) — schema untouched.
+- Inspected existing patterns in src/app/api/instructor/courses/route.ts, src/app/api/live-sessions/route.ts, src/app/api/live-sessions/[id]/route.ts, src/lib/session.ts, src/lib/email.ts, src/lib/api.ts, src/app/api/notifications/route.ts to match conventions (NextResponse.json + status, getCurrentUser() auth, params as Promise<{id}> for Next.js 16, sendEmail helper, db.notification.create for in-app notifications).
+- Created 16 API route files across 3 feature areas:
+  • Office Hours (6 routes): instructor list/create, instructor detail delete/patch, instructor bookings view, public available list, student book, student my-bookings.
+  • Messaging (5 routes): threads list/create (with lexicographic userA/userB normalization), thread detail (auto-marks-other-as-read), send-message, mark-thread-read, contacts (role-aware).
+  • Study Groups (5 routes): list/create (creator becomes owner), detail+patch+delete (owner-only), join (with joinCode enforcement + capacity), leave (owner blocked), my-groups.
+- Implemented robust validation:
+  • Office Hours: endAt > startAt enforced on create + patch; capacity check via count; prevent double-booking via @@unique([slotId, studentId]); on DELETE, cancel active bookings + notify students; on booking, email + notification to both parties.
+  • Messaging: thread normalization (user.id < recipientId) ensures @@unique([userAId, userBId]); participant verification on every thread-scoped route; unread counts computed via count query; email + notification fired on every outbound message.
+  • Study Groups: private groups require matching joinCode (auto-generated if missing on create); owner cannot leave (must delete); capacity enforced; owner-only PATCH/DELETE; notifications to owner on join/leave and to members on delete; meetingLink only returned to actual members (privacy-preserving).
+- Used Prisma `include` with select shapes to avoid N+1 and trim response payloads (e.g., instructor/course/creator/member.user all projected to safe fields).
+- All routes return JSON via NextResponse.json(...) with proper HTTP status codes (201 for creates, 401/403/400/404 for errors). No "use client" directives.
+- Verified each file compiles syntactically via `bun build --no-bundle` (no errors raised on any of the 16 files).
+
+Stage Summary:
+- 16 new API routes delivered, all backed by existing Prisma models (no schema changes).
+- Office Hours supports full instructor scheduling workflow + student booking workflow (with email + notification integration).
+- Messaging supports DM threads with find-or-create semantics, unread tracking, mark-as-read, and contact discovery (role-aware: students see their instructors, instructors see their students, plus existing DM partners).
+- Study Groups support CRUD + join (with private/code-gated access) + leave (with ownership protection) + my-groups listing.
+- All routes use existing helpers (db, getCurrentUser, sendEmail) and follow existing project conventions; ready for frontend wiring in the next task.
+
+---
+Task ID: 6c
+Agent: full-stack-developer
+Task: Build Bulk Student Import + Attendance Tracking + Certificate Templates APIs
+
+Work Log:
+- Read worklog.md (Task 6a assignment APIs + Task 6b office-hours/messaging/study-groups APIs already done) and confirmed prior conventions (NextResponse.json + status, getCurrentUser, async params pattern for Next.js 16, sendEmail helper, ownership gating pattern with admin bypass).
+- Inspected prisma/schema.prisma — confirmed `AttendanceRecord`, `CertificateTemplate`, `EmailLog` models exist; `Course.prerequisiteIds` / `Course.certificateTemplateId`, `Lab.autoGrade/xpReward/passingScore`, `Certificate.templateId/verificationHash` all present. Did NOT modify schema.
+- Inspected src/app/api/auth/register/route.ts → confirmed password hashing uses `bcryptjs` (`bcrypt.hashSync(pw, 10)`). Used the same lib in bulk-import.
+- Inspected src/lib/email.ts → `sendEmail({ to, subject, body, type, userId })` writes to EmailLog. Used it for welcome + enrollment notifications.
+- Inspected src/lib/session.ts → `getCurrentUser()` returns `{ id, email, name, role, avatar, title, bio }`.
+
+- Created shared CSV helper `src/lib/csv.ts` (no new dependency):
+  • `parseCsv(input)` → string[][] — handles quoted fields with embedded commas, "" escape, \r\n / \r / \n line endings.
+  • `parseCsvObjects(input)` → Record<string,string>[] keyed by lowercased header (accepts `name|fullname|full name` and `email|e-mail`).
+  • `isValidEmail(email)` regex check.
+  • `generateTempPassword()` → `GX-XXXXXX` (6 chars from unambiguous alphabet ABCDEFGHJKLMNPQRSTUVWXYZ23456789).
+
+- A. Bulk Student Import (2 routes):
+  1. `src/app/api/instructor/bulk-import/route.ts` (POST)
+     • Accepts `{ courseId, students: [{name,email,title?}] }` OR `{ courseId, csv: "..." }`.
+     • INSTRUCTOR/ADMIN only; instructors can only import into courses they own (admin bypasses).
+     • Per-row flow: validate name (≥1 char) + email (regex); if user exists → skip creation but enroll if not already; else create user with role STUDENT + temp password `GX-XXXXXX` hashed via bcryptjs (cost 10).
+     • Enrolls each new/existing student in the course (creates Enrollment + increments Course.studentsCount).
+     • Sends `welcome` email (with temp password) for newly-created users; sends `notification` email for existing users newly enrolled.
+     • Cap of 200 students per request; per-row try/catch so one bad row doesn't abort the batch.
+     • Returns `{ created, enrolled, skipped, results: [{ email, status, tempPassword?, error? }] }`.
+  2. `src/app/api/instructor/bulk-import/preview/route.ts` (POST)
+     • Accepts `{ csv }`, parses with parseCsvObjects, validates each row.
+     • Returns `{ rows: [{ name, email, title, valid, error? }], totalRows, validRows }`. Does NOT write to DB.
+
+- B. Attendance Tracking (3 routes):
+  3. `src/app/api/instructor/courses/[id]/attendance/route.ts`
+     • GET: optional `?date=YYYY-MM-DD` and `?sessionType=` filters; returns `{ records, byDate (grouped by `date|sessionType`), roster (all enrolled users so instructor can mark absentees), course }`. Includes `user` relation in records.
+     • POST: `{ userId, date, sessionType?, status, notes? }` — validates date regex, status ∈ {present,absent,late,excused}, requires student to be enrolled. Upserts via compound unique `courseId_userId_date_sessionType`.
+  4. `src/app/api/instructor/courses/[id]/attendance/bulk/route.ts` (POST)
+     • Body `{ date, sessionType?, records: [{ userId, status, notes? }] }`. Per-record try/catch + validation; upserts each. Returns `{ upserted, errors, total }`.
+  5. `src/app/api/me/attendance/route.ts` (GET)
+     • Student's own records across all enrolled courses.
+     • Returns aggregated `stats` (totalSessions, present, absent, late, excused, attendanceRate = (present+late)/total*100, excluding excused from the denominator penalty).
+     • Returns per-course breakdown + recent 20 records (with course info).
+
+- C. Certificate Templates (2 routes):
+  6. `src/app/api/certificate-templates/route.ts`
+     • GET: public — lists all templates with `_count.certificates`, sorted by `isDefault desc, createdAt desc`.
+     • POST: ADMIN/INSTRUCTOR only. Accepts all template fields (name, description, primaryColor, accentColor, fontFamily, borderStyle, logoUrl, signatureText, sealStyle, backgroundPattern, isDefault). Wrapped in `$transaction`: if `isDefault: true`, first `updateMany` to unset isDefault on all other templates, then create. Returns 201 with the new template.
+  7. `src/app/api/certificate-templates/[id]/route.ts`
+     • GET: fetch one template with `_count.certificates`.
+     • PATCH: ADMIN/INSTRUCTOR. Allowlisted field set; if `isDefault: true`, transaction unsets others first.
+     • DELETE: ADMIN/INSTRUCTOR. 409 if any certificates reference the template (uses `_count.certificates`); otherwise deletes.
+
+- D. Course Prerequisites (1 route):
+  8. `src/app/api/instructor/courses/[id]/prerequisites/route.ts`
+     • GET: returns `prerequisites` (resolved course objects for current prereqIds) + `candidates` (other courses by the same instructor, or all for admin — for the picker UI).
+     • PUT: `{ prerequisiteIds: string[] }` — dedupes, strips self-reference, validates all IDs exist (count check), stores as comma-joined string in `Course.prerequisiteIds`. Returns `{ course, prerequisiteIds }`.
+
+- E. Email Notifications Log (1 route):
+  9. `src/app/api/admin/emails/route.ts` (GET)
+     • ADMIN only. Optional `?type=` and `?status=` filters; pagination via `?page=` and `?pageSize=` (max 100).
+     • Includes `user` relation (`id, name, email`). Returns `{ logs, page, pageSize, total, totalPages }`.
+
+- All routes follow project conventions:
+  • `NextResponse.json(..., { status })` for JSON responses with proper HTTP codes (200/201/400/401/403/404/409/500).
+  • Errors as `{ error: string }`.
+  • Next.js 16 async params: `params: Promise<{ id: string }>` with `await params`.
+  • No `"use client"` directives — all server route handlers.
+  • No Prisma schema changes (as instructed).
+  • No new dependencies (bcryptjs already in package.json, CSV parser is hand-rolled).
+- Verified all 10 files (1 lib + 9 routes) compile via `bun build` (all 10 bundled successfully with 0 errors).
+
+Stage Summary:
+- 9 API route files + 1 shared lib file delivered (10 files total).
+- Bulk import supports both JSON-array and CSV input with preview-before-commit; per-row resilience + welcome-email-with-temp-password flow.
+- Attendance tracking supports single-student upsert, bulk session marking, and student self-summary with attendance rate.
+- Certificate templates support full CRUD with `isDefault` mutual-exclusion (transaction) and referential-integrity-protected delete (409 if certificates exist).
+- Prerequisites route complements existing `/api/courses/[id]/enroll` GET (which already enforces prereqs at enrollment time) with an instructor-facing manage UI.
+- Admin email log endpoint exposes the audit trail produced by `sendEmail()` calls throughout the platform (assignments, enrollments, bulk-import welcomes, etc.).
+- Ready for frontend integration: bulk-import CSV upload UI (instructor), attendance roster grid (instructor) + attendance widget (student), certificate template builder (admin/instructor), prerequisite picker (instructor), admin email log viewer.
+
+---
+Task ID: 7a
+Agent: full-stack-developer
+Task: Build student views (Assignments, Messaging, Study Groups, Office Hours)
+
+Work Log:
+- Read prior work logs (tasks 6a, 6c) and inspected all relevant API route files to map exact response shapes:
+  - `GET /api/me/assignments` → `{ assignments: [...], stats: { total, dueSoon, overdue, missing, submitted, graded } }` (each assignment carries `status`, `overdue`, `dueSoon`, `submission`, `enablePeerReview`, etc.)
+  - `GET /api/assignments/[id]` → `{ assignment: { ...full fields incl. instructions, submissionType, allowLate, latePenalty, enablePeerReview, peerReviewCount, peerReviewDueDate } }`
+  - `POST /api/assignments/[id]/submit` body `{ content?, fileUrl? }` → `{ submission }`
+  - `GET /api/assignments/[id]/peer-reviews` → `{ assignment, toReview: [{ id, content, fileUrl, submittedAt, late, user }], completed: [...], progress, needsOwnSubmission? }`
+  - `POST /api/submissions/[id]/peer-review` body `{ rating, feedback, rubricScores? }` → `{ review }`
+  - `GET /api/messages/threads` → `{ threads: [{ id, other, lastMessage, lastMessageAt, unreadCount }] }`; `POST` creates a thread with `{ recipientId, content }`
+  - `GET /api/messages/threads/[id]` → `{ thread: { other }, messages: [...] }` (auto-marks other's messages read); `POST /api/messages/threads/[id]/read` manual mark-read; `POST /api/messages/threads/[id]/messages` body `{ content }`
+  - `GET /api/messages/contacts` → `{ contacts: [...] }` (role-aware: students see their instructors + existing DM partners)
+  - `GET /api/study-groups` + `POST /api/study-groups` + `GET /api/study-groups/my` + `GET /api/study-groups/[id]` (with members) + `POST /api/study-groups/[id]/join` (with optional `joinCode`)
+  - `GET /api/office-hours/available` (active slots with `bookedCount`, `myBooking`, `isFull`); `GET /api/office-hours/my-bookings`; `POST /api/office-hours/[id]/book` body `{ topic, notes }`
+- Read existing views (`certificates.tsx`, `community.tsx`, `my-learning.tsx`, `instructor-dashboard.tsx`) to match the holographic aesthetic: `card-hover`, `bg-grid`, `text-gradient-emerald`, gradient banners, `border-border`, emerald/cyan/amber accent badges, `bg-card/50 backdrop-blur`, monospace font for IDs, `Avatar`/`AvatarFallback` for user chips.
+- Inspected `globals.css` to confirm available holographic classes (`bg-grid`, `text-gradient-emerald`, `pulse-dot`, `card-hover`, `scanlines`).
+- Inspected `app-store.ts` to confirm `navigate({ name: "catalog" })` is the proper SPA nav signature used by CTA buttons.
+
+Files created (NEW only — no existing files modified):
+
+1. `src/views/assignments.tsx` — `AssignmentsView()`
+   - Header with `ClipboardList` icon + subtitle.
+   - 4 stat cards (Pending / Submitted / Graded / Overdue) with `bg-grid` overlay + colored icon + monospace count.
+   - Filter tabs (All / Pending / Submitted / Graded / Overdue) with rose-tinted Overdue trigger.
+   - `AssignmentCard` lists title, course `shortName` badge, due date (formatted), points, status badge (`statusBadge` helper maps `missing`→amber Pending, `submitted`/`resubmitted`→cyan, `returned`→amber, `graded`→emerald, overdue→rose), late flag, grade display, "Due soon" badge.
+   - "Open" button opens `AssignmentDialog` — fetches full detail (`/api/assignments/[id]`), shows description + instructions (scrollable), submission-type/late/peer-review rules grid, and a submission form (Textarea for content + Input for fileUrl) that posts to `/api/assignments/[id]/submit`; on success invalidates `["me","assignments"]` and toasts.
+   - "Peer Review" button (shown when `enablePeerReview`) opens `PeerReviewDialog` — fetches `/api/assignments/[id]/peer-reviews`; handles `needsOwnSubmission` empty-state; lists `toReview` submissions (expandable card with avatar + content preview + file link); review form has 1–5 star rating (hover preview + fill state) and feedback textarea; submits to `/api/submissions/[id]/peer-review`; shows completed reviews with star badge.
+   - Loading skeletons + friendly empty state with "Browse Courses" CTA.
+
+2. `src/views/messaging.tsx` — `MessagingView()`
+   - Two-pane layout: 320px thread list + flexible conversation; on mobile shows one pane at a time (back chevron toggles).
+   - Left pane: `MessageSquare` header with "New Message" button, search input (`Search` icon) filtering by name or last-message preview, thread list with avatar + name (bolded when unread) + last-message preview (prefixed "You: " when sent by me) + time-ago + red unread count badge.
+   - `NewMessageDialog`: fetches `/api/messages/contacts`, renders recipient picker (avatar + name + title + role badge, click-to-select highlighted), message textarea, posts to `/api/messages/threads`; on success opens the new thread.
+   - Right pane (`ConversationPane`): header with back button (mobile), other user's avatar/name/title/role badge; messages grouped by day with "Today"/"Yesterday"/weekday labels; bubbles are right-aligned emerald for mine, left-aligned card for received; auto-scrolls to bottom on new messages; refetches every 10s via `refetchInterval`.
+   - Composer: textarea (Enter sends, Shift+Enter for newline) + Send button; posts to `/api/messages/threads/[id]/messages`.
+   - Mark-as-read: `openThread` fires `POST /api/messages/threads/[id]/read` then invalidates `["message-threads"]`.
+   - Empty state placeholder ("Select a conversation").
+   - Loading skeletons + 10s polling on both thread list and active thread.
+
+3. `src/views/study-groups.tsx` — `StudyGroupsView()`
+   - Header with `Users` icon + subtitle.
+   - Two tabs: Discover / My Groups.
+   - Discover tab: search input + "Create Group" button; responsive grid of `GroupCard`s — title, private/globe icon, course badge, description, tags (capped at 4 + "+N"), capacity bar (`Progress`), creator avatar + name + time-ago, Open/Join actions. Private groups show "Join with Code" CTA; full groups disable Join; already-joined groups show "Joined".
+   - `CreateGroupDialog`: title, description, optional linked-course `<select>` (loaded from `/api/courses?enrolled=true`), maxMembers, meetingLink, tags (comma-separated → array), `Switch` for `isPrivate` (reveals joinCode field when on); posts to `/api/study-groups`.
+   - `JoinCodeDialog`: prompts for join code (uppercase, monospace, centered), posts `/api/study-groups/[id]/join` with `{ joinCode }`.
+   - `GroupDetailDialog`: fetches `/api/study-groups/[id]` (with members), shows description, meeting link, tags, and full member list with owner crown badge.
+   - My Groups tab: list of joined groups with Owner/Member role badge, member count, meeting link indicator, time-ago; "Open" button opens `GroupDetailDialog`.
+   - Empty states + skeletons for both tabs.
+   - Query keys: `["study-groups"]`, `["my-study-groups"]`, `["study-group", id]`.
+
+4. `src/views/office-hours.tsx` — `OfficeHoursView()`
+   - Header with `CalendarClock` icon + subtitle.
+   - Two tabs: Available Slots / My Bookings.
+   - Available Slots: responsive grid of `SlotCard`s — instructor avatar + name + title, course badge, date (weekday + month + day), time range with duration in parens, mode badge (Video/In-Person/Chat with color-coded icon via `ModeIcon` component + `modeColor` helper), location badge, capacity bar (`Progress`), and contextual action button: "Booked" (emerald check, when `myBooking`), "Session ended" (past), "Fully booked" (full), or "Book Slot".
+   - `BookSlotDialog`: shows summary card (mode/date/time/location), topic input (max 200 chars), notes textarea (max 2000); posts to `/api/office-hours/[id]/book`; on success invalidates `["office-hours-available"]` + `["my-office-hour-bookings"]` and toasts "Slot booked!".
+   - My Bookings: list of `BookingCard`s — instructor info, date/time, mode badge, course badge, status badge (Confirmed/Completed/Cancelled), topic, notes (clamped), location, and a "Cancel" button that toasts "Contact instructor to cancel" (per spec — no cancel endpoint).
+   - Empty states + skeletons.
+   - 30s `refetchInterval` on both available slots and my bookings to keep capacity fresh.
+   - Refactored `modeIcon` helper into a proper `ModeIcon` React component to satisfy ESLint's `react-hooks/static-components` rule (no component creation during render).
+
+Cross-cutting:
+- All 4 views start with `"use client"` and `export function XxxView()`.
+- All use TanStack Query (`useQuery`/`useMutation`/`useQueryClient`) with proper invalidation after mutations and error toasts via `sonner`.
+- All use shadcn/ui primitives (`Card`, `Button`, `Badge`, `Input`, `Textarea`, `Label`, `Avatar`, `Dialog`, `Tabs`, `Skeleton`, `Progress`, `ScrollArea`, `Switch`, `Select` where appropriate) + `lucide-react` icons + `cn` util.
+- Mobile-first responsive (`sm:`, `md:`, `lg:` breakpoints); semantic HTML (`header`, `section`, `article`, `footer`, `main`).
+- Consistent date formatting via `toLocaleDateString`/`toLocaleTimeString` and a `timeAgo` helper inline in each view.
+- Holographic styling: `card-hover`, `bg-grid` overlays, gradient banners, emerald/cyan/amber accents, `bg-card/50`, `border-border`, no white backgrounds.
+
+Stage Summary:
+- 4 new student-facing view files created (`src/views/assignments.tsx`, `messaging.tsx`, `study-groups.tsx`, `office-hours.tsx`) totaling ~1,800 lines of typed React/TSX.
+- All views consume the APIs built in tasks 6a/6b/6c without modification — purely additive UI layer.
+- ESLint passes cleanly (0 errors, 0 warnings) after refactoring `ModeIcon` into a static component to satisfy `react-hooks/static-components`.
+- Dev log clean (no compile/runtime errors); views compile on-demand (not yet routed — parent task will wire them into the SPA nav/router).
+- Each view handles loading (skeletons), empty (illustrated empty states with CTAs), and error (toast) states, and follows the existing GuardianX holographic design system.
+- No existing files were modified, per task instructions. Ready for the parent orchestrator to register these views in the app-shell nav + Zustand `View` union.
+
+---
+Task ID: 7b
+Agent: full-stack-developer
+Task: Build instructor dashboard tab components (Assignments, Office Hours, Messaging, Attendance, Bulk Import, Certificate Templates)
+
+Work Log:
+- Read prior worklog sections (tasks 6a/6b/6c — APIs for assignments/rubrics/submissions/grading, office-hours, messaging/threads/contacts, attendance/bulk, certificate-templates; task 7a — student views for assignments/messaging/study-groups/office-hours as reference for holographic styling).
+- Inspected exact response shapes of every API route the components consume by reading the route handler source files (not guessing) — verified field names, status codes, error shapes, ownership gating.
+- Read `src/views/instructor-dashboard.tsx` (first 200 lines) to match existing card/header/tabs styling (cyan hero with `bg-grid` overlay, `card-hover`, `holo-border`, `scanlines`, monospace font for counts/IDs, emerald/cyan/amber/violet/rose accent palette).
+- Created the `src/components/instructor/` directory (did not exist).
+- Created 6 NEW component files, each starting with `"use client"` and exporting `InstructorXxxTab()`:
+
+1. `assignments-tab.tsx` (≈900 lines) — `InstructorAssignmentsTab()`
+   - 2-column layout: course `<Select>` + assignments list.
+   - "Create Assignment" → `AssignmentFormDialog` (title, description, instructions textarea, pointsPossible, dueDate datetime-local, submissionType select, allowLate Switch + latePenalty, enablePeerReview Switch + peerReviewCount + peerReviewDueDate, rubricId select, moduleId select). Posts `POST /api/instructor/courses/[courseId]/assignments`.
+   - Assignment cards: title, peer-review + rubric badges, due date (overdue in rose), points, submission count badge, late policy badge. "Open" → `AssignmentDetailDialog` with sub-tabs: Submissions (stats, filter chips, expandable rows → `GradingDialog` with rubric sliders when rubric exists, manual grade fallback, feedback textarea → `POST /api/instructor/submissions/[id]/grade`) and Edit (reuses AssignmentFormDialog → `PATCH`).
+   - Delete with AlertDialog confirm → `DELETE /api/instructor/assignments/[id]`.
+   - Rubrics manager dialog with create/edit/delete; dynamic criteria list (label/description/points with add/remove). Posts `POST /api/instructor/rubrics` or `PATCH /api/instructor/rubrics/[id]`.
+   - Modules loaded from public `GET /api/courses/[courseId]` (which includes `modules`); the `GET /api/instructor/courses/[id]/modules` route only has POST.
+
+2. `office-hours-tab.tsx` (≈430 lines) — `InstructorOfficeHoursTab()`
+   - 3 stat cards (Total/Upcoming/Total Bookings) + 30s polling.
+   - "Create Slot" → dialog with startAt/endAt datetime-local, mode select (video/in-person/chat), location, maxBookings, optional courseId. Posts `POST /api/instructor/office-hours`.
+   - Slot cards: date/time, mode badge with colored icon, location (mono), capacity `Progress` bar, expandable bookings list (student avatar + topic + notes), Delete → `DELETE /api/instructor/office-hours/[id]` (confirm dialog shows cancelled-bookings count).
+
+3. `messaging-tab.tsx` (≈450 lines) — `InstructorMessagingTab()`
+   - 2-pane layout (320px list + conversation); mobile shows one pane at a time with back chevron.
+   - Thread list with search, unread bold + red badge, "You:" prefix on own last messages.
+   - "New Message" → dialog with searchable recipient picker from `GET /api/messages/contacts`, posts `POST /api/messages/threads` with `{recipientId, content}`.
+   - Conversation: messages grouped by day (Today/Yesterday/weekday), bubbles (emerald right / card left), auto-scroll, Enter-to-send composer → `POST /api/messages/threads/[id]/messages`. Mark-read on open via `POST /api/messages/threads/[id]/read`. 10s polling on both panes.
+
+4. `attendance-tab.tsx` (≈440 lines) — `InstructorAttendanceTab()`
+   - Course picker + date input + sessionType select (live/in-person/exam).
+   - Mark Attendance roster: each enrolled student row with 4 status toggles (Present/Late/Absent/Excused, color-coded). "Quick set all" row. Save → `POST /api/instructor/courses/[id]/attendance/bulk`.
+   - Stats (client-computed): Attendance Rate %, Total Sessions, Most Common Status.
+   - Recent Sessions list (per-session status counts as badges) + Per-Student Breakdown matrix table (sticky first column, last 8 sessions as columns, status icons in colored cells).
+
+5. `bulk-import-tab.tsx` (≈560 lines) — `InstructorBulkImportTab()`
+   - Course picker + "Template CSV" download button (client-side blob).
+   - 2 mode tabs: Paste CSV (textarea + server preview via `POST /api/instructor/bulk-import/preview`) or Manual Entry (dynamic rows + client-side validation).
+   - Preview table with valid/invalid badges + error reasons.
+   - Import action card (amber warning) + confirm AlertDialog → `POST /api/instructor/bulk-import` with `{courseId, csv}` or `{courseId, students:[...]}`.
+   - Import Results view: Created/Enrolled/Skipped stat cards + security warning card with "Copy All" + results table (email + status + temp password with per-row copy button showing check icon when copied).
+
+6. `certificate-templates-tab.tsx` (≈580 lines) — `InstructorCertificateTemplatesTab()`
+   - Fetches `GET /api/certificate-templates`.
+   - "Create Template" → `TemplateFormDialog` with name, description, primaryColor + accentColor (native `<input type="color">` paired with hex Input), fontFamily/borderStyle/sealStyle/backgroundPattern selects, signatureText, logoUrl, isDefault Switch.
+   - `CertificatePreview` component: live mini certificate rendering with banner gradient (primary→accent), border style applied (classic solid / modern dashed / minimal opacity-50 / holographic glow), seal in bottom-right (color or gradient per sealStyle), signature text bottom-left, pattern overlay (grid/particles/circuit). Used both as a compact banner on each template card and a large live preview inside the form.
+   - Template cards: preview banner + name + Default badge + description + color swatches with hex values + style badges + certificate count + Edit/Delete buttons. Delete with AlertDialog confirm; disabled if certificates reference the template (409 from server).
+
+Cross-cutting:
+- All 6 files: `"use client"` + `export function InstructorXxxTab()`.
+- TanStack Query (`useQuery`/`useMutation`/`useQueryClient`) with proper invalidation after mutations; error toasts via `sonner`.
+- shadcn/ui primitives (Card, Button, Badge, Input, Textarea, Label, Avatar, Dialog, AlertDialog, Tabs, Skeleton, Progress, Switch, Select, Table, ScrollArea) + lucide-react icons + `cn` + `api` helper.
+- Mobile-first responsive (`sm:`/`md:`/`lg:`); semantic HTML.
+- Holographic styling: `card-hover`, `bg-grid`, `holo-border`, gradient banners, emerald/cyan/amber/violet/rose accents, `bg-card/50`, monospace for IDs/hex/count tabular numbers.
+- datetime-local inputs → ISO via `new Date(value).toISOString()`; existing dates prefill via `toLocalDateTimeInputValue` helper.
+- ESLint passes cleanly (0 errors, 0 warnings). Dev server log healthy (no compile/runtime errors).
+- No existing files modified. No new routes created. Parent dashboard will wire these tabs in.
+- Wrote work record to `/home/z/my-project/agent-ctx/7b-full-stack-developer.md`.
+
+Stage Summary:
+- 6 new instructor tab component files created in `src/components/instructor/` totaling ~3,360 lines of typed React/TSX.
+- All 6 components consume the APIs built in tasks 6a/6b/6c without modification — purely additive UI layer.
+- Each component handles loading (skeletons), empty (illustrated empty states with CTAs), and error (toast) states, and follows the existing GuardianX holographic design system.
+- ESLint passes cleanly. Ready for the parent orchestrator to wire these tabs into the instructor dashboard's `INSTRUCTOR_TABS` array + render switch.
+
+---
+Task ID: 7 (parent)
+Agent: main (Z.ai Code)
+Task: Add certificate verification card on homepage + 14 additional LMS features (Assignments, Course Analytics, Study Groups, Attendance, Peer Review, Video Recording, Email Notifications, Office Hours, Bulk Import, Certificate Templates, Auto-Graded Labs, Course Prerequisites, Student Messaging, Grading Rubric)
+
+Work Log:
+- Expanded Prisma schema with 12 new models (Assignment, AssignmentSubmission, GradingRubric, RubricCriterion, PeerReview, OfficeHourSlot, OfficeHourBooking, MessageThread, Message, StudyGroup, StudyGroupMember, AttendanceRecord, CertificateTemplate, EmailLog) + added fields to Course (prerequisiteIds, certificateTemplateId), Lab (autoGrade, xpReward, passingScore), Certificate (templateId, verificationHash), User (new relations). Added StudyGroup.course relation after testing revealed it was missing.
+- Ran db:push successfully (clean schema, no data loss).
+- Built `src/lib/email.ts` — sendEmail() stub that logs to EmailLog table + generateVerificationHash() for tamper-evident cert verification.
+- Built PUBLIC certificate verification API at `src/app/api/certificates/verify/route.ts` — anyone can verify a cert by ID without auth. Returns student name, course, score, issue date, instructor, template info, hash validity.
+- Built `src/components/platform/certificate-verify-card.tsx` — "Verify Your Certificate" card with lookup Dialog. Shows verified/unverified states with full cert details.
+- Added the verify card to `src/components/platform/auth-screen.tsx` below the demo accounts section — visible on the public homepage.
+- Updated certificate issuance in `src/app/api/lessons/[id]/progress/route.ts` to generate verificationHash + apply default template + send certificate-issued email.
+- Enhanced lab submit (`src/app/api/labs/[slug]/submit/route.ts`) with auto-grading using lab.xpReward/passingScore fields + email notification on completion.
+- Added Course Prerequisites enforcement to `src/app/api/courses/[id]/enroll/route.ts` — blocks enrollment if prerequisite courses aren't completed; returns missing prerequisites list. Added GET endpoint to fetch prerequisites for UI.
+- Spawned 3 parallel subagents (6a, 6b, 6c) to build all feature APIs:
+  - 6a: Assignment + Rubric + PeerReview APIs (12 routes)
+  - 6b: Office Hours + Messaging + Study Groups APIs (16 routes)
+  - 6c: Bulk Import + Attendance + Certificate Templates + Prerequisites + Email log APIs (9 routes + csv helper)
+- Spawned 2 parallel subagents (7a, 7b) to build frontend:
+  - 7a: 4 student views (assignments.tsx, messaging.tsx, study-groups.tsx, office-hours.tsx)
+  - 7b: 6 instructor tab components (assignments-tab, office-hours-tab, messaging-tab, attendance-tab, bulk-import-tab, certificate-templates-tab)
+- Wired everything together:
+  - app-store.ts: added 4 new view types (assignments, messaging, study-groups, office-hours)
+  - page.tsx: routed the 4 new views
+  - app-shell.tsx: added 4 new nav items (Assignments, Office Hours, Study Groups, Messages) with appropriate icons
+  - instructor-dashboard.tsx: expanded from 5 tabs to 11 tabs (added Assignments, Office Hours, Attendance, Messages, Bulk Import, Cert Templates) with horizontal scroll for the tab list
+- Added Video Recording to live sessions via MediaRecorder API — Record/Stop button in controls, live timer, REC indicator on stage, auto-downloads .webm file on stop.
+- Added Course Prerequisites UI in course-detail.tsx — shows prerequisite courses in an amber warning box on the enroll card when prerequisites exist.
+- Seeded 4 certificate templates (Guardian Classic as default, Cyber Neon, Gold Excellence, Minimal Pro) via prisma/seed-templates.ts. Backfills verificationHash on existing certs.
+- Created a demo certificate (GX-DEMO2024CERT001) so the verify flow can be tested end-to-end.
+
+Stage Summary:
+- Certificate Verification card LIVE on homepage — verified end-to-end with demo cert showing "Authentic Certificate / VERIFIED / Jamie Rivera / Certified Ethical Hacker / Score 95%".
+- Instructor Dashboard expanded from 5 → 11 tabs, all loading correctly.
+- Student nav expanded with 4 new items (Assignments, Office Hours, Study Groups, Messages), all views loading correctly.
+- Video Recording integrated into live session room.
+- Course Prerequisites enforced server-side + displayed in course detail.
+- Auto-Graded Labs: XP + score calculated on flag submission, email sent.
+- Email Notifications: stub logs all emails to EmailLog table (visible to admin).
+- ESLint: 0 errors, 0 warnings.
+- All features verified via agent-browser: homepage verify card, instructor 11 tabs, student 4 new views all render.
+- Services running: dev(3000), lab-orchestrator(3004), terminal-gateway(3005), whiteboard(3006), live-signaling(3003).
+
+Demo Flow:
+1. Homepage (logged out) → "Verify Your Certificate" card → enter `GX-DEMO2024CERT001` → see verified cert details.
+2. Login as instructor → Instructor dashboard → 11 tabs including Assignments, Office Hours, Attendance, Messages, Bulk Import, Cert Templates.
+3. Login as student → sidebar shows Assignments, Office Hours, Study Groups, Messages → each loads with proper empty states.
+4. Live session room → Record button records screen share as .webm.
+
+Unresolved / Next Steps:
+- Email sending is a stub (logs to DB). To enable real emails, integrate with SES/SendGrid in `src/lib/email.ts`.
+- Video Recording saves to user's downloads — could be extended to upload to S3 and attach to the live session record for replay.
+- Peer Review assignment is lazy (picks random submissions on demand) — could be pre-assigned when submission window closes.
+- Study Group "Open" action currently shows members; could add a group chat or shared notes feature.

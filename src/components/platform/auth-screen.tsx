@@ -13,6 +13,7 @@ import { Separator } from "@/components/ui/separator"
 import { api } from "@/lib/api"
 import { useAppStore } from "@/store/app-store"
 import { toast } from "sonner"
+import { CertificateVerifyCard } from "@/components/platform/certificate-verify-card"
 
 const DEMO_ACCOUNTS = [
   { label: "Student", email: "student@guardianx.io", password: "student123", icon: GraduationCap, color: "text-emerald-400" },
@@ -317,6 +318,11 @@ export function AuthScreen() {
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Verify Your Certificate — public lookup */}
+          <div className="mt-6">
+            <CertificateVerifyCard />
           </div>
         </div>
       </div>

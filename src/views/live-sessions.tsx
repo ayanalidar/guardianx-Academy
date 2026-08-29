@@ -21,6 +21,7 @@ import {
   Radio, Video, Mic, MicOff, ScreenShare, ScreenShareOff, PhoneOff, Users,
   MessageSquare, Send, Hand, VideoOff, Monitor, Plus, ChevronLeft, Clock,
   ShieldAlert, Volume2, CircleDot, RadioTower, PenLine, Presentation,
+  Circle, Download, Square,
 } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
@@ -220,6 +221,13 @@ function LiveRoom({ session, onLeave, userName, userId, isHost }: {
   const [activePresenterName, setActivePresenterName] = React.useState<string | null>(null)
   const [stageMode, setStageMode] = React.useState<"screen" | "whiteboard">("screen")
 
+  // Video Recording state (records the screen-share stream via MediaRecorder)
+  const [recording, setRecording] = React.useState(false)
+  const [recordSeconds, setRecordSeconds] = React.useState(0)
+  const mediaRecorderRef = React.useRef<MediaRecorder | null>(null)
+  const recordedChunksRef = React.useRef<Blob[]>([])
+  const recordTimerRef = React.useRef<ReturnType<typeof setInterval> | null>(null)
+
   // remote video elements
   const screenVideoRef = React.useRef<HTMLVideoElement>(null)
   const remoteVoicePeers = React.useRef<Map<string, HTMLAudioElement>>(new Map())
@@ -325,12 +333,82 @@ function LiveRoom({ session, onLeave, userName, userId, isHost }: {
   }
 
   async function leaveCall() {
+    // Stop recording if active
+    if (recording) {
+      stopRecording()
+    }
     await api(`/api/live-sessions/${session.id}`, { method: "POST", body: JSON.stringify({ action: "leave" }) })
     if (isHost) {
       await api(`/api/live-sessions/${session.id}`, { method: "POST", body: JSON.stringify({ action: "end" }) })
     }
     qc.invalidateQueries({ queryKey: ["live-sessions"] })
     onLeave()
+  }
+
+  // ===== Video Recording (MediaRecorder API) =====
+  function startRecording() {
+    const videoEl = screenVideoRef.current
+    const stream = videoEl?.srcObject as MediaStream | null
+    if (!stream || stream.getTracks().length === 0) {
+      toast.error("Start screen sharing first to record the session.")
+      return
+    }
+    try {
+      recordedChunksRef.current = []
+      // Prefer video/webm; fall back to whatever the browser supports
+      const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp9")
+        ? "video/webm;codecs=vp9"
+        : MediaRecorder.isTypeSupported("video/webm")
+          ? "video/webm"
+          : ""
+      const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined)
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) recordedChunksRef.current.push(e.data)
+      }
+      recorder.onstop = () => {
+        const blob = new Blob(recordedChunksRef.current, { type: "video/webm" })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement("a")
+        a.href = url
+        const stamp = new Date().toISOString().replace(/[:.]/g, "-")
+        a.download = `guardianx-${session.title.replace(/[^a-z0-9]/gi, "-").toLowerCase()}-${stamp}.webm`
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+        toast.success("Recording saved to your downloads.")
+      }
+      recorder.start(1000) // collect data every 1s
+      mediaRecorderRef.current = recorder
+      setRecording(true)
+      setRecordSeconds(0)
+      recordTimerRef.current = setInterval(() => {
+        setRecordSeconds((s) => s + 1)
+      }, 1000)
+      toast.success("Recording started")
+    } catch (err) {
+      console.error(err)
+      toast.error("Recording failed to start.")
+    }
+  }
+
+  function stopRecording() {
+    const recorder = mediaRecorderRef.current
+    if (recorder && recorder.state !== "inactive") {
+      recorder.stop()
+    }
+    mediaRecorderRef.current = null
+    setRecording(false)
+    if (recordTimerRef.current) {
+      clearInterval(recordTimerRef.current)
+      recordTimerRef.current = null
+    }
+  }
+
+  function formatRecordTime(s: number) {
+    const m = Math.floor(s / 60)
+    const sec = s % 60
+    return `${m.toString().padStart(2, "0")}:${sec.toString().padStart(2, "0")}`
   }
 
   return (
@@ -395,8 +473,17 @@ function LiveRoom({ session, onLeave, userName, userId, isHost }: {
           ) : (
             <Card className="overflow-hidden relative bg-black/40 border-border min-h-[400px] flex items-center justify-center">
               <div className="absolute top-3 left-3 z-10 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/60 backdrop-blur text-xs">
-                <span className="h-1.5 w-1.5 rounded-full bg-red-400 pulse-dot" />
-                <span className="font-mono text-red-400">REC</span>
+                {recording ? (
+                  <>
+                    <span className="h-2 w-2 rounded-full bg-red-500 pulse-dot" />
+                    <span className="font-mono text-red-400">REC {formatRecordTime(recordSeconds)}</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="h-1.5 w-1.5 rounded-full bg-red-400/60" />
+                    <span className="font-mono text-red-400/70">REC</span>
+                  </>
+                )}
                 <span className="text-muted-foreground">·</span>
                 <Video className="h-3 w-3 text-emerald-400" />
                 <span className="text-emerald-400">{sharing ? "Presenting" : activePresenterName ? "Viewing" : "No presentation"}</span>
@@ -442,6 +529,25 @@ function LiveRoom({ session, onLeave, userName, userId, isHost }: {
             {!isHost && !sharing && (
               <Button variant="outline" size="sm" onClick={requestPresent}>
                 <Hand className="h-4 w-4" /><span className="ml-1.5">Raise Hand</span>
+              </Button>
+            )}
+            <div className="h-6 w-px bg-border mx-1" />
+            {recording ? (
+              <Button variant="destructive" size="sm" onClick={stopRecording} className="gap-1.5">
+                <Square className="h-3.5 w-3.5 fill-current" />
+                <span className="font-mono text-xs">{formatRecordTime(recordSeconds)}</span>
+                <span className="ml-1">Stop Rec</span>
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={startRecording}
+                disabled={stageMode !== "screen" || (!sharing && !activePresenterName)}
+                title={stageMode !== "screen" ? "Switch to Screen Share to record" : (!sharing && !activePresenterName) ? "Waiting for a screen share to record" : "Record the screen share"}
+              >
+                <Circle className="h-3.5 w-3.5 text-red-500 fill-red-500" />
+                <span className="ml-1.5">Record</span>
               </Button>
             )}
             <div className="h-6 w-px bg-border mx-1" />

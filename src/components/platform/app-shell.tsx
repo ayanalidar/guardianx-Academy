@@ -8,6 +8,7 @@ import {
   Radio, FlaskConical, Award, Users, User, LogOut, Menu, X,
   Search, Sun, Moon, Bell, Terminal, ChevronRight, Settings,
   Trophy, Zap, Flame, Crown, CheckCheck, Sparkles, Presentation,
+  ClipboardList, MessageSquare, UsersRound, CalendarClock,
 } from "lucide-react"
 import { useAppStore, type View } from "@/store/app-store"
 import { useUser } from "@/hooks/use-user"
@@ -37,9 +38,13 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", icon: LayoutDashboard, view: { name: "dashboard" } },
   { label: "Course Catalog", icon: BookOpen, view: { name: "catalog" } },
   { label: "My Learning", icon: GraduationCap, view: { name: "learning" } },
+  { label: "Assignments", icon: ClipboardList, view: { name: "assignments" } },
   { label: "Notes", icon: StickyNote, view: { name: "notes" } },
   { label: "Live Sessions", icon: Radio, view: { name: "live" } },
   { label: "Cyber Labs", icon: FlaskConical, view: { name: "labs" } },
+  { label: "Office Hours", icon: CalendarClock, view: { name: "office-hours" } },
+  { label: "Study Groups", icon: UsersRound, view: { name: "study-groups" } },
+  { label: "Messages", icon: MessageSquare, view: { name: "messaging" } },
   { label: "Achievements", icon: Trophy, view: { name: "achievements" } },
   { label: "Leaderboards", icon: Crown, view: { name: "leaderboard" } },
   { label: "Certificates", icon: Award, view: { name: "certificates" } },

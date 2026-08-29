@@ -18,6 +18,10 @@ export type View =
   | { name: "instructor" }
   | { name: "community" }
   | { name: "profile" }
+  | { name: "assignments" }
+  | { name: "messaging" }
+  | { name: "study-groups" }
+  | { name: "office-hours" }
   | { name: "auth" }
 
 interface AppState {

@@ -20,6 +20,10 @@ import { LeaderboardView } from "@/views/leaderboard"
 import { InstructorDashboardView } from "@/views/instructor-dashboard"
 import { CommunityView } from "@/views/community"
 import { ProfileView } from "@/views/profile"
+import { AssignmentsView } from "@/views/assignments"
+import { MessagingView } from "@/views/messaging"
+import { StudyGroupsView } from "@/views/study-groups"
+import { OfficeHoursView } from "@/views/office-hours"
 
 function ViewRouter() {
   const { view } = useAppStore()
@@ -41,6 +45,10 @@ function ViewRouter() {
       {view.name === "instructor" && <InstructorDashboardView />}
       {view.name === "community" && <CommunityView />}
       {view.name === "profile" && <ProfileView />}
+      {view.name === "assignments" && <AssignmentsView />}
+      {view.name === "messaging" && <MessagingView />}
+      {view.name === "study-groups" && <StudyGroupsView />}
+      {view.name === "office-hours" && <OfficeHoursView />}
     </div>
   )
 }

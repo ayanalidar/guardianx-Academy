@@ -29,9 +29,16 @@ import {
   GraduationCap, Award, Activity, ArrowRight, BarChart3, CheckCircle2,
   Plus, Pencil, Trash2, Save, X, FileText, Radio, Calendar as CalendarIcon,
   Image as ImageIcon, Video, Link2, PlayCircle, StopCircle, Eye, Sparkles,
+  ClipboardList, MessageSquare, CalendarClock, UserPlus, Palette,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
+import { InstructorAssignmentsTab } from "@/components/instructor/assignments-tab"
+import { InstructorOfficeHoursTab } from "@/components/instructor/office-hours-tab"
+import { InstructorMessagingTab } from "@/components/instructor/messaging-tab"
+import { InstructorAttendanceTab } from "@/components/instructor/attendance-tab"
+import { InstructorBulkImportTab } from "@/components/instructor/bulk-import-tab"
+import { InstructorCertificateTemplatesTab } from "@/components/instructor/certificate-templates-tab"
 
 interface InstructorCourse {
   id: string; slug: string; title: string; shortName: string; color: string
@@ -61,8 +68,14 @@ const COURSE_COLORS_LIST = ["emerald", "cyan", "teal", "violet", "amber", "orang
 
 const INSTRUCTOR_TABS = [
   { id: "courses", label: "My Courses", icon: BookOpen },
+  { id: "assignments", label: "Assignments", icon: ClipboardList },
   { id: "live", label: "Live Sessions", icon: Radio },
+  { id: "office-hours", label: "Office Hours", icon: CalendarClock },
   { id: "students", label: "My Students", icon: Users },
+  { id: "attendance", label: "Attendance", icon: CheckCircle2 },
+  { id: "messaging", label: "Messages", icon: MessageSquare },
+  { id: "bulk-import", label: "Bulk Import", icon: UserPlus },
+  { id: "templates", label: "Cert Templates", icon: Palette },
   { id: "calendar", label: "Calendar", icon: CalendarIcon },
   { id: "analytics", label: "Analytics", icon: BarChart3 },
 ] as const
@@ -88,19 +101,27 @@ export function InstructorDashboardView() {
       <InstructorHero />
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as InstructorTab)}>
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 h-auto">
-          {INSTRUCTOR_TABS.map((t) => (
-            <TabsTrigger key={t.id} value={t.id} className="flex items-center gap-1.5 py-2">
-              <t.icon className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">{t.label}</span>
-              <span className="sm:hidden text-xs">{t.label.split(" ")[0]}</span>
-            </TabsTrigger>
-          ))}
-        </TabsList>
+        <ScrollArea className="w-full">
+          <TabsList className="grid w-max min-w-full grid-cols-11 h-auto">
+            {INSTRUCTOR_TABS.map((t) => (
+              <TabsTrigger key={t.id} value={t.id} className="flex items-center gap-1.5 py-2 px-3">
+                <t.icon className="h-3.5 w-3.5 shrink-0" />
+                <span className="hidden lg:inline whitespace-nowrap">{t.label}</span>
+                <span className="lg:hidden text-xs whitespace-nowrap">{t.label.split(" ")[0]}</span>
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </ScrollArea>
 
         <TabsContent value="courses" className="mt-4"><MyCoursesTab /></TabsContent>
+        <TabsContent value="assignments" className="mt-4"><InstructorAssignmentsTab /></TabsContent>
         <TabsContent value="live" className="mt-4"><LiveSessionsTab /></TabsContent>
+        <TabsContent value="office-hours" className="mt-4"><InstructorOfficeHoursTab /></TabsContent>
         <TabsContent value="students" className="mt-4"><MyStudentsTab /></TabsContent>
+        <TabsContent value="attendance" className="mt-4"><InstructorAttendanceTab /></TabsContent>
+        <TabsContent value="messaging" className="mt-4"><InstructorMessagingTab /></TabsContent>
+        <TabsContent value="bulk-import" className="mt-4"><InstructorBulkImportTab /></TabsContent>
+        <TabsContent value="templates" className="mt-4"><InstructorCertificateTemplatesTab /></TabsContent>
         <TabsContent value="calendar" className="mt-4"><CalendarTab /></TabsContent>
         <TabsContent value="analytics" className="mt-4"><AnalyticsTab /></TabsContent>
       </Tabs>

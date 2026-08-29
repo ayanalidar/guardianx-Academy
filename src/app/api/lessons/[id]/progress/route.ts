@@ -54,12 +54,21 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (pct === 100) {
     const existingCert = await db.certificate.findFirst({ where: { userId: user.id, courseId: lesson.module.courseId } })
     if (!existingCert) {
+      const certId = `GX-${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).slice(2, 6).toUpperCase()}`
+      const issuedAt = new Date()
+      const { generateVerificationHash, sendEmail } = await import("@/lib/email")
+      const verificationHash = generateVerificationHash(certId, user.id, lesson.module.courseId, issuedAt)
+      // Find the default certificate template (if any)
+      const defaultTemplate = await db.certificateTemplate.findFirst({ where: { isDefault: true } })
       await db.certificate.create({
         data: {
           userId: user.id,
           courseId: lesson.module.courseId,
-          certificateId: `GX-${Date.now().toString(36).toUpperCase()}`,
+          certificateId: certId,
           score: pct,
+          issuedAt,
+          verificationHash,
+          templateId: defaultTemplate?.id ?? null,
         },
       })
       xpAwarded = await awardXp(user.id, "cert_earned", 300, lesson.module.courseId)
@@ -67,6 +76,17 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       const course = await db.course.findUnique({ where: { id: lesson.module.courseId }, select: { title: true } })
       const { notifyCertificate } = await import("@/lib/notifications")
       await notifyCertificate(user.id, course?.title ?? "Course", lesson.module.courseId)
+      // Send certificate-issued email
+      const certUser = await db.user.findUnique({ where: { id: user.id }, select: { email: true, name: true } })
+      if (certUser) {
+        await sendEmail({
+          to: certUser.email,
+          subject: `🎉 Certificate Earned — ${course?.title ?? "Course"}`,
+          body: `Hi ${certUser.name},\n\nCongratulations! You've successfully completed "${course?.title ?? "your course"}" on GuardianX Academy.\n\nYour certificate ID is: ${certId}\nVerification hash: ${verificationHash}\n\nYou can verify your certificate anytime at guardianx.io using this ID.\n\nKeep learning,\nThe GuardianX Team`,
+          type: "certificate",
+          userId: user.id,
+        })
+      }
     }
   }
 

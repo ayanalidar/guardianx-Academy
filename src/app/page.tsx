@@ -110,10 +110,11 @@ export default function Home() {
   const { view } = useAppStore()
   const [session, setSession] = React.useState<any>(null)
   const [sessionChecked, setSessionChecked] = React.useState(false)
+  const [, forceRender] = React.useState(0)
 
   // Listen for navigation events (fallback for when Zustand re-render doesn't trigger)
   React.useEffect(() => {
-    const handler = (e: any) => {
+    const handler = () => {
       setSession(prev => prev) // Force re-render
       forceRender((v: number) => v + 1)
     }

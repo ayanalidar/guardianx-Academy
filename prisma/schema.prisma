@@ -59,6 +59,25 @@ model User {
   emailsReceived       EmailLog[]
   schoolMemberships    SchoolMember[]
   batchMemberships     BatchMember[]
+  // Feature expansion relations
+  aiChatSessions       AIChatSession[]
+  codeReviews          CodeReview[]
+  careerPaths          CareerPath[]
+  postedJobs           Job[]
+  jobApplications      JobApplication[]
+  mockInterviews       MockInterview[]
+  resumes              Resume[]
+  ctfOrganized         CTFCompetition[]
+  ctfTeamMemberships   CTFTeamMember[]
+  weeklyChallengeSubs  WeeklyChallengeSubmission[]
+  teamMissionMemberships TeamMissionMember[]
+  learningAnalytics    LearningAnalytics[]
+  skillAssessmentResults SkillAssessmentResult[]
+  labSnapshots         LabSnapshot[]
+  cyberRangeMemberships CyberRangeMember[]
+  bugBountySubmissions  BugBountySubmission[]
+  parentAccounts       ParentAccount[]
+  authoredCourses      AuthoredCourse[]
 }
 
 // ============================================================
@@ -684,3 +703,482 @@ model EmailLog {
   status        String   @default("sent") // sent | failed | queued
   sentAt        DateTime @default(now())
 }
+
+// ============================================================
+// FEATURE EXPANSION — 20 new feature models
+// ============================================================
+
+// --- 1. AI Learning Assistant ---
+model AIChatSession {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId    String?
+  labId       String?
+  context     String   @default("") // current page context
+  messages    AIChatMessage[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model AIChatMessage {
+  id          String   @id @default(cuid())
+  sessionId   String
+  session     AIChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  role        String   // user | assistant
+  content     String
+  createdAt   DateTime @default(now())
+}
+
+// --- 2. Live Threat Intelligence Feed ---
+model ThreatFeed {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  severity    String   @default("medium") // low | medium | high | critical
+  category    String   // malware | vulnerability | breach | attack | advisory
+  source      String   @default("GuardianX Intelligence")
+  cve         String?
+  ioc         String?  // indicator of compromise
+  affectedSystems String @default("")
+  publishedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+}
+
+// --- 3. AI Code Review ---
+model CodeReview {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId    String?
+  labId       String?
+  language    String   @default("python") // python | bash | javascript | c | sql
+  code        String
+  feedback    String   @default("") // AI-generated feedback (JSON)
+  score       Int      @default(0) // 0-100
+  issues      String   @default("[]") // JSON array of issues found
+  createdAt   DateTime @default(now())
+}
+
+// --- 4. Career Path Planner ---
+model CareerPath {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  targetRole  String   // SOC Analyst | Pentester | Security Engineer | CISO | etc.
+  currentRole String   @default("")
+  targetSalary String  @default("")
+  recommendedCourses String @default("[]") // JSON array of course IDs
+  recommendedCerts String @default("[]") // JSON array of cert names
+  recommendedLabs String @default("[]") // JSON array of lab IDs
+  estimatedWeeks Int   @default(12)
+  progress    Int      @default(0) // 0-100
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model CareerRole {
+  id          String   @id @default(cuid())
+  title       String   @unique
+  description String
+  avgSalary   String
+  requiredSkills String @default("[]") // JSON array
+  recommendedCourses String @default("[]") // JSON array of course IDs
+  growthRate  String   @default("15%")
+  category    String   @default("security") // security | network | cloud | governance
+}
+
+// --- 5. Job Board ---
+model Job {
+  id          String   @id @default(cuid())
+  title       String
+  company     String
+  companyLogo String?
+  location    String
+  remote      Boolean  @default(false)
+  type        String   @default("full-time") // full-time | part-time | contract | internship
+  salary      String   @default("")
+  description String
+  requirements String  @default("")
+  requiredCerts String @default("[]") // JSON array
+  requiredSkills String @default("[]") // JSON array
+  postedById  String
+  postedBy    User     @relation(fields: [postedById], references: [id])
+  status      String   @default("active") // active | closed | draft
+  applications JobApplication[]
+  createdAt   DateTime @default(now())
+}
+
+model JobApplication {
+  id          String   @id @default(cuid())
+  jobId       String
+  job         Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  coverLetter String   @default("")
+  status      String   @default("pending") // pending | reviewed | shortlisted | rejected | hired
+  createdAt   DateTime @default(now())
+
+  @@unique([jobId, userId])
+}
+
+// --- 6. Mock Interview ---
+model MockInterview {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role        String   // SOC Analyst | Pentester | etc.
+  difficulty  String   @default("intermediate") // beginner | intermediate | advanced
+  questions   String   @default("[]") // JSON array of questions
+  answers     String   @default("[]") // JSON array of answers
+  score       Int      @default(0)
+  feedback    String   @default("")
+  duration    Int      @default(0) // seconds
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+}
+
+model InterviewQuestion {
+  id          String   @id @default(cuid())
+  role        String   // SOC Analyst | Pentester | etc.
+  difficulty  String   @default("intermediate")
+  question    String
+  expectedAnswer String @default("")
+  category    String   @default("technical") // technical | behavioral | scenario
+  tags        String   @default("")
+}
+
+// --- 7. Resume Builder ---
+model Resume {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  template    String   @default("professional") // professional | modern | minimal | cybersecurity
+  summary     String   @default("")
+  experience  String   @default("[]") // JSON array
+  education   String   @default("[]") // JSON array
+  skills      String   @default("[]") // JSON array
+  certifications String @default("[]") // JSON array (auto-populated from GuardianX)
+  projects    String   @default("[]") // JSON array
+  contactInfo String   @default("{}") // JSON
+  isPublic    Boolean  @default(false)
+  shareUrl    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// --- 8. CTF Competition ---
+model CTFCompetition {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  format      String   @default("jeopardy") // jeopardy | attack-defense
+  startAt     DateTime
+  endAt       DateTime
+  maxTeams    Int      @default(50)
+  teamSize    Int      @default(4)
+  status      String   @default("upcoming") // upcoming | live | ended
+  prizes      String   @default("")
+  organizerId String
+  organizer   User     @relation(fields: [organizerId], references: [id])
+  challenges  CTFChallenge[]
+  teams       CTFTeam[]
+  createdAt   DateTime @default(now())
+}
+
+model CTFChallenge {
+  id            String   @id @default(cuid())
+  competitionId String
+  competition   CTFCompetition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  title         String
+  description   String
+  category      String   // web | crypto | forensics | reverse | pwn | misc
+  difficulty    String   @default("easy") // easy | medium | hard | insane
+  points        Int      @default(100)
+  flag          String
+  hint          String?
+  hintsUsed     Int      @default(0)
+  solveCount    Int      @default(0)
+  order         Int      @default(0)
+  submissions   CTFSubmission[]
+}
+
+model CTFTeam {
+  id            String   @id @default(cuid())
+  competitionId String
+  competition   CTFCompetition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  name          String
+  captainId     String
+  members       CTFTeamMember[]
+  score         Int      @default(0)
+  rank          Int      @default(0)
+  createdAt     DateTime @default(now())
+
+  @@unique([competitionId, name])
+}
+
+model CTFTeamMember {
+  id          String   @id @default(cuid())
+  teamId      String
+  team        CTFTeam  @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role        String   @default("member") // captain | member
+  joinedAt    DateTime @default(now())
+
+  @@unique([teamId, userId])
+}
+
+model CTFSubmission {
+  id            String   @id @default(cuid())
+  challengeId   String
+  challenge     CTFChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  teamId        String
+  flag          String
+  correct       Boolean  @default(false)
+  submittedAt   DateTime @default(now())
+}
+
+// --- 9. Weekly Challenges ---
+model WeeklyChallenge {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  category    String   // web | crypto | forensics | network | misc
+  difficulty  String   @default("medium")
+  flag        String
+  points      Int      @default(500)
+  hint        String?
+  startAt     DateTime @default(now())
+  endAt       DateTime
+  isActive    Boolean  @default(true)
+  participants WeeklyChallengeSubmission[]
+  createdAt   DateTime @default(now())
+}
+
+model WeeklyChallengeSubmission {
+  id          String   @id @default(cuid())
+  challengeId String
+  challenge   WeeklyChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  flag        String
+  correct     Boolean  @default(false)
+  timeTaken   Int      @default(0) // seconds
+  submittedAt DateTime @default(now())
+
+  @@unique([challengeId, userId])
+}
+
+// --- 10. Team Lab Missions ---
+model TeamMission {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  scenario    String
+  maxTeamSize Int      @default(4)
+  duration    Int      @default(60) // minutes
+  difficulty  String   @default("medium")
+  objectives  String   @default("[]") // JSON array
+  status      String   @default("active")
+  sessions    TeamMissionSession[]
+  createdAt   DateTime @default(now())
+}
+
+model TeamMissionSession {
+  id          String   @id @default(cuid())
+  missionId   String
+  mission     TeamMission @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  leaderId    String
+  status      String   @default("waiting") // waiting | active | completed | failed
+  members     TeamMissionMember[]
+  startedAt   DateTime?
+  completedAt DateTime?
+  score       Int      @default(0)
+  createdAt   DateTime @default(now())
+}
+
+model TeamMissionMember {
+  id          String   @id @default(cuid())
+  sessionId   String
+  session     TeamMissionSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role        String   @default("member") // leader | scanner | exploiter | reporter
+  joinedAt    DateTime @default(now())
+
+  @@unique([sessionId, userId])
+}
+
+// --- 11. Learning Analytics ---
+model LearningAnalytics {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  totalTimeSpent Int   @default(0) // seconds
+  coursesStarted Int   @default(0)
+  coursesCompleted Int @default(0)
+  labsAttempted Int    @default(0)
+  labsSolved  Int      @default(0)
+  avgQuizScore Float   @default(0)
+  currentStreak Int    @default(0)
+  longestStreak Int    @default(0)
+  skillRadar  String   @default("{}") // JSON: { web: 75, network: 60, ... }
+  weeklyActivity String @default("[]") // JSON: array of {date, minutes}
+  peerComparison String @default("{}") // JSON: percentile data
+  updatedAt   DateTime @updatedAt
+}
+
+// --- 12. Skill Assessment ---
+model SkillAssessment {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  category    String   // web | network | crypto | forensics | reverse | governance
+  difficulty  String   @default("intermediate")
+  duration    Int      @default(30) // minutes
+  questions   SkillAssessmentQuestion[]
+  results     SkillAssessmentResult[]
+  createdAt   DateTime @default(now())
+}
+
+model SkillAssessmentQuestion {
+  id            String   @id @default(cuid())
+  assessmentId  String
+  assessment    SkillAssessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  question      String
+  options       String   @default("[]") // JSON array
+  correctAnswer Int      @default(0)
+  explanation   String   @default("")
+  skillTag      String   @default("") // e.g., "sql-injection"
+  points        Int      @default(10)
+}
+
+model SkillAssessmentResult {
+  id            String   @id @default(cuid())
+  assessmentId  String
+  assessment    SkillAssessment @relation(fields: [assessmentId], references: [id])
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  answers       String   @default("[]") // JSON
+  score         Int      @default(0)
+  passed        Boolean  @default(false)
+  skillScores   String   @default("{}") // JSON: per-skill breakdown
+  takenAt       DateTime @default(now())
+}
+
+// --- 13. Course Prerequisites Visualizer ---
+// Uses existing Course.prerequisiteIds field
+// No new models needed — data is derived from Course model
+
+// --- 14. Lab Snapshots ---
+model LabSnapshot {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  labId       String
+  name        String   @default("Untitled Snapshot")
+  description String   @default("")
+  state       String   @default("{}") // JSON: terminal history, env vars, progress
+  createdAt   DateTime @default(now())
+}
+
+// --- 15. Collaborative Cyber Range ---
+model CyberRange {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  topology    String   @default("{}") // JSON: network topology config
+  machines    String   @default("[]") // JSON: array of machine configs
+  maxUsers    Int      @default(10)
+  difficulty  String   @default("advanced")
+  duration    Int      @default(120) // minutes
+  status      String   @default("available")
+  sessions    CyberRangeSession[]
+  createdAt   DateTime @default(now())
+}
+
+model CyberRangeSession {
+  id          String   @id @default(cuid())
+  rangeId     String
+  range       CyberRange @relation(fields: [rangeId], references: [id], onDelete: Cascade)
+  leaderId    String
+  status      String   @default("waiting") // waiting | active | completed
+  members     CyberRangeMember[]
+  startedAt   DateTime?
+  endedAt     DateTime?
+  createdAt   DateTime @default(now())
+}
+
+model CyberRangeMember {
+  id          String   @id @default(cuid())
+  sessionId   String
+  session     CyberRangeSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role        String   @default("member") // leader | attacker | defender | observer
+  joinedAt    DateTime @default(now())
+
+  @@unique([sessionId, userId])
+}
+
+// --- 16. Bug Bounty Integration ---
+model BugBountyProgram {
+  id          String   @id @default(cuid())
+  name        String
+  platform    String   @default("GuardianX") // GuardianX | HackerOne | Bugcrowd
+  url         String
+  description String
+  scope       String   @default("")
+  rewardRange String   @default("$0 - $0")
+  difficulty  String   @default("medium")
+  tags        String   @default("")
+  submissions BugBountySubmission[]
+  createdAt   DateTime @default(now())
+}
+
+model BugBountySubmission {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  programId   String
+  program     BugBountyProgram @relation(fields: [programId], references: [id])
+  title       String
+  description String
+  severity    String   @default("medium") // low | medium | high | critical
+  status      String   @default("submitted") // submitted | validated | rewarded | rejected
+  bounty      String   @default("")
+  createdAt   DateTime @default(now())
+}
+
+// --- 17. PWA ---
+// No DB models needed — PWA is a frontend manifest + service worker
+
+// --- 19. Parent/Guardian Portal ---
+model ParentAccount {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  name        String
+  passwordHash String
+  phone       String?
+  studentId   String
+  student     User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  relationship String  @default("parent") // parent | guardian
+  createdAt   DateTime @default(now())
+}
+
+// --- 20. Course Authoring Studio ---
+model AuthoredCourse {
+  id          String   @id @default(cuid())
+  title       String
+  authorId    String
+  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  status      String   @default("draft") // draft | review | published
+  config      String   @default("{}") // JSON: full course config (modules, lessons, quizzes, labs)
+  version     Int      @default(1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Update User model with new relations
+// Note: These are added at the end to avoid circular reference issues

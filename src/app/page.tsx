@@ -31,6 +31,25 @@ import { AssignmentsView } from "@/views/assignments"
 import { MessagingView } from "@/views/messaging"
 import { StudyGroupsView } from "@/views/study-groups"
 import { OfficeHoursView } from "@/views/office-hours"
+// New feature views
+import { AIAssistantView } from "@/views/ai-assistant"
+import { ThreatFeedView } from "@/views/threat-feed"
+import { CodeReviewView } from "@/views/code-review"
+import { CareerPlannerView } from "@/views/career-planner"
+import { JobBoardView } from "@/views/job-board"
+import { MockInterviewView } from "@/views/mock-interview"
+import { ResumeBuilderView } from "@/views/resume-builder"
+import { CTFPlatformView } from "@/views/ctf-platform"
+import { WeeklyChallengesView } from "@/views/weekly-challenges"
+import { TeamMissionsView } from "@/views/team-missions"
+import { LearningAnalyticsView } from "@/views/learning-analytics"
+import { SkillAssessmentsView } from "@/views/skill-assessments"
+import { PrerequisitesVisualizerView } from "@/views/prerequisites-visualizer"
+import { LabSnapshotsView } from "@/views/lab-snapshots"
+import { CyberRangeView } from "@/views/cyber-range"
+import { BugBountyView } from "@/views/bug-bounty"
+import { ParentPortalView } from "@/views/parent-portal"
+import { CourseStudioView } from "@/views/course-studio"
 
 // Public views that show the header + footer (accessible without login)
 const PUBLIC_VIEWS = new Set(["home", "impact", "contact", "institutions", "catalog", "course"])
@@ -65,6 +84,25 @@ function ViewRouter() {
       {view.name === "messaging" && <MessagingView />}
       {view.name === "study-groups" && <StudyGroupsView />}
       {view.name === "office-hours" && <OfficeHoursView />}
+      {/* New feature views */}
+      {view.name === "ai-assistant" && <AIAssistantView />}
+      {view.name === "threat-feed" && <ThreatFeedView />}
+      {view.name === "code-review" && <CodeReviewView />}
+      {view.name === "career-planner" && <CareerPlannerView />}
+      {view.name === "job-board" && <JobBoardView />}
+      {view.name === "mock-interview" && <MockInterviewView />}
+      {view.name === "resume-builder" && <ResumeBuilderView />}
+      {view.name === "ctf-platform" && <CTFPlatformView />}
+      {view.name === "weekly-challenges" && <WeeklyChallengesView />}
+      {view.name === "team-missions" && <TeamMissionsView />}
+      {view.name === "learning-analytics" && <LearningAnalyticsView />}
+      {view.name === "skill-assessments" && <SkillAssessmentsView />}
+      {view.name === "prerequisites-visualizer" && <PrerequisitesVisualizerView />}
+      {view.name === "lab-snapshots" && <LabSnapshotsView />}
+      {view.name === "cyber-range" && <CyberRangeView />}
+      {view.name === "bug-bounty" && <BugBountyView />}
+      {view.name === "parent-portal" && <ParentPortalView />}
+      {view.name === "course-studio" && <CourseStudioView />}
     </div>
   )
 }

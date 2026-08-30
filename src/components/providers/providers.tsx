@@ -5,6 +5,7 @@ import { SessionProvider } from "next-auth/react"
 import { ThemeProvider } from "@/components/providers/theme-provider"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { GamificationToaster } from "@/components/providers/gamification-toaster"
+import { ServiceWorkerRegister } from "@/components/providers/service-worker-register"
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = React.useState(
@@ -29,6 +30,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <QueryClientProvider client={queryClient}>
           {children}
           <GamificationToaster />
+          <ServiceWorkerRegister />
         </QueryClientProvider>
       </ThemeProvider>
     </SessionProvider>

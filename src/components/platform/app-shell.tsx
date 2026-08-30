@@ -9,6 +9,8 @@ import {
   Search, Sun, Moon, Bell, Terminal, ChevronRight, Settings,
   Trophy, Zap, Flame, Crown, CheckCheck, Sparkles, Presentation,
   ClipboardList, MessageSquare, UsersRound, CalendarClock, Building2,
+  Briefcase, FileText, Mic, Target, Network, Server, Bug, Camera,
+  Code2, ShieldAlert, BarChart3, PenLine, Heart,
 } from "lucide-react"
 import { useAppStore, type View } from "@/store/app-store"
 import { useUser } from "@/hooks/use-user"
@@ -42,13 +44,31 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Notes", icon: StickyNote, view: { name: "notes" } },
   { label: "Live Sessions", icon: Radio, view: { name: "live" } },
   { label: "Cyber Labs", icon: FlaskConical, view: { name: "labs" } },
+  { label: "AI Assistant", icon: Sparkles, view: { name: "ai-assistant" } },
+  { label: "Threat Feed", icon: ShieldAlert, view: { name: "threat-feed" } },
+  { label: "Code Review", icon: Code2, view: { name: "code-review" } },
+  { label: "Career Planner", icon: Briefcase, view: { name: "career-planner" } },
+  { label: "Job Board", icon: Search, view: { name: "job-board" } },
+  { label: "Mock Interview", icon: Mic, view: { name: "mock-interview" } },
+  { label: "Resume Builder", icon: FileText, view: { name: "resume-builder" } },
+  { label: "CTF Platform", icon: Trophy, view: { name: "ctf-platform" } },
+  { label: "Weekly Challenge", icon: Zap, view: { name: "weekly-challenges" } },
+  { label: "Team Missions", icon: UsersRound, view: { name: "team-missions" } },
+  { label: "Analytics", icon: BarChart3, view: { name: "learning-analytics" } },
+  { label: "Skill Tests", icon: Target, view: { name: "skill-assessments" } },
+  { label: "Prereq Graph", icon: Network, view: { name: "prerequisites-visualizer" } },
+  { label: "Lab Snapshots", icon: Camera, view: { name: "lab-snapshots" } },
+  { label: "Cyber Range", icon: Server, view: { name: "cyber-range" } },
+  { label: "Bug Bounty", icon: Bug, view: { name: "bug-bounty" } },
   { label: "Office Hours", icon: CalendarClock, view: { name: "office-hours" } },
   { label: "Study Groups", icon: UsersRound, view: { name: "study-groups" } },
   { label: "Messages", icon: MessageSquare, view: { name: "messaging" } },
-  { label: "Achievements", icon: Trophy, view: { name: "achievements" } },
+  { label: "Achievements", icon: Award, view: { name: "achievements" } },
   { label: "Leaderboards", icon: Crown, view: { name: "leaderboard" } },
   { label: "Certificates", icon: Award, view: { name: "certificates" } },
   { label: "Community", icon: Users, view: { name: "community" } },
+  { label: "Parent Portal", icon: Heart, view: { name: "parent-portal" } },
+  { label: "Course Studio", icon: PenLine, view: { name: "course-studio" } },
 ]
 
 function Logo({ onClick }: { onClick?: () => void }) {

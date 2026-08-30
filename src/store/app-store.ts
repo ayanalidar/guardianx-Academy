@@ -30,6 +30,25 @@ export type View =
   | { name: "study-groups" }
   | { name: "office-hours" }
   | { name: "auth" }
+  // New feature views
+  | { name: "ai-assistant" }
+  | { name: "threat-feed" }
+  | { name: "code-review" }
+  | { name: "career-planner" }
+  | { name: "job-board" }
+  | { name: "mock-interview" }
+  | { name: "resume-builder" }
+  | { name: "ctf-platform" }
+  | { name: "weekly-challenges" }
+  | { name: "team-missions" }
+  | { name: "learning-analytics" }
+  | { name: "skill-assessments" }
+  | { name: "prerequisites-visualizer" }
+  | { name: "lab-snapshots" }
+  | { name: "cyber-range" }
+  | { name: "bug-bounty" }
+  | { name: "parent-portal" }
+  | { name: "course-studio" }
 
 interface AppState {
   view: View

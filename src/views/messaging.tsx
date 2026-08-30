@@ -4,7 +4,6 @@ import * as React from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { api } from "@/lib/api"
 import { cn } from "@/lib/utils"
-import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -29,8 +28,10 @@ import {
   ChevronLeft,
   Mail,
   Users,
+  Shield,
 } from "lucide-react"
 import { toast } from "sonner"
+import { ScrollReveal, FadeIn } from "@/components/platform/motion-system"
 
 /* ------------------------------------------------------------------ */
 /* Types                                                              */
@@ -144,10 +145,11 @@ export function MessagingView() {
       )
     : threads
 
+  const totalUnread = threads.reduce((sum, t) => sum + (t.unreadCount || 0), 0)
+
   function openThread(id: string) {
     setActiveThreadId(id)
     setMobileShowConversation(true)
-    // Mark as read on server
     api(`/api/messages/threads/${id}/read`, { method: "POST" })
       .then(() => qc.invalidateQueries({ queryKey: ["message-threads"] }))
       .catch(() => {})
@@ -160,148 +162,189 @@ export function MessagingView() {
   }
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <MessageSquare className="h-7 w-7 text-emerald-400" /> Messages
-          </h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Direct messages with your instructors and peers.
-          </p>
-        </div>
-        <Button onClick={() => setNewMessageOpen(true)} className="gap-1.5 self-start sm:self-auto">
-          <Plus className="h-4 w-4" /> New Message
-        </Button>
-      </header>
+    <div className="relative min-h-screen">
+      {/* Atmospheric background */}
+      <div className="absolute inset-0 bg-mesh opacity-40 pointer-events-none" />
+      <div className="absolute top-0 right-1/4 w-[500px] h-[400px] bg-violet-600/5 blur-[120px] rounded-full pointer-events-none" />
 
-      {/* Two-pane layout */}
-      <Card className="overflow-hidden grid md:grid-cols-[320px_1fr] h-[70vh] min-h-[480px] p-0">
-        {/* Left pane — thread list */}
-        <section
-          className={cn(
-            "border-r border-border flex flex-col",
-            mobileShowConversation && activeThreadId ? "hidden md:flex" : "flex"
-          )}
-        >
-          {/* Search */}
-          <div className="p-3 border-b border-border">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search threads…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-8 h-9"
-              />
-            </div>
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+        {/* ====================================================
+            HEADER — oversized editorial
+            ==================================================== */}
+        <ScrollReveal>
+          <div className="flex items-center gap-2 mb-4">
+            <Shield className="h-3.5 w-3.5 text-violet-300" />
+            <span className="text-[10px] font-mono text-muted-foreground tracking-[0.3em]">
+              DIRECT · ENCRYPTED · PRIVATE
+            </span>
           </div>
+        </ScrollReveal>
 
-          {/* Thread list */}
-          <ScrollArea className="flex-1">
-            {threadsLoading ? (
-              <div className="p-3 space-y-2">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Skeleton key={i} className="h-16" />
-                ))}
+        <ScrollReveal delay={0.05}>
+          <h1 className="text-[clamp(2.5rem,7vw,5.5rem)] font-bold leading-[0.9] tracking-[-0.04em] mb-4 text-balance">
+            <span className="text-gradient-premium">Messages.</span>
+          </h1>
+        </ScrollReveal>
+
+        <ScrollReveal delay={0.15}>
+          <div className="flex items-end justify-between gap-6 flex-wrap mb-12">
+            <p className="text-muted-foreground max-w-md text-sm leading-relaxed">
+              Direct, private conversations with your instructors and peers.
+              {totalUnread > 0 && (
+                <span className="text-violet-300"> · {totalUnread} unread message{totalUnread !== 1 ? "s" : ""}.</span>
+              )}
+            </p>
+            <Button
+              onClick={() => setNewMessageOpen(true)}
+              className="bg-violet-600 hover:bg-violet-500 btn-premium gap-1.5"
+            >
+              <Plus className="h-4 w-4" /> New Message
+            </Button>
+          </div>
+        </ScrollReveal>
+
+        {/* ====================================================
+            TWO-PANE — premium glass
+            ==================================================== */}
+        <ScrollReveal delay={0.2}>
+          <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-card/20 backdrop-blur-xl grid md:grid-cols-[340px_1fr] h-[72vh] min-h-[520px]">
+            {/* Top accent line */}
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-500/30 to-transparent z-20 pointer-events-none" />
+
+            {/* Left pane — thread list */}
+            <section
+              className={cn(
+                "border-r border-border/60 flex flex-col bg-background/20",
+                mobileShowConversation && activeThreadId ? "hidden md:flex" : "flex"
+              )}
+            >
+              {/* Search */}
+              <div className="p-4 border-b border-border/60">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search threads…"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="pl-9 h-10 bg-background/50 border-border/60"
+                  />
+                </div>
               </div>
-            ) : filtered.length === 0 ? (
-              <div className="p-6 text-center text-sm text-muted-foreground">
-                {search ? "No matching threads." : "No conversations yet."}
-              </div>
-            ) : (
-              <ul className="divide-y divide-border">
-                {filtered.map((t) => (
-                  <li key={t.id}>
-                    <button
-                      onClick={() => openThread(t.id)}
-                      className={cn(
-                        "w-full text-left p-3 flex items-start gap-3 transition-colors hover:bg-card/50",
-                        activeThreadId === t.id && "bg-card/70"
-                      )}
-                    >
-                      <div className="relative shrink-0">
-                        <Avatar className="h-10 w-10 border border-border">
-                          {t.other.avatar ? (
-                            <AvatarImage src={t.other.avatar} alt={t.other.name} />
-                          ) : null}
-                          <AvatarFallback className="bg-emerald-500/10 text-emerald-400 text-xs">
-                            {initialsOf(t.other.name)}
-                          </AvatarFallback>
-                        </Avatar>
-                        {t.unreadCount > 0 && (
-                          <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center">
-                            {t.unreadCount > 9 ? "9+" : t.unreadCount}
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2">
-                          <span
-                            className={cn(
-                              "text-sm truncate",
-                              t.unreadCount > 0 ? "font-semibold" : "font-medium"
-                            )}
-                          >
-                            {t.other.name}
-                          </span>
-                          <span className="text-[10px] text-muted-foreground shrink-0">
-                            {t.lastMessage ? timeAgo(t.lastMessage.createdAt) : ""}
-                          </span>
-                        </div>
-                        <p
+
+              {/* Thread list */}
+              <ScrollArea className="flex-1">
+                {threadsLoading ? (
+                  <div className="p-3 space-y-2">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Skeleton key={i} className="h-16 rounded-xl" />
+                    ))}
+                  </div>
+                ) : filtered.length === 0 ? (
+                  <div className="p-8 text-center">
+                    <Mail className="h-8 w-8 text-muted-foreground mx-auto mb-3 opacity-50" />
+                  <p className="text-sm text-muted-foreground">
+                    {search ? "No matching threads." : "No conversations yet."}
+                  </p>
+                  </div>
+                ) : (
+                  <ul className="divide-y divide-border/40">
+                    {filtered.map((t) => (
+                      <li key={t.id}>
+                        <button
+                          onClick={() => openThread(t.id)}
                           className={cn(
-                            "text-xs text-muted-foreground truncate mt-0.5",
-                            t.unreadCount > 0 && "text-foreground/80 font-medium"
+                            "w-full text-left p-3 flex items-start gap-3 transition-all hover:bg-violet-500/5",
+                            activeThreadId === t.id && "bg-violet-500/10 border-l-2 border-l-violet-500"
                           )}
                         >
-                          {t.lastMessage
-                            ? (t.lastMessage.isMine ? "You: " : "") + t.lastMessage.content
-                            : "No messages yet"}
-                        </p>
-                      </div>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </ScrollArea>
-        </section>
+                          <div className="relative shrink-0">
+                            <Avatar className="h-10 w-10 border border-border/60">
+                              {t.other.avatar ? (
+                                <AvatarImage src={t.other.avatar} alt={t.other.name} />
+                              ) : null}
+                              <AvatarFallback className="bg-violet-500/10 text-violet-300 text-xs font-medium">
+                                {initialsOf(t.other.name)}
+                              </AvatarFallback>
+                            </Avatar>
+                            {t.unreadCount > 0 && (
+                              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-violet-500 text-white text-[10px] font-bold flex items-center justify-center shadow-lg shadow-violet-500/30">
+                                {t.unreadCount > 9 ? "9+" : t.unreadCount}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2">
+                              <span
+                                className={cn(
+                                  "text-sm truncate",
+                                  t.unreadCount > 0 ? "font-semibold" : "font-medium"
+                                )}
+                              >
+                                {t.other.name}
+                              </span>
+                              <span className="text-[10px] text-muted-foreground shrink-0 font-mono">
+                                {t.lastMessage ? timeAgo(t.lastMessage.createdAt) : ""}
+                              </span>
+                            </div>
+                            <p
+                              className={cn(
+                                "text-xs text-muted-foreground truncate mt-0.5",
+                                t.unreadCount > 0 && "text-foreground/80 font-medium"
+                              )}
+                            >
+                              {t.lastMessage
+                                ? (t.lastMessage.isMine ? "You: " : "") + t.lastMessage.content
+                                : "No messages yet"}
+                            </p>
+                          </div>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </ScrollArea>
+            </section>
 
-        {/* Right pane — active conversation */}
-        <section
-          className={cn(
-            "flex flex-col",
-            mobileShowConversation && activeThreadId ? "flex" : "hidden md:flex"
-          )}
-        >
-          {activeThreadId ? (
-            <ConversationPane
-              threadId={activeThreadId}
-              onBack={() => {
-                setMobileShowConversation(false)
-                setActiveThreadId(null)
-              }}
-            />
-          ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-center p-6">
-              <MessageSquare className="h-12 w-12 text-muted-foreground mb-3" />
-              <h3 className="font-semibold mb-1">Select a conversation</h3>
-              <p className="text-sm text-muted-foreground">
-                Choose a thread from the left, or start a new message.
-              </p>
-            </div>
-          )}
-        </section>
-      </Card>
+            {/* Right pane — active conversation */}
+            <section
+              className={cn(
+                "flex flex-col",
+                mobileShowConversation && activeThreadId ? "flex" : "hidden md:flex"
+              )}
+            >
+              {activeThreadId ? (
+                <ConversationPane
+                  threadId={activeThreadId}
+                  onBack={() => {
+                    setMobileShowConversation(false)
+                    setActiveThreadId(null)
+                  }}
+                />
+              ) : (
+                <div className="flex-1 flex flex-col items-center justify-center text-center p-8 relative">
+                  <div className="absolute inset-0 bg-grid opacity-[0.07] pointer-events-none" />
+                  <div className="relative z-10">
+                    <div className="inline-flex p-5 rounded-2xl border border-violet-500/30 bg-violet-500/10 mb-6">
+                      <MessageSquare className="h-9 w-9 text-violet-300" />
+                    </div>
+                    <h3 className="text-xl font-bold mb-2 tracking-[-0.02em]">Select a conversation</h3>
+                    <p className="text-sm text-muted-foreground max-w-sm">
+                      Choose a thread from the left, or start a new message to begin a private dialogue.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </section>
+          </div>
+        </ScrollReveal>
 
-      {/* New message dialog */}
-      <NewMessageDialog
-        open={newMessageOpen}
-        onOpenChange={setNewMessageOpen}
-        onCreated={handleNewThreadCreated}
-      />
+        {/* New message dialog */}
+        <NewMessageDialog
+          open={newMessageOpen}
+          onOpenChange={setNewMessageOpen}
+          onCreated={handleNewThreadCreated}
+        />
+      </div>
     </div>
   )
 }
@@ -341,7 +384,6 @@ function ConversationPane({
     onError: (e: Error) => toast.error("Failed to send", { description: e.message }),
   })
 
-  // Auto-scroll to bottom on new messages
   React.useEffect(() => {
     const el = scrollRef.current
     if (el) el.scrollTop = el.scrollHeight
@@ -363,7 +405,6 @@ function ConversationPane({
     }
   }
 
-  // Group messages by day
   const grouped: { label: string; items: MessageItem[] }[] = []
   let currentLabel = ""
   for (const m of messages) {
@@ -379,31 +420,31 @@ function ConversationPane({
   return (
     <>
       {/* Header */}
-      <header className="flex items-center gap-3 p-3 border-b border-border">
+      <header className="flex items-center gap-3 p-4 border-b border-border/60 bg-background/30 backdrop-blur">
         <Button
           variant="ghost"
           size="icon"
-          className="md:hidden h-8 w-8"
+          className="md:hidden h-8 w-8 hover:bg-violet-500/10"
           onClick={onBack}
           aria-label="Back to threads"
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
-        <Avatar className="h-9 w-9 border border-border">
+        <Avatar className="h-10 w-10 border border-border/60">
           {other?.avatar ? <AvatarImage src={other.avatar} alt={other.name} /> : null}
-          <AvatarFallback className="bg-emerald-500/10 text-emerald-400 text-xs">
+          <AvatarFallback className="bg-violet-500/10 text-violet-300 text-xs font-medium">
             {other ? initialsOf(other.name) : "?"}
           </AvatarFallback>
         </Avatar>
         <div className="flex-1 min-w-0">
-          <div className="font-medium text-sm truncate">
+          <div className="font-semibold text-sm truncate">
             {other?.name ?? "Loading…"}
           </div>
           {other?.title && (
             <div className="text-xs text-muted-foreground truncate">{other.title}</div>
           )}
         </div>
-        <Badge variant="outline" className="capitalize text-[10px] hidden sm:inline-flex">
+        <Badge variant="outline" className="capitalize text-[10px] hidden sm:inline-flex border-violet-500/30 text-violet-300 bg-violet-500/10">
           {other?.role ?? ""}
         </Badge>
       </header>
@@ -411,24 +452,25 @@ function ConversationPane({
       {/* Messages */}
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto p-4 space-y-4"
+        className="flex-1 overflow-y-auto p-4 space-y-4 relative"
         style={{ scrollbarWidth: "thin" }}
       >
+        <div className="absolute inset-0 bg-grid opacity-[0.05] pointer-events-none" />
         {isLoading ? (
-          <div className="space-y-3">
+          <div className="space-y-3 relative">
             {Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton key={i} className={cn("h-12", i % 2 === 0 ? "w-2/3" : "w-1/2 ml-auto")} />
+              <Skeleton key={i} className={cn("h-12 rounded-2xl", i % 2 === 0 ? "w-2/3" : "w-1/2 ml-auto")} />
             ))}
           </div>
         ) : messages.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-center text-sm text-muted-foreground">
-            <Mail className="h-10 w-10 mb-2" />
+          <div className="h-full flex flex-col items-center justify-center text-center text-sm text-muted-foreground relative">
+            <Mail className="h-10 w-10 mb-3 opacity-50" />
             No messages yet — say hello!
           </div>
         ) : (
           grouped.map((group) => (
-            <div key={group.label} className="space-y-2">
-              <div className="text-center text-[10px] uppercase tracking-wider text-muted-foreground py-1">
+            <div key={group.label} className="space-y-2 relative">
+              <div className="text-center text-[10px] font-mono uppercase tracking-[0.3em] text-muted-foreground py-1">
                 {group.label}
               </div>
               {group.items.map((m) => (
@@ -438,17 +480,17 @@ function ConversationPane({
                 >
                   <div
                     className={cn(
-                      "max-w-[78%] px-3 py-2 rounded-xl text-sm break-words",
+                      "max-w-[78%] px-4 py-2.5 rounded-2xl text-sm break-words",
                       m.isMine
-                        ? "bg-emerald-500/15 text-emerald-50 border border-emerald-500/30 rounded-br-sm"
-                        : "bg-card border border-border rounded-bl-sm"
+                        ? "bg-violet-500/15 text-violet-50 border border-violet-500/30 rounded-br-sm backdrop-blur"
+                        : "bg-card/60 border border-border/60 rounded-bl-sm backdrop-blur"
                     )}
                   >
-                    <p className="whitespace-pre-wrap">{m.content}</p>
+                    <p className="whitespace-pre-wrap leading-relaxed">{m.content}</p>
                     <div
                       className={cn(
-                        "text-[10px] mt-1",
-                        m.isMine ? "text-emerald-200/60" : "text-muted-foreground"
+                        "text-[10px] mt-1 font-mono",
+                        m.isMine ? "text-violet-200/60" : "text-muted-foreground"
                       )}
                     >
                       {timeShort(m.createdAt)}
@@ -462,20 +504,20 @@ function ConversationPane({
       </div>
 
       {/* Composer */}
-      <footer className="p-3 border-t border-border">
+      <footer className="p-3 border-t border-border/60 bg-background/30 backdrop-blur">
         <div className="flex items-end gap-2">
           <Textarea
             placeholder="Type a message… (Enter to send, Shift+Enter for newline)"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="min-h-[44px] max-h-32 resize-none"
+            className="min-h-[44px] max-h-32 resize-none bg-background/50 border-border/60"
             rows={1}
           />
           <Button
             onClick={handleSend}
             disabled={!draft.trim() || sendMutation.isPending}
-            className="gap-1.5"
+            className="bg-violet-600 hover:bg-violet-500 btn-premium gap-1.5"
             aria-label="Send message"
           >
             <Send className="h-4 w-4" />
@@ -533,10 +575,10 @@ function NewMessageDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-popover/95 backdrop-blur-xl border-border/60">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Plus className="h-5 w-5 text-emerald-400" /> New Message
+          <DialogTitle className="flex items-center gap-2 text-xl">
+            <Plus className="h-5 w-5 text-violet-300" /> New Message
           </DialogTitle>
           <DialogDescription>
             Choose a recipient from your network and write the first message.
@@ -544,9 +586,8 @@ function NewMessageDialog({
         </DialogHeader>
 
         <div className="space-y-4 py-2">
-          {/* Recipient picker */}
           <div>
-            <label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">
+            <label className="text-[10px] font-mono uppercase tracking-[0.25em] text-muted-foreground mb-2 block">
               Recipient
             </label>
             {isLoading ? (
@@ -556,8 +597,8 @@ function NewMessageDialog({
                 ))}
               </div>
             ) : contacts.length === 0 ? (
-              <div className="text-sm text-muted-foreground p-3 border border-dashed border-border rounded-lg text-center">
-                <Users className="h-5 w-5 mx-auto mb-1" />
+              <div className="text-sm text-muted-foreground p-4 border border-dashed border-border/60 rounded-lg text-center">
+                <Users className="h-5 w-5 mx-auto mb-2 opacity-60" />
                 No contacts available. Enroll in a course to message instructors.
               </div>
             ) : (
@@ -568,15 +609,15 @@ function NewMessageDialog({
                     type="button"
                     onClick={() => setRecipientId(c.id)}
                     className={cn(
-                      "w-full flex items-center gap-3 p-2 rounded-lg border transition-colors text-left",
+                      "w-full flex items-center gap-3 p-2 rounded-lg border transition-all text-left",
                       recipientId === c.id
-                        ? "border-emerald-500/40 bg-emerald-500/10"
-                        : "border-border hover:bg-card/50"
+                        ? "border-violet-500/40 bg-violet-500/10"
+                        : "border-border/60 hover:bg-violet-500/5 hover:border-violet-500/30"
                     )}
                   >
-                    <Avatar className="h-8 w-8 border border-border">
+                    <Avatar className="h-8 w-8 border border-border/60">
                       {c.avatar ? <AvatarImage src={c.avatar} alt={c.name} /> : null}
-                      <AvatarFallback className="bg-emerald-500/10 text-emerald-400 text-xs">
+                      <AvatarFallback className="bg-violet-500/10 text-violet-300 text-xs">
                         {initialsOf(c.name)}
                       </AvatarFallback>
                     </Avatar>
@@ -586,7 +627,7 @@ function NewMessageDialog({
                         <div className="text-xs text-muted-foreground truncate">{c.title}</div>
                       )}
                     </div>
-                    <Badge variant="outline" className="capitalize text-[10px]">
+                    <Badge variant="outline" className="capitalize text-[10px] border-violet-500/30 text-violet-300">
                       {c.role}
                     </Badge>
                   </button>
@@ -595,16 +636,15 @@ function NewMessageDialog({
             )}
           </div>
 
-          {/* Message */}
           <div>
-            <label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">
+            <label className="text-[10px] font-mono uppercase tracking-[0.25em] text-muted-foreground mb-2 block">
               Message
             </label>
             <Textarea
               placeholder="Write your message…"
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              className="min-h-[100px]"
+              className="min-h-[100px] bg-background/50 resize-none"
             />
           </div>
         </div>
@@ -623,9 +663,10 @@ function NewMessageDialog({
             onClick={() =>
               createMutation.mutate({ recipientId, content: content.trim() })
             }
+            className="bg-violet-600 hover:bg-violet-500 btn-premium gap-1.5"
           >
             {createMutation.isPending ? "Sending…" : "Send"}
-            <Send className="h-3.5 w-3.5 ml-1.5" />
+            <Send className="h-3.5 w-3.5" />
           </Button>
         </DialogFooter>
       </DialogContent>

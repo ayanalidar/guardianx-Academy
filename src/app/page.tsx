@@ -4,7 +4,12 @@ import * as React from "react"
 import { useSession } from "next-auth/react"
 import { AuthScreen } from "@/components/platform/auth-screen"
 import { AppShell } from "@/components/platform/app-shell"
+import { PublicPageShell } from "@/components/platform/public-page-shell"
 import { useAppStore } from "@/store/app-store"
+import { HomeView } from "@/views/home"
+import { ImpactView } from "@/views/impact"
+import { ContactView } from "@/views/contact"
+import { PartnerInstitutionsView } from "@/views/partner-institutions"
 import { DashboardView } from "@/views/dashboard"
 import { CourseCatalogView } from "@/views/course-catalog"
 import { CourseDetailView } from "@/views/course-detail"
@@ -18,6 +23,8 @@ import { CertificatesView } from "@/views/certificates"
 import { AchievementsView } from "@/views/achievements"
 import { LeaderboardView } from "@/views/leaderboard"
 import { InstructorDashboardView } from "@/views/instructor-dashboard"
+import { SchoolDashboardView } from "@/views/school-dashboard"
+import { AdminDashboardView } from "@/views/admin-dashboard"
 import { CommunityView } from "@/views/community"
 import { ProfileView } from "@/views/profile"
 import { AssignmentsView } from "@/views/assignments"
@@ -25,11 +32,18 @@ import { MessagingView } from "@/views/messaging"
 import { StudyGroupsView } from "@/views/study-groups"
 import { OfficeHoursView } from "@/views/office-hours"
 
+// Public views that show the header + footer (accessible without login)
+const PUBLIC_VIEWS = new Set(["home", "impact", "contact", "institutions", "catalog", "course"])
+
 function ViewRouter() {
   const { view } = useAppStore()
   // key forces remount + fade-in on navigation
   return (
     <div key={JSON.stringify(view)} className="page-transition">
+      {view.name === "home" && <HomeView />}
+      {view.name === "impact" && <ImpactView />}
+      {view.name === "contact" && <ContactView />}
+      {view.name === "institutions" && <PartnerInstitutionsView />}
       {view.name === "dashboard" && <DashboardView />}
       {view.name === "catalog" && <CourseCatalogView />}
       {view.name === "course" && <CourseDetailView />}
@@ -43,6 +57,8 @@ function ViewRouter() {
       {view.name === "achievements" && <AchievementsView />}
       {view.name === "leaderboard" && <LeaderboardView />}
       {view.name === "instructor" && <InstructorDashboardView />}
+      {view.name === "school" && <SchoolDashboardView />}
+      {view.name === "admin" && <AdminDashboardView />}
       {view.name === "community" && <CommunityView />}
       {view.name === "profile" && <ProfileView />}
       {view.name === "assignments" && <AssignmentsView />}
@@ -55,6 +71,7 @@ function ViewRouter() {
 
 export default function Home() {
   const { data: session, status } = useSession()
+  const { view } = useAppStore()
 
   if (status === "loading") {
     return (
@@ -72,8 +89,34 @@ export default function Home() {
     )
   }
 
+  // If logged in and view is a public page (home/impact/contact), still show the app shell
+  // so the user can navigate back to their dashboard via the sidebar.
+  // If NOT logged in:
+  //   - "login" view → show AuthScreen (full-screen, has its own header)
+  //   - public views (home/impact/contact) → show PublicPageShell with header + footer
+  //   - any other view → redirect to login
   if (!session) {
+    if (view.name === "login") {
+      return <AuthScreen />
+    }
+    if (PUBLIC_VIEWS.has(view.name)) {
+      return (
+        <PublicPageShell>
+          <ViewRouter />
+        </PublicPageShell>
+      )
+    }
+    // Default: show login screen for any authenticated view when not logged in
     return <AuthScreen />
+  }
+
+  // Logged in: if user explicitly navigates to a public view, show it with public shell
+  if (PUBLIC_VIEWS.has(view.name)) {
+    return (
+      <PublicPageShell>
+        <ViewRouter />
+      </PublicPageShell>
+    )
   }
 
   return (

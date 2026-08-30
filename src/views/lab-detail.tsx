@@ -4,20 +4,32 @@ import * as React from "react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { motion, AnimatePresence } from "framer-motion"
 import { api } from "@/lib/api"
 import { useAppStore } from "@/store/app-store"
 import { colorFor, DIFFICULTY_COLORS } from "@/lib/colors"
-import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Progress } from "@/components/ui/progress"
 import {
   ChevronLeft, Terminal, Target, Clock, Flag, Lightbulb, CheckCircle2,
-  PlayCircle, Lock, ListChecks, BookOpen, Zap, Trophy,
+  PlayCircle, ListChecks, BookOpen, Zap, Trophy, ArrowRight,
+  ChevronDown, ChevronUp, Activity, Crosshair, ShieldCheck,
 } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
+import {
+  ScrollReveal, Stagger, StaggerItem, Counter, CursorGlow,
+  ScaleReveal,
+} from "@/components/platform/motion-system"
+import { NetworkVisualization } from "@/components/platform/network-visualization"
+
+/* ============================================================
+   LabDetailView — Cyber Range Mission
+   Premium cinematic experience: oversized mission title,
+   immersive header with network viz, sticky briefing,
+   objective checklist, premium terminal, collapsible hints.
+   ============================================================ */
 
 // Format milliseconds as Mm Ss or Hh Mm
 function formatDuration(ms: number): string {
@@ -36,7 +48,14 @@ interface LabData {
     category: string; difficulty: string; durationMin: number; points: number; tags: string
     scenario: string; objectives: string; hints: string; flag: string; commands: string; color: string
   }
-  progress: { status: string; flagFound: boolean; hintsUsed: number } | null
+  progress: { status: string; flagFound: boolean; hintsUsed: number; timeSpentMs?: number; attempts?: number } | null
+}
+
+const DIFFICULTY_DOTS: Record<string, { count: number; color: string; label: string }> = {
+  Easy: { count: 1, color: "bg-emerald-400", label: "text-emerald-400" },
+  Medium: { count: 2, color: "bg-amber-400", label: "text-amber-400" },
+  Hard: { count: 3, color: "bg-rose-400", label: "text-rose-400" },
+  Insane: { count: 4, color: "bg-fuchsia-400", label: "text-fuchsia-400" },
 }
 
 export function LabDetailView() {
@@ -59,109 +78,358 @@ export function LabDetailView() {
   if (!data) return null
 
   const { lab, progress } = data
+  // colorFor retained for compatibility with lab.color (used to drive accent theme)
   const col = colorFor(lab.color)
   const objectives = lab.objectives.split("|").filter(Boolean)
   const commands = lab.commands.split("|").filter(Boolean)
   const done = progress?.status === "completed"
+  const started = !!progress
+  const dot = DIFFICULTY_DOTS[lab.difficulty] ?? DIFFICULTY_DOTS.Medium
 
   return (
-    <div className="space-y-6">
-      <Button variant="ghost" size="sm" onClick={() => navigate({ name: "labs" })} className="text-muted-foreground">
-        <ChevronLeft className="h-4 w-4 mr-1" /> Back to labs
-      </Button>
+    <div className="relative min-h-screen">
+      {/* Atmospheric background */}
+      <div className="absolute inset-0 bg-mesh opacity-40 pointer-events-none" />
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-violet-600/8 blur-[120px] rounded-full pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-cyan-600/5 blur-[120px] rounded-full pointer-events-none" />
 
-      {/* Header */}
-      <div className={`relative overflow-hidden rounded-2xl border ${col.border} bg-gradient-to-br ${col.gradient} p-6 lg:p-8`}>
-        <div className="absolute inset-0 bg-grid opacity-30" />
-        <div className="relative z-10">
-          <div className="flex items-center gap-2 mb-3 flex-wrap">
-            <Badge variant="outline" className={`text-xs ${DIFFICULTY_COLORS[lab.difficulty]}`}>{lab.difficulty}</Badge>
-            <Badge variant="outline" className="text-xs">{lab.category}</Badge>
-            {done && <Badge className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"><CheckCircle2 className="h-3 w-3 mr-1" /> Solved</Badge>}
-          </div>
-          <h1 className="text-2xl lg:text-3xl font-bold mb-2 flex items-center gap-3">
-            <Terminal className="h-7 w-7 text-emerald-400" /> {lab.title}
-          </h1>
-          <p className="text-muted-foreground max-w-2xl">{lab.longDescription}</p>
-          <div className="flex flex-wrap items-center gap-4 mt-4 text-sm text-muted-foreground">
-            <span className="flex items-center gap-1"><Clock className="h-4 w-4" />{lab.durationMin} min</span>
-            <span className="flex items-center gap-1 text-violet-400 font-medium"><Target className="h-4 w-4" />{lab.points} points</span>
-            <span className="flex items-center gap-1"><Lightbulb className="h-4 w-4" />{progress?.hintsUsed ?? 0} hints used</span>
-            {progress?.timeSpentMs ? (
-              <span className="flex items-center gap-1 text-cyan-400 font-mono"><Clock className="h-4 w-4" />{formatDuration(progress.timeSpentMs)} spent</span>
-            ) : null}
-          </div>
-        </div>
-      </div>
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
+        {/* Back */}
+        <ScrollReveal>
+          <button
+            onClick={() => navigate({ name: "labs" })}
+            className="group inline-flex items-center gap-2 text-[10px] font-mono tracking-[0.25em] text-muted-foreground hover:text-violet-300 transition-colors mb-8"
+          >
+            <ChevronLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+            BACK TO RANGE
+          </button>
+        </ScrollReveal>
 
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Left: scenario + objectives + terminal */}
-        <div className="lg:col-span-2 space-y-4">
-          {/* Scenario */}
-          <Card className="p-6">
-            <h3 className="font-semibold mb-3 flex items-center gap-2"><BookOpen className="h-4 w-4 text-emerald-400" /> Mission Briefing</h3>
-            <div className="prose-guardianx max-w-none text-sm">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{lab.scenario}</ReactMarkdown>
-            </div>
-          </Card>
+        {/* ====================================================
+            HEADER — oversized title with network viz background
+            ==================================================== */}
+        <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-card/30 mb-10">
+          <div className="absolute inset-0 bg-gradient-to-br from-violet-950/40 via-background to-cyan-950/15" />
+          <div className="absolute inset-0 bg-grid opacity-15" />
+          <NetworkVisualization variant="section" className="absolute inset-0 opacity-50" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
 
-          {/* Objectives */}
-          <Card className="p-6">
-            <h3 className="font-semibold mb-3 flex items-center gap-2"><ListChecks className="h-4 w-4 text-amber-400" /> Objectives</h3>
-            <div className="space-y-2">
-              {objectives.map((obj, i) => (
-                <div key={i} className="flex items-start gap-3 p-2.5 rounded-lg bg-muted/30">
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-amber-400 text-xs font-mono font-bold">{i + 1}</span>
-                  <span className="text-sm">{obj}</span>
+          <div className="relative z-10 p-8 lg:p-12">
+            <ScrollReveal>
+              <div className="flex items-center gap-3 mb-6 flex-wrap">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-violet-500/30 bg-violet-500/10 text-violet-300 text-[10px] font-mono tracking-[0.25em]">
+                  <Crosshair className="h-3 w-3" /> MISSION BRIEF
                 </div>
-              ))}
-            </div>
-          </Card>
+                <span className="text-[10px] font-mono text-muted-foreground tracking-[0.2em]">
+                  {lab.category.toUpperCase()}
+                </span>
+                <div className="flex items-center gap-1.5">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <span
+                      key={i}
+                      className={cn("h-1.5 w-1.5 rounded-full", i < dot.count ? dot.color : "bg-border")}
+                    />
+                  ))}
+                  <span className={cn("text-[10px] font-mono ml-1.5", dot.label)}>
+                    {lab.difficulty.toUpperCase()}
+                  </span>
+                </div>
+                {done && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[10px] font-mono border border-emerald-500/30">
+                    <ShieldCheck className="h-3 w-3" /> SOLVED
+                  </span>
+                )}
+                {started && !done && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 text-[10px] font-mono border border-amber-500/30">
+                    <Activity className="h-3 w-3" /> ACTIVE
+                  </span>
+                )}
+              </div>
+            </ScrollReveal>
 
-          {/* Terminal */}
-          <LabTerminal
-            labSlug={slug}
-            commands={commands}
-            flag={lab.flag}
-            started={!!progress}
-            done={done}
-            onStart={() => startMutation.mutate()}
-          />
+            <ScrollReveal delay={0.05}>
+              <h1 className="text-[clamp(2rem,6vw,4.5rem)] font-bold leading-[0.95] tracking-[-0.04em] mb-4 text-balance">
+                {lab.title}
+              </h1>
+            </ScrollReveal>
+
+            <ScrollReveal delay={0.15}>
+              <p className="text-muted-foreground max-w-2xl text-base lg:text-lg mb-8">
+                {lab.longDescription}
+              </p>
+            </ScrollReveal>
+
+            <ScrollReveal delay={0.25}>
+              <div className="flex flex-wrap items-center gap-x-8 gap-y-4 border-t border-border/60 pt-6">
+                <HeaderStat icon={Clock} label="EST. TIME" value={`${lab.durationMin}m`} color="text-cyan-300" />
+                <HeaderStat icon={Target} label="REWARD" value={`${lab.points} pts`} color="text-violet-300" />
+                <HeaderStat icon={Lightbulb} label="HINTS USED" value={`${progress?.hintsUsed ?? 0}`} color="text-amber-300" />
+                {progress?.timeSpentMs ? (
+                  <HeaderStat icon={Activity} label="TIME SPENT" value={formatDuration(progress.timeSpentMs)} color="text-emerald-300" />
+                ) : null}
+                <HeaderStat icon={Trophy} label="XP REWARD" value={`${lab.points} XP`} color="text-violet-300" />
+              </div>
+            </ScrollReveal>
+          </div>
         </div>
 
-        {/* Right: hints + flag submission + tools */}
-        <div className="space-y-4">
-          <HintsPanel slug={slug} hintsString={lab.hints} hintsUsed={progress?.hintsUsed ?? 0} difficulty={lab.difficulty} />
+        {/* ====================================================
+            SUCCESS BANNER — if lab completed
+            ==================================================== */}
+        {done && (
+          <ScaleReveal className="mb-8">
+            <SuccessBanner points={lab.points} />
+          </ScaleReveal>
+        )}
 
-          {/* Available commands */}
-          <Card className="p-5">
-            <h3 className="font-semibold mb-3 flex items-center gap-2 text-sm"><Terminal className="h-4 w-4 text-cyan-400" /> Available Tools</h3>
-            <div className="flex flex-wrap gap-1.5">
-              {commands.map((cmd) => (
-                <Badge key={cmd} variant="outline" className="text-xs font-mono text-cyan-400 border-cyan-500/20">{cmd}</Badge>
-              ))}
+        {/* ====================================================
+            MAIN GRID — content + sticky sidebar
+            ==================================================== */}
+        <div className="grid lg:grid-cols-12 gap-6">
+          {/* Left: Main content (briefing, objectives, terminal, hints) */}
+          <div className="lg:col-span-8 space-y-6">
+            {/* Mission Briefing — with sticky header */}
+            <ScrollReveal>
+              <MissionBriefing scenario={lab.scenario} />
+            </ScrollReveal>
+
+            {/* Objectives */}
+            <ScrollReveal>
+              <div className="relative rounded-2xl border border-border/60 bg-card/30 p-6 lg:p-8">
+                <div className="flex items-center gap-2 mb-5">
+                  <ListChecks className="h-4 w-4 text-amber-300" />
+                  <span className="text-[10px] font-mono text-amber-300 tracking-[0.25em]">OBJECTIVES</span>
+                </div>
+                <Stagger staggerChildren={0.08} className="space-y-2">
+                  {objectives.map((obj, i) => (
+                    <StaggerItem key={i}>
+                      <ObjectiveRow index={i + 1} text={obj} done={done} />
+                    </StaggerItem>
+                  ))}
+                </Stagger>
+              </div>
+            </ScrollReveal>
+
+            {/* Terminal */}
+            <ScrollReveal>
+              <LabTerminal
+                labSlug={slug}
+                labTitle={lab.title}
+                commands={commands}
+                flag={lab.flag}
+                started={started}
+                done={done}
+                onStart={() => startMutation.mutate()}
+              />
+            </ScrollReveal>
+
+            {/* Hints — collapsible */}
+            <ScrollReveal>
+              <HintsPanel
+                slug={slug}
+                hintsString={lab.hints}
+                hintsUsed={progress?.hintsUsed ?? 0}
+                difficulty={lab.difficulty}
+              />
+            </ScrollReveal>
+          </div>
+
+          {/* Right: Sticky sidebar */}
+          <div className="lg:col-span-4">
+            <div className="lg:sticky lg:top-6 space-y-4">
+              {/* Reward */}
+              <ScrollReveal>
+                <div className="relative overflow-hidden rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-950/40 to-transparent p-6">
+                  <div className="absolute inset-0 bg-grid opacity-10" />
+                  <div className="absolute -top-8 -right-8 w-32 h-32 bg-violet-600/15 blur-[60px] rounded-full" />
+                  <div className="relative z-10">
+                    <div className="flex items-center justify-between mb-4">
+                      <Trophy className="h-6 w-6 text-violet-300" />
+                      <span className="text-[10px] font-mono text-violet-300 tracking-[0.25em]">REWARD</span>
+                    </div>
+                    <div className="text-4xl font-bold text-violet-300 mb-1 tabular-nums">
+                      <Counter value={lab.points} />
+                      <span className="text-base text-muted-foreground font-normal ml-1">XP</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {done
+                        ? "Earned. Mission complete."
+                        : "Solve this lab to claim XP and unlock achievements."}
+                    </p>
+                  </div>
+                </div>
+              </ScrollReveal>
+
+              {/* Mission Stats */}
+              <ScrollReveal delay={0.05}>
+                <div className="rounded-2xl border border-border/60 bg-card/30 p-6">
+                  <div className="flex items-center gap-2 mb-5">
+                    <Activity className="h-4 w-4 text-cyan-300" />
+                    <span className="text-[10px] font-mono text-cyan-300 tracking-[0.25em]">MISSION STATS</span>
+                  </div>
+                  <div className="space-y-3">
+                    <SidebarStat
+                      label="Status"
+                      value={done ? "Solved" : started ? "In Progress" : "Ready"}
+                      valueColor={done ? "text-emerald-400" : started ? "text-amber-400" : "text-muted-foreground"}
+                    />
+                    <SidebarStat
+                      label="Time Spent"
+                      value={progress?.timeSpentMs ? formatDuration(progress.timeSpentMs) : "—"}
+                      mono
+                    />
+                    <SidebarStat
+                      label="Hints Used"
+                      value={`${progress?.hintsUsed ?? 0}`}
+                      mono
+                    />
+                    <SidebarStat label="Difficulty" value={lab.difficulty} />
+                    <SidebarStat label="Category" value={lab.category} />
+                    <SidebarStat label="Est. Duration" value={`${lab.durationMin} min`} mono />
+                  </div>
+                </div>
+              </ScrollReveal>
+
+              {/* Available tools */}
+              <ScrollReveal delay={0.1}>
+                <div className="rounded-2xl border border-border/60 bg-card/30 p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Terminal className="h-4 w-4 text-cyan-300" />
+                    <span className="text-[10px] font-mono text-cyan-300 tracking-[0.25em]">AVAILABLE TOOLS</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {commands.map((cmd) => (
+                      <span
+                        key={cmd}
+                        className="px-2 py-1 rounded-md bg-cyan-500/5 border border-cyan-500/20 text-cyan-300 text-[11px] font-mono"
+                      >
+                        {cmd}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </ScrollReveal>
             </div>
-          </Card>
-
-          {/* Reward */}
-          <Card className="p-5 bg-gradient-to-br from-violet-950/30 to-transparent border-violet-500/20">
-            <Trophy className="h-8 w-8 text-violet-400 mb-2" />
-            <div className="font-semibold text-sm mb-1">Reward</div>
-            <div className="text-2xl font-bold text-violet-400">{lab.points} points</div>
-            <p className="text-xs text-muted-foreground mt-1">Solve this lab to earn points and unlock achievements.</p>
-          </Card>
+          </div>
         </div>
       </div>
     </div>
   )
 }
 
-// ---- Hints panel ----
+/* ============================================================
+   HeaderStat — small inline stat for header
+   ============================================================ */
+function HeaderStat({ icon: Icon, label, value, color }: { icon: any; label: string; value: string; color: string }) {
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-1">
+        <Icon className={cn("h-3.5 w-3.5", color)} />
+        <span className="text-[10px] font-mono text-muted-foreground tracking-[0.2em]">{label}</span>
+      </div>
+      <div className={cn("text-sm font-mono font-semibold", color)}>{value}</div>
+    </div>
+  )
+}
+
+/* ============================================================
+   SidebarStat — key/value row
+   ============================================================ */
+function SidebarStat({ label, value, color, valueColor, mono }: { label: string; value: string; color?: string; valueColor?: string; mono?: boolean }) {
+  return (
+    <div className="flex items-center justify-between border-b border-border/40 pb-2.5 last:border-0 last:pb-0">
+      <span className="text-[10px] font-mono text-muted-foreground tracking-[0.15em] uppercase">{label}</span>
+      <span className={cn("text-sm", mono && "font-mono", valueColor ?? color)}>{value}</span>
+    </div>
+  )
+}
+
+/* ============================================================
+   MissionBriefing — sticky header within briefing card
+   ============================================================ */
+function MissionBriefing({ scenario }: { scenario: string }) {
+  return (
+    <div className="relative rounded-2xl border border-border/60 bg-card/30 overflow-hidden">
+      {/* Sticky header within the briefing card */}
+      <div className="sticky top-0 z-10 backdrop-blur-xl bg-background/85 border-b border-border/60 px-6 lg:px-8 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <BookOpen className="h-4 w-4 text-violet-300" />
+            <span className="text-[10px] font-mono text-violet-300 tracking-[0.25em]">MISSION BRIEFING</span>
+          </div>
+          <span className="text-[10px] font-mono text-muted-foreground tracking-[0.2em] hidden sm:inline">
+            SCENARIO · INTEL
+          </span>
+        </div>
+      </div>
+      <div className="p-6 lg:p-8">
+        <div className="prose-guardianx max-w-none text-sm">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{scenario}</ReactMarkdown>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ============================================================
+   ObjectiveRow — single objective with checkmark state
+   ============================================================ */
+function ObjectiveRow({ index, text, done }: { index: number; text: string; done: boolean }) {
+  return (
+    <div className="group flex items-start gap-4 p-3 rounded-lg hover:bg-muted/20 transition-colors">
+      <span
+        className={cn(
+          "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-mono font-bold transition-all",
+          done
+            ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+            : "bg-amber-500/10 text-amber-400 border border-amber-500/20 group-hover:border-amber-500/40"
+        )}
+      >
+        {done ? <CheckCircle2 className="h-4 w-4" /> : index}
+      </span>
+      <span className={cn("text-sm pt-1 leading-relaxed", done && "text-muted-foreground line-through")}>
+        {text}
+      </span>
+    </div>
+  )
+}
+
+/* ============================================================
+   SuccessBanner — celebration on completion
+   ============================================================ */
+function SuccessBanner({ points }: { points: number }) {
+  return (
+    <div className="relative overflow-hidden rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-emerald-950/40 via-background to-violet-950/30 p-8">
+      <div className="absolute inset-0 bg-grid opacity-15" />
+      <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-600/15 blur-[80px] rounded-full" />
+      <NetworkVisualization variant="minimal" className="absolute right-0 top-0 w-72 h-72 opacity-40" />
+      <div className="relative z-10 flex items-center gap-6">
+        <div className="inline-flex p-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 shrink-0">
+          <ShieldCheck className="h-8 w-8 text-emerald-300" />
+        </div>
+        <div>
+          <p className="text-[10px] font-mono text-emerald-300 tracking-[0.3em] mb-1">MISSION COMPLETE</p>
+          <h3 className="text-2xl lg:text-3xl font-bold mb-1 tracking-[-0.02em]">
+            Flag captured. Well done, Guardian.
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            <span className="text-emerald-300 font-mono">+{points} XP</span> earned · Achievements updated
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ============================================================
+   HintsPanel — collapsible hints section
+   ============================================================ */
 function HintsPanel({ slug, hintsString, hintsUsed, difficulty }: { slug: string; hintsString: string; hintsUsed: number; difficulty: string }) {
   const qc = useQueryClient()
   const hints = hintsString.split("|").filter(Boolean)
   const [revealed, setRevealed] = React.useState(hintsUsed)
   const [potentialXp, setPotentialXp] = React.useState<number | null>(null)
+  const [open, setOpen] = React.useState(false)
   const HINT_PENALTY = 10
 
   const hintMutation = useMutation({
@@ -177,46 +445,97 @@ function HintsPanel({ slug, hintsString, hintsUsed, difficulty }: { slug: string
   })
 
   return (
-    <Card className="p-5">
-      <h3 className="font-semibold mb-3 flex items-center gap-2 text-sm"><Lightbulb className="h-4 w-4 text-amber-400" /> Hints</h3>
-      <div className="space-y-2 mb-3">
-        {hints.slice(0, revealed).map((h, i) => (
-          <div key={i} className="p-2.5 rounded-lg bg-amber-500/5 border border-amber-500/20 text-xs text-muted-foreground flex items-start gap-2">
-            <Lightbulb className="h-3.5 w-3.5 text-amber-400 shrink-0 mt-0.5" />
-            <span>{h}</span>
-          </div>
-        ))}
-        {revealed === 0 && (
-          <div className="space-y-2">
-            <p className="text-xs text-muted-foreground">Stuck? Reveal hints one at a time.</p>
-            <div className="flex items-center gap-1.5 p-2 rounded-lg bg-red-500/5 border border-red-500/20 text-[10px] text-red-400">
-              <Zap className="h-3 w-3" />
-              <span>Each hint deducts {HINT_PENALTY} XP from your lab reward.</span>
-            </div>
-          </div>
-        )}
-      </div>
-      {potentialXp !== null && revealed > 0 && (
-        <div className="mb-3 p-2 rounded-lg bg-muted/30 text-[10px] text-center">
-          <span className="text-muted-foreground">Potential XP on completion: </span>
-          <span className={cn("font-mono font-bold", potentialXp < 100 ? "text-amber-400" : "text-emerald-400")}>{potentialXp} XP</span>
-          {revealed > 0 && <span className="text-red-400 ml-1">(-{revealed * HINT_PENALTY} penalty)</span>}
+    <div className="rounded-2xl border border-border/60 bg-card/30 overflow-hidden">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/20 transition-colors"
+      >
+        <div className="flex items-center gap-3">
+          <Lightbulb className="h-4 w-4 text-amber-300" />
+          <span className="text-[10px] font-mono text-amber-300 tracking-[0.25em]">HINTS</span>
+          <span className="text-[10px] font-mono text-muted-foreground ml-2 tracking-[0.15em]">
+            {revealed}/{hints.length} REVEALED
+          </span>
         </div>
-      )}
-      {revealed < hints.length ? (
-        <Button variant="outline" size="sm" className="w-full border-amber-500/30 text-amber-400 hover:bg-amber-500/10" onClick={() => hintMutation.mutate()} disabled={hintMutation.isPending}>
-          <Lightbulb className="h-3.5 w-3.5 mr-1.5" /> Reveal Hint ({revealed}/{hints.length}) <span className="ml-1 text-[9px] text-red-400">-{HINT_PENALTY} XP</span>
-        </Button>
-      ) : (
-        <p className="text-xs text-muted-foreground text-center">All hints revealed.</p>
-      )}
-    </Card>
+        <div className="flex items-center gap-2">
+          {revealed < hints.length && (
+            <span className="text-[10px] font-mono text-rose-400 hidden sm:inline">
+              -{HINT_PENALTY} XP EACH
+            </span>
+          )}
+          {open ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+        </div>
+      </button>
+
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            className="overflow-hidden"
+          >
+            <div className="px-6 pb-6 space-y-3">
+              {hints.slice(0, revealed).map((h, i) => (
+                <div
+                  key={i}
+                  className="p-3 rounded-lg bg-amber-500/5 border border-amber-500/20 text-xs text-muted-foreground flex items-start gap-3"
+                >
+                  <span className="text-[10px] font-mono text-amber-400 shrink-0 mt-0.5 tracking-[0.1em]">
+                    H{String(i + 1).padStart(2, "0")}
+                  </span>
+                  <span className="leading-relaxed">{h}</span>
+                </div>
+              ))}
+              {revealed === 0 && (
+                <div className="space-y-3">
+                  <p className="text-xs text-muted-foreground">
+                    Stuck? Reveal hints one at a time. Each hint reduces your XP reward.
+                  </p>
+                  <div className="flex items-center gap-2 p-2.5 rounded-lg bg-rose-500/5 border border-rose-500/20 text-[10px] text-rose-300">
+                    <Zap className="h-3 w-3 shrink-0" />
+                    <span>Each hint deducts {HINT_PENALTY} XP from your lab reward.</span>
+                  </div>
+                </div>
+              )}
+              {potentialXp !== null && revealed > 0 && (
+                <div className="p-2.5 rounded-lg bg-muted/30 text-[10px] text-center">
+                  <span className="text-muted-foreground tracking-[0.15em]">POTENTIAL XP: </span>
+                  <span className={cn("font-mono font-bold", potentialXp < 100 ? "text-amber-400" : "text-emerald-400")}>
+                    {potentialXp} XP
+                  </span>
+                  {revealed > 0 && <span className="text-rose-400 ml-1">(-{revealed * HINT_PENALTY})</span>}
+                </div>
+              )}
+              {revealed < hints.length ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full border-amber-500/30 text-amber-400 hover:bg-amber-500/10"
+                  onClick={() => hintMutation.mutate()}
+                  disabled={hintMutation.isPending}
+                >
+                  <Lightbulb className="h-3.5 w-3.5 mr-1.5" />
+                  Reveal Hint ({revealed}/{hints.length})
+                  <span className="ml-1 text-[9px] text-rose-400">-{HINT_PENALTY} XP</span>
+                </Button>
+              ) : (
+                <p className="text-xs text-muted-foreground text-center">All hints revealed.</p>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   )
 }
 
-// ---- Interactive terminal ----
-function LabTerminal({ labSlug, commands, flag, started, done, onStart }: {
-  labSlug: string; commands: string[]; flag: string; started: boolean; done: boolean; onStart: () => void
+/* ============================================================
+   LabTerminal — premium terminal with violet accent
+   ============================================================ */
+function LabTerminal({ labSlug, labTitle, commands, flag, started, done, onStart }: {
+  labSlug: string; labTitle: string; commands: string[]; flag: string; started: boolean; done: boolean; onStart: () => void
 }) {
   const qc = useQueryClient()
   const [history, setHistory] = React.useState<{ type: "in" | "out" | "err" | "ok"; text: string }[]>([
@@ -228,7 +547,7 @@ function LabTerminal({ labSlug, commands, flag, started, done, onStart }: {
   const [flagInput, setFlagInput] = React.useState("")
   const [cmdHistory, setCmdHistory] = React.useState<string[]>([])
   const [histIdx, setHistIdx] = React.useState(-1)
-  const [elapsedMs, setElapsedMs] = React.useState(0) // live timer for display
+  const [elapsedMs, setElapsedMs] = React.useState(0)
   const endRef = React.useRef<HTMLDivElement>(null)
   const inputRef = React.useRef<HTMLInputElement>(null)
   const sessionStartRef = React.useRef<number>(0)
@@ -263,7 +582,6 @@ function LabTerminal({ labSlug, commands, flag, started, done, onStart }: {
     return () => {
       clearInterval(tickInterval)
       clearInterval(heartbeatInterval)
-      // final heartbeat on unmount/leave
       const finalElapsed = Date.now() - lastHeartbeatRef.current
       if (finalElapsed > 2000) {
         fetch(`/api/labs/${labSlug}/submit`, {
@@ -281,7 +599,7 @@ function LabTerminal({ labSlug, commands, flag, started, done, onStart }: {
     onSuccess: (data) => {
       if (data.correct) {
         setHistory((h) => [...h, { type: "ok", text: "✓ FLAG ACCEPTED! Lab solved. Well done, Guardian." }])
-        toast.success("🎉 Flag captured! Lab complete!")
+        toast.success("Flag captured! Lab complete!")
         qc.invalidateQueries({ queryKey: ["lab", labSlug] })
         qc.invalidateQueries({ queryKey: ["me"] })
         qc.invalidateQueries({ queryKey: ["achievements"] })
@@ -338,7 +656,6 @@ function LabTerminal({ labSlug, commands, flag, started, done, onStart }: {
         break
       default:
         if (commands.includes(c)) {
-          // simulate tool output based on command
           out(`[${c}] Running...`)
           if (c === "nmap") {
             out("Starting Nmap 7.94 ( https://nmap.org )")
@@ -427,52 +744,70 @@ function LabTerminal({ labSlug, commands, flag, started, done, onStart }: {
 
   if (!started) {
     return (
-      <Card className="p-8 text-center border-dashed">
-        <Terminal className="h-10 w-10 text-emerald-400 mx-auto mb-3" />
-        <h3 className="font-semibold mb-1">Ready to start the lab?</h3>
-        <p className="text-sm text-muted-foreground mb-4">Launch the interactive terminal and begin your mission.</p>
-        <Button onClick={onStart}><PlayCircle className="h-4 w-4 mr-1.5" /> Start Lab</Button>
-      </Card>
+      <div className="relative overflow-hidden rounded-2xl border border-dashed border-violet-500/30 bg-card/20 p-10 text-center">
+        <div className="absolute inset-0 bg-grid opacity-10" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-violet-600/10 blur-[80px] rounded-full" />
+        <div className="relative z-10">
+          <div className="inline-flex p-4 rounded-2xl border border-violet-500/30 bg-violet-500/10 mb-5">
+            <Terminal className="h-8 w-8 text-violet-300" />
+          </div>
+          <h3 className="text-xl font-bold mb-2 tracking-tight">Ready to start the mission?</h3>
+          <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
+            Launch the interactive terminal and begin your offensive security engagement.
+          </p>
+          <Button onClick={onStart} className="bg-violet-600 hover:bg-violet-500 btn-premium">
+            <PlayCircle className="h-4 w-4 mr-1.5" /> Deploy Environment
+          </Button>
+        </div>
+      </div>
     )
   }
 
   return (
-    <Card className="overflow-hidden border-emerald-500/20">
-      <div className="flex items-center gap-2 px-4 py-2 bg-muted/50 border-b border-border">
+    <div className="relative overflow-hidden rounded-2xl border border-violet-500/30 bg-[oklch(0.06_0.01_280)]">
+      {/* Terminal header bar */}
+      <div className="flex items-center gap-2 px-4 py-2.5 bg-violet-950/30 border-b border-violet-500/20">
         <div className="flex gap-1.5">
-          <div className="h-3 w-3 rounded-full bg-red-500/70" />
-          <div className="h-3 w-3 rounded-full bg-amber-500/70" />
-          <div className="h-3 w-3 rounded-full bg-emerald-500/70" />
+          <div className="h-2.5 w-2.5 rounded-full bg-rose-500/70" />
+          <div className="h-2.5 w-2.5 rounded-full bg-amber-500/70" />
+          <div className="h-2.5 w-2.5 rounded-full bg-emerald-500/70" />
         </div>
-        <span className="text-xs font-mono text-muted-foreground ml-2">guardian@guardianx-lab: ~/labs/{labSlug}</span>
+        <span className="text-[10px] font-mono text-muted-foreground ml-2 truncate">
+          guardian@guardianx-lab: ~/labs/{labSlug}
+        </span>
         <div className="ml-auto flex items-center gap-3">
           {started && !done && (
-            <span className="text-[10px] font-mono text-cyan-400 flex items-center gap-1 tabular-nums" title="Session time">
+            <span className="text-[10px] font-mono text-cyan-300 flex items-center gap-1 tabular-nums" title="Session time">
               <Clock className="h-3 w-3" /> {formatDuration(elapsedMs)}
             </span>
           )}
-          <span className="text-[10px] font-mono text-emerald-400 flex items-center gap-1">
+          <span className="text-[10px] font-mono text-emerald-300 flex items-center gap-1">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 pulse-dot" /> CONNECTED
           </span>
         </div>
       </div>
+
+      {/* Terminal body */}
       <div
-        className="p-4 font-mono text-xs h-80 overflow-y-auto bg-[oklch(0.1_0.015_200)] cursor-text"
+        className="p-4 font-mono text-xs h-80 overflow-y-auto bg-[oklch(0.04_0.01_280)] cursor-text scanlines relative"
         onClick={() => inputRef.current?.focus()}
       >
         {history.map((line, i) => (
-          <div key={i} className={cn(
-            "whitespace-pre-wrap break-words",
-            line.type === "in" && "text-emerald-300",
-            line.type === "out" && "text-muted-foreground",
-            line.type === "err" && "text-red-400",
-            line.type === "ok" && "text-emerald-400 font-bold",
-          )}>
-            {line.type === "in" && <span className="text-emerald-500">$ </span>}{line.text}
+          <div
+            key={i}
+            className={cn(
+              "whitespace-pre-wrap break-words",
+              line.type === "in" && "text-emerald-300",
+              line.type === "out" && "text-muted-foreground",
+              line.type === "err" && "text-rose-400",
+              line.type === "ok" && "text-emerald-400 font-bold",
+            )}
+          >
+            {line.type === "in" && <span className="text-violet-400">$ </span>}{line.text}
           </div>
         ))}
         <div className="flex items-center">
-          <span className="text-emerald-500">$ </span>
+          <span className="text-violet-400">$ </span>
           <input
             ref={inputRef}
             autoFocus
@@ -485,20 +820,31 @@ function LabTerminal({ labSlug, commands, flag, started, done, onStart }: {
         </div>
         <div ref={endRef} />
       </div>
+
       {/* Flag submission bar */}
-      <div className="flex items-center gap-2 p-3 border-t border-border bg-muted/30">
-        <Flag className="h-4 w-4 text-amber-400" />
+      <div className="flex items-center gap-2 p-3 border-t border-violet-500/20 bg-violet-950/20">
+        <Flag className="h-4 w-4 text-violet-300 shrink-0" />
         <input
           value={flagInput}
           onChange={(e) => setFlagInput(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter" && flagInput.trim()) { submitMutation.mutate(flagInput); setFlagInput("") } }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && flagInput.trim()) {
+              submitMutation.mutate(flagInput)
+              setFlagInput("")
+            }
+          }}
           placeholder="Paste flag here (FLAG{...}) and press Enter"
-          className="flex-1 bg-transparent outline-none text-xs font-mono"
+          className="flex-1 bg-transparent outline-none text-xs font-mono text-emerald-200 placeholder:text-muted-foreground/60"
         />
-        <Button size="sm" disabled={!flagInput.trim() || submitMutation.isPending} onClick={() => { submitMutation.mutate(flagInput); setFlagInput("") }}>
-          <Zap className="h-3.5 w-3.5 mr-1" /> Submit Flag
+        <Button
+          size="sm"
+          disabled={!flagInput.trim() || submitMutation.isPending}
+          onClick={() => { submitMutation.mutate(flagInput); setFlagInput("") }}
+          className="bg-violet-600 hover:bg-violet-500 btn-premium"
+        >
+          <Zap className="h-3.5 w-3.5 mr-1" /> Submit
         </Button>
       </div>
-    </Card>
+    </div>
   )
 }

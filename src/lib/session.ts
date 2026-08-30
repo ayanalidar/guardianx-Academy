@@ -7,7 +7,7 @@ export async function getCurrentUser() {
   if (!session?.user) return null
   const user = await db.user.findUnique({
     where: { id: (session.user as any).id },
-    select: { id: true, email: true, name: true, role: true, avatar: true, title: true, bio: true },
+    select: { id: true, email: true, name: true, role: true, avatar: true, title: true, bio: true, schoolId: true },
   })
   return user
 }

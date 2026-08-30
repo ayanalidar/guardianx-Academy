@@ -29,7 +29,7 @@ import {
   GraduationCap, Award, Activity, ArrowRight, BarChart3, CheckCircle2,
   Plus, Pencil, Trash2, Save, X, FileText, Radio, Calendar as CalendarIcon,
   Image as ImageIcon, Video, Link2, PlayCircle, StopCircle, Eye, Sparkles,
-  ClipboardList, MessageSquare, CalendarClock, UserPlus, Palette,
+  ClipboardList, MessageSquare, CalendarClock, UserPlus, Palette, Building2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"

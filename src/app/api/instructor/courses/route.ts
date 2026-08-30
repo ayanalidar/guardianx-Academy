@@ -9,11 +9,12 @@ export async function GET() {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
 
+  // ADMIN sees all courses; INSTRUCTOR sees their own
   const where = user.role === "ADMIN" ? {} : { instructorId: user.id }
   const courses = await db.course.findMany({
     where,
     include: {
-      _count: { select: { enrollments: true, lessons: false, modules: true } },
+      _count: { select: { enrollments: true, modules: true } },
       modules: { select: { id: true, lessons: { select: { id: true } } } },
       enrollments: {
         select: {

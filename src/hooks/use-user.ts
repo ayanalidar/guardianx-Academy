@@ -28,6 +28,7 @@ export interface CurrentUser {
   avatar: string | null
   title: string | null
   bio: string | null
+  schoolId: string | null
 }
 
 export function useUser() {

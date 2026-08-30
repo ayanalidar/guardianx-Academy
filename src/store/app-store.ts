@@ -3,6 +3,11 @@
 import { create } from "zustand"
 
 export type View =
+  | { name: "home" }
+  | { name: "impact" }
+  | { name: "contact" }
+  | { name: "login" }
+  | { name: "institutions" }
   | { name: "dashboard" }
   | { name: "catalog" }
   | { name: "course"; courseId: string }
@@ -16,6 +21,8 @@ export type View =
   | { name: "achievements" }
   | { name: "leaderboard" }
   | { name: "instructor" }
+  | { name: "school" }
+  | { name: "admin" }
   | { name: "community" }
   | { name: "profile" }
   | { name: "assignments" }
@@ -32,7 +39,7 @@ interface AppState {
 }
 
 export const useAppStore = create<AppState>((set) => ({
-  view: { name: "dashboard" },
+  view: { name: "home" },
   sidebarOpen: false,
   navigate: (view) => {
     set({ view, sidebarOpen: false })

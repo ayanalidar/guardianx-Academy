@@ -4,7 +4,6 @@ import * as React from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { api } from "@/lib/api"
 import { cn } from "@/lib/utils"
-import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -34,8 +33,12 @@ import {
   User,
   Sparkles,
   AlertCircle,
+  ArrowRight,
 } from "lucide-react"
 import { toast } from "sonner"
+import {
+  ScrollReveal, CursorGlow, Stagger, StaggerItem, Counter, FadeIn,
+} from "@/components/platform/motion-system"
 
 /* ------------------------------------------------------------------ */
 /* Types                                                              */
@@ -114,9 +117,9 @@ function modeLabel(mode: SlotMode) {
 }
 
 function modeColor(mode: SlotMode) {
-  if (mode === "video") return { text: "text-cyan-400", bg: "bg-cyan-500/10", border: "border-cyan-500/30" }
-  if (mode === "in-person") return { text: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/30" }
-  return { text: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/30" }
+  if (mode === "video") return { text: "text-cyan-300", bg: "bg-cyan-500/10", border: "border-cyan-500/30", glow: "bg-cyan-500/8", dot: "bg-cyan-400" }
+  if (mode === "in-person") return { text: "text-amber-300", bg: "bg-amber-500/10", border: "border-amber-500/30", glow: "bg-amber-500/8", dot: "bg-amber-400" }
+  return { text: "text-emerald-300", bg: "bg-emerald-500/10", border: "border-emerald-500/30", glow: "bg-emerald-500/8", dot: "bg-emerald-400" }
 }
 
 function formatDateTime(iso: string) {
@@ -160,33 +163,58 @@ export function OfficeHoursView() {
   const [tab, setTab] = React.useState<"available" | "mine">("available")
 
   return (
-    <div className="space-y-6">
-      <header className="space-y-1">
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <CalendarClock className="h-7 w-7 text-emerald-400" /> Office Hours
-        </h1>
-        <p className="text-muted-foreground">
-          Book 1:1 time with your instructors.
-        </p>
-      </header>
+    <div className="relative min-h-screen">
+      {/* Atmospheric background */}
+      <div className="absolute inset-0 bg-mesh opacity-40 pointer-events-none" />
+      <div className="absolute top-0 right-1/4 w-[500px] h-[400px] bg-violet-600/5 blur-[120px] rounded-full pointer-events-none" />
+      <div className="absolute top-40 left-0 w-[400px] h-[300px] bg-amber-500/4 blur-[100px] rounded-full pointer-events-none" />
 
-      <Tabs value={tab} onValueChange={(v) => setTab(v as "available" | "mine")}>
-        <TabsList className="grid w-full grid-cols-2 max-w-md">
-          <TabsTrigger value="available" className="gap-1.5">
-            <Calendar className="h-3.5 w-3.5" /> Available Slots
-          </TabsTrigger>
-          <TabsTrigger value="mine" className="gap-1.5">
-            <CalendarClock className="h-3.5 w-3.5" /> My Bookings
-          </TabsTrigger>
-        </TabsList>
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+        {/* ====================================================
+            HEADER — oversized editorial
+            ==================================================== */}
+        <ScrollReveal>
+          <div className="flex items-center gap-2 mb-4">
+            <CalendarClock className="h-3.5 w-3.5 text-violet-300" />
+            <span className="text-[10px] font-mono text-muted-foreground tracking-[0.3em]">
+              1:1 INSTRUCTOR ACCESS · BOOK A SLOT
+            </span>
+          </div>
+        </ScrollReveal>
 
-        <TabsContent value="available" className="mt-4">
-          <AvailableSlotsTab />
-        </TabsContent>
-        <TabsContent value="mine" className="mt-4">
-          <MyBookingsTab />
-        </TabsContent>
-      </Tabs>
+        <ScrollReveal delay={0.05}>
+          <h1 className="text-[clamp(2.5rem,7vw,5.5rem)] font-bold leading-[0.9] tracking-[-0.04em] mb-4 text-balance">
+            Office <span className="text-gradient-premium">hours.</span>
+          </h1>
+        </ScrollReveal>
+
+        <ScrollReveal delay={0.15}>
+          <p className="text-muted-foreground max-w-xl mb-12 text-sm leading-relaxed">
+            Reserve focused, individual time with your instructors.
+            Choose video, in-person, or chat — come prepared, leave with clarity.
+          </p>
+        </ScrollReveal>
+
+        <ScrollReveal delay={0.2}>
+          <Tabs value={tab} onValueChange={(v) => setTab(v as "available" | "mine")}>
+            <TabsList className="bg-card/30 backdrop-blur border border-border/60 h-auto p-1 grid w-full grid-cols-2 max-w-md">
+              <TabsTrigger value="available" className="py-2 gap-1.5 data-[state=active]:bg-violet-500/15 data-[state=active]:text-violet-200">
+                <Calendar className="h-3.5 w-3.5" /> Available Slots
+              </TabsTrigger>
+              <TabsTrigger value="mine" className="py-2 gap-1.5 data-[state=active]:bg-emerald-500/15 data-[state=active]:text-emerald-200">
+                <CalendarClock className="h-3.5 w-3.5" /> My Bookings
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="available" className="mt-8">
+              <AvailableSlotsTab />
+            </TabsContent>
+            <TabsContent value="mine" className="mt-8">
+              <MyBookingsTab />
+            </TabsContent>
+          </Tabs>
+        </ScrollReveal>
+      </div>
     </div>
   )
 }
@@ -207,27 +235,23 @@ function AvailableSlotsTab() {
   const slots = data?.slots ?? []
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {isLoading ? (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-64" />
+            <Skeleton key={i} className="h-72 rounded-2xl" />
           ))}
         </div>
       ) : slots.length === 0 ? (
-        <Card className="p-12 text-center border-dashed">
-          <CalendarClock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="font-semibold mb-1">No upcoming office hours</h3>
-          <p className="text-sm text-muted-foreground">
-            Your instructors haven't opened any slots yet. Check back soon.
-          </p>
-        </Card>
+        <EmptySlotsState />
       ) : (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <Stagger className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4" staggerChildren={0.06}>
           {slots.map((s) => (
-            <SlotCard key={s.id} slot={s} onBook={() => setBookSlot(s)} />
+            <StaggerItem key={s.id}>
+              <SlotCard slot={s} onBook={() => setBookSlot(s)} />
+            </StaggerItem>
           ))}
-        </div>
+        </Stagger>
       )}
 
       <BookSlotDialog
@@ -239,7 +263,31 @@ function AvailableSlotsTab() {
 }
 
 /* ------------------------------------------------------------------ */
-/* Slot Card                                                          */
+/* Empty State                                                        */
+/* ------------------------------------------------------------------ */
+
+function EmptySlotsState() {
+  return (
+    <FadeIn>
+      <div className="relative overflow-hidden rounded-2xl border border-dashed border-border/60 bg-card/20 p-16 text-center">
+        <div className="absolute inset-0 bg-grid opacity-10 pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-violet-600/5 blur-[80px] rounded-full pointer-events-none" />
+        <div className="relative z-10">
+          <div className="inline-flex p-4 rounded-2xl border border-violet-500/30 bg-violet-500/10 mb-6">
+            <CalendarClock className="h-7 w-7 text-violet-300" />
+          </div>
+          <h3 className="text-2xl font-bold mb-2 tracking-[-0.02em]">No upcoming office hours</h3>
+          <p className="text-sm text-muted-foreground max-w-md mx-auto">
+            Your instructors haven&apos;t opened any slots yet. Check back soon — slots appear here in real time.
+          </p>
+        </div>
+      </div>
+    </FadeIn>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/* Slot Card — premium                                                */
 /* ------------------------------------------------------------------ */
 
 function SlotCard({
@@ -259,95 +307,94 @@ function SlotCard({
   const isPast = new Date(slot.endAt).getTime() <= Date.now()
 
   return (
-    <Card className="p-5 card-hover relative overflow-hidden flex flex-col">
-      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500/40 via-cyan-500/30 to-transparent" />
+    <CursorGlow className="group h-full" color={`oklch(${slot.mode === "video" ? "0.65 0.12 200" : slot.mode === "in-person" ? "0.7 0.15 85" : "0.7 0.15 155"} / 0.06)`}>
+      <div className="relative h-full overflow-hidden rounded-2xl border border-border/60 bg-card/20 backdrop-blur p-5 flex flex-col hover:-translate-y-1 transition-all duration-300 hover:border-violet-500/30">
+        {/* Top accent line based on mode */}
+        <div className={cn("absolute top-0 left-0 right-0 h-px bg-gradient-to-r to-transparent", color.dot, "via-50")} />
 
-      {/* Instructor */}
-      <div className="flex items-start gap-3 mb-3">
-        <Avatar className="h-10 w-10 border border-border">
-          {slot.instructor.avatar ? (
-            <AvatarImage src={slot.instructor.avatar} alt={slot.instructor.name} />
-          ) : null}
-          <AvatarFallback className="bg-emerald-500/10 text-emerald-400 text-xs">
-            {initialsOf(slot.instructor.name)}
-          </AvatarFallback>
-        </Avatar>
-        <div className="flex-1 min-w-0">
-          <div className="font-medium text-sm truncate">{slot.instructor.name}</div>
-          <div className="text-xs text-muted-foreground truncate">
-            {slot.instructor.title || "Instructor"}
+        {/* Instructor */}
+        <div className="flex items-start gap-3 mb-4">
+          <Avatar className="h-11 w-11 border border-border/60">
+            {slot.instructor.avatar ? (
+              <AvatarImage src={slot.instructor.avatar} alt={slot.instructor.name} />
+            ) : null}
+            <AvatarFallback className="bg-violet-500/10 text-violet-300 text-xs font-medium">
+              {initialsOf(slot.instructor.name)}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex-1 min-w-0">
+            <div className="font-semibold text-sm truncate group-hover:text-violet-200 transition-colors">{slot.instructor.name}</div>
+            <div className="text-xs text-muted-foreground truncate">
+              {slot.instructor.title || "Instructor"}
+            </div>
+          </div>
+          {slot.course && (
+            <Badge variant="outline" className="font-mono text-[10px] shrink-0 border-violet-500/30 text-violet-300">
+              {slot.course.shortName}
+            </Badge>
+          )}
+        </div>
+
+        {/* Date / time */}
+        <div className="space-y-1.5 mb-4 text-sm">
+          <div className="flex items-center gap-2">
+            <Calendar className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            <span className="font-medium">{start.date}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Clock className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            <span>
+              {start.time} – {end.time}
+              <span className="text-muted-foreground ml-1.5 font-mono text-xs">
+                ({formatDuration(slot.startAt, slot.endAt)})
+              </span>
+            </span>
           </div>
         </div>
-        {slot.course && (
-          <Badge variant="outline" className="font-mono text-[10px] shrink-0">
-            {slot.course.shortName}
-          </Badge>
-        )}
-      </div>
 
-      {/* Date / time */}
-      <div className="space-y-1 mb-3 text-sm">
-        <div className="flex items-center gap-2">
-          <Calendar className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-          <span className="font-medium">{start.date}</span>
+        {/* Mode + location */}
+        <div className="flex flex-wrap items-center gap-2 mb-4">
+          <Badge
+            variant="outline"
+            className={cn("gap-1", color.text, color.bg, color.border, "border")}
+          >
+            <ModeIcon mode={slot.mode} className="h-3 w-3" /> {modeLabel(slot.mode)}
+          </Badge>
+          {slot.location && (
+            <Badge variant="secondary" className="text-[10px] gap-1 bg-muted/40 border border-border/40">
+              <MapPin className="h-2.5 w-2.5" />
+              <span className="max-w-[120px] truncate">{slot.location}</span>
+            </Badge>
+          )}
         </div>
-        <div className="flex items-center gap-2">
-          <Clock className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-          <span>
-            {start.time} – {end.time}
-            <span className="text-muted-foreground ml-1">
-              ({formatDuration(slot.startAt, slot.endAt)})
+
+        {/* Capacity */}
+        <div className="space-y-1.5 mb-4 mt-auto">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-muted-foreground">Capacity</span>
+            <span className="font-mono">
+              <Counter value={slot.bookedCount} />/{slot.maxBookings}
             </span>
-          </span>
+          </div>
+          <Progress value={capacityPct} className="h-1.5" />
         </div>
-      </div>
 
-      {/* Mode + location */}
-      <div className="flex flex-wrap items-center gap-2 mb-3">
-        <Badge
-          variant="outline"
-          className={cn("gap-1", color.text, color.bg, color.border, "border")}
-        >
-          <ModeIcon mode={slot.mode} className="h-3 w-3" /> {modeLabel(slot.mode)}
-        </Badge>
-        {slot.location && (
-          <Badge variant="secondary" className="text-[10px] gap-1 bg-muted/60">
-            <MapPin className="h-2.5 w-2.5" />
-            <span className="max-w-[120px] truncate">{slot.location}</span>
-          </Badge>
+        {/* Action */}
+        {isBookedByMe ? (
+          <Button variant="secondary" disabled className="w-full gap-1.5 bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+            <CheckCircle2 className="h-4 w-4" /> Booked
+          </Button>
+        ) : isPast ? (
+          <Button variant="ghost" disabled className="w-full">Session ended</Button>
+        ) : slot.isFull ? (
+          <Button variant="ghost" disabled className="w-full">Fully booked</Button>
+        ) : (
+          <Button onClick={onBook} className="w-full gap-1.5 bg-violet-600 hover:bg-violet-500 btn-premium">
+            <Sparkles className="h-4 w-4" /> Book Slot
+          </Button>
         )}
       </div>
-
-      {/* Capacity */}
-      <div className="space-y-1.5 mb-4 mt-auto">
-        <div className="flex items-center justify-between text-xs">
-          <span className="text-muted-foreground">Capacity</span>
-          <span className="font-mono">
-            {slot.bookedCount}/{slot.maxBookings}
-          </span>
-        </div>
-        <Progress value={capacityPct} className="h-1.5" />
-      </div>
-
-      {/* Action */}
-      {isBookedByMe ? (
-        <Button variant="secondary" disabled className="w-full gap-1.5">
-          <CheckCircle2 className="h-4 w-4 text-emerald-400" /> Booked
-        </Button>
-      ) : isPast ? (
-        <Button variant="ghost" disabled className="w-full">
-          Session ended
-        </Button>
-      ) : slot.isFull ? (
-        <Button variant="ghost" disabled className="w-full">
-          Fully booked
-        </Button>
-      ) : (
-        <Button onClick={onBook} className="w-full gap-1.5">
-          <Sparkles className="h-4 w-4" /> Book Slot
-        </Button>
-      )}
-    </Card>
+    </CursorGlow>
   )
 }
 
@@ -396,10 +443,10 @@ function BookSlotDialog({
 
   return (
     <Dialog open={!!slot} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-popover/95 backdrop-blur-xl border-border/60">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <CalendarClock className="h-5 w-5 text-emerald-400" /> Book Office Hours
+          <DialogTitle className="flex items-center gap-2 text-xl">
+            <CalendarClock className="h-5 w-5 text-violet-300" /> Book Office Hours
           </DialogTitle>
           <DialogDescription>
             Confirm your booking with{" "}
@@ -413,12 +460,12 @@ function BookSlotDialog({
         {!slot || !start || !end || !color ? null : (
           <div className="space-y-4 py-2">
             {/* Summary */}
-            <div className={cn("rounded-lg border p-3 space-y-2", color.border, color.bg)}>
+            <div className={cn("rounded-xl border p-4 space-y-2", color.border, color.bg)}>
               <div className="flex items-center gap-2 text-sm font-medium">
                 <ModeIcon mode={slot.mode} className={cn("h-4 w-4", color.text)} />
                 {modeLabel(slot.mode)} session
               </div>
-              <div className="text-xs space-y-1">
+              <div className="text-xs space-y-1.5">
                 <div className="flex items-center gap-2">
                   <Calendar className="h-3 w-3 text-muted-foreground" />
                   {start.date}
@@ -436,7 +483,6 @@ function BookSlotDialog({
               </div>
             </div>
 
-            {/* Topic */}
             <div className="space-y-2">
               <Label htmlFor="book-topic">Topic</Label>
               <Input
@@ -445,13 +491,13 @@ function BookSlotDialog({
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
                 maxLength={200}
+                className="bg-background/50"
               />
               <p className="text-[10px] text-muted-foreground">
                 Optional — gives your instructor a heads-up.
               </p>
             </div>
 
-            {/* Notes */}
             <div className="space-y-2">
               <Label htmlFor="book-notes">Notes</Label>
               <Textarea
@@ -459,7 +505,7 @@ function BookSlotDialog({
                 placeholder="Anything specific you want to cover?"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                className="min-h-[80px]"
+                className="min-h-[80px] bg-background/50 resize-none"
                 maxLength={2000}
               />
             </div>
@@ -475,9 +521,10 @@ function BookSlotDialog({
             onClick={() =>
               bookMutation.mutate({ topic: topic.trim(), notes: notes.trim() })
             }
+            className="bg-violet-600 hover:bg-violet-500 btn-premium gap-1.5"
           >
             {bookMutation.isPending ? "Booking…" : "Confirm Booking"}
-            <Sparkles className="h-3.5 w-3.5 ml-1.5" />
+            <Sparkles className="h-3.5 w-3.5" />
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -503,23 +550,32 @@ function MyBookingsTab() {
       {isLoading ? (
         <div className="space-y-3">
           {Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} className="h-32" />
+            <Skeleton key={i} className="h-32 rounded-2xl" />
           ))}
         </div>
       ) : bookings.length === 0 ? (
-        <Card className="p-12 text-center border-dashed">
-          <CalendarClock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="font-semibold mb-1">No upcoming bookings</h3>
-          <p className="text-sm text-muted-foreground">
-            Browse the Available Slots tab to book office hours with your instructors.
-          </p>
-        </Card>
+        <FadeIn>
+          <div className="relative overflow-hidden rounded-2xl border border-dashed border-border/60 bg-card/20 p-16 text-center">
+            <div className="absolute inset-0 bg-grid opacity-10 pointer-events-none" />
+            <div className="relative z-10">
+              <div className="inline-flex p-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 mb-6">
+                <CalendarClock className="h-7 w-7 text-emerald-300" />
+              </div>
+              <h3 className="text-2xl font-bold mb-2 tracking-[-0.02em]">No upcoming bookings</h3>
+              <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
+                Browse the Available Slots tab to book office hours with your instructors.
+              </p>
+            </div>
+          </div>
+        </FadeIn>
       ) : (
-        <div className="space-y-3">
+        <Stagger className="space-y-3" staggerChildren={0.06}>
           {bookings.map((b) => (
-            <BookingCard key={b.id} booking={b} />
+            <StaggerItem key={b.id}>
+              <BookingCard booking={b} />
+            </StaggerItem>
           ))}
-        </div>
+        </Stagger>
       )}
     </div>
   )
@@ -539,13 +595,13 @@ function BookingCard({ booking }: { booking: OfficeHourBooking }) {
     switch (booking.status) {
       case "booked":
         return (
-          <Badge className="bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+          <Badge className="bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
             <CheckCircle2 className="h-3 w-3 mr-1" /> Confirmed
           </Badge>
         )
       case "completed":
         return (
-          <Badge variant="outline" className="text-cyan-400 border-cyan-500/30 bg-cyan-500/10">
+          <Badge variant="outline" className="text-cyan-300 border-cyan-500/30 bg-cyan-500/10">
             Completed
           </Badge>
         )
@@ -561,77 +617,80 @@ function BookingCard({ booking }: { booking: OfficeHourBooking }) {
   })()
 
   return (
-    <Card className="p-5 card-hover">
-      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-        {/* Instructor avatar */}
-        <div className="flex items-center gap-3 shrink-0 sm:w-56">
-          <Avatar className="h-10 w-10 border border-border">
-            {slot.instructor.avatar ? (
-              <AvatarImage src={slot.instructor.avatar} alt={slot.instructor.name} />
-            ) : null}
-            <AvatarFallback className="bg-emerald-500/10 text-emerald-400 text-xs">
-              {initialsOf(slot.instructor.name)}
-            </AvatarFallback>
-          </Avatar>
-          <div className="min-w-0">
-            <div className="font-medium text-sm truncate">{slot.instructor.name}</div>
-            <div className="text-xs text-muted-foreground truncate">
-              {slot.instructor.title || "Instructor"}
+    <CursorGlow className="group" color="oklch(0.6 0.2 295 / 0.05)">
+      <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-card/20 backdrop-blur p-5 hover:border-violet-500/30 transition-all duration-300">
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-violet-500/30 via-violet-500/10 to-transparent" />
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+          {/* Instructor avatar */}
+          <div className="flex items-center gap-3 shrink-0 sm:w-56">
+            <Avatar className="h-11 w-11 border border-border/60">
+              {slot.instructor.avatar ? (
+                <AvatarImage src={slot.instructor.avatar} alt={slot.instructor.name} />
+              ) : null}
+              <AvatarFallback className="bg-violet-500/10 text-violet-300 text-xs font-medium">
+                {initialsOf(slot.instructor.name)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0">
+              <div className="font-semibold text-sm truncate group-hover:text-violet-200 transition-colors">{slot.instructor.name}</div>
+              <div className="text-xs text-muted-foreground truncate">
+                {slot.instructor.title || "Instructor"}
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Time + mode */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap mb-1">
-            <span className="font-medium text-sm">{start.date}</span>
-            <span className="text-sm text-muted-foreground">
-              {start.time} – {end.time}
-            </span>
-            <Badge
-              variant="outline"
-              className={cn("gap-1 text-[10px]", color.text, color.bg, color.border, "border")}
-            >
-              <ModeIcon mode={slot.mode} className="h-2.5 w-2.5" /> {modeLabel(slot.mode)}
-            </Badge>
-            {slot.course && (
-              <Badge variant="outline" className="font-mono text-[10px]">
-                {slot.course.shortName}
+          {/* Time + mode */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap mb-1.5">
+              <span className="font-medium text-sm">{start.date}</span>
+              <span className="text-sm text-muted-foreground font-mono">
+                {start.time} – {end.time}
+              </span>
+              <Badge
+                variant="outline"
+                className={cn("gap-1 text-[10px]", color.text, color.bg, color.border, "border")}
+              >
+                <ModeIcon mode={slot.mode} className="h-2.5 w-2.5" /> {modeLabel(slot.mode)}
               </Badge>
+              {slot.course && (
+                <Badge variant="outline" className="font-mono text-[10px] border-violet-500/30 text-violet-300">
+                  {slot.course.shortName}
+                </Badge>
+              )}
+              {statusBadge}
+            </div>
+            {booking.topic && (
+              <div className="text-sm text-muted-foreground mb-1">
+                <span className="text-muted-foreground/80">Topic:</span>{" "}
+                <span className="text-foreground">{booking.topic}</span>
+              </div>
             )}
-            {statusBadge}
+            {booking.notes && (
+              <p className="text-xs text-muted-foreground line-clamp-2">{booking.notes}</p>
+            )}
+            {slot.location && (
+              <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                <MapPin className="h-3 w-3" />
+                <span className="truncate">{slot.location}</span>
+              </div>
+            )}
           </div>
-          {booking.topic && (
-            <div className="text-sm text-muted-foreground mb-1">
-              <span className="text-muted-foreground/80">Topic:</span>{" "}
-              <span className="text-foreground">{booking.topic}</span>
-            </div>
-          )}
-          {booking.notes && (
-            <p className="text-xs text-muted-foreground line-clamp-2">{booking.notes}</p>
-          )}
-          {slot.location && (
-            <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-              <MapPin className="h-3 w-3" />
-              <span className="truncate">{slot.location}</span>
-            </div>
-          )}
-        </div>
 
-        {/* Cancel */}
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-xs shrink-0"
-          onClick={() =>
-            toast.info("Contact instructor to cancel", {
-              description: "Reply to your booking confirmation email or message the instructor directly.",
-            })
-          }
-        >
-          <User className="h-3 w-3 mr-1" /> Cancel
-        </Button>
+          {/* Cancel */}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-xs shrink-0 hover:bg-rose-500/10 hover:text-rose-300"
+            onClick={() =>
+              toast.info("Contact instructor to cancel", {
+                description: "Reply to your booking confirmation email or message the instructor directly.",
+              })
+            }
+          >
+            <User className="h-3 w-3 mr-1" /> Cancel
+          </Button>
+        </div>
       </div>
-    </Card>
+    </CursorGlow>
   )
 }

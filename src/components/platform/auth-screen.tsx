@@ -3,22 +3,45 @@
 import * as React from "react"
 import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { Shield, Terminal, Zap, Lock, Mail, User, GraduationCap, ChevronRight, Eye, EyeOff } from "lucide-react"
+import { motion } from "framer-motion"
+import {
+  Shield, Terminal, Zap, Lock, Mail, User, GraduationCap, ChevronRight,
+  Eye, EyeOff, Building2, Hash, BadgeCheck,
+  CheckCircle2, Users, BookOpen, ArrowRight, Globe, Cpu,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { api } from "@/lib/api"
 import { useAppStore } from "@/store/app-store"
 import { toast } from "sonner"
 import { CertificateVerifyCard } from "@/components/platform/certificate-verify-card"
+import { PublicHeader } from "@/components/platform/public-header"
+import { cn } from "@/lib/utils"
 
 const DEMO_ACCOUNTS = [
-  { label: "Student", email: "student@guardianx.io", password: "student123", icon: GraduationCap, color: "text-emerald-400" },
-  { label: "Instructor", email: "instructor@guardianx.io", password: "instructor123", icon: User, color: "text-cyan-400" },
-  { label: "Admin", email: "admin@guardianx.io", password: "admin123", icon: Shield, color: "text-amber-400" },
+  { label: "Student", email: "student@guardianx.io", password: "student123", icon: GraduationCap, color: "text-violet-300", tint: "bg-violet-500/10 border-violet-500/30" },
+  { label: "Instructor", email: "instructor@guardianx.io", password: "instructor123", icon: User, color: "text-cyan-300", tint: "bg-cyan-500/10 border-cyan-500/30" },
+  { label: "Admin", email: "admin@guardianx.io", password: "admin123", icon: Shield, color: "text-amber-300", tint: "bg-amber-500/10 border-amber-500/30" },
+]
+
+const FEATURES = [
+  { icon: Terminal, title: "Certification Tracks", desc: "CEH · CISSP · CCNA · CCNP · RHCSA + 22 more" },
+  { icon: Zap, title: "Live Workshops", desc: "Screen-share with two-way voice & whiteboard" },
+  { icon: Shield, title: "Hands-on Labs", desc: "31 real offensive-security CTF challenges" },
+  { icon: GraduationCap, title: "Verifiable Certs", desc: "Public verification for employers & recruiters" },
+  { icon: Building2, title: "School Portal", desc: "Multi-tenant dashboards for institutions" },
+  { icon: BadgeCheck, title: "Industry Recognized", desc: "Trusted by 12,000+ cyber defenders" },
+]
+
+const STATS = [
+  { value: "12K+", label: "Learners", icon: Users, color: "text-violet-300" },
+  { value: "27+", label: "Courses", icon: BookOpen, color: "text-cyan-300" },
+  { value: "31", label: "Labs", icon: Shield, color: "text-amber-300" },
 ]
 
 export function AuthScreen() {
@@ -26,25 +49,37 @@ export function AuthScreen() {
   const { navigate } = useAppStore()
   const [loading, setLoading] = React.useState(false)
   const [showPass, setShowPass] = React.useState(false)
+  const [activeTab, setActiveTab] = React.useState("login")
+
+  // Standard login state
   const [loginEmail, setLoginEmail] = React.useState("student@guardianx.io")
   const [loginPass, setLoginPass] = React.useState("student123")
+
+  // School portal login state
+  const [schoolCode, setSchoolCode] = React.useState("")
+  const [schoolEmail, setSchoolEmail] = React.useState("")
+  const [schoolPass, setSchoolPass] = React.useState("")
+
+  // Register state
   const [regName, setRegName] = React.useState("")
   const [regEmail, setRegEmail] = React.useState("")
   const [regPass, setRegPass] = React.useState("")
 
   // After successful auth, fetch the user's role and route accordingly.
-  // Instructors and admins go to the Instructor dashboard; everyone else to the student dashboard.
   async function routeByRole() {
     try {
       const data = await api<{ user: { role: string } | null }>("/api/me")
       const role = data?.user?.role
-      if (role === "INSTRUCTOR" || role === "ADMIN") {
+      if (role === "SCHOOL_ADMIN") {
+        navigate({ name: "school" })
+      } else if (role === "INSTRUCTOR") {
         navigate({ name: "instructor" })
+      } else if (role === "ADMIN") {
+        navigate({ name: "admin" })
       } else {
         navigate({ name: "dashboard" })
       }
     } catch {
-      // fall back to default dashboard
       navigate({ name: "dashboard" })
     }
   }
@@ -64,7 +99,25 @@ export function AuthScreen() {
     }
     toast.success("Welcome back, Guardian!")
     router.refresh()
-    // route by role after refresh
+    setTimeout(routeByRole, 200)
+  }
+
+  async function handleSchoolLogin(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+    const res = await signIn("school-login", {
+      schoolCode,
+      adminEmail: schoolEmail,
+      password: schoolPass,
+      redirect: false,
+    })
+    setLoading(false)
+    if (res?.error) {
+      toast.error("Invalid school credentials. Check your school code, email, and password.")
+      return
+    }
+    toast.success("Welcome to your School Portal!")
+    router.refresh()
     setTimeout(routeByRole, 200)
   }
 
@@ -97,235 +150,385 @@ export function AuthScreen() {
       return
     }
     toast.success("Welcome back, Guardian!")
-    try {
-      const r = await fetch("/api/auth/session")
-      const session = await r.json()
-      const role = session?.user?.role
-      if (role === "ADMIN") {
-        navigate({ name: "admin" })
-      } else if (role === "INSTRUCTOR") {
-        navigate({ name: "instructor" })
-      } else {
-        navigate({ name: "dashboard" })
-      }
-    } catch {
-      navigate({ name: "dashboard" })
-    }
     router.refresh()
+    setTimeout(routeByRole, 200)
   }
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-background bg-grid relative overflow-hidden">
-      {/* Left: branding */}
-      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12 relative scanlines border-r border-border">
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-950/40 via-transparent to-cyan-950/30 pointer-events-none" />
-        <div className="relative z-10">
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <img src="/guardianx-logo.png" alt="GuardianX Academy" className="h-10 w-10 object-contain" />
-              <div className="absolute inset-0 bg-emerald-500/20 blur-lg rounded-full" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight">
-                Guardian<span className="text-emerald-400">X</span> Academy
-              </h1>
-              <p className="text-xs text-muted-foreground font-mono">Building Tomorrow&apos;s Cyber Guardians</p>
-            </div>
-          </div>
-        </div>
+    <div className="min-h-screen flex flex-col bg-background relative overflow-hidden">
+      <PublicHeader />
 
-        <div className="relative z-10 space-y-8">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs font-mono mb-6">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 pulse-dot" />
-              SYSTEM ONLINE
-            </div>
-            <h2 className="text-4xl xl:text-5xl font-bold leading-tight mb-4">
-              Master Cyber Security.
-              <br />
-              <span className="text-gradient-emerald">Become a Guardian.</span>
-            </h2>
-            <p className="text-muted-foreground text-lg max-w-md">
-              Industry-leading certification prep, live screen-sharing workshops, and hands-on offensive security labs — all in one platform.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4 max-w-md">
-            {[
-              { icon: Terminal, label: "CEH · CISSP · CCNA", desc: "8+ certification tracks" },
-              { icon: Zap, label: "Live Workshops", desc: "Screen-share & 2-way voice" },
-              { icon: Shield, label: "Hands-on Labs", desc: "Real CTF challenges" },
-              { icon: GraduationCap, label: "Verifiable Certs", desc: "Industry recognized" },
-            ].map((f) => (
-              <div key={f.label} className="rounded-lg border border-border bg-card/50 backdrop-blur p-4">
-                <f.icon className="h-5 w-5 text-emerald-400 mb-2" />
-                <div className="text-sm font-medium">{f.label}</div>
-                <div className="text-xs text-muted-foreground">{f.desc}</div>
+      {/* ===== Content starts BELOW the fixed header (pt-20) ===== */}
+      <main className="flex-1 pt-20 lg:pt-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
+            {/* ============================================================
+                LEFT — Branding (desktop only)
+                ============================================================ */}
+            <section className="hidden lg:flex lg:flex-col gap-8 lg:sticky lg:top-28">
+              {/* Logo + tagline */}
+              <div className="space-y-5">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-violet-500/30 bg-violet-500/10 text-violet-300 text-xs font-mono w-fit">
+                  <span className="h-1.5 w-1.5 rounded-full bg-violet-400 pulse-dot" />
+                  SYSTEM ONLINE
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-violet-500/30 bg-violet-500/10">
+                    <Shield className="h-5 w-5 text-violet-300" strokeWidth={1.8} />
+                  </div>
+                  <div>
+                    <div className="text-xl font-bold tracking-tight leading-none">
+                      Guardian<span className="text-violet-400">X</span> Academy
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1 font-mono">cyber security · certification · labs</div>
+                  </div>
+                </div>
+                <h1 className="text-[clamp(2rem,3.5vw,3rem)] font-bold leading-[1.05] tracking-[-0.02em] text-balance">
+                  Master Cyber Security.
+                  <br />
+                  <span className="text-gradient-premium">Become a Guardian.</span>
+                </h1>
+                <p className="text-base text-muted-foreground max-w-md leading-relaxed">
+                  Industry-leading certification prep, live screen-sharing workshops, and hands-on offensive security labs — all in one platform built for defenders.
+                </p>
               </div>
-            ))}
-          </div>
-        </div>
 
-        <div className="relative z-10 text-xs text-muted-foreground font-mono">
-          <div className="flex items-center gap-2">
-            <Lock className="h-3 w-3" />
-            <span>Encrypted • SOC2-aligned • Built for defenders</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Right: auth form */}
-      <div className="flex-1 flex items-center justify-center p-6 sm:p-12">
-        <div className="w-full max-w-md">
-          {/* mobile logo */}
-          <div className="flex lg:hidden items-center gap-3 mb-8 justify-center">
-            <img src="/guardianx-logo.png" alt="GuardianX" className="h-8 w-8 object-contain" />
-            <h1 className="text-2xl font-bold">
-              Guardian<span className="text-violet-400">X</span>
-            </h1>
-          </div>
-
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold">Sign in to continue</h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              Access your learning dashboard, labs, and live sessions.
-            </p>
-          </div>
-
-          <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="login">Sign In</TabsTrigger>
-              <TabsTrigger value="register">Create Account</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="login">
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="email"
-                      type="email"
-                      className="pl-9"
-                      placeholder="you@example.com"
-                      value={loginEmail}
-                      onChange={(e) => setLoginEmail(e.target.value)}
-                      required
-                    />
+              {/* Feature highlights — solid cards */}
+              <div className="grid grid-cols-2 gap-3">
+                {FEATURES.map((f) => (
+                  <div
+                    key={f.title}
+                    className="group rounded-xl border border-border bg-card shadow-lg p-4 transition-all hover:-translate-y-1 hover:border-violet-500/40 hover:shadow-[0_20px_60px_-20px_oklch(0.6_0.2_295_/_0.25)]"
+                  >
+                    <div className="inline-flex p-2 rounded-lg bg-violet-500/10 mb-3 transition-transform group-hover:scale-110">
+                      <f.icon className="h-4 w-4 text-violet-300" />
+                    </div>
+                    <div className="text-sm font-semibold mb-0.5">{f.title}</div>
+                    <div className="text-xs text-muted-foreground leading-relaxed">{f.desc}</div>
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="password"
-                      type={showPass ? "text" : "password"}
-                      className="pl-9 pr-9"
-                      placeholder="••••••••"
-                      value={loginPass}
-                      onChange={(e) => setLoginPass(e.target.value)}
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPass((s) => !s)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    >
-                      {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Authenticating..." : "Sign In"}
-                  <ChevronRight className="h-4 w-4 ml-1" />
-                </Button>
-              </form>
-            </TabsContent>
+                ))}
+              </div>
 
-            <TabsContent value="register">
-              <form onSubmit={handleRegister} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Full Name</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="name"
-                      className="pl-9"
-                      placeholder="Jane Doe"
-                      value={regName}
-                      onChange={(e) => setRegName(e.target.value)}
-                      required
-                    />
-                  </div>
+              {/* Stats strip — solid card */}
+              <div className="rounded-xl border border-border bg-card shadow-lg p-5">
+                <div className="grid grid-cols-3 gap-4">
+                  {STATS.map((s, i) => (
+                    <div key={s.label} className={cn("flex items-center gap-3", i < STATS.length - 1 && "border-r border-border pr-4")}>
+                      <s.icon className={cn("h-5 w-5", s.color)} />
+                      <div>
+                        <div className="text-xl font-bold leading-none">{s.value}</div>
+                        <div className="text-[11px] text-muted-foreground mt-1">{s.label}</div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="reg-email">Email</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="reg-email"
-                      type="email"
-                      className="pl-9"
-                      placeholder="you@example.com"
-                      value={regEmail}
-                      onChange={(e) => setRegEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="reg-password">Password</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="reg-password"
-                      type="password"
-                      className="pl-9"
-                      placeholder="Min 6 characters"
-                      value={regPass}
-                      onChange={(e) => setRegPass(e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Creating account..." : "Create Account"}
-                  <ChevronRight className="h-4 w-4 ml-1" />
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
+              </div>
 
-          <div className="mt-8">
-            <div className="relative">
-              <Separator />
-              <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-3 text-xs text-muted-foreground font-mono">
-                QUICK DEMO ACCESS
-              </span>
-            </div>
-            <div className="grid grid-cols-3 gap-2 mt-4">
-              {DEMO_ACCOUNTS.map((acc) => (
-                <button
-                  key={acc.label}
-                  onClick={() => quickLogin(acc.email, acc.password)}
-                  className="group rounded-lg border border-border bg-card/50 hover:bg-card hover:border-emerald-500/40 p-3 transition-all text-left"
+              {/* Trust footer */}
+              <div className="flex items-center gap-2 text-xs text-muted-foreground font-mono">
+                <Lock className="h-3 w-3 text-cyan-300" />
+                <span>Encrypted · SOC2-aligned · Built for defenders</span>
+              </div>
+            </section>
+
+            {/* ============================================================
+                RIGHT — Auth form (solid card, shadow-lg)
+                ============================================================ */}
+            <section className="w-full">
+              {/* Mobile logo (shown only on small screens) */}
+              <div className="flex lg:hidden items-center justify-center gap-3 mb-6">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-violet-500/30 bg-violet-500/10">
+                  <Shield className="h-5 w-5 text-violet-300" strokeWidth={1.8} />
+                </div>
+                <div className="text-xl font-bold tracking-tight">
+                  Guardian<span className="text-violet-400">X</span>
+                </div>
+              </div>
+
+              {/* Form card — solid, shadowed */}
+              <Card className="bg-card shadow-lg border border-border p-6 sm:p-8">
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4 }}
+                  className="mb-6"
                 >
-                  <acc.icon className={`h-4 w-4 mb-1.5 ${acc.color}`} />
-                  <div className="text-xs font-medium">{acc.label}</div>
-                  <div className="text-[10px] text-muted-foreground font-mono truncate">1-click</div>
-                </button>
-              ))}
-            </div>
-          </div>
+                  <h2 className="text-2xl font-bold tracking-tight">
+                    {activeTab === "school"
+                      ? "Institution Portal Login"
+                      : activeTab === "register"
+                        ? "Create your account"
+                        : "Sign in to continue"}
+                  </h2>
+                  <p className="text-sm text-muted-foreground mt-1.5">
+                    {activeTab === "school"
+                      ? "Access your school, college, or university dashboard."
+                      : activeTab === "register"
+                        ? "Start your cyber security journey today."
+                        : "Access your learning dashboard, labs, and live sessions."}
+                  </p>
+                </motion.div>
 
-          {/* Verify Your Certificate — public lookup */}
-          <div className="mt-6">
-            <CertificateVerifyCard />
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                  <TabsList className="grid w-full grid-cols-3 mb-6">
+                    <TabsTrigger value="login">Sign In</TabsTrigger>
+                    <TabsTrigger value="school">
+                      <Building2 className="h-3.5 w-3.5 mr-1.5" /> School
+                    </TabsTrigger>
+                    <TabsTrigger value="register">Register</TabsTrigger>
+                  </TabsList>
+
+                  {/* ===== Sign In tab ===== */}
+                  <TabsContent value="login">
+                    <form onSubmit={handleLogin} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="email">Email</Label>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="email"
+                            type="email"
+                            className="pl-9"
+                            placeholder="you@example.com"
+                            value={loginEmail}
+                            onChange={(e) => setLoginEmail(e.target.value)}
+                            required
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="password">Password</Label>
+                          <button
+                            type="button"
+                            onClick={() => setShowPass((s) => !s)}
+                            className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+                          >
+                            {showPass ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                            {showPass ? "Hide" : "Show"}
+                          </button>
+                        </div>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="password"
+                            type={showPass ? "text" : "password"}
+                            className="pl-9"
+                            placeholder="••••••••"
+                            value={loginPass}
+                            onChange={(e) => setLoginPass(e.target.value)}
+                            required
+                          />
+                        </div>
+                      </div>
+                      <Button type="submit" className="w-full btn-premium py-2.5" disabled={loading}>
+                        {loading ? "Authenticating..." : "Sign In"}
+                        <ChevronRight className="h-4 w-4 ml-1" />
+                      </Button>
+                    </form>
+
+                    <div className="mt-4 flex items-center justify-between text-xs">
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab("school")}
+                        className="text-cyan-300 hover:text-cyan-200 font-medium flex items-center gap-1 transition-colors"
+                      >
+                        <Building2 className="h-3 w-3" /> Login as Institution →
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab("register")}
+                        className="text-violet-300 hover:text-violet-200 font-medium transition-colors"
+                      >
+                        Create account →
+                      </button>
+                    </div>
+                  </TabsContent>
+
+                  {/* ===== School Portal tab ===== */}
+                  <TabsContent value="school">
+                    <form onSubmit={handleSchoolLogin} className="space-y-4">
+                      <div className="rounded-lg border border-cyan-500/30 bg-cyan-500/5 p-3 mb-2">
+                        <div className="flex items-center gap-2 text-xs text-cyan-300 font-medium mb-1">
+                          <Building2 className="h-3.5 w-3.5" /> Institution Login
+                        </div>
+                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                          Each school, college, and university has a unique{" "}
+                          <span className="font-mono text-cyan-300">School Code</span> for secure multi-tenant access.
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="schoolCode">School Code</Label>
+                        <div className="relative">
+                          <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="schoolCode"
+                            type="text"
+                            className="pl-9 font-mono uppercase"
+                            placeholder="GXS-DELHI-001"
+                            value={schoolCode}
+                            onChange={(e) => setSchoolCode(e.target.value.toUpperCase())}
+                            required
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="schoolEmail">Admin Email</Label>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="schoolEmail"
+                            type="email"
+                            className="pl-9"
+                            placeholder="admin@yourschool.edu"
+                            value={schoolEmail}
+                            onChange={(e) => setSchoolEmail(e.target.value)}
+                            required
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="schoolPass">Password</Label>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="schoolPass"
+                            type={showPass ? "text" : "password"}
+                            className="pl-9 pr-9"
+                            placeholder="••••••••"
+                            value={schoolPass}
+                            onChange={(e) => setSchoolPass(e.target.value)}
+                            required
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPass((s) => !s)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </button>
+                        </div>
+                      </div>
+                      <Button
+                        type="submit"
+                        className="w-full btn-premium py-2.5 bg-cyan-500 text-cyan-950 hover:bg-cyan-400"
+                        disabled={loading}
+                      >
+                        {loading ? "Authenticating..." : "Access Institution Portal"}
+                        <ChevronRight className="h-4 w-4 ml-1" />
+                      </Button>
+                    </form>
+
+                    <div className="mt-4 text-center">
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab("login")}
+                        className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        ← Back to individual login
+                      </button>
+                    </div>
+                  </TabsContent>
+
+                  {/* ===== Register tab ===== */}
+                  <TabsContent value="register">
+                    <form onSubmit={handleRegister} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="name">Full Name</Label>
+                        <div className="relative">
+                          <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="name"
+                            className="pl-9"
+                            placeholder="Jane Doe"
+                            value={regName}
+                            onChange={(e) => setRegName(e.target.value)}
+                            required
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="reg-email">Email</Label>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="reg-email"
+                            type="email"
+                            className="pl-9"
+                            placeholder="you@example.com"
+                            value={regEmail}
+                            onChange={(e) => setRegEmail(e.target.value)}
+                            required
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="reg-password">Password</Label>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="reg-password"
+                            type="password"
+                            className="pl-9"
+                            placeholder="Min 6 characters"
+                            value={regPass}
+                            onChange={(e) => setRegPass(e.target.value)}
+                            required
+                          />
+                        </div>
+                      </div>
+                      <Button type="submit" className="w-full btn-premium py-2.5" disabled={loading}>
+                        {loading ? "Creating account..." : "Create Account"}
+                        <ChevronRight className="h-4 w-4 ml-1" />
+                      </Button>
+                      <p className="text-[11px] text-muted-foreground text-center leading-relaxed">
+                        By signing up, you agree to our Terms of Service and Privacy Policy.
+                      </p>
+                    </form>
+                  </TabsContent>
+                </Tabs>
+
+                {/* ===== Quick demo access — clean grid, no overlap ===== */}
+                {(activeTab === "login" || activeTab === "register") && (
+                  <div className="mt-8">
+                    <div className="relative">
+                      <Separator />
+                      <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-3 text-[10px] text-muted-foreground font-mono tracking-[0.15em]">
+                        QUICK DEMO ACCESS
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2.5 mt-4">
+                      {DEMO_ACCOUNTS.map((acc) => (
+                        <button
+                          key={acc.label}
+                          type="button"
+                          onClick={() => quickLogin(acc.email, acc.password)}
+                          disabled={loading}
+                          className={cn(
+                            "group rounded-lg border bg-card p-3 text-left transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:pointer-events-none",
+                            acc.tint,
+                            "hover:shadow-md"
+                          )}
+                        >
+                          <acc.icon className={cn("h-4 w-4 mb-2", acc.color)} />
+                          <div className="text-xs font-semibold">{acc.label}</div>
+                          <div className="text-[10px] text-muted-foreground font-mono mt-0.5">1-click</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </Card>
+
+              {/* ===== Certificate Verify Card — solid wrapper below the form ===== */}
+              <div className="mt-6">
+                <CertificateVerifyCard />
+              </div>
+            </section>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   )
 }

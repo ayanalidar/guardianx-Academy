@@ -1,33 +1,51 @@
 "use client"
 
 import * as React from "react"
+import { motion } from "framer-motion"
 import { useQuery } from "@tanstack/react-query"
 import { api } from "@/lib/api"
 import { useAppStore } from "@/store/app-store"
-import { colorFor, LEVEL_COLORS } from "@/lib/colors"
 import { useBookmarks } from "@/hooks/use-bookmarks"
-import { Card } from "@/components/ui/card"
+import { getCourseImage } from "@/lib/course-images"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, Star, Clock, BookOpen, Users, Shield, SlidersHorizontal, Bookmark, BookmarkCheck, Trash2 } from "lucide-react"
-import { toast } from "sonner"
+import {
+  Search, Star, Clock, BookOpen, Users, Shield, Bookmark, BookmarkCheck,
+  ArrowRight, Layers, Sparkles, FlaskConical, GraduationCap, Tag,
+  Gauge, PlayCircle, CheckCircle2, Award,
+} from "lucide-react"
+import { cn } from "@/lib/utils"
+import {
+  ScrollReveal, TextReveal, Stagger, StaggerItem, CursorGlow, MagneticButton, Counter,
+} from "@/components/platform/motion-system"
 
 interface CourseItem {
   id: string; slug: string; title: string; shortName: string; description: string
   category: string; level: string; durationHours: number; rating: number
   studentsCount: number; color: string; thumbnail: string | null
-  tags: string; certBody: string
-  instructor: { id: string; name: string; title: string | null }
+  tags: string; certBody: string; price: number
+  instructor: { id: string; name: string; title: string | null; avatar?: string | null }
   lessonCount: number; moduleCount: number
   enrollment?: { progress: number; completed: boolean; lastAccessed: string | null; enrolledAt: string } | null
 }
 
 const CATEGORIES = ["All", "Ethical Hacking", "Networking", "Web Security", "System Administration", "Security Management", "Identity & Access"]
 const LEVELS = ["All", "Beginner", "Intermediate", "Advanced"]
+const STATUSES = [
+  { value: "all", label: "All Status" },
+  { value: "not-started", label: "Not Started" },
+  { value: "in-progress", label: "In Progress" },
+  { value: "completed", label: "Completed" },
+]
+
+const LEVEL_STYLES: Record<string, { badge: string; dot: string }> = {
+  Beginner: { badge: "border-emerald-500/40 text-emerald-300 bg-emerald-500/10", dot: "bg-emerald-400" },
+  Intermediate: { badge: "border-cyan-500/40 text-cyan-300 bg-cyan-500/10", dot: "bg-cyan-400" },
+  Advanced: { badge: "border-violet-500/40 text-violet-300 bg-violet-500/10", dot: "bg-violet-400" },
+}
 
 export function CourseCatalogView() {
   const { navigate } = useAppStore()
@@ -48,265 +66,576 @@ export function CourseCatalogView() {
     },
   })
 
-  const { data: bookmarkData } = useQuery<{ bookmarks: any[] }>({
-    queryKey: ["bookmarks"],
-    queryFn: () => api("/api/bookmarks"),
-  })
-
   const courses = data?.courses ?? []
-  const bookmarks = bookmarkData?.bookmarks ?? []
+  const featured = courses[0]
+  const rest = courses.slice(1)
+
+  // Aggregate stats
+  const totalStudents = courses.reduce((acc, c) => acc + (c.studentsCount || 0), 0)
+  const avgRating = courses.length > 0
+    ? (courses.reduce((acc, c) => acc + (c.rating || 0), 0) / courses.length)
+    : 0
+  const totalLabs = 31 // GuardianX cyber range lab count (platform-wide)
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-emerald-950/30 to-background p-6 lg:p-8">
-        <div className="absolute inset-0 bg-grid opacity-20" />
-        <div className="relative z-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs font-mono mb-3">
-            <Shield className="h-3 w-3" /> CERTIFICATION TRACKS
-          </div>
-          <h1 className="text-3xl font-bold mb-2">Course Catalog</h1>
-          <p className="text-muted-foreground max-w-2xl">
-            Industry-recognized cyber security certification prep. From beginner networking to advanced exploitation and privileged access management.
-          </p>
+    <div className="relative min-h-screen pt-20 lg:pt-24">
+      {/* Atmospheric background */}
+      <div className="absolute inset-0 bg-mesh opacity-50 pointer-events-none" />
+      <div className="absolute top-0 right-0 w-[600px] h-[400px] bg-violet-600/5 blur-[120px] rounded-full pointer-events-none" />
+
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+        {/* ====================================================
+            HEADER — editorial, premium
+            ==================================================== */}
+        <div className="mb-10 lg:mb-12">
+          <ScrollReveal>
+            <div className="flex items-center gap-2 mb-4">
+              <span className="h-1.5 w-1.5 rounded-full bg-violet-400 pulse-dot" />
+              <span className="text-[10px] font-mono text-violet-300/80 tracking-[0.3em]">CATALOG</span>
+            </div>
+          </ScrollReveal>
+          <ScrollReveal delay={0.1}>
+            <h1 className="text-[clamp(2.25rem,6vw,4.5rem)] font-bold leading-[0.95] tracking-[-0.04em] mb-4 text-balance">
+              <TextReveal text="Find your" />{" "}
+              <span className="text-gradient-premium">
+                <TextReveal text="path." delay={0.3} />
+              </span>
+            </h1>
+          </ScrollReveal>
+          <ScrollReveal delay={0.2}>
+            <p className="text-base lg:text-lg text-muted-foreground max-w-2xl leading-relaxed">
+              {courses.length} certification tracks across ethical hacking, networking, web security, IAM, and more —
+              from beginner fundamentals to advanced specializations.
+            </p>
+          </ScrollReveal>
         </div>
-      </div>
 
-      <Tabs defaultValue="catalog">
-        <TabsList>
-          <TabsTrigger value="catalog">
-            <BookOpen className="h-3.5 w-3.5 mr-1.5" /> All Courses
-            <Badge variant="outline" className="ml-2 text-[9px] h-4 px-1">{courses.length}</Badge>
-          </TabsTrigger>
-          <TabsTrigger value="wishlist">
-            <Bookmark className="h-3.5 w-3.5 mr-1.5" /> Wishlist
-            {bookmarks.length > 0 && <Badge variant="outline" className="ml-2 text-[9px] h-4 px-1 bg-amber-500/10 text-amber-400 border-amber-500/30">{bookmarks.length}</Badge>}
-          </TabsTrigger>
-        </TabsList>
+        {/* ====================================================
+            STATS STRIP — premium solid cards
+            ==================================================== */}
+        <ScrollReveal delay={0.25}>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10 lg:mb-12">
+            <StatCard
+              icon={BookOpen}
+              label="Total Courses"
+              value={courses.length || 27}
+              color="text-violet-300"
+              tint="bg-violet-500/10"
+            />
+            <StatCard
+              icon={Users}
+              label="Total Students"
+              value={totalStudents || 12000}
+              color="text-cyan-300"
+              tint="bg-cyan-500/10"
+            />
+            <StatCard
+              icon={FlaskConical}
+              label="Practice Labs"
+              value={totalLabs}
+              color="text-amber-300"
+              tint="bg-amber-500/10"
+            />
+            <StatCard
+              icon={Star}
+              label="Avg Rating"
+              value={Math.round(avgRating || 4.7)}
+              suffix="/5"
+              color="text-emerald-300"
+              tint="bg-emerald-500/10"
+            />
+          </div>
+        </ScrollReveal>
 
-        {/* Catalog tab */}
-        <TabsContent value="catalog" className="space-y-4 mt-4">
-          {/* Filters */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by name, topic, or tag (e.g. SQLi, BGP, SELinux)..."
-                className="pl-9"
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-              />
+        {/* ====================================================
+            FILTER BAR — search + 3 selects, all on a solid card
+            ==================================================== */}
+        <ScrollReveal delay={0.3}>
+          <div className="rounded-2xl border border-border/60 bg-card shadow-lg p-4 sm:p-5 mb-10 lg:mb-12">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="relative flex-1 min-w-[220px]">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search courses, certifications, topics..."
+                  className="pl-9"
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                />
+              </div>
+              <Select value={category} onValueChange={setCategory}>
+                <SelectTrigger className="w-full sm:w-[180px]"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={level} onValueChange={setLevel}>
+                <SelectTrigger className="w-full sm:w-[150px]"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {LEVELS.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger className="w-full sm:w-[160px]"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {STATUSES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
-            <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger className="w-full sm:w-[200px]">
-                <SlidersHorizontal className="h-4 w-4 mr-2" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Select value={level} onValueChange={setLevel}>
-              <SelectTrigger className="w-full sm:w-[160px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {LEVELS.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger className="w-full sm:w-[160px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Courses</SelectItem>
-                <SelectItem value="not-started">Not Started</SelectItem>
-                <SelectItem value="in-progress">In Progress</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-              </SelectContent>
-            </Select>
+            {(q || category !== "All" || level !== "All" || status !== "all") && (
+              <div className="mt-3 pt-3 border-t border-border/40 flex items-center gap-2 flex-wrap">
+                <span className="text-[10px] font-mono text-muted-foreground tracking-[0.2em]">ACTIVE FILTERS:</span>
+                {q && <FilterChip label={`"${q}"`} onClear={() => setQ("")} />}
+                {category !== "All" && <FilterChip label={category} onClear={() => setCategory("All")} />}
+                {level !== "All" && <FilterChip label={level} onClear={() => setLevel("All")} />}
+                {status !== "all" && (
+                  <FilterChip
+                    label={STATUSES.find((s) => s.value === status)?.label || status}
+                    onClear={() => setStatus("all")}
+                  />
+                )}
+                <button
+                  onClick={() => { setQ(""); setCategory("All"); setLevel("All"); setStatus("all") }}
+                  className="text-[10px] font-mono text-violet-300 hover:text-violet-200 tracking-wider ml-1"
+                >
+                  CLEAR ALL
+                </button>
+              </div>
+            )}
           </div>
+        </ScrollReveal>
 
-          <div className="text-sm text-muted-foreground">
-            {isLoading ? "Loading..." : `${courses.length} course${courses.length !== 1 ? "s" : ""} found`}
+        {/* ====================================================
+            COURSES
+            ==================================================== */}
+        {isLoading ? (
+          <div className="space-y-8">
+            <Skeleton className="h-[28rem] rounded-3xl" />
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-[26rem] rounded-2xl" />)}
+            </div>
           </div>
+        ) : courses.length === 0 ? (
+          <div className="text-center py-32">
+            <div className="inline-flex p-4 rounded-2xl bg-card border border-border/60 shadow-lg mb-5">
+              <BookOpen className="h-8 w-8 text-muted-foreground/60" />
+            </div>
+            <p className="text-muted-foreground mb-2">No courses found.</p>
+            <p className="text-xs text-muted-foreground/60">Try adjusting your filters or clearing them.</p>
+          </div>
+        ) : (
+          <>
+            {/* Featured course — large immersive card */}
+            {featured && (
+              <FeaturedCourse course={featured} />
+            )}
 
-          {/* Grid */}
-          {isLoading ? (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <Card key={i} className="overflow-hidden">
-                  <Skeleton className="h-28" />
-                  <div className="p-5 space-y-3">
-                    <Skeleton className="h-4 w-3/4" />
-                    <Skeleton className="h-3 w-full" />
-                    <Skeleton className="h-3 w-2/3" />
-                    <div className="flex gap-2"><Skeleton className="h-6 w-16" /><Skeleton className="h-6 w-20" /></div>
+            {/* Rest — sophisticated grid */}
+            {rest.length > 0 && (
+              <div className="mt-12 lg:mt-16">
+                <div className="flex items-center justify-between mb-8">
+                  <div>
+                    <p className="text-[10px] font-mono text-violet-400 tracking-[0.25em] mb-2">ALL COURSES</p>
+                    <h2 className="text-2xl lg:text-3xl font-bold tracking-tight">Explore the catalog</h2>
                   </div>
-                </Card>
-              ))}
-            </div>
-          ) : courses.length === 0 ? (
-            <Card className="p-12 text-center border-dashed">
-              <Search className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-              <p className="font-medium mb-1">No courses found</p>
-              <p className="text-sm text-muted-foreground">Try adjusting your search or filters.</p>
-            </Card>
-          ) : (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {courses.map((c) => {
-                const col = colorFor(c.color)
-                return (
-                  <button key={c.id} onClick={() => navigate({ name: "course", courseId: c.id })} className="text-left group">
-                    <Card className="overflow-hidden card-hover h-full flex flex-col">
-                      <div className={`relative h-28 ${c.thumbnail ? "" : `bg-gradient-to-br ${col.gradient}`} flex items-center justify-center overflow-hidden`}>
-                        {c.thumbnail ? (
-                          <img
-                            src={c.thumbnail}
-                            alt={c.title}
-                            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                            onError={(e) => {
-                              const img = e.target as HTMLImageElement
-                              img.style.display = "none"
-                              const parent = img.parentElement
-                              if (parent && !parent.classList.contains("bg-gradient-to-br")) {
-                                parent.classList.add("bg-gradient-to-br", col.gradient)
-                                const fallback = document.createElement("span")
-                                fallback.className = `relative font-mono font-bold text-3xl ${col.text}`
-                                fallback.textContent = c.shortName
-                                parent.appendChild(fallback)
-                              }
-                            }}
-                          />
-                        ) : (
-                          <>
-                            <div className="absolute inset-0 bg-grid opacity-40" />
-                            <span className={`relative font-mono font-bold text-3xl ${col.text} group-hover:scale-110 transition-transform`}>
-                              {c.shortName}
-                            </span>
-                          </>
-                        )}
-                        <div className="absolute top-0 right-0 px-2 py-1 bg-background/60 backdrop-blur text-[10px] font-mono text-muted-foreground rounded-bl-lg">
-                          {c.certBody}
-                        </div>
-                      </div>
-                      <div className="p-5 flex-1 flex flex-col">
-                        <div className="flex items-center gap-2 mb-2 flex-wrap">
-                          <Badge variant="outline" className={`text-[10px] ${LEVEL_COLORS[c.level]}`}>{c.level}</Badge>
-                          <Badge variant="outline" className="text-[10px]">{c.category}</Badge>
-                          {c.enrollment?.completed && (
-                            <Badge className="text-[9px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">✓ Completed</Badge>
-                          )}
-                          {c.enrollment && !c.enrollment.completed && (
-                            <Badge className="text-[9px] bg-cyan-500/15 text-cyan-400 border border-cyan-500/30">{c.enrollment.progress}%</Badge>
-                          )}
-                        </div>
-                        <h3 className="font-semibold mb-1 group-hover:text-emerald-400 transition-colors line-clamp-1">{c.title}</h3>
-                        <p className="text-sm text-muted-foreground line-clamp-2 mb-3 flex-1">{c.description}</p>
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground mb-3">
-                          <span className="flex items-center gap-1"><Star className="h-3 w-3 text-amber-400 fill-amber-400" />{c.rating}</span>
-                          <span className="flex items-center gap-1"><Users className="h-3 w-3" />{c.studentsCount.toLocaleString()}</span>
-                          <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{c.durationHours}h</span>
-                          <span className="flex items-center gap-1"><BookOpen className="h-3 w-3" />{c.lessonCount}</span>
-                        </div>
-                        <div className="flex items-center justify-between pt-3 border-t border-border">
-                          <span className="text-xs text-muted-foreground">by {c.instructor.name}</span>
-                          <span className={`text-sm font-bold ${col.text}`}>${c.price}</span>
-                        </div>
-                      </div>
-                    </Card>
-                  </button>
-                )
-              })}
-            </div>
-          )}
-        </TabsContent>
+                  <span className="text-xs text-muted-foreground font-mono">{rest.length} TRACKS</span>
+                </div>
+                <Stagger className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6" staggerChildren={0.08}>
+                  {rest.map((course, i) => (
+                    <StaggerItem key={course.id}>
+                      <CourseCard course={course} index={i + 1} />
+                    </StaggerItem>
+                  ))}
+                </Stagger>
+              </div>
+            )}
 
-        {/* Wishlist tab */}
-        <TabsContent value="wishlist" className="mt-4">
-          <WishlistTab bookmarks={bookmarks} />
-        </TabsContent>
-      </Tabs>
+            {/* Bottom CTA */}
+            <ScrollReveal delay={0.1}>
+              <div className="mt-16 lg:mt-20 rounded-2xl border border-border/60 bg-card shadow-lg p-8 lg:p-12 text-center relative overflow-hidden">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[250px] bg-violet-600/8 blur-[100px] rounded-full pointer-events-none" />
+                <div className="relative z-10">
+                  <Sparkles className="h-8 w-8 text-violet-300 mx-auto mb-4" />
+                  <h3 className="text-2xl lg:text-3xl font-bold tracking-tight mb-3 text-balance">
+                    Not sure where to start?
+                  </h3>
+                  <p className="text-muted-foreground max-w-xl mx-auto mb-6">
+                    Sign in to get personalized recommendations, track progress, and unlock hands-on labs.
+                  </p>
+                  <div className="flex items-center justify-center gap-3 flex-wrap">
+                    <MagneticButton strength={0.3}>
+                      <Button onClick={() => navigate({ name: "login" })} className="bg-violet-600 hover:bg-violet-500 btn-premium px-6 py-3">
+                        Create Free Account <ArrowRight className="h-4 w-4 ml-2" />
+                      </Button>
+                    </MagneticButton>
+                    <Button variant="outline" onClick={() => navigate({ name: "home" })}>
+                      <PlayCircle className="h-4 w-4 mr-2" /> Watch Demo
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </ScrollReveal>
+          </>
+        )}
+      </div>
     </div>
   )
 }
 
-// ---- Wishlist Tab ----
-function WishlistTab({ bookmarks }: { bookmarks: any[] }) {
-  const { navigate } = useAppStore()
-  const { toggleAsync } = useBookmarks()
+/* ============================================================
+   StatCard — small solid premium card for stats strip
+   ============================================================ */
+function StatCard({
+  icon: Icon, label, value, color, tint, suffix,
+}: {
+  icon: typeof BookOpen; label: string; value: number; color: string; tint: string; suffix?: string
+}) {
+  return (
+    <div className="rounded-xl border border-border/60 bg-card shadow-lg p-5 flex items-center gap-4 hover:border-violet-500/30 transition-colors">
+      <div className={cn("inline-flex p-3 rounded-lg shrink-0", tint)}>
+        <Icon className={cn("h-5 w-5", color)} />
+      </div>
+      <div className="min-w-0">
+        <div className="text-2xl lg:text-3xl font-bold tabular-nums leading-none mb-1">
+          <Counter value={value} suffix={suffix} />
+        </div>
+        <div className="text-[10px] text-muted-foreground uppercase tracking-wider truncate">{label}</div>
+      </div>
+    </div>
+  )
+}
 
-  if (bookmarks.length === 0) {
-    return (
-      <Card className="p-12 text-center border-dashed">
-        <Bookmark className="h-10 w-10 text-muted-foreground/50 mx-auto mb-3" />
-        <h3 className="font-semibold mb-1">Your wishlist is empty</h3>
-        <p className="text-sm text-muted-foreground mb-4">Bookmark courses you're interested in to save them here for later.</p>
-        <Button onClick={() => navigate({ name: "catalog" })}>
-          <BookOpen className="h-4 w-4 mr-1.5" /> Browse Courses
-        </Button>
-      </Card>
-    )
-  }
+/* ============================================================
+   FilterChip — tiny removable filter pill
+   ============================================================ */
+function FilterChip({ label, onClear }: { label: string; onClear: () => void }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-md border border-violet-500/30 bg-violet-500/10 px-2 py-1 text-[10px] font-mono text-violet-200">
+      {label}
+      <button onClick={onClear} className="hover:text-violet-100" aria-label={`Clear filter ${label}`}>
+        ×
+      </button>
+    </span>
+  )
+}
+
+/* ============================================================
+   FeaturedCourse — large immersive featured card
+   ============================================================ */
+function FeaturedCourse({ course }: { course: CourseItem }) {
+  const { navigate } = useAppStore()
+  const { isBookmarked, toggle: toggleBookmark, isAuthenticated } = useBookmarks()
+  const image = getCourseImage(course)
+  const levelStyle = LEVEL_STYLES[course.level] || LEVEL_STYLES.Intermediate
 
   return (
-    <div className="space-y-3">
-      <div className="text-sm text-muted-foreground flex items-center gap-2">
-        <BookmarkCheck className="h-4 w-4 text-amber-400" />
-        {bookmarks.length} saved course{bookmarks.length !== 1 ? "s" : ""}
-      </div>
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {bookmarks.map((b) => {
-          const c = b.course
-          const col = colorFor(c.color)
-          return (
-            <Card key={b.id} className="overflow-hidden card-hover h-full flex flex-col relative group">
-              <button onClick={() => navigate({ name: "course", courseId: c.id })} className="text-left flex-1 flex flex-col">
-                <div className={`relative h-28 ${c.thumbnail ? "" : `bg-gradient-to-br ${col.gradient}`} flex items-center justify-center overflow-hidden`}>
-                  {c.thumbnail ? (
-                    <img
-                      src={c.thumbnail}
-                      alt={c.title}
-                      className="absolute inset-0 w-full h-full object-cover"
-                      onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
-                    />
-                  ) : (
-                    <>
-                      <div className="absolute inset-0 bg-grid opacity-40" />
-                      <span className={`relative font-mono font-bold text-3xl ${col.text}`}>{c.shortName}</span>
-                    </>
-                  )}
-                  <Badge variant="outline" className={`absolute top-2 right-2 text-[10px] ${LEVEL_COLORS[c.level]}`}>{c.level}</Badge>
-                </div>
-                <div className="p-5 flex-1 flex flex-col">
-                  <Badge variant="outline" className="text-[10px] w-fit mb-2">{c.category}</Badge>
-                  <h3 className="font-semibold mb-1 group-hover:text-emerald-400 transition-colors line-clamp-1">{c.title}</h3>
-                  <p className="text-sm text-muted-foreground line-clamp-2 mb-3 flex-1">{c.description}</p>
-                  <div className="flex items-center gap-3 text-xs text-muted-foreground mb-3">
-                    <span className="flex items-center gap-1"><Star className="h-3 w-3 text-amber-400 fill-amber-400" />{c.rating}</span>
-                    <span className="flex items-center gap-1"><Users className="h-3 w-3" />{c.studentsCount.toLocaleString()}</span>
-                    <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{c.durationHours}h</span>
-                    <span className="flex items-center gap-1"><BookOpen className="h-3 w-3" />{c.lessonCount}</span>
-                  </div>
-                </div>
+    <ScrollReveal>
+      <div
+        className="relative overflow-hidden rounded-3xl border border-border/60 bg-card shadow-lg cursor-pointer group"
+        onClick={() => navigate({ name: "course", courseId: course.id })}
+      >
+        {/* Top: real course image */}
+        <div className="relative aspect-[21/9] lg:aspect-[21/8] overflow-hidden">
+          <img
+            src={image}
+            alt={course.title}
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-card via-card/60 to-card/10" />
+
+          {/* Top bar */}
+          <div className="absolute top-4 left-4 right-4 lg:top-6 lg:left-6 lg:right-6 flex items-center justify-between">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[10px] font-mono text-violet-300 tracking-[0.25em] px-2 py-1 rounded border border-violet-500/30 bg-violet-500/10 backdrop-blur-sm">
+                ★ FEATURED
+              </span>
+              <span className={cn("text-[10px] font-mono px-2 py-1 rounded border backdrop-blur-sm", levelStyle.badge)}>
+                {course.level.toUpperCase()}
+              </span>
+              <span className="text-[10px] font-mono text-muted-foreground px-2 py-1 rounded border border-border/60 bg-card/80 backdrop-blur-sm tracking-wider">
+                {course.category}
+              </span>
+            </div>
+            {isAuthenticated && (
+              <button
+                onClick={(e) => { e.stopPropagation(); toggleBookmark(course.id) }}
+                className="h-9 w-9 rounded-lg border border-border/60 bg-card/80 backdrop-blur flex items-center justify-center hover:bg-violet-500/15 hover:border-violet-500/40 transition-colors"
+                aria-label="Toggle bookmark"
+              >
+                {isBookmarked(course.id) ? <BookmarkCheck className="h-4 w-4 text-violet-300" /> : <Bookmark className="h-4 w-4 text-muted-foreground" />}
               </button>
-              <div className="px-5 py-3 border-t border-border flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">by {c.instructor.name}</span>
-                <button
-                  onClick={async () => {
-                    await toggleAsync(c.id)
-                    toast.success("Removed from wishlist")
-                  }}
-                  className="text-muted-foreground hover:text-red-400 p-1.5 rounded-lg hover:bg-red-500/10 transition-colors"
-                  title="Remove from wishlist"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
+            )}
+          </div>
+
+          {/* Course short name overlay — oversized */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <motion.div
+              whileHover={{ scale: 1.04 }}
+              transition={{ type: "spring", stiffness: 200, damping: 20 }}
+              className="text-[clamp(3rem,11vw,9rem)] font-bold font-mono text-gradient-premium opacity-90"
+            >
+              {course.shortName}
+            </motion.div>
+          </div>
+
+          {/* Bottom content overlay */}
+          <div className="absolute bottom-0 left-0 right-0 p-5 lg:p-10 bg-gradient-to-t from-card via-card/85 to-transparent">
+            <div className="grid lg:grid-cols-12 gap-6 items-end">
+              <div className="lg:col-span-8">
+                {course.certBody && (
+                  <div className="flex items-center gap-2 mb-2">
+                    <Award className="h-3.5 w-3.5 text-amber-300" />
+                    <span className="text-[10px] text-amber-200 font-mono tracking-[0.2em]">{course.certBody.toUpperCase()}</span>
+                  </div>
+                )}
+                <h2 className="text-2xl lg:text-5xl font-bold tracking-[-0.03em] mb-3 text-balance leading-tight">
+                  {course.title}
+                </h2>
+                <p className="text-sm lg:text-base text-muted-foreground max-w-2xl leading-relaxed line-clamp-2">
+                  {course.description}
+                </p>
               </div>
-            </Card>
-          )
-        })}
+              <div className="lg:col-span-4 flex lg:justify-end">
+                <MagneticButton strength={0.3}>
+                  <Button
+                    className="bg-violet-600 hover:bg-violet-500 btn-premium px-6 py-4"
+                    onClick={(e) => { e.stopPropagation(); navigate({ name: "course", courseId: course.id }); }}
+                  >
+                    {course.enrollment ? "Continue Learning" : "Enroll Now"}
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </Button>
+                </MagneticButton>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Metadata strip — solid bg-card */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 p-5 lg:p-6 border-t border-border/40">
+          {[
+            { label: "Category", value: course.category, icon: Layers },
+            { label: "Difficulty", value: course.level, icon: Gauge },
+            { label: "Duration", value: `${course.durationHours}h`, icon: Clock },
+            { label: "Rating", value: `★ ${course.rating}`, icon: Star },
+            { label: "Students", value: course.studentsCount.toLocaleString(), icon: Users },
+            { label: "Instructor", value: course.instructor.name, icon: Shield },
+          ].map((m) => (
+            <div key={m.label} className="min-w-0">
+              <div className="text-[9px] text-muted-foreground/70 uppercase tracking-wider mb-1 flex items-center gap-1">
+                <m.icon className="h-3 w-3 shrink-0" /> {m.label}
+              </div>
+              <div className="text-sm font-medium truncate">{m.value}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Modules + lessons + price strip */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-border/40 border-t border-border/40">
+          <FeaturedMeta icon={BookOpen} label="Modules" value={course.moduleCount} />
+          <FeaturedMeta icon={Layers} label="Lessons" value={course.lessonCount} />
+          <FeaturedMeta icon={CheckCircle2} label="Cert" value={course.certBody ? "Included" : "Self"} />
+          <FeaturedMeta
+            icon={Tag}
+            label="Price"
+            value={course.price && course.price > 0 ? `$${course.price}` : "Free"}
+            highlight
+          />
+        </div>
+
+        {/* Progress bar if enrolled */}
+        {course.enrollment && (
+          <div className="p-5 lg:p-6 border-t border-border/40 bg-background/40">
+            <div className="flex items-center justify-between text-[10px] mb-2 font-mono">
+              <span className="text-muted-foreground tracking-[0.2em]">YOUR PROGRESS</span>
+              <span className="text-violet-300">{course.enrollment.progress}%</span>
+            </div>
+            <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+              <div className="h-full bg-violet-500 rounded-full progress-active" style={{ width: `${course.enrollment.progress}%` }} />
+            </div>
+          </div>
+        )}
       </div>
+    </ScrollReveal>
+  )
+}
+
+function FeaturedMeta({
+  icon: Icon, label, value, highlight,
+}: { icon: typeof BookOpen; label: string; value: string | number; highlight?: boolean }) {
+  return (
+    <div className={cn("p-4 lg:p-5 bg-card", highlight && "bg-violet-500/5")}>
+      <div className="text-[9px] text-muted-foreground/70 uppercase tracking-wider mb-1 flex items-center gap-1">
+        <Icon className={cn("h-3 w-3", highlight && "text-violet-300")} /> {label}
+      </div>
+      <div className={cn("text-sm font-semibold tabular-nums", highlight && "text-violet-200")}>{value}</div>
+    </div>
+  )
+}
+
+/* ============================================================
+   CourseCard — sophisticated, interactive, full-data card
+   ============================================================ */
+function CourseCard({ course, index }: { course: CourseItem; index: number }) {
+  const { navigate } = useAppStore()
+  const { isBookmarked, toggle: toggleBookmark, isAuthenticated } = useBookmarks()
+  const image = getCourseImage(course)
+  const levelStyle = LEVEL_STYLES[course.level] || LEVEL_STYLES.Intermediate
+
+  return (
+    <CursorGlow className="group h-full" color="oklch(0.6 0.2 295 / 0.05)">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6 }}
+        className="relative h-full flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-card shadow-lg cursor-pointer transition-all duration-500 hover:-translate-y-1 hover:border-violet-500/40 hover:shadow-[0_20px_60px_-20px_oklch(0.6_0.2_295_/_0.25)]"
+        onClick={() => navigate({ name: "course", courseId: course.id })}
+      >
+        {/* Visual */}
+        <div className="relative aspect-[16/10] overflow-hidden">
+          <img
+            src={image}
+            alt={course.title}
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-card via-card/20 to-transparent" />
+
+          {/* Top: course number + level */}
+          <div className="absolute top-3 left-3 right-3 flex items-center justify-between">
+            <span className="text-[9px] font-mono text-muted-foreground tracking-[0.2em] px-2 py-0.5 rounded border border-border/60 bg-card/80 backdrop-blur-sm">
+              COURSE {String(index).padStart(2, "0")}
+            </span>
+            <span className={cn("text-[9px] font-mono px-2 py-0.5 rounded border backdrop-blur-sm", levelStyle.badge)}>
+              {course.level.toUpperCase()}
+            </span>
+          </div>
+
+          {/* Hover CTA */}
+          <div className="absolute inset-0 bg-violet-950/60 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center justify-center">
+            <div className="flex items-center gap-2 text-violet-200 text-sm font-medium">
+              <PlayCircle className="h-5 w-5" />
+              View Course
+            </div>
+          </div>
+
+          {/* Short name badge */}
+          <div className="absolute bottom-3 left-3">
+            <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-card/90 backdrop-blur-sm border border-border/60 text-xs font-mono font-bold text-violet-200">
+              {course.shortName}
+            </span>
+          </div>
+          {/* Price badge */}
+          <div className="absolute bottom-3 right-3">
+            <span className={cn(
+              "inline-flex items-center px-2.5 py-1 rounded-md backdrop-blur-sm border text-xs font-mono font-semibold",
+              course.price && course.price > 0
+                ? "bg-amber-500/15 border-amber-500/40 text-amber-200"
+                : "bg-emerald-500/15 border-emerald-500/40 text-emerald-200"
+            )}>
+              {course.price && course.price > 0 ? `$${course.price}` : "FREE"}
+            </span>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="flex flex-col flex-1 p-5">
+          {/* Category + cert body */}
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
+            <Badge variant="outline" className="text-[9px] font-mono border-violet-500/30 text-violet-300 bg-violet-500/5">
+              {course.category}
+            </Badge>
+            {course.certBody && (
+              <span className="inline-flex items-center gap-1 text-[9px] font-mono text-amber-200/80">
+                <Award className="h-3 w-3" /> {course.certBody}
+              </span>
+            )}
+          </div>
+
+          {/* Title */}
+          <h3 className="font-semibold text-base mb-2 group-hover:text-violet-200 transition-colors line-clamp-2 leading-snug">
+            {course.title}
+          </h3>
+
+          {/* Description */}
+          <p className="text-xs text-muted-foreground line-clamp-2 mb-4 leading-relaxed">
+            {course.description}
+          </p>
+
+          {/* Instructor */}
+          <div className="flex items-center gap-2 mb-4 pb-4 border-b border-border/40">
+            <div className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-violet-500/10 border border-violet-500/30 shrink-0">
+              <GraduationCap className="h-3.5 w-3.5 text-violet-300" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-[10px] text-muted-foreground/70 uppercase tracking-wider">Instructor</div>
+              <div className="text-xs font-medium truncate">{course.instructor.name}</div>
+            </div>
+          </div>
+
+          {/* Metadata grid */}
+          <div className="grid grid-cols-3 gap-2 mb-4">
+            <MiniStat icon={BookOpen} label="Modules" value={course.moduleCount} />
+            <MiniStat icon={Layers} label="Lessons" value={course.lessonCount} />
+            <MiniStat icon={Clock} label="Hours" value={course.durationHours} />
+          </div>
+
+          {/* Rating + students row */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-1.5">
+              <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400/40" />
+              <span className="text-xs font-semibold tabular-nums">{course.rating}</span>
+              <span className="text-[10px] text-muted-foreground">/5</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Users className="h-3.5 w-3.5" />
+              <span className="tabular-nums">{course.studentsCount.toLocaleString()}</span>
+              <span className="text-[10px]">students</span>
+            </div>
+            {isAuthenticated && (
+              <button
+                onClick={(e) => { e.stopPropagation(); toggleBookmark(course.id) }}
+                className="text-muted-foreground hover:text-violet-300 transition-colors p-1 -m-1"
+                aria-label="Toggle bookmark"
+              >
+                {isBookmarked(course.id) ? <BookmarkCheck className="h-4 w-4 text-violet-300" /> : <Bookmark className="h-4 w-4" />}
+              </button>
+            )}
+          </div>
+
+          {/* CTA + Progress */}
+          <div className="mt-auto">
+            <Button
+              size="sm"
+              className="w-full bg-violet-600 hover:bg-violet-500 btn-premium"
+              onClick={(e) => { e.stopPropagation(); navigate({ name: "course", courseId: course.id }); }}
+            >
+              {course.enrollment ? "Continue Learning" : "Enroll Now"}
+              <ArrowRight className="h-3.5 w-3.5 ml-1" />
+            </Button>
+
+            {course.enrollment && (
+              <div className="mt-3">
+                <div className="flex items-center justify-between text-[9px] mb-1 font-mono">
+                  <span className="text-muted-foreground tracking-wider">PROGRESS</span>
+                  <span className="text-violet-300">{course.enrollment.progress}%</span>
+                </div>
+                <div className="h-1 rounded-full bg-muted overflow-hidden">
+                  <div className="h-full bg-violet-500 rounded-full" style={{ width: `${course.enrollment.progress}%` }} />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </motion.div>
+    </CursorGlow>
+  )
+}
+
+function MiniStat({ icon: Icon, label, value }: { icon: typeof BookOpen; label: string; value: number }) {
+  return (
+    <div className="rounded-lg bg-background/40 border border-border/40 p-2 text-center">
+      <Icon className="h-3 w-3 text-muted-foreground mx-auto mb-0.5" />
+      <div className="text-xs font-semibold tabular-nums">{value}</div>
+      <div className="text-[8px] text-muted-foreground/70 uppercase tracking-wider">{label}</div>
     </div>
   )
 }

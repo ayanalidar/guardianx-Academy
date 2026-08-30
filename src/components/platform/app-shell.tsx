@@ -8,7 +8,7 @@ import {
   Radio, FlaskConical, Award, Users, User, LogOut, Menu, X,
   Search, Sun, Moon, Bell, Terminal, ChevronRight, Settings,
   Trophy, Zap, Flame, Crown, CheckCheck, Sparkles, Presentation,
-  ClipboardList, MessageSquare, UsersRound, CalendarClock,
+  ClipboardList, MessageSquare, UsersRound, CalendarClock, Building2,
 } from "lucide-react"
 import { useAppStore, type View } from "@/store/app-store"
 import { useUser } from "@/hooks/use-user"
@@ -55,12 +55,12 @@ function Logo({ onClick }: { onClick?: () => void }) {
   return (
     <button onClick={onClick} className="flex items-center gap-2.5 group">
       <div className="relative">
-        <img src="/guardianx-logo.png" alt="GuardianX" className="h-8 w-8 object-contain" />
-        <div className="absolute inset-0 bg-violet-500/20 blur-md rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+        <Shield className="h-8 w-8 text-emerald-400" strokeWidth={1.5} />
+        <div className="absolute inset-0 bg-emerald-500/30 blur-md rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
       </div>
       <div className="text-left">
         <div className="font-bold text-lg leading-none tracking-tight">
-          Guardian<span className="text-violet-400">X</span>
+          Guardian<span className="text-emerald-400">X</span>
         </div>
         <div className="text-[9px] text-muted-foreground font-mono tracking-widest">SECURE · LEARN · DEFEND</div>
       </div>
@@ -111,6 +111,38 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
           <Presentation className="h-4 w-4 shrink-0" />
           <span className="flex-1 text-left">Instructor</span>
           {view.name === "instructor" && <ChevronRight className="h-3.5 w-3.5" />}
+        </button>
+      ) : null}
+      {user?.role === "SCHOOL_ADMIN" ? (
+        <button
+          onClick={() => { navigate({ name: "school" }); onNavigate?.() }}
+          className={cn(
+            "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group relative border",
+            view.name === "school"
+              ? "bg-violet-500/10 text-violet-400 border-violet-500/20"
+              : "text-muted-foreground hover:text-foreground hover:bg-accent/50 border-transparent"
+          )}
+        >
+          {view.name === "school" && <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-0.5 bg-violet-400 rounded-r" />}
+          <Building2 className="h-4 w-4 shrink-0" />
+          <span className="flex-1 text-left">School Portal</span>
+          {view.name === "school" && <ChevronRight className="h-3.5 w-3.5" />}
+        </button>
+      ) : null}
+      {user?.role === "ADMIN" ? (
+        <button
+          onClick={() => { navigate({ name: "admin" }); onNavigate?.() }}
+          className={cn(
+            "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group relative border",
+            view.name === "admin"
+              ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
+              : "text-muted-foreground hover:text-foreground hover:bg-accent/50 border-transparent"
+          )}
+        >
+          {view.name === "admin" && <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-0.5 bg-amber-400 rounded-r" />}
+          <Shield className="h-4 w-4 shrink-0" />
+          <span className="flex-1 text-left">Admin Console</span>
+          {view.name === "admin" && <ChevronRight className="h-3.5 w-3.5" />}
         </button>
       ) : null}
     </nav>

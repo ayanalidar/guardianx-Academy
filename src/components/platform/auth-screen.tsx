@@ -122,7 +122,7 @@ export function AuthScreen() {
         <div className="relative z-10">
           <div className="flex items-center gap-3">
             <div className="relative">
-              <img src="/guardianx-academy-logo.png" alt="GuardianX Academy" className="h-10 w-10 rounded-lg object-cover logo-img logo-animated logo-glow" />
+              <img src="/guardianx-logo.png" alt="GuardianX Academy" className="h-10 w-10 object-contain" />
               <div className="absolute inset-0 bg-emerald-500/20 blur-lg rounded-full" />
             </div>
             <div>
@@ -179,9 +179,9 @@ export function AuthScreen() {
         <div className="w-full max-w-md">
           {/* mobile logo */}
           <div className="flex lg:hidden items-center gap-3 mb-8 justify-center">
-            <Shield className="h-8 w-8 text-emerald-400" strokeWidth={1.5} />
+            <img src="/guardianx-logo.png" alt="GuardianX" className="h-8 w-8 object-contain" />
             <h1 className="text-2xl font-bold">
-              Guardian<span className="text-emerald-400">X</span>
+              Guardian<span className="text-violet-400">X</span>
             </h1>
           </div>
 

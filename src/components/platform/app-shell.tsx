@@ -55,12 +55,12 @@ function Logo({ onClick }: { onClick?: () => void }) {
   return (
     <button onClick={onClick} className="flex items-center gap-2.5 group">
       <div className="relative">
-        <Shield className="h-8 w-8 text-emerald-400" strokeWidth={1.5} />
-        <div className="absolute inset-0 bg-emerald-500/30 blur-md rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+        <img src="/guardianx-logo.png" alt="GuardianX" className="h-8 w-8 object-contain" />
+        <div className="absolute inset-0 bg-violet-500/20 blur-md rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
       </div>
       <div className="text-left">
         <div className="font-bold text-lg leading-none tracking-tight">
-          Guardian<span className="text-emerald-400">X</span>
+          Guardian<span className="text-violet-400">X</span>
         </div>
         <div className="text-[9px] text-muted-foreground font-mono tracking-widest">SECURE · LEARN · DEFEND</div>
       </div>

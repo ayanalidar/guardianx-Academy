@@ -105,4 +105,16 @@ export const authOptions: NextAuthOptions = {
       return session
     },
   },
+  // Allow cross-origin session checks for preview environments
+  cookies: {
+    sessionToken: {
+      name: `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "none",
+        path: "/",
+        secure: false,
+      },
+    },
+  },
 }

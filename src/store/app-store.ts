@@ -62,7 +62,11 @@ export const useAppStore = create<AppState>((set) => ({
   sidebarOpen: false,
   navigate: (view) => {
     set({ view, sidebarOpen: false })
-    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" })
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" })
+      // Dispatch a custom event for components that might not re-render
+      window.dispatchEvent(new CustomEvent("guardianx-navigate", { detail: view }))
+    }
   },
   setSidebarOpen: (sidebarOpen) => set({ sidebarOpen }),
 }))

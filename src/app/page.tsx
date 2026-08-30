@@ -1,7 +1,6 @@
 "use client"
 
 import * as React from "react"
-import { useSession } from "next-auth/react"
 import { AuthScreen } from "@/components/platform/auth-screen"
 import { AppShell } from "@/components/platform/app-shell"
 import { PublicPageShell } from "@/components/platform/public-page-shell"
@@ -108,10 +107,38 @@ function ViewRouter() {
 }
 
 export default function Home() {
-  const { data: session, status } = useSession()
   const { view } = useAppStore()
+  const [session, setSession] = React.useState<any>(null)
+  const [sessionChecked, setSessionChecked] = React.useState(false)
 
-  if (status === "loading") {
+  // Listen for navigation events (fallback for when Zustand re-render doesn't trigger)
+  React.useEffect(() => {
+    const handler = (e: any) => {
+      setSession(prev => prev) // Force re-render
+      forceRender((v: number) => v + 1)
+    }
+    window.addEventListener("guardianx-navigate", handler)
+    return () => window.removeEventListener("guardianx-navigate", handler)
+  }, [])
+
+  // Check session via fetch instead of useSession hook (avoids CLIENT_FETCH_ERROR blocking)
+  React.useEffect(() => {
+    fetch("/api/auth/session", { credentials: "include" })
+      .then(r => r.json())
+      .then(data => { setSession(data?.user ? data : null); setSessionChecked(true) })
+      .catch(() => { setSession(null); setSessionChecked(true) })
+  }, [])
+
+  // Force re-render when view changes
+  React.useEffect(() => {
+    const handler = () => forceRender((v: number) => v + 1)
+    const unsub = useAppStore.subscribe(handler)
+    return () => { unsub() }
+  }, [forceRender])
+
+  const isPublicView = PUBLIC_VIEWS.has(view.name) || view.name === "login"
+
+  if (!sessionChecked && !isPublicView) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background bg-grid">
         <div className="flex flex-col items-center gap-4">

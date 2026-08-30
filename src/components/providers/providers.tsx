@@ -20,7 +20,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       })
   )
   return (
-    <SessionProvider>
+    <SessionProvider session={null} refetchInterval={0} basePath="/api/auth">
       <ThemeProvider
         attribute="class"
         defaultTheme="dark"

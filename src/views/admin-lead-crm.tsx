@@ -350,9 +350,49 @@ export function LeadCrmView() {
                 )}
               </h3>
               <p className="text-xs text-muted-foreground mb-3">
-                Create a Google Form for lead capture. Responses sync automatically to this CRM.
-                Use a webhook or paste responses manually here.
+                Create a Google Form for lead capture. Responses sync automatically to this CRM
+                via Google Apps Script webhook — no manual entry needed.
               </p>
+
+              {/* Webhook URL */}
+              <div className="mb-3 p-3 rounded-lg bg-muted/30 border border-border/40">
+                <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider mb-1">WEBHOOK URL</div>
+                <div className="flex items-center gap-2">
+                  <code className="text-xs text-violet-300 font-mono break-all flex-1">
+                    https://academy.guardianx.cloud/api/crm/webhook
+                  </code>
+                  <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => {
+                    navigator.clipboard?.writeText("https://academy.guardianx.cloud/api/crm/webhook")
+                    toast.success("Webhook URL copied!")
+                  }}>
+                    Copy
+                  </Button>
+                </div>
+                <div className="text-[10px] font-mono text-muted-foreground mt-2">
+                  TOKEN: <span className="text-cyan-300">guardianx-crm-webhook-2025</span>
+                </div>
+              </div>
+
+              {/* Setup instructions */}
+              <details className="mb-3">
+                <summary className="text-xs text-violet-300 cursor-pointer hover:underline">
+                  How to set up Google Forms webhook →
+                </summary>
+                <div className="mt-2 p-3 rounded-lg bg-muted/20 border border-border/30 text-xs text-muted-foreground space-y-1.5">
+                  <p><span className="font-bold text-violet-300">1.</span> Create a Google Form at <a href="https://forms.new" target="_blank" rel="noreferrer" className="text-violet-300 underline">forms.new</a></p>
+                  <p><span className="font-bold text-violet-300">2.</span> Add questions: Name, Email, Phone, Organization, Type, Requirement, Message</p>
+                  <p><span className="font-bold text-violet-300">3.</span> In Google Form → 3-dot menu → Script Editor</p>
+                  <p><span className="font-bold text-violet-300">4.</span> Delete default code, paste the GuardianX webhook script</p>
+                  <p><span className="font-bold text-violet-300">5.</span> Click Run → "setupTriggers" and grant permissions</p>
+                  <p><span className="font-bold text-violet-300">6.</span> Form responses now auto-sync to this CRM!</p>
+                  <a href="/google-forms-webhook.js" target="_blank" rel="noreferrer" className="inline-block mt-2">
+                    <Button size="sm" variant="outline" className="text-xs">
+                      <FileText className="h-3 w-3 mr-1" /> View Apps Script Code
+                    </Button>
+                  </a>
+                </div>
+              </details>
+
               <div className="flex flex-wrap items-center gap-2">
                 <a href="https://forms.new" target="_blank" rel="noreferrer">
                   <Button size="sm" className="bg-violet-600 hover:bg-violet-500 btn-premium">
@@ -360,7 +400,7 @@ export function LeadCrmView() {
                   </Button>
                 </a>
                 <Button size="sm" variant="outline" onClick={() => setConnectFormOpen(true)}>
-                  <LinkIcon className="h-3.5 w-3.5 mr-1.5" /> Connect Google Form
+                  <LinkIcon className="h-3.5 w-3.5 mr-1.5" /> Connect Form URL
                 </Button>
                 {googleFormUrl && (
                   <>

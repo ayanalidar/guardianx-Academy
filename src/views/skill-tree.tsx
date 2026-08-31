@@ -1,9 +1,11 @@
 "use client"
 
 import * as React from "react"
+import { useQuery } from "@tanstack/react-query"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { useAppStore } from "@/store/app-store"
+import { getCmsIcon } from "@/lib/cms-icons"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -60,6 +62,104 @@ interface SkillBranch {
   skills: SkillNodeData[]
 }
 
+/* ---------------------------------------------------------------- *
+ *  Shape returned by /api/skills                                   *
+ * ---------------------------------------------------------------- */
+interface SkillRow {
+  id: string
+  slug: string
+  name: string
+  description?: string | null
+  categoryId: string
+  difficulty: string
+  xp: number
+  status: string
+  prerequisites: string[]
+  relatedCourses: string[]
+  relatedLabs: string[]
+  order: number
+}
+
+interface SkillCategoryRow {
+  id: string
+  slug: string
+  name: string
+  icon: string
+  color: string
+  tint: string
+  description?: string | null
+  order: number
+  skills: SkillRow[]
+}
+
+/** Maps the branch color class to the SVG stroke color used for the
+ *  connection lines. Kept literal so Tailwind/PostCSS can see them. */
+const COLOR_TO_STROKE: Record<string, string> = {
+  "text-rose-300": "oklch(0.6 0.2 25 / 0.7)",
+  "text-cyan-300": "oklch(0.65 0.12 200 / 0.7)",
+  "text-violet-300": "oklch(0.6 0.2 295 / 0.7)",
+  "text-amber-300": "oklch(0.7 0.15 85 / 0.7)",
+  "text-emerald-300": "oklch(0.7 0.15 155 / 0.7)",
+  "text-teal-300": "oklch(0.7 0.12 180 / 0.7)",
+  "text-fuchsia-300": "oklch(0.6 0.18 320 / 0.7)",
+}
+
+function deriveStroke(color: string): string {
+  return COLOR_TO_STROKE[color] ?? "oklch(0.6 0.2 295 / 0.7)"
+}
+
+/** Shorten long skill names to a label that fits inside a skill node. */
+function toLabel(name: string): string {
+  if (!name) return ""
+  // Use the first word (or first 10 chars) as the on-node label
+  const words = name.split(/\s+/)
+  if (words.length === 1) return words[0].slice(0, 12)
+  // For multi-word names, prefer the first meaningful word
+  const first = words[0]
+  if (first.length <= 10) return first
+  return first.slice(0, 10)
+}
+
+function coerceStatus(s: string): SkillStatus {
+  switch (s) {
+    case "completed":
+    case "in-progress":
+    case "available":
+    case "locked":
+      return s
+    default:
+      return "available"
+  }
+}
+
+/** Convert a DB SkillCategoryRow + nested Skill rows into the local
+ *  SkillBranch shape used by the radial tree layout. */
+function mapCategoryToBranch(cat: SkillCategoryRow): SkillBranch {
+  return {
+    id: cat.slug,
+    name: cat.name,
+    icon: getCmsIcon(cat.icon),
+    color: cat.color,
+    tint: cat.tint,
+    stroke: deriveStroke(cat.color),
+    skills: (cat.skills ?? []).map((s) => ({
+      id: s.slug,
+      label: toLabel(s.name),
+      description: s.description ?? `Master ${s.name} — ${s.difficulty} level skill worth ${s.xp} XP.`,
+      status: coerceStatus(s.status),
+      xp: s.xp,
+      prerequisites: Array.isArray(s.prerequisites) ? s.prerequisites : [],
+      relatedCourses: Array.isArray(s.relatedCourses) ? s.relatedCourses : [],
+      relatedLabs: Array.isArray(s.relatedLabs) ? s.relatedLabs : [],
+      assessments: [],
+    })),
+  }
+}
+
+/**
+ * Hardcoded fallback — only shown if /api/skills is unreachable.
+ * Mirrors the production DB rows seeded by prisma/seed-production.ts.
+ */
 const BRANCHES: SkillBranch[] = [
   {
     id: "offensive",
@@ -184,8 +284,8 @@ function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
 }
 
 /** Compute branch angle starting at top (-90deg) going clockwise. */
-function branchAngle(i: number): number {
-  return -90 + i * (360 / BRANCHES.length)
+function branchAngle(count: number, i: number): number {
+  return -90 + i * (360 / Math.max(1, count))
 }
 
 interface PositionedBranch extends SkillBranch {
@@ -194,9 +294,20 @@ interface PositionedBranch extends SkillBranch {
   skillsWithPos: (SkillNodeData & { x: number; y: number })[]
 }
 
-function buildLayout(): PositionedBranch[] {
-  return BRANCHES.map((branch, i) => {
-    const angle = branchAngle(i)
+/** A skill that has been positioned in the radial layout AND annotated
+ *  with its parent branch metadata (used by the detail panel and
+ *  prerequisite resolver). */
+interface PositionedSkill extends SkillNodeData {
+  x: number
+  y: number
+  branchId: string
+  branchName: string
+  branchColor: string
+}
+
+function buildLayout(branches: SkillBranch[]): PositionedBranch[] {
+  return branches.map((branch, i) => {
+    const angle = branchAngle(branches.length, i)
     const hub = polarToCartesian(CENTER.x, CENTER.y, BRANCH_RADIUS, angle)
     const skillsWithPos = branch.skills.map((skill, j) => {
       const count = branch.skills.length
@@ -210,19 +321,9 @@ function buildLayout(): PositionedBranch[] {
   })
 }
 
-const LAYOUT = buildLayout()
-
-const ALL_SKILLS = LAYOUT.flatMap((b) =>
-  b.skillsWithPos.map((s) => ({ ...s, branchId: b.id, branchName: b.name, branchColor: b.color }))
-)
-
-const COMPLETED_COUNT = ALL_SKILLS.filter((s) => s.status === "completed").length
-const IN_PROGRESS_COUNT = ALL_SKILLS.filter((s) => s.status === "in-progress").length
-const TOTAL_XP = ALL_SKILLS.filter((s) => s.status === "completed").reduce((a, s) => a + s.xp, 0)
-const COMPLETION_PCT = Math.round((COMPLETED_COUNT / ALL_SKILLS.length) * 100)
-
 /* Compute rank from completed-skill count */
 function rankFromCompletion(completed: number, total: number): { name: string; level: number } {
+  if (total <= 0) return { name: "RECRUIT", level: 1 }
   const pct = completed / total
   if (pct >= 0.85) return { name: "ELITE GUARDIAN", level: 8 }
   if (pct >= 0.7) return { name: "GUARDIAN", level: 7 }
@@ -233,8 +334,6 @@ function rankFromCompletion(completed: number, total: number): { name: string; l
   if (pct >= 0.05) return { name: "ANALYST", level: 2 }
   return { name: "RECRUIT", level: 1 }
 }
-
-const RANK = rankFromCompletion(COMPLETED_COUNT, ALL_SKILLS.length)
 
 const LEGEND: { status: SkillStatus; label: string; color: string }[] = [
   { status: "completed", label: "Completed", color: "bg-emerald-400" },
@@ -248,11 +347,63 @@ export function SkillTreeView() {
   const [selectedSkillId, setSelectedSkillId] = React.useState<string | null>(null)
   const [filterBranch, setFilterBranch] = React.useState<string>("all")
 
-  const selectedSkill = ALL_SKILLS.find((s) => s.id === selectedSkillId) ?? null
+  // Fetch real skill tree from the database. Falls back to the hardcoded
+  // BRANCHES array if the API is unreachable.
+  const { data: skillsData } = useQuery<{
+    categories: SkillCategoryRow[]
+    count: number
+    skillCount: number
+  } | null>({
+    queryKey: ["skills-view"],
+    queryFn: async () => {
+      try {
+        const res = await fetch("/api/skills")
+        if (!res.ok) return null
+        return res.json()
+      } catch {
+        return null
+      }
+    },
+    staleTime: 60_000,
+  })
+
+  const { layout, allSkills, completedCount, inProgressCount, totalXp, completionPct, rank } =
+    React.useMemo(() => {
+      const rows = skillsData?.categories ?? []
+      const branches: SkillBranch[] =
+        rows.length > 0 ? rows.map(mapCategoryToBranch) : BRANCHES
+      const built = buildLayout(branches)
+      const skills: PositionedSkill[] = built.flatMap((b) =>
+        b.skillsWithPos.map((s) => ({
+          ...s,
+          branchId: b.id,
+          branchName: b.name,
+          branchColor: b.color,
+        }))
+      )
+      const completed = skills.filter((s) => s.status === "completed").length
+      const inProgress = skills.filter((s) => s.status === "in-progress").length
+      const xp = skills
+        .filter((s) => s.status === "completed")
+        .reduce((a, s) => a + s.xp, 0)
+      const pct = skills.length > 0 ? Math.round((completed / skills.length) * 100) : 0
+      const r = rankFromCompletion(completed, skills.length)
+      return {
+        layout: built,
+        allSkills: skills,
+        completedCount: completed,
+        inProgressCount: inProgress,
+        totalXp: xp,
+        completionPct: pct,
+        rank: r,
+      }
+    }, [skillsData])
+
+  const selectedSkill = allSkills.find((s) => s.id === selectedSkillId) ?? null
 
   // Build SVG connection paths
   const connections: { d: string; branch: PositionedBranch; key: string }[] = []
-  for (const branch of LAYOUT) {
+  for (const branch of layout) {
     // center -> hub
     connections.push({
       d: `M ${CENTER.x} ${CENTER.y} L ${branch.hub.x} ${branch.hub.y}`,
@@ -325,15 +476,15 @@ export function SkillTreeView() {
             color="text-emerald-300"
             tint="bg-emerald-500/10"
             label="Completion"
-            value={`${COMPLETION_PCT}%`}
-            sub={`${COMPLETED_COUNT} / ${ALL_SKILLS.length} skills`}
+            value={`${completionPct}%`}
+            sub={`${completedCount} / ${allSkills.length} skills`}
           />
           <SummaryStat
             icon={Zap}
             color="text-amber-300"
             tint="bg-amber-500/10"
             label="Total XP"
-            value={TOTAL_XP.toLocaleString()}
+            value={totalXp.toLocaleString()}
             sub="From completed skills"
           />
           <SummaryStat
@@ -341,16 +492,16 @@ export function SkillTreeView() {
             color="text-violet-300"
             tint="bg-violet-500/10"
             label="In Progress"
-            value={IN_PROGRESS_COUNT.toString()}
+            value={inProgressCount.toString()}
             sub="Currently being learned"
           />
           <div className="card-premium rounded-xl p-4 flex flex-col gap-2">
             <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-[0.2em]">Rank</span>
             <div className="flex items-center gap-2">
-              <RankBadge rank={RANK.name} level={RANK.level} size="md" />
+              <RankBadge rank={rank.name} level={rank.level} size="md" />
             </div>
             <p className="text-[10px] text-muted-foreground">
-              Reach {Math.ceil(ALL_SKILLS.length * 0.85)} skills to unlock Elite Guardian.
+              Reach {Math.ceil(allSkills.length * 0.85)} skills to unlock Elite Guardian.
             </p>
           </div>
         </motion.section>
@@ -372,7 +523,7 @@ export function SkillTreeView() {
               onClick={() => setFilterBranch("all")}
               label="All branches"
             />
-            {LAYOUT.map((b) => (
+            {layout.map((b) => (
               <FilterChip
                 key={b.id}
                 active={filterBranch === b.id}
@@ -481,7 +632,7 @@ export function SkillTreeView() {
                 </div>
 
                 {/* Branch hubs + skill nodes */}
-                {LAYOUT.map((branch) => {
+                {layout.map((branch) => {
                   const isFilteredOut =
                     filterBranch !== "all" && branch.id !== filterBranch
                   return (
@@ -553,6 +704,7 @@ export function SkillTreeView() {
                 <SkillDetailPanel
                   key={selectedSkill.id}
                   skill={selectedSkill}
+                  allSkills={allSkills}
                   onClose={() => setSelectedSkillId(null)}
                   onStartLearning={() => navigate({ name: "labs" })}
                 />
@@ -648,10 +800,12 @@ function FilterChip({
 
 function SkillDetailPanel({
   skill,
+  allSkills,
   onClose,
   onStartLearning,
 }: {
-  skill: (typeof ALL_SKILLS)[number]
+  skill: PositionedSkill
+  allSkills: PositionedSkill[]
   onClose: () => void
   onStartLearning: () => void
 }) {
@@ -670,8 +824,8 @@ function SkillDetailPanel({
   }
 
   const prereqSkills = skill.prerequisites
-    .map((id) => ALL_SKILLS.find((s) => s.id === id))
-    .filter(Boolean) as (typeof ALL_SKILLS)[number][]
+    .map((id) => allSkills.find((s) => s.id === id))
+    .filter(Boolean) as PositionedSkill[]
 
   return (
     <motion.div

@@ -14,23 +14,30 @@
 
 import {
   AlertTriangle, Activity, Award, BadgeCheck, BookOpen, Briefcase,
-  Building, Building2, Calendar, CheckCircle2, Circle, Clock, Cloud,
-  Code2, Cpu, Database, Eye, FileCheck, Fingerprint, FlaskConical,
-  Github, Globe, GraduationCap, Landmark, Layers, Linkedin, Lock,
-  Mail, MapPin, MessageSquare, Mic, Network, Phone, PlayCircle,
-  Radio, Rocket, Server, Shield, ShieldCheck, Star, Target, Terminal,
-  Tv, Twitter, Users, Wifi, Youtube, Zap, TrendingUp, Trophy,
+  Bug, Building, Building2, Calendar, CheckCircle2, Circle, Clock,
+  Cloud, CloudCog, Code2, Container, Cpu, Crosshair, Crown,
+  Database, Eye, FileCheck, Fingerprint, Flag, FlaskConical, FolderSearch,
+  Github, Globe, GraduationCap, Key, KeyRound, Landmark, Layers,
+  Linkedin, Lock, Mail, MapPin, MessageSquare, Mic, Network, Phone,
+  PlayCircle, Radar, Radio, Rocket, Route, ScanLine, Server, Shield,
+  ShieldAlert, ShieldCheck, Sparkles, Star, Swords, Target, Terminal,
+  Tv, Twitter, Users, Wifi, Wrench, Youtube, Zap, TrendingUp, Trophy,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
 const ICONS: Record<string, LucideIcon> = {
   AlertTriangle, Activity, Award, BadgeCheck, BookOpen, Briefcase,
-  Building, Building2, Calendar, CheckCircle2, Circle, Clock, Cloud,
-  Code2, Cpu, Database, Eye, FileCheck, Fingerprint, FlaskConical,
-  Github, Globe, GraduationCap, Landmark, Layers, Linkedin, Lock,
-  Mail, MapPin, MessageSquare, Mic, Network, Phone, PlayCircle,
-  Radio, Rocket, Server, Shield, ShieldCheck, Star, Target, Terminal,
-  Tv, Twitter, Users, Wifi, Youtube, Zap, TrendingUp, Trophy,
+  Bug, Building, Building2, Calendar, CheckCircle2, Circle, Clock,
+  Cloud, CloudCog, Code2, Container, Cpu, Crosshair, Crown,
+  Database, Eye, FileCheck, Fingerprint, Flag, FlaskConical, FolderSearch,
+  Github, Globe, GraduationCap, Key, KeyRound, Landmark, Layers,
+  Linkedin, Lock, Mail, MapPin, MessageSquare, Mic, Network, Phone,
+  PlayCircle, Radar, Radio, Rocket, Route, ScanLine, Server, Shield,
+  ShieldAlert, ShieldCheck, Sparkles, Star, Swords, Target, Terminal,
+  Tv, Twitter, Users, Wifi, Wrench, Youtube, Zap, TrendingUp, Trophy,
+  // Aliases — lucide-react renamed some icons. Map old names → current
+  // component so DB rows that store the legacy name still resolve.
+  CloudShield: CloudCog,
 }
 
 /**

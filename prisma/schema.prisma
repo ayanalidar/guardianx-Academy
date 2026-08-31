@@ -1199,3 +1199,134 @@ model SiteContent {
   @@unique([page, section, key])
   @@index([page, section])
 }
+
+// ============================================================
+// PRODUCTION MODELS — database-driven content (Phase PROD-DB)
+// ============================================================
+
+/// Learning paths — guided career journeys (replaces hardcoded arrays)
+model LearningPath {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  subtitle    String?
+  description String
+  icon        String   @default("Route") // Lucide icon name
+  color       String   @default("text-violet-300")
+  tint        String   @default("bg-violet-500/10")
+  difficulty  String   @default("Beginner") // Beginner | Intermediate | Advanced
+  duration    String   @default("12 weeks")
+  skillsCount Int      @default(0)
+  labsCount   Int      @default(0)
+  xpReward    Int      @default(5000)
+  careerOutcome String?
+  skills      String   @default("[]") // JSON array of skill names
+  courses     String   @default("[]") // JSON array of course IDs
+  order       Int      @default(0)
+  published   Boolean  @default(true)
+  featured    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+/// Skill categories — branches of the skill tree
+model SkillCategory {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  icon        String   @default("Shield")
+  color       String   @default("text-violet-300")
+  tint        String   @default("bg-violet-500/10")
+  description String?
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  skills      Skill[]
+}
+
+/// Individual skills — nodes in the skill tree
+model Skill {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  description String?
+  categoryId  String
+  category    SkillCategory @relation(fields: [categoryId], references: [id])
+  difficulty  String   @default("Beginner")
+  xp          Int      @default(100)
+  status      String   @default("available") // locked | available | in-progress | completed
+  prerequisites String @default("[]") // JSON array of skill slugs
+  relatedCourses String @default("[]") // JSON array of course IDs
+  relatedLabs String   @default("[]") // JSON array of lab IDs
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+/// Rank hierarchy — 8 tiers from Recruit to Elite Guardian
+model Rank {
+  id          String   @id @default(cuid())
+  name        String   @unique // RECRUIT, ANALYST, HUNTER, OPERATOR, SPECIALIST, SENTINEL, GUARDIAN, ELITE_GUARDIAN
+  displayName String   // "Recruit", "Analyst", etc.
+  level       Int      @unique // 1-8
+  xpThreshold Int      // XP needed to reach this rank
+  color       String   @default("text-gray-400")
+  description String?
+  icon        String   @default("Shield")
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+/// Career roles — for career matching engine
+/// (renamed from CareerRole → CareerPathRole to avoid collision with the
+///  pre-existing CareerRole model used by /api/career/roles)
+model CareerPathRole {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  description String?
+  icon        String   @default("Briefcase")
+  color       String   @default("text-violet-300")
+  // Skill weights as JSON: {"networking": 20, "linux": 20, "web": 25, "pentesting": 30, "reporting": 5}
+  skillWeights String  @default("{}")
+  minThreshold Int     @default(60) // minimum readiness % to be "ready"
+  recommendedCerts String @default("[]") // JSON array of cert names
+  recommendedCourses String @default("[]") // JSON array of course IDs
+  recommendedLabs String @default("[]") // JSON array of lab IDs
+  salaryRange String?
+  demand      String   @default("High") // High | Medium | Low
+  published   Boolean  @default(true)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+/// Platform statistics — admin-managed, optionally auto-calculated
+model PlatformStat {
+  id          String   @id @default(cuid())
+  key         String   @unique // "learner_count", "lab_count", "course_count", "partner_count"
+  label       String   // "Learners", "Labs", "Courses", "Partners"
+  value       String   // "12000+" or calculated value
+  source      String   @default("manual") // "manual" | "calculated"
+  displayStatus String @default("visible") // visible | hidden
+  suffix      String?  // "+", "", etc.
+  icon        String   @default("Users")
+  color       String   @default("text-violet-300")
+  updatedAt   DateTime @updatedAt
+  updatedBy   String?
+}
+
+/// Technology ecosystem — replaces fake "Trusted by Google" logos
+model TechnologyPartner {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  category    String   @default("tool") // tool | platform | framework
+  description String?
+  url         String?
+  icon        String   @default("Terminal")
+  order       Int      @default(0)
+  published   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

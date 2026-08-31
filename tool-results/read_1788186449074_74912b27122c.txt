@@ -1,0 +1,1737 @@
+     1→"use client"
+     2→
+     3→import * as React from "react"
+     4→import { motion } from "framer-motion"
+     5→import { useAppStore } from "@/store/app-store"
+     6→import { Button } from "@/components/ui/button"
+     7→import { Badge } from "@/components/ui/badge"
+     8→import {
+     9→  Shield,
+    10→  ArrowRight,
+    11→  BookOpen,
+    12→  FlaskConical,
+    13→  Trophy,
+    14→  Award,
+    15→  Briefcase,
+    16→  Building2,
+    17→  Lock,
+    18→  Server,
+    19→  Database,
+    20→  Terminal,
+    21→  Crosshair,
+    22→  Target,
+    23→  Zap,
+    24→  TrendingUp,
+    25→  Rocket,
+    26→  GraduationCap,
+    27→  CheckCircle2,
+    28→  BadgeCheck,
+    29→  Users,
+    30→  Layers,
+    31→  Globe,
+    32→  Cloud,
+    33→  Eye,
+    34→  Crown,
+    35→  FileCheck,
+    36→  Sparkles,
+    37→  ChevronRight,
+    38→} from "lucide-react"
+    39→import { cn } from "@/lib/utils"
+    40→import { ParticleLogo } from "@/components/platform/particle-logo"
+    41→import { CertificateVerifyCard } from "@/components/platform/certificate-verify-card"
+    42→import { usePageContent, getContent } from "@/lib/use-content"
+    43→import {
+    44→  CyberTerminal,
+    45→  MissionCard,
+    46→  XPBar,
+    47→  RankBadge,
+    48→  SkillNode,
+    49→  StatTile,
+    50→  StatusDot,
+    51→} from "@/components/cyber"
+    52→import type { TerminalLine } from "@/components/cyber"
+    53→
+    54→/* ---------------------------------------------------------------- *
+    55→ *  HomeView — GuardianX Academy cinematic 13-section homepage      *
+    56→ *  Tells the full story: hero → products → range → paths →         *
+    57→ *  skills → missions → gamification → careers → institutions →     *
+    58→ *  certifications → stories → trust → final CTA.                   *
+    59→ * ---------------------------------------------------------------- */
+    60→
+    61→// Shared animation variants — no scroll triggers, just simple fades.
+    62→const FADE_UP = {
+    63→  initial: { opacity: 0, y: 10 },
+    64→  animate: { opacity: 1, y: 0 },
+    65→  transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] as const },
+    66→}
+    67→
+    68→const FADE_IN = {
+    69→  initial: { opacity: 0 },
+    70→  animate: { opacity: 1 },
+    71→  transition: { duration: 0.35, ease: "easeOut" },
+    72→}
+    73→
+    74→export function HomeView() {
+    75→  const { navigate } = useAppStore()
+    76→
+    77→  /* ------------------------------------------------------------- *
+    78→   *  CMS content with fallbacks                                   *
+    79→   * ------------------------------------------------------------- */
+    80→  const cms = usePageContent("home")
+    81→  const cmsData = cms.data
+    82→
+    83→  const heroBadge = getContent(
+    84→    cmsData,
+    85→    "hero",
+    86→    "badge",
+    87→    "WORLD-CLASS CYBER SECURITY EDUCATION"
+    88→  )
+    89→  // Title is split into prefix + accent so the accent can receive the
+    90→  // premium gradient treatment.
+    91→  const heroTitlePrefix = getContent(
+    92→    cmsData,
+    93→    "hero",
+    94→    "title",
+    95→    "Learn cybersecurity by actually"
+    96→  )
+    97→  const heroTitleAccent = getContent(
+    98→    cmsData,
+    99→    "hero",
+   100→    "titleAccent",
+   101→    "breaking things."
+   102→  )
+   103→  const heroDescription = getContent(
+   104→    cmsData,
+   105→    "hero",
+   106→    "description",
+   107→    "A world-class platform for aspirants, freshers, and working professionals. Certification prep, live workshops, hands-on labs, and corporate training — all in one place."
+   108→  )
+   109→  const heroCtaPrimary = getContent(cmsData, "hero", "ctaPrimary", "START LEARNING")
+   110→  const heroCtaSecondary = getContent(cmsData, "hero", "ctaSecondary", "EXPLORE CYBER RANGE")
+   111→
+   112→  const platformEyebrow = getContent(cmsData, "platform", "eyebrow", "THE PLATFORM")
+   113→  const platformTitle = getContent(
+   114→    cmsData,
+   115→    "platform",
+   116→    "title",
+   117→    "One platform. Every angle of cyber security."
+   118→  )
+   119→  const platformDesc = getContent(
+   120→    cmsData,
+   121→    "platform",
+   122→    "description",
+   123→    "GuardianX is an end-to-end cyber security training platform — from beginner foundations through advanced certifications and real-world practice labs."
+   124→  )
+   125→
+   126→  const rangeTitle = getContent(
+   127→    cmsData,
+   128→    "range",
+   129→    "title",
+   130→    "Don't watch someone hack. Hack it yourself."
+   131→  )
+   132→  const rangeDesc = getContent(
+   133→    cmsData,
+   134→    "range",
+   135→    "description",
+   136→    "Spin up a real isolated target in seconds. Probe it, break it, capture the flag — all from your browser."
+   137→  )
+   138→
+   139→  const pathsTitle = getContent(cmsData, "paths", "title", "Choose your mission.")
+   140→  const pathsDesc = getContent(
+   141→    cmsData,
+   142→    "paths",
+   143→    "description",
+   144→    "Structured learning paths that take you from zero to certified — each with a clear outcome and timeline."
+   145→  )
+   146→
+   147→  const skillsTitle = getContent(cmsData, "skills", "title", "Map your skills.")
+   148→  const skillsDesc = getContent(
+   149→    cmsData,
+   150→    "skills",
+   151→    "description",
+   152→    "Visualize every skill you'll earn across the offensive, defensive, and forensic spectrum."
+   153→  )
+   154→
+   155→  const missionTitle = getContent(cmsData, "mission", "title", "Your command center.")
+   156→  const missionDesc = getContent(
+   157→    cmsData,
+   158→    "mission",
+   159→    "description",
+   160→    "Track XP, missions, ranks, and daily objectives from one unified dashboard."
+   161→  )
+   162→
+   163→  const gamifyTitle = getContent(cmsData, "gamify", "title", "Level up your defense.")
+   164→  const gamifyDesc = getContent(
+   165→    cmsData,
+   166→    "gamify",
+   167→    "description",
+   168→    "Every action earns XP. Climb the ranks from RECRUIT to ELITE GUARDIAN."
+   169→  )
+   170→
+   171→  const careerTitle = getContent(cmsData, "career", "title", "Turn skills into careers.")
+   172→  const careerDesc = getContent(
+   173→    cmsData,
+   174→    "career",
+   175→    "description",
+   176→    "We map your progress against real job roles and tell you exactly what's left."
+   177→  )
+   178→
+   179→  const institutionsTitle = getContent(
+   180→    cmsData,
+   181→    "institutions",
+   182→    "title",
+   183→    "GuardianX for Institutions."
+   184→  )
+   185→  const institutionsSub = getContent(
+   186→    cmsData,
+   187→    "institutions",
+   188→    "subtitle",
+   189→    "Teach. Practice. Track. Certify."
+   190→  )
+   191→
+   192→  const certTitle = getContent(cmsData, "cert", "title", "Prove what you know.")
+   193→  const certDesc = getContent(
+   194→    cmsData,
+   195→    "cert",
+   196→    "description",
+   197→    "Every certificate is cryptographically signed and publicly verifiable."
+   198→  )
+   199→
+   200→  const storiesTitle = getContent(cmsData, "stories", "title", "From learning to career.")
+   201→  const storiesDesc = getContent(
+   202→    cmsData,
+   203→    "stories",
+   204→    "description",
+   205→    "A typical GuardianX learner journey — from day one to the offer letter."
+   206→  )
+   207→
+   208→  const trustLabel = getContent(cmsData, "trust", "label", "Trusted by defenders at")
+   209→
+   210→  const finalCtaTitle = getContent(cmsData, "finalCta", "title", "Become unstoppable.")
+   211→  const finalCtaSubtitle = getContent(
+   212→    cmsData,
+   213→    "finalCta",
+   214→    "subtitle",
+   215→    "Join 12,000+ defenders advancing their careers."
+   216→  )
+   217→  const finalCtaPrimary = getContent(cmsData, "finalCta", "ctaPrimary", "START FREE TODAY")
+   218→  const finalCtaSecondary = getContent(cmsData, "finalCta", "ctaSecondary", "TALK TO US")
+   219→
+   220→  /* ------------------------------------------------------------- *
+   221→   *  Static demo content for the cyber range showcase terminal     *
+   222→   * ------------------------------------------------------------- */
+   223→  const nmapLines: TerminalLine[] = React.useMemo(
+   224→    () => [
+   225→      { type: "command", text: "nmap -sV -p 22,80,3306 10.10.24.14" },
+   226→      { type: "output", text: "Starting Nmap 7.94 ( https://nmap.org )" },
+   227→      { type: "output", text: "Nmap scan report for 10.10.24.14" },
+   228→      { type: "output", text: "Host is up (0.0031s latency)." },
+   229→      { type: "output", text: "PORT     STATE SERVICE  VERSION" },
+   230→      { type: "output", text: "22/tcp   open  ssh      OpenSSH 8.2p1 Ubuntu" },
+   231→      { type: "output", text: "80/tcp   open  http     Apache httpd 2.4.41 ((DVWA))" },
+   232→      { type: "output", text: "3306/tcp open  mysql    MySQL 5.7.31" },
+   233→      { type: "success", text: "3 services discovered — DVWA target mapped" },
+   234→    ],
+   235→    []
+   236→  )
+   237→
+   238→  return (
+   239→    <main className="relative">
+   240→      {/* =====================================================
+   241→          SECTION 1 — HERO
+   242→          ===================================================== */}
+   243→      <section
+   244→        aria-labelledby="hero-heading"
+   245→        className="relative overflow-hidden"
+   246→      >
+   247→        <div className="absolute inset-0 bg-mesh" aria-hidden />
+   248→        <div className="absolute inset-0 bg-grid opacity-10" aria-hidden />
+   249→        <div
+   250→          className="absolute left-1/3 top-1/4 size-[500px] rounded-full bg-violet-600/8 blur-[120px] pointer-events-none"
+   251→          aria-hidden
+   252→        />
+   253→        <div
+   254→          className="absolute bottom-1/4 right-1/3 size-[400px] rounded-full bg-cyan-500/6 blur-[100px] pointer-events-none"
+   255→          aria-hidden
+   256→        />
+   257→
+   258→        {/* Desktop: large interactive particle logo on the right */}
+   259→        <div className="hidden lg:block absolute right-[6%] top-1/2 -translate-y-1/2 pointer-events-auto">
+   260→          <motion.div
+   261→            initial={{ opacity: 0, scale: 0.7 }}
+   262→            animate={{ opacity: 1, scale: 1 }}
+   263→            transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+   264→          >
+   265→            <ParticleLogo size={680} interactive showGlow />
+   266→          </motion.div>
+   267→        </div>
+   268→
+   269→        {/* Mobile: smaller particle logo inline */}
+   270→        <div className="lg:hidden absolute inset-x-0 top-0 h-[44vh] flex items-center justify-center pointer-events-none">
+   271→          <ParticleLogo size={340} interactive={false} showGlow />
+   272→        </div>
+   273→
+   274→        <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full py-12 lg:py-16 pt-[48vh] lg:pt-16">
+   275→          <div className="max-w-3xl">
+   276→            <motion.div
+   277→              {...FADE_UP}
+   278→              className="inline-flex items-center gap-2 mb-4 rounded-full border border-violet-500/30 bg-violet-500/10 px-3 py-1.5"
+   279→            >
+   280→              <span className="h-1.5 w-1.5 rounded-full bg-violet-400 pulse-dot" aria-hidden />
+   281→              <span className="text-[10px] font-mono text-violet-300/90 tracking-[0.25em]">
+   282→                {heroBadge}
+   283→              </span>
+   284→            </motion.div>
+   285→
+   286→            <motion.h1
+   287→              id="hero-heading"
+   288→              {...FADE_UP}
+   289→              transition={{ duration: 0.45, delay: 0.05 }}
+   290→              className="text-[clamp(2.25rem,5.5vw,4rem)] font-bold leading-[1.02] tracking-[-0.03em] mb-5 text-balance"
+   291→            >
+   292→              {heroTitlePrefix}{" "}
+   293→              <span className="text-gradient-premium">{heroTitleAccent}</span>
+   294→            </motion.h1>
+   295→
+   296→            <motion.p
+   297→              {...FADE_UP}
+   298→              transition={{ duration: 0.4, delay: 0.15 }}
+   299→              className="text-base lg:text-lg text-muted-foreground max-w-xl mb-6 leading-relaxed"
+   300→            >
+   301→              {heroDescription}
+   302→            </motion.p>
+   303→
+   304→            <motion.div
+   305→              {...FADE_UP}
+   306→              transition={{ duration: 0.4, delay: 0.25 }}
+   307→              className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-6"
+   308→            >
+   309→              <Button
+   310→                size="lg"
+   311→                onClick={() => navigate({ name: "login" })}
+   312→                className="bg-violet-600 hover:bg-violet-500 btn-premium px-7 py-6 text-sm"
+   313→                aria-label={heroCtaPrimary}
+   314→              >
+   315→                {heroCtaPrimary}
+   316→                <ArrowRight className="h-4 w-4 ml-2" aria-hidden />
+   317→              </Button>
+   318→              <Button
+   319→                size="lg"
+   320→                variant="outline"
+   321→                onClick={() => navigate({ name: "labs" })}
+   322→                className="px-6 py-6 text-sm"
+   323→                aria-label={heroCtaSecondary}
+   324→              >
+   325→                <Crosshair className="h-4 w-4 mr-2" aria-hidden />
+   326→                {heroCtaSecondary}
+   327→              </Button>
+   328→            </motion.div>
+   329→
+   330→            {/* Live platform indicators */}
+   331→            <motion.div
+   332→              {...FADE_UP}
+   333→              transition={{ duration: 0.4, delay: 0.35 }}
+   334→              className="flex flex-wrap items-center gap-x-5 gap-y-2 pt-4 border-t border-border/40"
+   335→            >
+   336→              <StatusDot status="online" pulse size="sm" label="LABS ONLINE" />
+   337→              <StatusDot status="online" pulse size="sm" label="CTF ACTIVE" />
+   338→              <StatusDot status="online" pulse size="sm" label="12,000+ LEARNERS" />
+   339→            </motion.div>
+   340→          </div>
+   341→        </div>
+   342→      </section>
+   343→
+   344→      {/* =====================================================
+   345→          SECTION 2 — PLATFORM INTRODUCTION (6 pillars)
+   346→          ===================================================== */}
+   347→      <section
+   348→        aria-labelledby="platform-heading"
+   349→        className="relative py-8 lg:py-12"
+   350→      >
+   351→        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+   352→          <motion.div {...FADE_UP} className="max-w-2xl mb-6">
+   353→            <p className="text-[10px] font-mono text-violet-300/80 tracking-[0.25em] mb-2">
+   354→              {platformEyebrow}
+   355→            </p>
+   356→            <h2
+   357→              id="platform-heading"
+   358→              className="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-[-0.02em] mb-3"
+   359→            >
+   360→              {platformTitle}
+   361→            </h2>
+   362→            <p className="text-sm text-muted-foreground leading-relaxed">
+   363→              {platformDesc}
+   364→            </p>
+   365→          </motion.div>
+   366→
+   367→          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 lg:gap-4">
+   368→            {PILLARS.map((p, i) => (
+   369→              <motion.div
+   370→                key={p.title}
+   371→                initial={{ opacity: 0, y: 10 }}
+   372→                animate={{ opacity: 1, y: 0 }}
+   373→                transition={{ duration: 0.35, delay: 0.05 * i, ease: "easeOut" }}
+   374→                className="card-premium rounded-xl p-4 lg:p-5"
+   375→              >
+   376→                <div
+   377→                  className={cn(
+   378→                    "mb-3 flex size-10 items-center justify-center rounded-lg border border-border/50",
+   379→                    p.tint,
+   380→                    p.color
+   381→                  )}
+   382→                  aria-hidden
+   383→                >
+   384→                  <p.icon className="size-5" />
+   385→                </div>
+   386→                <h3 className="text-sm font-semibold mb-1">{p.title}</h3>
+   387→                <p className="text-xs text-muted-foreground leading-relaxed">
+   388→                  {p.desc}
+   389→                </p>
+   390→              </motion.div>
+   391→            ))}
+   392→          </div>
+   393→        </div>
+   394→      </section>
+   395→
+   396→      {/* =====================================================
+   397→          SECTION 3 — CYBER RANGE SHOWCASE
+   398→          ===================================================== */}
+   399→      <section
+   400→        aria-labelledby="range-heading"
+   401→        className="relative py-8 lg:py-12"
+   402→      >
+   403→        <div className="absolute inset-0 bg-grid opacity-[0.04] pointer-events-none" aria-hidden />
+   404→        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
+   405→          <motion.div {...FADE_UP} className="max-w-2xl mb-6">
+   406→            <h2
+   407→              id="range-heading"
+   408→              className="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-[-0.02em] mb-3 text-balance"
+   409→            >
+   410→              {rangeTitle}
+   411→            </h2>
+   412→            <p className="text-sm text-muted-foreground leading-relaxed">
+   413→              {rangeDesc}
+   414→            </p>
+   415→          </motion.div>
+   416→
+   417→          <div className="grid lg:grid-cols-2 gap-4 lg:gap-6 items-stretch">
+   418→            {/* Target info card */}
+   419→            <motion.div
+   420→              {...FADE_UP}
+   421→              transition={{ duration: 0.4, delay: 0.05 }}
+   422→              className="card-premium rounded-2xl p-5 lg:p-6 scanlines"
+   423→            >
+   424→              <div className="flex items-center justify-between mb-4">
+   425→                <div className="flex items-center gap-2">
+   426→                  <StatusDot status="online" pulse size="sm" label="TARGET ONLINE" />
+   427→                </div>
+   428→                <Badge className="bg-violet-500/15 text-violet-300 border-violet-500/30 font-mono text-[10px]">
+   429→                  DVWA
+   430→                </Badge>
+   431→              </div>
+   432→
+   433→              <h3 className="text-base font-semibold mb-4 flex items-center gap-2">
+   434→                <Server className="size-4 text-cyan-300" aria-hidden />
+   435→                Target Machine
+   436→              </h3>
+   437→
+   438→              <dl className="space-y-3 font-mono text-sm">
+   439→                <div className="flex justify-between border-b border-border/40 pb-2">
+   440→                  <dt className="text-muted-foreground">TARGET</dt>
+   441→                  <dd className="text-foreground">DVWA</dd>
+   442→                </div>
+   443→                <div className="flex justify-between border-b border-border/40 pb-2">
+   444→                  <dt className="text-muted-foreground">STATUS</dt>
+   445→                  <dd className="text-emerald-300">ONLINE</dd>
+   446→                </div>
+   447→                <div className="flex justify-between border-b border-border/40 pb-2">
+   448→                  <dt className="text-muted-foreground">IP</dt>
+   449→                  <dd className="text-cyan-200">10.10.24.14</dd>
+   450→                </div>
+   451→              </dl>
+   452→
+   453→              <div className="mt-4">
+   454→                <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider mb-2">
+   455→                  Open Services
+   456→                </p>
+   457→                <div className="flex flex-wrap gap-2">
+   458→                  {RANGE_SERVICES.map((s) => (
+   459→                    <span
+   460→                      key={s.port}
+   461→                      className="inline-flex items-center gap-1.5 rounded-md border border-border/50 bg-[oklch(0.1_0.008_270)] px-2 py-1 font-mono text-xs"
+   462→                    >
+   463→                      <s.icon className={cn("size-3.5", s.color)} aria-hidden />
+   464→                      <span className="text-cyan-200">{s.port}</span>
+   465→                      <span className="text-muted-foreground">{s.name}</span>
+   466→                    </span>
+   467→                  ))}
+   468→                </div>
+   469→              </div>
+   470→
+   471→              <Button
+   472→                className="mt-5 w-full bg-violet-600 hover:bg-violet-500 btn-premium"
+   473→                onClick={() => navigate({ name: "labs" })}
+   474→                aria-label="Launch lab"
+   475→              >
+   476→                <Crosshair className="size-4 mr-2" aria-hidden />
+   477→                LAUNCH LAB
+   478→              </Button>
+   479→            </motion.div>
+   480→
+   481→            {/* Cyber terminal — nmap scan */}
+   482→            <motion.div
+   483→              {...FADE_UP}
+   484→              transition={{ duration: 0.4, delay: 0.15 }}
+   485→              className="flex"
+   486→            >
+   487→              <CyberTerminal
+   488→                lines={nmapLines}
+   489→                speed={18}
+   490→                className="w-full"
+   491→                prompt="guardian@kali:~$"
+   492→              />
+   493→            </motion.div>
+   494→          </div>
+   495→        </div>
+   496→      </section>
+   497→
+   498→      {/* =====================================================
+   499→          SECTION 4 — LEARNING PATHS
+   500→          ===================================================== */}
+   501→      <section
+   502→        aria-labelledby="paths-heading"
+   503→        className="relative py-8 lg:py-12"
+   504→      >
+   505→        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+   506→          <motion.div {...FADE_UP} className="max-w-2xl mb-6">
+   507→            <h2
+   508→              id="paths-heading"
+   509→              className="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-[-0.02em] mb-3"
+   510→            >
+   511→              {pathsTitle}
+   512→            </h2>
+   513→            <p className="text-sm text-muted-foreground leading-relaxed">
+   514→              {pathsDesc}
+   515→            </p>
+   516→          </motion.div>
+   517→
+   518→          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
+   519→            {LEARNING_PATHS.map((p, i) => (
+   520→              <motion.div
+   521→                key={p.title}
+   522→                initial={{ opacity: 0, y: 10 }}
+   523→                animate={{ opacity: 1, y: 0 }}
+   524→                transition={{ duration: 0.35, delay: 0.04 * i, ease: "easeOut" }}
+   525→                className="card-premium rounded-2xl p-5 flex flex-col"
+   526→              >
+   527→                <div className="flex items-start justify-between mb-3">
+   528→                  <div
+   529→                    className={cn(
+   530→                      "flex size-10 items-center justify-center rounded-lg border border-border/50",
+   531→                      p.tint,
+   532→                      p.color
+   533→                    )}
+   534→                    aria-hidden
+   535→                  >
+   536→                    <p.icon className="size-5" />
+   537→                  </div>
+   538→                  <Badge
+   539→                    variant="outline"
+   540→                    className={cn("font-mono text-[10px] border-border/60", p.color)}
+   541→                  >
+   542→                    {p.difficulty}
+   543→                  </Badge>
+   544→                </div>
+   545→
+   546→                <h3 className="text-base font-semibold mb-1">{p.title}</h3>
+   547→                <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
+   548→                  {p.desc}
+   549→                </p>
+   550→
+   551→                <div className="mt-auto grid grid-cols-2 gap-2 mb-4 text-[11px] font-mono">
+   552→                  <div className="rounded-md border border-border/40 bg-[oklch(0.1_0.008_270)] px-2 py-1.5">
+   553→                    <p className="text-muted-foreground uppercase">Duration</p>
+   554→                    <p className="text-foreground">{p.duration}</p>
+   555→                  </div>
+   556→                  <div className="rounded-md border border-border/40 bg-[oklch(0.1_0.008_270)] px-2 py-1.5">
+   557→                    <p className="text-muted-foreground uppercase">Skills</p>
+   558→                    <p className="text-foreground">{p.skills}</p>
+   559→                  </div>
+   560→                </div>
+   561→
+   562→                <Button
+   563→                  variant="outline"
+   564→                  size="sm"
+   565→                  className="w-full"
+   566→                  onClick={() => navigate({ name: "catalog" })}
+   567→                  aria-label={`Explore ${p.title} path`}
+   568→                >
+   569→                  EXPLORE PATH
+   570→                  <ArrowRight className="size-3.5 ml-1.5" aria-hidden />
+   571→                </Button>
+   572→              </motion.div>
+   573→            ))}
+   574→          </div>
+   575→        </div>
+   576→      </section>
+   577→
+   578→      {/* =====================================================
+   579→          SECTION 5 — SKILL TREE PREVIEW
+   580→          ===================================================== */}
+   581→      <section
+   582→        aria-labelledby="skills-heading"
+   583→        className="relative py-8 lg:py-12 overflow-hidden"
+   584→      >
+   585→        <div className="absolute inset-0 bg-grid opacity-[0.04] pointer-events-none" aria-hidden />
+   586→        <div
+   587→          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 size-[460px] rounded-full bg-violet-600/6 blur-[100px] pointer-events-none"
+   588→          aria-hidden
+   589→        />
+   590→        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
+   591→          <motion.div {...FADE_UP} className="max-w-2xl mb-6">
+   592→            <h2
+   593→              id="skills-heading"
+   594→              className="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-[-0.02em] mb-3"
+   595→            >
+   596→              {skillsTitle}
+   597→            </h2>
+   598→            <p className="text-sm text-muted-foreground leading-relaxed">
+   599→              {skillsDesc}
+   600→            </p>
+   601→          </motion.div>
+   602→
+   603→          <motion.div
+   604→            {...FADE_UP}
+   605→            transition={{ duration: 0.4, delay: 0.1 }}
+   606→            className="card-premium rounded-2xl p-6 lg:p-8"
+   607→          >
+   608→            {/* Visual tree — central node with 6 branch nodes around it */}
+   609→            <div className="relative mx-auto aspect-square max-w-[520px]">
+   610→              {/* SVG connection lines */}
+   611→              <svg
+   612→                aria-hidden
+   613→                className="absolute inset-0 w-full h-full"
+   614→                viewBox="0 0 100 100"
+   615→                preserveAspectRatio="none"
+   616→              >
+   617→                {BRANCH_ANGLES.map((angle, i) => {
+   618→                  const rad = (angle * Math.PI) / 180
+   619→                  const x = 50 + 38 * Math.cos(rad)
+   620→                  const y = 50 + 38 * Math.sin(rad)
+   621→                  return (
+   622→                    <line
+   623→                      key={i}
+   624→                      x1="50"
+   625→                      y1="50"
+   626→                      x2={x}
+   627→                      y2={y}
+   628→                      stroke="oklch(0.6 0.2 295 / 0.4)"
+   629→                      strokeWidth="0.4"
+   630→                      strokeDasharray="1 1.5"
+   631→                    />
+   632→                  )
+   633→                })}
+   634→              </svg>
+   635→
+   636→              {/* Central node */}
+   637→              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
+   638→                <div
+   639→                  className="flex size-20 lg:size-24 flex-col items-center justify-center rounded-full border-2 border-violet-500/60 bg-violet-500/15 text-violet-200 shadow-[0_0_24px_-4px_oklch(0.6_0.2_295_/_0.7)]"
+   640→                  aria-label="Central skill: Cybersecurity"
+   641→                >
+   642→                  <Shield className="size-5 lg:size-6" aria-hidden />
+   643→                  <span className="mt-0.5 font-mono text-[8px] lg:text-[9px] font-bold uppercase tracking-wider text-center px-1">
+   644→                    CYBERSECURITY
+   645→                  </span>
+   646→                </div>
+   647→              </div>
+   648→
+   649→              {/* Branch nodes */}
+   650→              {BRANCHES.map((b, i) => {
+   651→                const angle = BRANCH_ANGLES[i]
+   652→                const rad = (angle * Math.PI) / 180
+   653→                const x = 50 + 38 * Math.cos(rad)
+   654→                const y = 50 + 38 * Math.sin(rad)
+   655→                return (
+   656→                  <div
+   657→                    key={b.label}
+   658→                    className="absolute z-10"
+   659→                    style={{
+   660→                      left: `${x}%`,
+   661→                      top: `${y}%`,
+   662→                      transform: "translate(-50%, -50%)",
+   663→                    }}
+   664→                  >
+   665→                    <SkillNode
+   666→                      label={b.label}
+   667→                      status={b.status}
+   668→                      size={72}
+   669→                      className="lg:hidden"
+   670→                    />
+   671→                    <SkillNode
+   672→                      label={b.label}
+   673→                      status={b.status}
+   674→                      xp={b.xp}
+   675→                      size={84}
+   676→                      className="hidden lg:flex"
+   677→                    />
+   678→                  </div>
+   679→                )
+   680→              })}
+   681→            </div>
+   682→
+   683→            <div className="mt-6 flex justify-center">
+   684→              <Button
+   685→                variant="outline"
+   686→                onClick={() => navigate({ name: "skill-assessments" })}
+   687→                aria-label="Explore skill tree"
+   688→              >
+   689→                EXPLORE SKILL TREE
+   690→                <ArrowRight className="size-4 ml-2" aria-hidden />
+   691→              </Button>
+   692→            </div>
+   693→          </motion.div>
+   694→        </div>
+   695→      </section>
+   696→
+   697→      {/* =====================================================
+   698→          SECTION 6 — MISSION CONTROL PREVIEW
+   699→          ===================================================== */}
+   700→      <section
+   701→        aria-labelledby="mission-heading"
+   702→        className="relative py-8 lg:py-12"
+   703→      >
+   704→        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+   705→          <motion.div {...FADE_UP} className="max-w-2xl mb-6">
+   706→            <h2
+   707→              id="mission-heading"
+   708→              className="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-[-0.02em] mb-3"
+   709→            >
+   710→              {missionTitle}
+   711→            </h2>
+   712→            <p className="text-sm text-muted-foreground leading-relaxed">
+   713→              {missionDesc}
+   714→            </p>
+   715→          </motion.div>
+   716→
+   717→          <div className="grid lg:grid-cols-3 gap-4 lg:gap-6">
+   718→            {/* Left column — stat tiles + XP + rank */}
+   719→            <motion.div
+   720→              {...FADE_UP}
+   721→              transition={{ duration: 0.4, delay: 0.05 }}
+   722→              className="space-y-4"
+   723→            >
+   724→              <div className="grid grid-cols-2 gap-3">
+   725→                <StatTile
+   726→                  icon={Zap}
+   727→                  label="TOTAL XP"
+   728→                  value="8,420"
+   729→                  color="text-amber-300"
+   730→                  tint="bg-amber-500/10"
+   731→                />
+   732→                <StatTile
+   733→                  icon={Trophy}
+   734→                  label="RANK"
+   735→                  value="OPERATOR"
+   736→                  color="text-violet-300"
+   737→                  tint="bg-violet-500/10"
+   738→                />
+   739→                <StatTile
+   740→                  icon={Target}
+   741→                  label="MISSIONS"
+   742→                  value="47"
+   743→                  suffix="/120"
+   744→                  color="text-cyan-300"
+   745→                  tint="bg-cyan-500/10"
+   746→                />
+   747→                <StatTile
+   748→                  icon={TrendingUp}
+   749→                  label="STREAK"
+   750→                  value="14"
+   751→                  suffix="days"
+   752→                  color="text-emerald-300"
+   753→                  tint="bg-emerald-500/10"
+   754→                  trend={{ value: 22, direction: "up" }}
+   755→                />
+   756→              </div>
+   757→
+   758→              <div className="card-premium rounded-xl p-4">
+   759→                <div className="flex items-center justify-between mb-3">
+   760→                  <RankBadge rank="OPERATOR" level={7} size="md" />
+   761→                  <span className="font-mono text-[10px] text-muted-foreground uppercase">
+   762→                    Level 7
+   763→                  </span>
+   764→                </div>
+   765→                <XPBar current={1842} max={2400} level={7} showLabel />
+   766→              </div>
+   767→            </motion.div>
+   768→
+   769→            {/* Middle column — current mission */}
+   770→            <motion.div
+   771→              {...FADE_UP}
+   772→              transition={{ duration: 0.4, delay: 0.12 }}
+   773→            >
+   774→              <MissionCard
+   775→                title="SQL Injection — Login Bypass"
+   776→                objective="Exploit the DVWA login form to bypass authentication. Capture the flag stored in the admin panel."
+   777→                difficulty="MEDIUM"
+   778→                xp={450}
+   779→                timeElapsed="00:12:34"
+   780→                onSubmit={() => {}}
+   781→                onLaunch={() => navigate({ name: "labs" })}
+   782→              />
+   783→            </motion.div>
+   784→
+   785→            {/* Right column — daily objective */}
+   786→            <motion.div
+   787→              {...FADE_UP}
+   788→              transition={{ duration: 0.4, delay: 0.2 }}
+   789→              className="card-premium rounded-2xl p-5 flex flex-col"
+   790→            >
+   791→              <div className="flex items-center gap-2 mb-4">
+   792→                <span className="flex size-8 items-center justify-center rounded-lg bg-amber-500/10 text-amber-300 border border-amber-500/30">
+   793→                  <Target className="size-4" aria-hidden />
+   794→                </span>
+   795→                <h3 className="text-sm font-semibold">Daily Objective</h3>
+   796→              </div>
+   797→
+   798→              <ul className="space-y-3 mb-5 flex-1">
+   799→                {DAILY_OBJECTIVES.map((o, i) => (
+   800→                  <li key={i} className="flex items-start gap-2.5">
+   801→                    <CheckCircle2
+   802→                      className={cn(
+   803→                        "size-4 mt-0.5 shrink-0",
+   804→                        o.done ? "text-emerald-400" : "text-muted-foreground/40"
+   805→                      )}
+   806→                      aria-hidden
+   807→                    />
+   808→                    <div className="flex-1">
+   809→                      <p
+   810→                        className={cn(
+   811→                          "text-xs leading-relaxed",
+   812→                          o.done ? "text-muted-foreground line-through" : "text-foreground"
+   813→                        )}
+   814→                      >
+   815→                        {o.label}
+   816→                      </p>
+   817→                      <p className="font-mono text-[10px] text-amber-300/80 mt-0.5">
+   818→                        +{o.xp} XP
+   819→                      </p>
+   820→                    </div>
+   821→                  </li>
+   822→                ))}
+   823→              </ul>
+   824→
+   825→              <Button
+   826→                className="w-full bg-violet-600 hover:bg-violet-500 btn-premium"
+   827→                onClick={() => navigate({ name: "dashboard" })}
+   828→                aria-label="Enter mission control"
+   829→              >
+   830→                ENTER MISSION CONTROL
+   831→                <ArrowRight className="size-4 ml-2" aria-hidden />
+   832→              </Button>
+   833→            </motion.div>
+   834→          </div>
+   835→        </div>
+   836→      </section>
+   837→
+   838→      {/* =====================================================
+   839→          SECTION 7 — GAMIFICATION
+   840→          ===================================================== */}
+   841→      <section
+   842→        aria-labelledby="gamify-heading"
+   843→        className="relative py-8 lg:py-12 overflow-hidden"
+   844→      >
+   845→        <div className="absolute inset-0 bg-mesh opacity-50 pointer-events-none" aria-hidden />
+   846→        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
+   847→          <motion.div {...FADE_UP} className="max-w-2xl mb-6">
+   848→            <h2
+   849→              id="gamify-heading"
+   850→              className="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-[-0.02em] mb-3"
+   851→            >
+   852→              {gamifyTitle}
+   853→            </h2>
+   854→            <p className="text-sm text-muted-foreground leading-relaxed">
+   855→              {gamifyDesc}
+   856→            </p>
+   857→          </motion.div>
+   858→
+   859→          {/* Rank hierarchy ladder */}
+   860→          <motion.div
+   861→            {...FADE_UP}
+   862→            transition={{ duration: 0.4, delay: 0.05 }}
+   863→            className="card-premium rounded-2xl p-5 lg:p-6 mb-4"
+   864→          >
+   865→            <div className="flex items-center justify-between mb-4">
+   866→              <h3 className="text-sm font-semibold flex items-center gap-2">
+   867→                <Crown className="size-4 text-amber-300" aria-hidden />
+   868→                Rank Hierarchy
+   869→              </h3>
+   870→              <span className="font-mono text-[10px] text-muted-foreground uppercase">
+   871→                8 TIERS · 200–10,000 XP EACH
+   872→              </span>
+   873→            </div>
+   874→
+   875→            <div className="flex flex-wrap items-center gap-2">
+   876→              {RANK_LADDER.map((r, i) => (
+   877→                <React.Fragment key={r.name}>
+   878→                  <div className="flex flex-col items-center gap-1">
+   879→                    <RankBadge rank={r.name} level={r.level} size="sm" />
+   880→                  </div>
+   881→                  {i < RANK_LADDER.length - 1 && (
+   882→                    <ChevronRight
+   883→                      className="size-3 text-muted-foreground/50"
+   884→                      aria-hidden
+   885→                    />
+   886→                  )}
+   887→                </React.Fragment>
+   888→              ))}
+   889→            </div>
+   890→          </motion.div>
+   891→
+   892→          <div className="grid sm:grid-cols-3 gap-3 lg:gap-4 mb-4">
+   893→            <StatTile
+   894→              icon={Zap}
+   895→              label="XP EARNED"
+   896→              value="8,420"
+   897→              color="text-amber-300"
+   898→              tint="bg-amber-500/10"
+   899→              trend={{ value: 18, direction: "up" }}
+   900→            />
+   901→            <StatTile
+   902→              icon={Award}
+   903→              label="BADGES UNLOCKED"
+   904→              value="14"
+   905→              suffix="/32"
+   906→              color="text-violet-300"
+   907→              tint="bg-violet-500/10"
+   908→              trend={{ value: 8, direction: "up" }}
+   909→            />
+   910→            <StatTile
+   911→              icon={Trophy}
+   912→              label="CTF SCORE"
+   913→              value="2,180"
+   914→              color="text-cyan-300"
+   915→              tint="bg-cyan-500/10"
+   916→              trend={{ value: 32, direction: "up" }}
+   917→            />
+   918→          </div>
+   919→
+   920→          <div className="flex justify-center">
+   921→            <Button
+   922→              variant="outline"
+   923→              onClick={() => navigate({ name: "leaderboard" })}
+   924→              aria-label="View leaderboard"
+   925→            >
+   926→              VIEW LEADERBOARD
+   927→              <ArrowRight className="size-4 ml-2" aria-hidden />
+   928→            </Button>
+   929→          </div>
+   930→        </div>
+   931→      </section>
+   932→
+   933→      {/* =====================================================
+   934→          SECTION 8 — CAREER CENTER
+   935→          ===================================================== */}
+   936→      <section
+   937→        aria-labelledby="career-heading"
+   938→        className="relative py-8 lg:py-12"
+   939→      >
+   940→        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+   941→          <motion.div {...FADE_UP} className="max-w-2xl mb-6">
+   942→            <h2
+   943→              id="career-heading"
+   944→              className="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-[-0.02em] mb-3"
+   945→            >
+   946→              {careerTitle}
+   947→            </h2>
+   948→            <p className="text-sm text-muted-foreground leading-relaxed">
+   949→              {careerDesc}
+   950→            </p>
+   951→          </motion.div>
+   952→
+   953→          <div className="grid lg:grid-cols-2 gap-4 lg:gap-6">
+   954→            {/* Skill percentages */}
+   955→            <motion.div
+   956→              {...FADE_UP}
+   957→              transition={{ duration: 0.4, delay: 0.05 }}
+   958→              className="card-premium rounded-2xl p-5 lg:p-6"
+   959→            >
+   960→              <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
+   961→                <Layers className="size-4 text-cyan-300" aria-hidden />
+   962→                Your Skill Profile
+   963→              </h3>
+   964→              <div className="space-y-3">
+   965→                {CAREER_SKILLS.map((s) => (
+   966→                  <div key={s.label}>
+   967→                    <div className="flex items-center justify-between mb-1">
+   968→                      <span className="text-xs text-foreground">{s.label}</span>
+   969→                      <span className="font-mono text-xs text-muted-foreground">
+   970→                        {s.value}%
+   971→                      </span>
+   972→                    </div>
+   973→                    <div className="h-2 rounded-full border border-border/40 bg-[oklch(0.1_0.008_270)] overflow-hidden">
+   974→                      <motion.div
+   975→                        initial={{ width: 0 }}
+   976→                        animate={{ width: `${s.value}%` }}
+   977→                        transition={{ duration: 0.8, ease: "easeOut" }}
+   978→                        className={cn("h-full rounded-full", s.barClass)}
+   979→                      />
+   980→                    </div>
+   981→                  </div>
+   982→                ))}
+   983→              </div>
+   984→            </motion.div>
+   985→
+   986→            {/* You are ready for */}
+   987→            <motion.div
+   988→              {...FADE_UP}
+   989→              transition={{ duration: 0.4, delay: 0.12 }}
+   990→              className="card-premium rounded-2xl p-5 lg:p-6 glow-soft"
+   991→            >
+   992→              <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
+   993→                <CheckCircle2 className="size-4 text-emerald-300" aria-hidden />
+   994→                You Are Ready For
+   995→              </h3>
+   996→              <div className="space-y-4">
+   997→                {CAREER_ROLES.map((r) => (
+   998→                  <div
+   999→                    key={r.role}
+  1000→                    className="rounded-xl border border-border/40 bg-[oklch(0.1_0.008_270)] p-4"
+  1001→                  >
+  1002→                    <div className="flex items-center justify-between mb-2">
+  1003→                      <div>
+  1004→                        <p className="text-sm font-semibold">{r.role}</p>
+  1005→                        <p className="font-mono text-[10px] text-muted-foreground uppercase">
+  1006→                          {r.match}% match
+  1007→                        </p>
+  1008→                      </div>
+  1009→                      <Badge
+  1010→                        variant="outline"
+  1011→                        className={cn(
+  1012→                          "font-mono text-[10px]",
+  1013→                          r.match >= 75
+  1014→                            ? "border-emerald-500/40 text-emerald-300"
+  1015→                            : "border-amber-500/40 text-amber-300"
+  1016→                        )}
+  1017→                      >
+  1018→                        {r.match >= 75 ? "READY" : "ALMOST"}
+  1019→                      </Badge>
+  1020→                    </div>
+  1021→                    <div className="h-1.5 rounded-full border border-border/40 bg-[oklch(0.08_0.005_270)] overflow-hidden">
+  1022→                      <motion.div
+  1023→                        initial={{ width: 0 }}
+  1024→                        animate={{ width: `${r.match}%` }}
+  1025→                        transition={{ duration: 0.8, ease: "easeOut" }}
+  1026→                        className={cn(
+  1027→                          "h-full rounded-full",
+  1028→                          r.match >= 75
+  1029→                            ? "bg-gradient-to-r from-emerald-500 to-emerald-400"
+  1030→                            : "bg-gradient-to-r from-amber-500 to-amber-400"
+  1031→                        )}
+  1032→                      />
+  1033→                    </div>
+  1034→                  </div>
+  1035→                ))}
+  1036→              </div>
+  1037→
+  1038→              <Button
+  1039→                className="mt-5 w-full bg-violet-600 hover:bg-violet-500 btn-premium"
+  1040→                onClick={() => navigate({ name: "career-planner" })}
+  1041→                aria-label="Explore careers"
+  1042→              >
+  1043→                EXPLORE CAREERS
+  1044→                <ArrowRight className="size-4 ml-2" aria-hidden />
+  1045→              </Button>
+  1046→            </motion.div>
+  1047→          </div>
+  1048→        </div>
+  1049→      </section>
+  1050→
+  1051→      {/* =====================================================
+  1052→          SECTION 9 — INSTITUTIONS
+  1053→          ===================================================== */}
+  1054→      <section
+  1055→        aria-labelledby="institutions-heading"
+  1056→        className="relative py-8 lg:py-12 overflow-hidden"
+  1057→      >
+  1058→        <div className="absolute inset-0 bg-grid opacity-[0.04] pointer-events-none" aria-hidden />
+  1059→        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
+  1060→          <motion.div {...FADE_UP} className="max-w-2xl mb-6 text-center mx-auto">
+  1061→            <h2
+  1062→              id="institutions-heading"
+  1063→              className="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-[-0.02em] mb-2"
+  1064→            >
+  1065→              {institutionsTitle}
+  1066→            </h2>
+  1067→            <p className="text-base text-gradient-premium font-semibold tracking-wide">
+  1068→              {institutionsSub}
+  1069→            </p>
+  1070→          </motion.div>
+  1071→
+  1072→          <div className="grid md:grid-cols-3 gap-3 lg:gap-4">
+  1073→            {INSTITUTION_TYPES.map((inst, i) => (
+  1074→              <motion.div
+  1075→                key={inst.type}
+  1076→                initial={{ opacity: 0, y: 10 }}
+  1077→                animate={{ opacity: 1, y: 0 }}
+  1078→                transition={{ duration: 0.35, delay: 0.05 * i, ease: "easeOut" }}
+  1079→                className="card-premium rounded-2xl p-5 flex flex-col"
+  1080→              >
+  1081→                <div
+  1082→                  className={cn(
+  1083→                    "mb-4 flex size-12 items-center justify-center rounded-xl border border-border/50",
+  1084→                    inst.tint,
+  1085→                    inst.color
+  1086→                  )}
+  1087→                  aria-hidden
+  1088→                >
+  1089→                  <inst.icon className="size-6" />
+  1090→                </div>
+  1091→                <h3 className="text-base font-semibold mb-2">{inst.type}</h3>
+  1092→                <p className="text-xs text-muted-foreground mb-4 leading-relaxed flex-1">
+  1093→                  {inst.desc}
+  1094→                </p>
+  1095→                <Button
+  1096→                  variant="outline"
+  1097→                  size="sm"
+  1098→                  className="w-full"
+  1099→                  onClick={() => navigate({ name: "institutions" })}
+  1100→                  aria-label={`${inst.type} portal login`}
+  1101→                >
+  1102→                  <Lock className="size-3.5 mr-1.5" aria-hidden />
+  1103→                  PORTAL LOGIN
+  1104→                </Button>
+  1105→              </motion.div>
+  1106→            ))}
+  1107→          </div>
+  1108→
+  1109→          <div className="mt-6 flex justify-center">
+  1110→            <Button
+  1111→              variant="ghost"
+  1112→              onClick={() => navigate({ name: "institutions" })}
+  1113→              aria-label="Explore institutions"
+  1114→            >
+  1115→              EXPLORE INSTITUTIONS
+  1116→              <ArrowRight className="size-4 ml-2" aria-hidden />
+  1117→            </Button>
+  1118→          </div>
+  1119→        </div>
+  1120→      </section>
+  1121→
+  1122→      {/* =====================================================
+  1123→          SECTION 10 — CERTIFICATIONS
+  1124→          ===================================================== */}
+  1125→      <section
+  1126→        aria-labelledby="cert-heading"
+  1127→        className="relative py-8 lg:py-12"
+  1128→      >
+  1129→        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+  1130→          <motion.div {...FADE_UP} className="max-w-2xl mb-6">
+  1131→            <h2
+  1132→              id="cert-heading"
+  1133→              className="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-[-0.02em] mb-3"
+  1134→            >
+  1135→              {certTitle}
+  1136→            </h2>
+  1137→            <p className="text-sm text-muted-foreground leading-relaxed">
+  1138→              {certDesc}
+  1139→            </p>
+  1140→          </motion.div>
+  1141→
+  1142→          <div className="grid lg:grid-cols-2 gap-4 lg:gap-6 items-stretch">
+  1143→            {/* Certificate preview card */}
+  1144→            <motion.div
+  1145→              {...FADE_UP}
+  1146→              transition={{ duration: 0.4, delay: 0.05 }}
+  1147→              className="relative"
+  1148→            >
+  1149→              <div className="card-premium relative rounded-2xl p-6 lg:p-8 scanlines overflow-hidden h-full">
+  1150→                {/* Decorative corner */}
+  1151→                <div
+  1152→                  aria-hidden
+  1153→                  className="pointer-events-none absolute -right-12 -top-12 size-40 rounded-full opacity-40 blur-3xl"
+  1154→                  style={{
+  1155→                    background:
+  1156→                      "radial-gradient(circle, oklch(0.7 0.15 155 / 0.4), transparent 70%)",
+  1157→                  }}
+  1158→                />
+  1159→
+  1160→                <div className="relative flex items-start justify-between mb-5">
+  1161→                  <div>
+  1162→                    <p className="font-mono text-[10px] text-emerald-300 uppercase tracking-[0.25em] mb-1">
+  1163→                      GUARDIANX ACADEMY
+  1164→                    </p>
+  1165→                    <p className="text-xs text-muted-foreground">
+  1166→                      Verified Credential
+  1167→                    </p>
+  1168→                  </div>
+  1169→                  <span className="inline-flex items-center gap-1.5 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-wider text-emerald-300 shadow-[0_0_18px_-6px_oklch(0.7_0.15_155_/_0.6)]">
+  1170→                    <BadgeCheck className="size-3.5" aria-hidden />
+  1171→                    VERIFIED
+  1172→                  </span>
+  1173→                </div>
+  1174→
+  1175→                <div className="relative mb-5">
+  1176→                  <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+  1177→                    This certifies that
+  1178→                  </p>
+  1179→                  <p className="text-xl lg:text-2xl font-semibold text-foreground">
+  1180→                    Jane Doe
+  1181→                  </p>
+  1182→                </div>
+  1183→
+  1184→                <div className="relative mb-5">
+  1185→                  <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+  1186→                    Has successfully completed
+  1187→                  </p>
+  1188→                  <p className="text-base font-semibold text-gradient-premium">
+  1189→                    Certified Ethical Hacker (CEH) — Practical
+  1190→                  </p>
+  1191→                </div>
+  1192→
+  1193→                <div className="relative grid grid-cols-2 gap-3 mb-5">
+  1194→                  <div className="rounded-lg border border-border/40 bg-[oklch(0.1_0.008_270)] px-3 py-2">
+  1195→                    <p className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
+  1196→                      Credential ID
+  1197→                    </p>
+  1198→                    <p className="font-mono text-xs text-cyan-200 truncate">
+  1199→                      GX-CEH2024P-08842
+  1200→                    </p>
+  1201→                  </div>
+  1202→                  <div className="rounded-lg border border-border/40 bg-[oklch(0.1_0.008_270)] px-3 py-2">
+  1203→                    <p className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
+  1204→                      Issued
+  1205→                    </p>
+  1206→                    <p className="font-mono text-xs text-foreground">2024-09-14</p>
+  1207→                  </div>
+  1208→                </div>
+  1209→
+  1210→                <div className="relative flex items-center justify-between border-t border-border/40 pt-4">
+  1211→                  <span className="font-mono text-[10px] text-muted-foreground">
+  1212→                    GuardianX Academy
+  1213→                  </span>
+  1214→                  <span className="font-mono text-[10px] text-muted-foreground">
+  1215→                    Score: 94%
+  1216→                  </span>
+  1217→                </div>
+  1218→              </div>
+  1219→            </motion.div>
+  1220→
+  1221→            {/* Verification widget (full card) */}
+  1222→            <motion.div
+  1223→              {...FADE_UP}
+  1224→              transition={{ duration: 0.4, delay: 0.12 }}
+  1225→              className="card-premium rounded-2xl p-5 lg:p-6"
+  1226→            >
+  1227→              <CertificateVerifyCard />
+  1228→            </motion.div>
+  1229→          </div>
+  1230→        </div>
+  1231→      </section>
+  1232→
+  1233→      {/* =====================================================
+  1234→          SECTION 11 — SUCCESS STORIES
+  1235→          ===================================================== */}
+  1236→      <section
+  1237→        aria-labelledby="stories-heading"
+  1238→        className="relative py-8 lg:py-12"
+  1239→      >
+  1240→        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+  1241→          <motion.div {...FADE_UP} className="max-w-2xl mb-6">
+  1242→            <h2
+  1243→              id="stories-heading"
+  1244→              className="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-[-0.02em] mb-3"
+  1245→            >
+  1246→              {storiesTitle}
+  1247→            </h2>
+  1248→            <p className="text-sm text-muted-foreground leading-relaxed">
+  1249→              {storiesDesc}
+  1250→            </p>
+  1251→          </motion.div>
+  1252→
+  1253→          {/* Progression timeline */}
+  1254→          <motion.div
+  1255→            {...FADE_UP}
+  1256→            transition={{ duration: 0.4, delay: 0.05 }}
+  1257→            className="card-premium rounded-2xl p-5 mb-4"
+  1258→          >
+  1259→            <div className="flex flex-wrap items-center justify-center gap-2 lg:gap-3">
+  1260→              {STORY_STAGES.map((s, i) => (
+  1261→                <React.Fragment key={s.label}>
+  1262→                  <div className="flex flex-col items-center gap-1 px-2">
+  1263→                    <span
+  1264→                      className={cn(
+  1265→                        "flex size-9 items-center justify-center rounded-lg border",
+  1266→                        s.color,
+  1267→                        s.tint,
+  1268→                        s.border
+  1269→                      )}
+  1270→                      aria-hidden
+  1271→                    >
+  1272→                      <s.icon className="size-4" />
+  1273→                    </span>
+  1274→                    <span className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
+  1275→                      {s.label}
+  1276→                    </span>
+  1277→                  </div>
+  1278→                  {i < STORY_STAGES.length - 1 && (
+  1279→                    <ArrowRight
+  1280→                      className="size-3 text-muted-foreground/50"
+  1281→                      aria-hidden
+  1282→                    />
+  1283→                  )}
+  1284→                </React.Fragment>
+  1285→              ))}
+  1286→            </div>
+  1287→          </motion.div>
+  1288→
+  1289→          {/* Story cards — placeholder data, clearly marked */}
+  1290→          <div className="grid md:grid-cols-3 gap-3 lg:gap-4">
+  1291→            {STORIES.map((s, i) => (
+  1292→              <motion.div
+  1293→                key={s.name}
+  1294→                initial={{ opacity: 0, y: 10 }}
+  1295→                animate={{ opacity: 1, y: 0 }}
+  1296→                transition={{ duration: 0.35, delay: 0.05 * i, ease: "easeOut" }}
+  1297→                className="card-premium rounded-2xl p-5 flex flex-col"
+  1298→              >
+  1299→                <div className="flex items-center gap-3 mb-3">
+  1300→                  <div
+  1301→                    className="flex size-10 items-center justify-center rounded-full border border-violet-500/40 bg-violet-500/10 font-mono text-sm font-bold text-violet-200"
+  1302→                    aria-hidden
+  1303→                  >
+  1304→                    {s.name.charAt(0)}
+  1305→                  </div>
+  1306→                  <div>
+  1307→                    <p className="text-sm font-semibold">{s.name}</p>
+  1308→                    <p className="font-mono text-[10px] text-muted-foreground uppercase">
+  1309→                      {s.role}
+  1310→                    </p>
+  1311→                  </div>
+  1312→                </div>
+  1313→
+  1314→                <dl className="space-y-2 mb-4 flex-1">
+  1315→                  <div>
+  1316→                    <dt className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider">
+  1317→                      Path taken
+  1318→                    </dt>
+  1319→                    <dd className="text-xs text-foreground">{s.path}</dd>
+  1320→                  </div>
+  1321→                  <div>
+  1322→                    <dt className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider">
+  1323→                      Current position
+  1324→                    </dt>
+  1325→                    <dd className="text-xs text-foreground">{s.position}</dd>
+  1326→                  </div>
+  1327→                </dl>
+  1328→
+  1329→                <div className="rounded-md border border-amber-500/20 bg-amber-500/5 px-2 py-1.5">
+  1330→                  <p className="font-mono text-[10px] text-amber-300/80 uppercase tracking-wider">
+  1331→                    Sample profile · illustrative
+  1332→                  </p>
+  1333→                </div>
+  1334→              </motion.div>
+  1335→            ))}
+  1336→          </div>
+  1337→        </div>
+  1338→      </section>
+  1339→
+  1340→      {/* =====================================================
+  1341→          SECTION 12 — TRUST / PARTNERS
+  1342→          ===================================================== */}
+  1343→      <section
+  1344→        aria-labelledby="trust-heading"
+  1345→        className="relative py-8 lg:py-12 border-y border-border/40"
+  1346→      >
+  1347→        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+  1348→          <motion.div {...FADE_UP} className="text-center mb-6">
+  1349→            <p className="text-[10px] font-mono text-muted-foreground tracking-[0.25em] uppercase mb-1">
+  1350→              {trustLabel}
+  1351→            </p>
+  1352→            <h2
+  1353→              id="trust-heading"
+  1354→              className="sr-only"
+  1355→            >
+  1356→              Trusted by defenders at leading companies
+  1357→            </h2>
+  1358→          </motion.div>
+  1359→
+  1360→          {/* Company name strip */}
+  1361→          <motion.div
+  1362→            {...FADE_IN}
+  1363→            transition={{ duration: 0.5 }}
+  1364→            className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 mb-8"
+  1365→          >
+  1366→            {TRUST_COMPANIES.map((c) => (
+  1367→              <span
+  1368→                key={c}
+  1369→                className="font-mono text-base lg:text-lg font-semibold text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors"
+  1370→              >
+  1371→                {c}
+  1372→              </span>
+  1373→            ))}
+  1374→          </motion.div>
+  1375→
+  1376→          {/* Stats grid */}
+  1377→          <motion.div
+  1378→            {...FADE_UP}
+  1379→            transition={{ duration: 0.4, delay: 0.1 }}
+  1380→            className="grid grid-cols-2 md:grid-cols-4 gap-3 lg:gap-4"
+  1381→          >
+  1382→            {TRUST_STATS.map((s) => (
+  1383→              <div
+  1384→                key={s.label}
+  1385→                className="card-premium rounded-xl p-4 text-center"
+  1386→              >
+  1387→                <div
+  1388→                  className={cn(
+  1389→                    "mx-auto mb-2 flex size-9 items-center justify-center rounded-lg border border-border/50",
+  1390→                    s.tint,
+  1391→                    s.color
+  1392→                  )}
+  1393→                  aria-hidden
+  1394→                >
+  1395→                  <s.icon className="size-4" />
+  1396→                </div>
+  1397→                <p className={cn("font-mono text-2xl font-bold tabular-nums", s.color)}>
+  1398→                  {s.value}
+  1399→                </p>
+  1400→                <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">
+  1401→                  {s.label}
+  1402→                </p>
+  1403→              </div>
+  1404→            ))}
+  1405→          </motion.div>
+  1406→        </div>
+  1407→      </section>
+  1408→
+  1409→      {/* =====================================================
+  1410→          SECTION 13 — FINAL CTA
+  1411→          ===================================================== */}
+  1412→      <section
+  1413→        aria-labelledby="final-cta-heading"
+  1414→        className="relative py-12 lg:py-20 overflow-hidden"
+  1415→      >
+  1416→        <div className="absolute inset-0 bg-mesh" aria-hidden />
+  1417→        <div className="absolute inset-0 bg-grid opacity-10" aria-hidden />
+  1418→        <div
+  1419→          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 size-[600px] rounded-full bg-violet-600/10 blur-[140px] pointer-events-none"
+  1420→          aria-hidden
+  1421→        />
+  1422→
+  1423→        <div className="relative mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 text-center">
+  1424→          <motion.div {...FADE_UP}>
+  1425→            <div className="inline-flex items-center gap-2 mb-5 rounded-full border border-violet-500/30 bg-violet-500/10 px-3 py-1.5">
+  1426→              <Sparkles className="size-3.5 text-violet-300" aria-hidden />
+  1427→              <span className="font-mono text-[10px] text-violet-300/90 tracking-[0.25em]">
+  1428→                READY TO BEGIN
+  1429→              </span>
+  1430→            </div>
+  1431→
+  1432→            <h2
+  1433→              id="final-cta-heading"
+  1434→              className="text-[clamp(2rem,5vw,3.5rem)] font-bold leading-[1.05] tracking-[-0.03em] mb-4 text-balance"
+  1435→            >
+  1436→              <span className="text-gradient-premium">{finalCtaTitle}</span>
+  1437→            </h2>
+  1438→
+  1439→            <p className="text-base lg:text-lg text-muted-foreground max-w-xl mx-auto mb-7">
+  1440→              {finalCtaSubtitle}
+  1441→            </p>
+  1442→
+  1443→            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+  1444→              <Button
+  1445→                size="lg"
+  1446→                onClick={() => navigate({ name: "login" })}
+  1447→                className="bg-violet-600 hover:bg-violet-500 btn-premium px-8 py-6 text-sm w-full sm:w-auto"
+  1448→                aria-label={finalCtaPrimary}
+  1449→              >
+  1450→                <Rocket className="size-4 mr-2" aria-hidden />
+  1451→                {finalCtaPrimary}
+  1452→              </Button>
+  1453→              <Button
+  1454→                size="lg"
+  1455→                variant="outline"
+  1456→                onClick={() => navigate({ name: "contact" })}
+  1457→                className="px-7 py-6 text-sm w-full sm:w-auto"
+  1458→                aria-label={finalCtaSecondary}
+  1459→              >
+  1460→                {finalCtaSecondary}
+  1461→                <ArrowRight className="size-4 ml-2" aria-hidden />
+  1462→              </Button>
+  1463→            </div>
+  1464→
+  1465→            <p className="mt-5 font-mono text-[10px] text-muted-foreground/60 uppercase tracking-wider">
+  1466→              No credit card required · Free forever tier
+  1467→            </p>
+  1468→          </motion.div>
+  1469→        </div>
+  1470→      </section>
+  1471→    </main>
+  1472→  )
+  1473→}
+  1474→
+  1475→/* ---------------------------------------------------------------- *
+  1476→ *  Static demo data — clearly marked placeholders                  *
+  1477→ * ---------------------------------------------------------------- */
+  1478→
+  1479→const PILLARS = [
+  1480→  {
+  1481→    icon: BookOpen,
+  1482→    title: "LEARN",
+  1483→    desc: "Structured certification courses with video lessons, notes, and quizzes.",
+  1484→    color: "text-violet-300",
+  1485→    tint: "bg-violet-500/10",
+  1486→  },
+  1487→  {
+  1488→    icon: FlaskConical,
+  1489→    title: "PRACTICE",
+  1490→    desc: "Hands-on labs with real targets, isolated environments, and live terminals.",
+  1491→    color: "text-cyan-300",
+  1492→    tint: "bg-cyan-500/10",
+  1493→  },
+  1494→  {
+  1495→    icon: Trophy,
+  1496→    title: "COMPETE",
+  1497→    desc: "CTF competitions, weekly challenges, and team missions against peers.",
+  1498→    color: "text-amber-300",
+  1499→    tint: "bg-amber-500/10",
+  1500→  },
+  1501→  {
+  1502→    icon: Award,
+  1503→    title: "PROVE",
+  1504→    desc: "Tamper-evident, publicly verifiable credentials with cryptographic signatures.",
+  1505→    color: "text-emerald-300",
+  1506→    tint: "bg-emerald-500/10",
+  1507→  },
+  1508→  {
+  1509→    icon: Briefcase,
+  1510→    title: "CAREER",
+  1511→    desc: "Resume builder, mock interviews, job board, and role-matched skill analysis.",
+  1512→    color: "text-rose-300",
+  1513→    tint: "bg-rose-500/10",
+  1514→  },
+  1515→  {
+  1516→    icon: Building2,
+  1517→    title: "INSTITUTIONS",
+  1518→    desc: "Multi-tenant dashboards for schools, colleges, and universities.",
+  1519→    color: "text-teal-300",
+  1520→    tint: "bg-teal-500/10",
+  1521→  },
+  1522→] as const
+  1523→
+  1524→const RANGE_SERVICES = [
+  1525→  { port: "22", name: "SSH", icon: Terminal, color: "text-cyan-300" },
+  1526→  { port: "80", name: "HTTP", icon: Globe, color: "text-emerald-300" },
+  1527→  { port: "3306", name: "MYSQL", icon: Database, color: "text-amber-300" },
+  1528→] as const
+  1529→
+  1530→const LEARNING_PATHS = [
+  1531→  {
+  1532→    icon: BookOpen,
+  1533→    title: "Beginner",
+  1534→    desc: "Networking, Linux, and security fundamentals from absolute zero.",
+  1535→    duration: "3 months",
+  1536→    skills: "12 skills",
+  1537→    difficulty: "BEGINNER",
+  1538→    color: "text-emerald-300",
+  1539→    tint: "bg-emerald-500/10",
+  1540→  },
+  1541→  {
+  1542→    icon: Eye,
+  1543→    title: "SOC Analyst",
+  1544→    desc: "Log analysis, threat hunting, SIEM, and incident response.",
+  1545→    duration: "4 months",
+  1546→    skills: "18 skills",
+  1547→    difficulty: "INTERMEDIATE",
+  1548→    color: "text-cyan-300",
+  1549→    tint: "bg-cyan-500/10",
+  1550→  },
+  1551→  {
+  1552→    icon: Crosshair,
+  1553→    title: "Penetration Tester",
+  1554→    desc: "Recon, exploitation, privilege escalation, and reporting.",
+  1555→    duration: "6 months",
+  1556→    skills: "24 skills",
+  1557→    difficulty: "ADVANCED",
+  1558→    color: "text-violet-300",
+  1559→    tint: "bg-violet-500/10",
+  1560→  },
+  1561→  {
+  1562→    icon: Cloud,
+  1563→    title: "Cloud Security",
+  1564→    desc: "AWS, Azure, GCP security — containers, Kubernetes, IAM hardening.",
+  1565→    duration: "5 months",
+  1566→    skills: "20 skills",
+  1567→    difficulty: "ADVANCED",
+  1568→    color: "text-amber-300",
+  1569→    tint: "bg-amber-500/10",
+  1570→  },
+  1571→  {
+  1572→    icon: Briefcase,
+  1573→    title: "Job Ready",
+  1574→    desc: "Mock interviews, resume builder, and real-world projects portfolio.",
+  1575→    duration: "2 months",
+  1576→    skills: "10 skills",
+  1577→    difficulty: "PRACTICAL",
+  1578→    color: "text-rose-300",
+  1579→    tint: "bg-rose-500/10",
+  1580→  },
+  1581→  {
+  1582→    icon: GraduationCap,
+  1583→    title: "CISSP Track",
+  1584→    desc: "Certified Information Systems Security Professional prep — full domain coverage.",
+  1585→    duration: "5 months",
+  1586→    skills: "8 domains",
+  1587→    difficulty: "EXPERT",
+  1588→    color: "text-teal-300",
+  1589→    tint: "bg-teal-500/10",
+  1590→  },
+  1591→] as const
+  1592→
+  1593→// Skill tree branch angles (in degrees, 0 = right, going clockwise)
+  1594→const BRANCH_ANGLES = [-90, -30, 30, 90, 150, 210] as const
+  1595→
+  1596→const BRANCHES = [
+  1597→  { label: "OFFENSIVE", status: "completed" as const, xp: 850 },
+  1598→  { label: "DEFENSIVE", status: "in-progress" as const, xp: 420 },
+  1599→  { label: "NETWORK", status: "completed" as const, xp: 620 },
+  1600→  { label: "WEB", status: "available" as const, xp: 0 },
+  1601→  { label: "CLOUD", status: "locked" as const, xp: 0 },
+  1602→  { label: "FORENSICS", status: "locked" as const, xp: 0 },
+  1603→] as const
+  1604→
+  1605→const DAILY_OBJECTIVES = [
+  1606→  { label: "Complete 1 lab module", xp: 50, done: true },
+  1607→  { label: "Submit 1 CTF flag", xp: 100, done: true },
+  1608→  { label: "Pass a quiz with 80%+", xp: 75, done: false },
+  1609→  { label: "Spend 30 min in the cyber range", xp: 30, done: false },
+  1610→] as const
+  1611→
+  1612→const RANK_LADDER = [
+  1613→  { name: "RECRUIT", level: 1 },
+  1614→  { name: "ANALYST", level: 2 },
+  1615→  { name: "HUNTER", level: 3 },
+  1616→  { name: "OPERATOR", level: 4 },
+  1617→  { name: "SPECIALIST", level: 5 },
+  1618→  { name: "SENTINEL", level: 6 },
+  1619→  { name: "GUARDIAN", level: 7 },
+  1620→  { name: "ELITE GUARDIAN", level: 8 },
+  1621→] as const
+  1622→
+  1623→const CAREER_SKILLS = [
+  1624→  { label: "Networking", value: 92, barClass: "bg-gradient-to-r from-cyan-500 to-cyan-400" },
+  1625→  { label: "Linux", value: 81, barClass: "bg-gradient-to-r from-violet-500 to-violet-400" },
+  1626→  { label: "Web Security", value: 87, barClass: "bg-gradient-to-r from-emerald-500 to-emerald-400" },
+  1627→  { label: "Pentesting", value: 64, barClass: "bg-gradient-to-r from-amber-500 to-amber-400" },
+  1628→  { label: "SOC", value: 42, barClass: "bg-gradient-to-r from-rose-500 to-rose-400" },
+  1629→  { label: "Cloud", value: 23, barClass: "bg-gradient-to-r from-teal-500 to-teal-400" },
+  1630→] as const
+  1631→
+  1632→const CAREER_ROLES = [
+  1633→  { role: "Junior Pentester", match: 82 },
+  1634→  { role: "SOC Analyst", match: 71 },
+  1635→  { role: "Security Engineer", match: 54 },
+  1636→] as const
+  1637→
+  1638→const INSTITUTION_TYPES = [
+  1639→  {
+  1640→    type: "Schools",
+  1641→    icon: Building2,
+  1642→    desc: "Comprehensive cyber security programs for school students. Complimentary school management system for MoU partners.",
+  1643→    color: "text-emerald-300",
+  1644→    tint: "bg-emerald-500/10",
+  1645→  },
+  1646→  {
+  1647→    type: "Colleges",
+  1648→    icon: BookOpen,
+  1649→    desc: "Industry-aligned certification courses integrated into college curriculum with hands-on labs and instructor-led training.",
+  1650→    color: "text-cyan-300",
+  1651→    tint: "bg-cyan-500/10",
+  1652→  },
+  1653→  {
+  1654→    type: "Universities",
+  1655→    icon: Award,
+  1656→    desc: "Advanced research-grade cyber security labs, degree integration, and PhD-level coursework for universities.",
+  1657→    color: "text-violet-300",
+  1658→    tint: "bg-violet-500/10",
+  1659→  },
+  1660→] as const
+  1661→
+  1662→const STORY_STAGES = [
+  1663→  {
+  1664→    label: "START",
+  1665→    icon: Rocket,
+  1666→    color: "text-violet-300",
+  1667→    tint: "bg-violet-500/10",
+  1668→    border: "border-violet-500/40",
+  1669→  },
+  1670→  {
+  1671→    label: "LEARNING",
+  1672→    icon: BookOpen,
+  1673→    color: "text-cyan-300",
+  1674→    tint: "bg-cyan-500/10",
+  1675→    border: "border-cyan-500/40",
+  1676→  },
+  1677→  {
+  1678→    label: "LABS",
+  1679→    icon: FlaskConical,
+  1680→    color: "text-amber-300",
+  1681→    tint: "bg-amber-500/10",
+  1682→    border: "border-amber-500/40",
+  1683→  },
+  1684→  {
+  1685→    label: "CERTIFICATION",
+  1686→    icon: FileCheck,
+  1687→    color: "text-emerald-300",
+  1688→    tint: "bg-emerald-500/10",
+  1689→    border: "border-emerald-500/40",
+  1690→  },
+  1691→  {
+  1692→    label: "CAREER",
+  1693→    icon: Briefcase,
+  1694→    color: "text-rose-300",
+  1695→    tint: "bg-rose-500/10",
+  1696→    border: "border-rose-500/40",
+  1697→  },
+  1698→] as const
+  1699→
+  1700→const STORIES = [
+  1701→  {
+  1702→    name: "Aarav S.",
+  1703→    role: "Aspirant → SOC Analyst",
+  1704→    path: "Beginner Path → SOC Analyst → CEH Practical",
+  1705→    position: "SOC Analyst L1 · FinTech startup",
+  1706→  },
+  1707→  {
+  1708→    name: "Maya R.",
+  1709→    role: "Fresher → Junior Pentester",
+  1710→    path: "Beginner → Penetration Tester → OSCP",
+  1711→    position: "Junior Pentester · Security consultancy",
+  1712→  },
+  1713→  {
+  1714→    name: "Karthik V.",
+  1715→    role: "Working Pro → Cloud Security Engineer",
+  1716→    path: "Cloud Security Path → CISSP",
+  1717→    position: "Cloud Security Engineer · SaaS company",
+  1718→  },
+  1719→] as const
+  1720→
+  1721→const TRUST_COMPANIES = [
+  1722→  "Google",
+  1723→  "Microsoft",
+  1724→  "Amazon",
+  1725→  "IBM",
+  1726→  "Cisco",
+  1727→  "Palantir",
+  1728→  "CrowdStrike",
+  1729→] as const
+  1730→
+  1731→const TRUST_STATS = [
+  1732→  { icon: Users, value: "12,000+", label: "Learners", color: "text-violet-300", tint: "bg-violet-500/10" },
+  1733→  { icon: FlaskConical, value: "31", label: "Labs", color: "text-cyan-300", tint: "bg-cyan-500/10" },
+  1734→  { icon: BookOpen, value: "28+", label: "Courses", color: "text-amber-300", tint: "bg-amber-500/10" },
+  1735→  { icon: Building2, value: "150+", label: "Partners", color: "text-emerald-300", tint: "bg-emerald-500/10" },
+  1736→] as const
+  1737→

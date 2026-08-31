@@ -67,6 +67,141 @@ interface CareerRole {
   category: string
 }
 
+/* ---------------------------------------------------------------- *
+ *  Shape returned by /api/career-roles (new CareerPathRole model) *
+ * ---------------------------------------------------------------- */
+interface CareerPathRoleRow {
+  id: string
+  slug: string
+  title: string
+  description?: string | null
+  icon: string
+  color: string
+  skillWeights: Record<string, number>
+  minThreshold: number
+  recommendedCerts: string[]
+  recommendedCourses: string[]
+  recommendedLabs: string[]
+  salaryRange?: string | null
+  demand: string
+  published: boolean
+  order: number
+}
+
+/** Humanize a skillWeights key like "pentesting" → "Pentesting". */
+function humanizeSkill(key: string): string {
+  if (!key) return ""
+  return key.charAt(0).toUpperCase() + key.slice(1)
+}
+
+/** Map demand ("High" | "Medium" | "Low") → a growth-rate display string. */
+function demandToGrowth(demand: string): string {
+  const d = (demand || "").toLowerCase()
+  if (d.startsWith("high")) return "↑ 18% / yr"
+  if (d.startsWith("med")) return "↑ 9% / yr"
+  if (d.startsWith("low")) return "↑ 2% / yr"
+  return "↑ 5% / yr"
+}
+
+/** Pick a category ("security" | "cloud" | "governance" | "network") from
+ *  the dominant skill weight in the row. Falls back to "security". */
+function categoryFromWeights(weights: Record<string, number>): string {
+  const entries = Object.entries(weights ?? {})
+  if (entries.length === 0) return "security"
+  entries.sort((a, b) => b[1] - a[1])
+  const top = entries[0][0].toLowerCase()
+  if (top.includes("cloud")) return "cloud"
+  if (top.includes("govern") || top.includes("report")) return "governance"
+  if (top.includes("network") || top.includes("tcp")) return "network"
+  return "security"
+}
+
+/** Convert a DB CareerPathRoleRow into the local CareerRole shape. */
+function mapRowToCareerRole(row: CareerPathRoleRow): CareerRole {
+  const weights = row.skillWeights ?? {}
+  const requiredSkills = Object.keys(weights).map(humanizeSkill)
+  return {
+    id: row.id,
+    title: row.title,
+    description: row.description || "",
+    avgSalary: row.salaryRange || "Competitive",
+    requiredSkills: requiredSkills.length > 0 ? requiredSkills : ["Cybersecurity Fundamentals"],
+    recommendedCourses: row.recommendedCourses ?? [],
+    growthRate: demandToGrowth(row.demand),
+    category: categoryFromWeights(weights),
+  }
+}
+
+/** Hardcoded fallback — used only if /api/career-roles is unreachable. */
+const FALLBACK_ROLES: CareerRole[] = [
+  {
+    id: "fb-junior-pentester",
+    title: "Junior Penetration Tester",
+    description:
+      "Entry-level offensive security role. Executes scoped penetration tests against networks and web apps, documents findings, and supports senior testers on engagements.",
+    avgSalary: "$70,000 – $100,000",
+    requiredSkills: ["Networking", "Linux", "Web", "Pentesting", "Reporting"],
+    recommendedCourses: [],
+    growthRate: "↑ 18% / yr",
+    category: "security",
+  },
+  {
+    id: "fb-soc-analyst",
+    title: "SOC Analyst",
+    description:
+      "Monitors SIEM, triages alerts, escalates true positives, and writes initial incident reports. The classic blue-team entry point.",
+    avgSalary: "$65,000 – $95,000",
+    requiredSkills: ["Networking", "Linux", "Web", "Defensive", "Reporting"],
+    recommendedCourses: [],
+    growthRate: "↑ 18% / yr",
+    category: "security",
+  },
+  {
+    id: "fb-security-engineer",
+    title: "Security Engineer",
+    description:
+      "Designs, deploys, and maintains defensive security infrastructure — firewalls, EDR, IAM, WAF. Bridges blue-team and DevOps.",
+    avgSalary: "$110,000 – $155,000",
+    requiredSkills: ["Networking", "Linux", "Defensive", "Engineering", "Cloud"],
+    recommendedCourses: [],
+    growthRate: "↑ 18% / yr",
+    category: "security",
+  },
+  {
+    id: "fb-cloud-security-engineer",
+    title: "Cloud Security Engineer",
+    description:
+      "Secures cloud-native workloads. Implements CSPM, CI/CD security, container hardening, and zero-trust across AWS/Azure/GCP.",
+    avgSalary: "$130,000 – $180,000",
+    requiredSkills: ["Cloud", "Networking", "Linux", "Engineering", "Defensive"],
+    recommendedCourses: [],
+    growthRate: "↑ 18% / yr",
+    category: "cloud",
+  },
+  {
+    id: "fb-web-application-tester",
+    title: "Web Application Tester",
+    description:
+      "Specializes in web app pentesting. Deep OWASP Top 10 knowledge, advanced SQLi/XSS, SSRF, JWT attacks, and API security testing.",
+    avgSalary: "$95,000 – $140,000",
+    requiredSkills: ["Web", "Pentesting", "Networking", "Linux", "Reporting"],
+    recommendedCourses: [],
+    growthRate: "↑ 18% / yr",
+    category: "security",
+  },
+  {
+    id: "fb-security-consultant",
+    title: "Security Consultant",
+    description:
+      "Advises clients on security strategy, risk, compliance, and architecture. Combines technical depth with strong communication.",
+    avgSalary: "$120,000 – $180,000",
+    requiredSkills: ["Engineering", "Defensive", "Pentesting", "Governance", "Reporting"],
+    recommendedCourses: [],
+    growthRate: "↑ 9% / yr",
+    category: "governance",
+  },
+]
+
 interface CareerPath {
   id: string
   targetRole: string
@@ -228,10 +363,30 @@ export function CareerPlannerView() {
   const qc = useQueryClient()
   const { navigate } = useAppStore()
 
-  const { data: rolesData, isLoading: rolesLoading } = useQuery<{ roles: CareerRole[] }>({
-    queryKey: ["career-roles"],
-    queryFn: () => api("/api/career/roles"),
+  // Fetch real career roles from the database via /api/career-roles (the
+  // new CareerPathRole schema). Falls back to FALLBACK_ROLES if the API
+  // is unreachable.
+  const { data: rolesData, isLoading: rolesLoading } = useQuery<{ careerRoles: CareerPathRoleRow[]; count: number } | null>({
+    queryKey: ["career-roles-public"],
+    queryFn: async () => {
+      try {
+        const res = await fetch("/api/career-roles")
+        if (!res.ok) return null
+        return res.json()
+      } catch {
+        return null
+      }
+    },
+    staleTime: 60_000,
   })
+
+  const roles: CareerRole[] = React.useMemo(() => {
+    const rows = rolesData?.careerRoles ?? []
+    if (rows.length > 0) {
+      return rows.map(mapRowToCareerRole)
+    }
+    return FALLBACK_ROLES
+  }, [rolesData])
 
   const { data: coursesData } = useQuery<{ courses: CourseItem[] }>({
     queryKey: ["career-courses"],
@@ -255,15 +410,15 @@ export function CareerPlannerView() {
   // Pre-fill when path loads
   React.useEffect(() => {
     if (pathData?.path) {
-      const role = (rolesData?.roles ?? []).find((r) => r.title === pathData.path!.targetRole)
+      const role = roles.find((r) => r.title === pathData.path!.targetRole)
       if (role) setSelectedRoleId(role.id)
       setCurrentRole(pathData.path.currentRole)
       setTargetSalary(pathData.path.targetSalary)
       setEstimatedWeeks(pathData.path.estimatedWeeks)
     }
-  }, [pathData, rolesData])
+  }, [pathData, roles])
 
-  const selectedRole = (rolesData?.roles ?? []).find((r) => r.id === selectedRoleId)
+  const selectedRole = roles.find((r) => r.id === selectedRoleId)
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -294,7 +449,6 @@ export function CareerPlannerView() {
   })
 
   const path = pathData?.path ?? null
-  const roles = rolesData?.roles ?? []
   const avgSkill = Math.round(
     SKILL_ASSESSMENTS.reduce((a, s) => a + s.percentage, 0) / SKILL_ASSESSMENTS.length
   )

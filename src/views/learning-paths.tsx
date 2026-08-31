@@ -1,9 +1,11 @@
 "use client"
 
 import * as React from "react"
+import { useQuery } from "@tanstack/react-query"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { useAppStore } from "@/store/app-store"
+import { getCmsIcon } from "@/lib/cms-icons"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -62,12 +64,146 @@ interface LearningPath {
   prerequisites: string[]
 }
 
+/* ---------------------------------------------------------------- *
+ *  Shape returned by /api/learning-paths                          *
+ * ---------------------------------------------------------------- */
+interface LearningPathRow {
+  id: string
+  slug: string
+  title: string
+  subtitle?: string | null
+  description: string
+  icon: string
+  color: string
+  tint: string
+  difficulty: string
+  duration: string
+  skillsCount: number
+  labsCount: number
+  xpReward: number
+  careerOutcome?: string | null
+  skills: string[]
+  courses: string[]
+  order: number
+  published: boolean
+  featured: boolean
+}
+
+/* ---------------------------------------------------------------- *
+ *  Color variants — Tailwind needs the literal class names on     *
+ *  disk so JIT can include them; we cannot build these            *
+ *  dynamically with template strings.                             *
+ * ---------------------------------------------------------------- */
+const COLOR_VARIANTS: Record<string, { border: string; gradient: string }> = {
+  "text-emerald-300": {
+    border: "border-emerald-500/40",
+    gradient: "from-emerald-500/15 via-emerald-600/5 to-transparent",
+  },
+  "text-cyan-300": {
+    border: "border-cyan-500/40",
+    gradient: "from-cyan-500/15 via-cyan-600/5 to-transparent",
+  },
+  "text-rose-300": {
+    border: "border-rose-500/40",
+    gradient: "from-rose-500/15 via-rose-600/5 to-transparent",
+  },
+  "text-violet-300": {
+    border: "border-violet-500/40",
+    gradient: "from-violet-500/15 via-violet-600/5 to-transparent",
+  },
+  "text-amber-300": {
+    border: "border-amber-500/40",
+    gradient: "from-amber-500/15 via-amber-600/5 to-transparent",
+  },
+  "text-teal-300": {
+    border: "border-teal-500/40",
+    gradient: "from-teal-500/15 via-teal-600/5 to-transparent",
+  },
+  "text-blue-300": {
+    border: "border-blue-500/40",
+    gradient: "from-blue-500/15 via-blue-600/5 to-transparent",
+  },
+}
+
+function deriveBorder(color: string): string {
+  return COLOR_VARIANTS[color]?.border ?? "border-border/40"
+}
+function deriveGradient(color: string): string {
+  return COLOR_VARIANTS[color]?.gradient ?? COLOR_VARIANTS["text-violet-300"].gradient
+}
+
+/** Parse "12 weeks" / "16 weeks" → hours (assume ~5 study hours per week). */
+function weeksToHours(duration: string): number {
+  const m = duration.match(/(\d+)\s*week/i)
+  if (!m) return 40
+  return Math.max(1, parseInt(m[1], 10)) * 5
+}
+
+function coerceDifficulty(d: string): Difficulty {
+  const lower = (d || "").toLowerCase()
+  if (lower.includes("adv")) return "Advanced"
+  if (lower.includes("int") || lower.includes("med")) return "Intermediate"
+  return "Beginner"
+}
+
+/** Convert a DB LearningPathRow into the local LearningPath shape. */
+function mapRowToPath(row: LearningPathRow): LearningPath {
+  const skillList = Array.isArray(row.skills) ? row.skills : []
+  const difficulty = coerceDifficulty(row.difficulty)
+  // Split skills into ~3 modules of equal size so the curriculum panel
+  // still has structured content even when the API doesn't return modules.
+  const moduleCount = 3
+  const perModule = Math.ceil(skillList.length / moduleCount)
+  const moduleNames = ["Foundations", "Core Skills", "Advanced Topics"] as const
+  const lessonTypes = ["video", "lab", "reading"] as const
+  const modules: PathModule[] = Array.from({ length: moduleCount }, (_, i) => {
+    const slice = skillList.slice(i * perModule, (i + 1) * perModule)
+    return {
+      name: moduleNames[i] ?? `Module ${i + 1}`,
+      lessons: slice.map((s, idx) => ({
+        title: s,
+        type: lessonTypes[idx % lessonTypes.length],
+      })),
+    }
+  }).filter((m) => m.lessons.length > 0)
+
+  return {
+    id: row.id,
+    name: row.title,
+    tagline: row.subtitle || row.description,
+    icon: getCmsIcon(row.icon),
+    difficulty,
+    durationHours: weeksToHours(row.duration),
+    skillsCount: row.skillsCount || skillList.length,
+    labsCount: row.labsCount,
+    xpReward: row.xpReward,
+    color: row.color,
+    tint: row.tint,
+    border: deriveBorder(row.color),
+    gradient: deriveGradient(row.color),
+    skills: skillList,
+    careerOutcome: row.careerOutcome || "Cybersecurity role aligned with this path",
+    progressPercent: 0,
+    modules,
+    prerequisites:
+      difficulty === "Beginner"
+        ? ["Basic computer literacy", "Comfort with the command line (or willingness to learn)"]
+        : difficulty === "Intermediate"
+        ? ["Beginner Cybersecurity path (or equivalent)", "Networking fundamentals"]
+        : ["Intermediate networking knowledge", "Linux command-line fluency", "Scripting (Python or Bash)"],
+  }
+}
+
 const DIFFICULTY_BADGE: Record<Difficulty, string> = {
   Beginner: "bg-emerald-500/10 text-emerald-300 border-emerald-500/30",
   Intermediate: "bg-amber-500/10 text-amber-300 border-amber-500/30",
   Advanced: "bg-rose-500/10 text-rose-300 border-rose-500/30",
 }
 
+/**
+ * Hardcoded fallback — only shown if /api/learning-paths is unreachable.
+ * Mirrors the production DB rows seeded by prisma/seed-production.ts.
+ */
 const LEARNING_PATHS: LearningPath[] = [
   {
     id: "beginner-cyber",
@@ -369,6 +505,30 @@ export function LearningPathsView() {
   const { navigate } = useAppStore()
   const [expandedPathId, setExpandedPathId] = React.useState<string | null>(null)
 
+  // Fetch real learning paths from the database. Falls back to the
+  // hardcoded LEARNING_PATHS array below if the API is unreachable.
+  const { data: pathsData } = useQuery<{ learningPaths: LearningPathRow[]; count: number } | null>({
+    queryKey: ["learning-paths-view"],
+    queryFn: async () => {
+      try {
+        const res = await fetch("/api/learning-paths")
+        if (!res.ok) return null
+        return res.json()
+      } catch {
+        return null
+      }
+    },
+    staleTime: 60_000,
+  })
+
+  const paths: LearningPath[] = React.useMemo(() => {
+    const rows = pathsData?.learningPaths ?? []
+    if (rows.length > 0) {
+      return rows.map(mapRowToPath)
+    }
+    return LEARNING_PATHS
+  }, [pathsData])
+
   return (
     <div className="relative min-h-screen">
       {/* Atmospheric background */}
@@ -408,7 +568,7 @@ export function LearningPathsView() {
         <section aria-labelledby="paths-heading" className="mb-12">
           <h2 id="paths-heading" className="sr-only">Learning paths</h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {LEARNING_PATHS.map((path, i) => (
+            {paths.map((path, i) => (
               <motion.div
                 key={path.id}
                 initial={{ opacity: 0, y: 12 }}
@@ -461,7 +621,7 @@ export function LearningPathsView() {
                   </tr>
                 </thead>
                 <tbody>
-                  {LEARNING_PATHS.map((p) => (
+                  {paths.map((p) => (
                     <tr
                       key={p.id}
                       className="border-b border-border/40 last:border-0 hover:bg-muted/20 transition-colors"

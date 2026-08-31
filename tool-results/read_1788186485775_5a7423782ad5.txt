@@ -1,0 +1,748 @@
+     1→"use client"
+     2→
+     3→import * as React from "react"
+     4→import { motion, AnimatePresence } from "framer-motion"
+     5→import { cn } from "@/lib/utils"
+     6→import { useAppStore } from "@/store/app-store"
+     7→import { Button } from "@/components/ui/button"
+     8→import { Badge } from "@/components/ui/badge"
+     9→import {
+    10→  Shield,
+    11→  ShieldCheck,
+    12→  Swords,
+    13→  Cloud,
+    14→  Globe,
+    15→  Lock,
+    16→  Target,
+    17→  Clock,
+    18→  Zap,
+    19→  Trophy,
+    20→  ArrowRight,
+    21→  ArrowLeft,
+    22→  GraduationCap,
+    23→  CheckCircle2,
+    24→  Circle,
+    25→  BookOpen,
+    26→  Beaker,
+    27→  FileQuestion,
+    28→  Sparkles,
+    29→  Network,
+    30→} from "lucide-react"
+    31→import type { LucideIcon } from "lucide-react"
+    32→
+    33→/* ============================================================
+    34→   LearningPathsView — guided cybersecurity career paths
+    35→   ============================================================ */
+    36→
+    37→type Difficulty = "Beginner" | "Intermediate" | "Advanced"
+    38→
+    39→interface PathModule {
+    40→  name: string
+    41→  lessons: { title: string; type: "video" | "reading" | "lab" | "quiz" }[]
+    42→}
+    43→
+    44→interface LearningPath {
+    45→  id: string
+    46→  name: string
+    47→  tagline: string
+    48→  icon: LucideIcon
+    49→  difficulty: Difficulty
+    50→  durationHours: number
+    51→  skillsCount: number
+    52→  labsCount: number
+    53→  xpReward: number
+    54→  color: string
+    55→  tint: string
+    56→  border: string
+    57→  gradient: string
+    58→  skills: string[]
+    59→  careerOutcome: string
+    60→  progressPercent: number
+    61→  modules: PathModule[]
+    62→  prerequisites: string[]
+    63→}
+    64→
+    65→const DIFFICULTY_BADGE: Record<Difficulty, string> = {
+    66→  Beginner: "bg-emerald-500/10 text-emerald-300 border-emerald-500/30",
+    67→  Intermediate: "bg-amber-500/10 text-amber-300 border-amber-500/30",
+    68→  Advanced: "bg-rose-500/10 text-rose-300 border-rose-500/30",
+    69→}
+    70→
+    71→const LEARNING_PATHS: LearningPath[] = [
+    72→  {
+    73→    id: "beginner-cyber",
+    74→    name: "Beginner Cybersecurity",
+    75→    tagline: "From zero to your first security cert.",
+    76→    icon: Shield,
+    77→    difficulty: "Beginner",
+    78→    durationHours: 40,
+    79→    skillsCount: 8,
+    80→    labsCount: 12,
+    81→    xpReward: 1500,
+    82→    color: "text-emerald-300",
+    83→    tint: "bg-emerald-500/10",
+    84→    border: "border-emerald-500/40",
+    85→    gradient: "from-emerald-500/15 via-emerald-600/5 to-transparent",
+    86→    skills: ["Networking Basics", "Linux Fundamentals", "Windows Admin", "Cryptography 101", "Threat Modeling", "OSINT", "Wireshark", "Nmap"],
+    87→    careerOutcome: "Junior Security Analyst · IT Support Specialist",
+    88→    progressPercent: 0,
+    89→    prerequisites: ["Basic computer literacy", "Comfort with the command line (or willingness to learn)"],
+    90→    modules: [
+    91→      {
+    92→        name: "Foundations",
+    93→        lessons: [
+    94→          { title: "What is cybersecurity?", type: "video" },
+    95→          { title: "The CIA Triad", type: "reading" },
+    96→          { title: "Threat actors & motives", type: "video" },
+    97→        ],
+    98→      },
+    99→      {
+   100→        name: "Systems & Networks",
+   101→        lessons: [
+   102→          { title: "Linux fundamentals", type: "video" },
+   103→          { title: "Windows administration", type: "video" },
+   104→          { title: "TCP/IP deep-dive", type: "reading" },
+   105→          { title: "Lab: Network reconnaissance", type: "lab" },
+   106→        ],
+   107→      },
+   108→      {
+   109→        name: "Tools of the Trade",
+   110→        lessons: [
+   111→          { title: "Nmap essentials", type: "video" },
+   112→          { title: "Wireshark packet analysis", type: "video" },
+   113→          { title: "Lab: Scan and identify services", type: "lab" },
+   114→          { title: "Module quiz", type: "quiz" },
+   115→        ],
+   116→      },
+   117→    ],
+   118→  },
+   119→  {
+   120→    id: "soc-analyst",
+   121→    name: "SOC Analyst",
+   122→    tagline: "Detect, triage, and respond to live threats.",
+   123→    icon: ShieldCheck,
+   124→    difficulty: "Intermediate",
+   125→    durationHours: 60,
+   126→    skillsCount: 10,
+   127→    labsCount: 18,
+   128→    xpReward: 2200,
+   129→    color: "text-cyan-300",
+   130→    tint: "bg-cyan-500/10",
+   131→    border: "border-cyan-500/40",
+   132→    gradient: "from-cyan-500/15 via-cyan-600/5 to-transparent",
+   133→    skills: ["SIEM (Splunk)", "Log Analysis", "Incident Response", "MITRE ATT&CK", "Threat Hunting", "IDS/IPS", "Endpoint Detection", "Phishing Analysis", "Forensics Basics", "Vulnerability Scanning"],
+   134→    careerOutcome: "SOC Analyst Tier 1 · Detection Engineer",
+   135→    progressPercent: 35,
+   136→    prerequisites: ["Beginner Cybersecurity path (or equivalent)", "Networking fundamentals"],
+   137→    modules: [
+   138→      {
+   139→        name: "SOC Fundamentals",
+   140→        lessons: [
+   141→          { title: "Anatomy of a SOC", type: "video" },
+   142→          { title: "The incident response lifecycle", type: "video" },
+   143→          { title: "MITRE ATT&CK framework", type: "reading" },
+   144→        ],
+   145→      },
+   146→      {
+   147→        name: "Detection & Analysis",
+   148→        lessons: [
+   149→          { title: "Splunk queries & SPL", type: "video" },
+   150→          { title: "Writing detection rules", type: "video" },
+   151→          { title: "Lab: Investigate a phishing email", type: "lab" },
+   152→          { title: "Lab: Trace a brute-force attack", type: "lab" },
+   153→        ],
+   154→      },
+   155→      {
+   156→        name: "Response & Reporting",
+   157→        lessons: [
+   158→          { title: "Containment strategies", type: "video" },
+   159→          { title: "Writing an incident report", type: "reading" },
+   160→          { title: "Lab: Full IR scenario", type: "lab" },
+   161→          { title: "Module quiz", type: "quiz" },
+   162→        ],
+   163→      },
+   164→    ],
+   165→  },
+   166→  {
+   167→    id: "pentester",
+   168→    name: "Penetration Tester",
+   169→    tagline: "Break into systems before the bad guys do.",
+   170→    icon: Swords,
+   171→    difficulty: "Advanced",
+   172→    durationHours: 90,
+   173→    skillsCount: 14,
+   174→    labsCount: 24,
+   175→    xpReward: 3500,
+   176→    color: "text-rose-300",
+   177→    tint: "bg-rose-500/10",
+   178→    border: "border-rose-500/40",
+   179→    gradient: "from-rose-500/15 via-rose-600/5 to-transparent",
+   180→    skills: ["Recon & OSINT", "Burp Suite", "Metasploit", "Privilege Escalation", "Lateral Movement", "Web App Pentesting", "Network Pentesting", "AD Attacks", "SQL Injection", "XSS", "SSRF", "File Upload Bypass", "Pivoting", "Report Writing"],
+   181→    careerOutcome: "Junior Pentester · Red Team Operator",
+   182→    progressPercent: 12,
+   183→    prerequisites: ["Intermediate networking knowledge", "Linux command-line fluency", "Scripting (Python or Bash)"],
+   184→    modules: [
+   185→      {
+   186→        name: "Reconnaissance",
+   187→        lessons: [
+   188→          { title: "Passive vs active recon", type: "video" },
+   189→          { title: "OSINT toolchain", type: "video" },
+   190→          { title: "Lab: Map an external attack surface", type: "lab" },
+   191→        ],
+   192→      },
+   193→      {
+   194→        name: "Exploitation",
+   195→        lessons: [
+   196→          { title: "Metasploit framework", type: "video" },
+   197→          { title: "Web app attack methodology", type: "video" },
+   198→          { title: "Lab: SQL injection against DVWA", type: "lab" },
+   199→          { title: "Lab: Burp Suite XSS chain", type: "lab" },
+   200→        ],
+   201→      },
+   202→      {
+   203→        name: "Post-Exploitation",
+   204→        lessons: [
+   205→          { title: "Linux privesc techniques", type: "video" },
+   206→          { title: "Active Directory attacks", type: "video" },
+   207→          { title: "Lab: Kerberoast a domain", type: "lab" },
+   208→          { title: "Module quiz", type: "quiz" },
+   209→        ],
+   210→      },
+   211→    ],
+   212→  },
+   213→  {
+   214→    id: "cloud-sec",
+   215→    name: "Cloud Security",
+   216→    tagline: "Secure AWS, Azure, and Kubernetes at scale.",
+   217→    icon: Cloud,
+   218→    difficulty: "Intermediate",
+   219→    durationHours: 70,
+   220→    skillsCount: 12,
+   221→    labsCount: 20,
+   222→    xpReward: 2800,
+   223→    color: "text-violet-300",
+   224→    tint: "bg-violet-500/10",
+   225→    border: "border-violet-500/40",
+   226→    gradient: "from-violet-500/15 via-violet-600/5 to-transparent",
+   227→    skills: ["AWS IAM", "S3 Security", "Azure AD", "Kubernetes Hardening", "Container Security", "Terraform Security", "Cloud Logging", "CSPM", "Secrets Management", "Serverless Security", "Cloud Networking", "Zero Trust"],
+   228→    careerOutcome: "Cloud Security Engineer · DevSecOps Engineer",
+   229→    progressPercent: 0,
+   230→    prerequisites: ["AWS or Azure fundamentals", "Containerization basics (Docker)"],
+   231→    modules: [
+   232→      {
+   233→        name: "Cloud Foundations",
+   234→        lessons: [
+   235→          { title: "Shared responsibility model", type: "video" },
+   236→          { title: "AWS IAM deep-dive", type: "video" },
+   237→          { title: "Lab: Audit an AWS account", type: "lab" },
+   238→        ],
+   239→      },
+   240→      {
+   241→        name: "Container & K8s Security",
+   242→        lessons: [
+   243→          { title: "Docker security best practices", type: "video" },
+   244→          { title: "Kubernetes attack surface", type: "video" },
+   245→          { title: "Lab: Escape a misconfigured container", type: "lab" },
+   246→        ],
+   247→      },
+   248→      {
+   249→        name: "DevSecOps",
+   250→        lessons: [
+   251→          { title: "IaC security with Terraform", type: "video" },
+   252→          { title: "CI/CD pipeline scanning", type: "video" },
+   253→          { title: "Lab: Secure a Terraform project", type: "lab" },
+   254→          { title: "Module quiz", type: "quiz" },
+   255→        ],
+   256→      },
+   257→    ],
+   258→  },
+   259→  {
+   260→    id: "web-sec-specialist",
+   261→    name: "Web Security Specialist",
+   262→    tagline: "Hunt bugs in modern web applications.",
+   263→    icon: Globe,
+   264→    difficulty: "Intermediate",
+   265→    durationHours: 65,
+   266→    skillsCount: 11,
+   267→    labsCount: 22,
+   268→    xpReward: 2600,
+   269→    color: "text-amber-300",
+   270→    tint: "bg-amber-500/10",
+   271→    border: "border-amber-500/40",
+   272→    gradient: "from-amber-500/15 via-amber-600/5 to-transparent",
+   273→    skills: ["OWASP Top 10", "Burp Suite Pro", "SQL Injection", "XSS", "SSRF", "CSRF", "JWT Attacks", "GraphQL Security", "API Security", "Business Logic Flaws", "Bug Bounty Hunting"],
+   274→    careerOutcome: "Web App Security Tester · Bug Bounty Hunter",
+   275→    progressPercent: 48,
+   276→    prerequisites: ["HTTP & REST API basics", "JavaScript fundamentals"],
+   277→    modules: [
+   278→      {
+   279→        name: "Web App Foundations",
+   280→        lessons: [
+   281→          { title: "OWASP Top 10 walkthrough", type: "video" },
+   282→          { title: "Burp Suite mastery", type: "video" },
+   283→          { title: "Lab: Proxy and modify requests", type: "lab" },
+   284→        ],
+   285→      },
+   286→      {
+   287→        name: "Injection Attacks",
+   288→        lessons: [
+   289→          { title: "SQL injection playbook", type: "video" },
+   290→          { title: "XSS exploitation", type: "video" },
+   291→          { title: "Lab: SQLi to data exfil", type: "lab" },
+   292→          { title: "Lab: Stored XSS to admin takeover", type: "lab" },
+   293→        ],
+   294→      },
+   295→      {
+   296→        name: "Modern Web Attacks",
+   297→        lessons: [
+   298→          { title: "JWT manipulation", type: "video" },
+   299→          { title: "GraphQL & API abuse", type: "video" },
+   300→          { title: "Lab: SSRF to cloud metadata", type: "lab" },
+   301→          { title: "Module quiz", type: "quiz" },
+   302→        ],
+   303→      },
+   304→    ],
+   305→  },
+   306→  {
+   307→    id: "sec-engineer",
+   308→    name: "Security Engineer",
+   309→    tagline: "Design and build defensible systems.",
+   310→    icon: Lock,
+   311→    difficulty: "Advanced",
+   312→    durationHours: 100,
+   313→    skillsCount: 16,
+   314→    labsCount: 26,
+   315→    xpReward: 3800,
+   316→    color: "text-teal-300",
+   317→    tint: "bg-teal-500/10",
+   318→    border: "border-teal-500/40",
+   319→    gradient: "from-teal-500/15 via-teal-600/5 to-transparent",
+   320→    skills: ["Secure Architecture", "Threat Modeling", "Zero Trust Networks", "PKI & Cryptography", "IAM Design", "SIEM Engineering", "SOAR Automation", "Endpoint Hardening", "Cloud Security Architecture", "Secure SDLC", "Container Security", "Network Segmentation", "Incident Response", "Compliance (SOC2/ISO27001)", "Vulnerability Management", "Security Automation"],
+   321→    careerOutcome: "Security Engineer · Security Architect",
+   322→    progressPercent: 5,
+   323→    prerequisites: ["3+ years in IT, ops, or dev", "Intermediate networking & OS knowledge"],
+   324→    modules: [
+   325→      {
+   326→        name: "Architecture & Design",
+   327→        lessons: [
+   328→          { title: "Threat modeling with STRIDE", type: "video" },
+   329→          { title: "Zero trust architecture", type: "video" },
+   330→          { title: "Lab: Design a segmented network", type: "lab" },
+   331→        ],
+   332→      },
+   333→      {
+   334→        name: "Detection Engineering",
+   335→        lessons: [
+   336→          { title: "Building a SIEM pipeline", type: "video" },
+   337→          { title: "SOAR automation playbooks", type: "video" },
+   338→          { title: "Lab: Write a detection rule", type: "lab" },
+   339→        ],
+   340→      },
+   341→      {
+   342→        name: "Secure Operations",
+   343→        lessons: [
+   344→          { title: "Hardening endpoints at scale", type: "video" },
+   345→          { title: "Compliance & audit readiness", type: "video" },
+   346→          { title: "Lab: Run a tabletop exercise", type: "lab" },
+   347→          { title: "Module quiz", type: "quiz" },
+   348→        ],
+   349→      },
+   350→    ],
+   351→  },
+   352→]
+   353→
+   354→const LESSON_ICONS: Record<PathModule["lessons"][number]["type"], LucideIcon> = {
+   355→  video: BookOpen,
+   356→  reading: BookOpen,
+   357→  lab: Beaker,
+   358→  quiz: FileQuestion,
+   359→}
+   360→
+   361→const LESSON_COLORS: Record<PathModule["lessons"][number]["type"], string> = {
+   362→  video: "text-cyan-300",
+   363→  reading: "text-violet-300",
+   364→  lab: "text-amber-300",
+   365→  quiz: "text-rose-300",
+   366→}
+   367→
+   368→export function LearningPathsView() {
+   369→  const { navigate } = useAppStore()
+   370→  const [expandedPathId, setExpandedPathId] = React.useState<string | null>(null)
+   371→
+   372→  return (
+   373→    <div className="relative min-h-screen">
+   374→      {/* Atmospheric background */}
+   375→      <div className="absolute inset-0 bg-mesh opacity-40 pointer-events-none" />
+   376→      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-violet-600/8 blur-[120px] rounded-full pointer-events-none" />
+   377→      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-cyan-600/5 blur-[120px] rounded-full pointer-events-none" />
+   378→
+   379→      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+   380→        {/* ====================================================
+   381→            HERO
+   382→            ==================================================== */}
+   383→        <motion.section
+   384→          initial={{ opacity: 0, y: 12 }}
+   385→          animate={{ opacity: 1, y: 0 }}
+   386→          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+   387→          className="mb-12"
+   388→        >
+   389→          <div className="flex items-center gap-2 mb-6">
+   390→            <span className="h-1.5 w-1.5 rounded-full bg-violet-400 pulse-dot" />
+   391→            <span className="text-[10px] font-mono text-violet-300 tracking-[0.3em]">
+   392→              CAREER PATHS · BEGINNER TO JOB-READY
+   393→            </span>
+   394→          </div>
+   395→
+   396→          <h1 className="text-[clamp(2.25rem,7vw,5rem)] font-bold leading-[0.92] tracking-[-0.04em] mb-5 text-balance">
+   397→            Choose your <span className="text-gradient-premium">mission.</span>
+   398→          </h1>
+   399→
+   400→          <p className="text-muted-foreground max-w-2xl text-base lg:text-lg text-balance">
+   401→            Guided cybersecurity career paths from beginner to job-ready. Pick a destination, follow the curriculum, and ship with the skills recruiters actually screen for.
+   402→          </p>
+   403→        </motion.section>
+   404→
+   405→        {/* ====================================================
+   406→            PATH CARDS
+   407→            ==================================================== */}
+   408→        <section aria-labelledby="paths-heading" className="mb-12">
+   409→          <h2 id="paths-heading" className="sr-only">Learning paths</h2>
+   410→          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+   411→            {LEARNING_PATHS.map((path, i) => (
+   412→              <motion.div
+   413→                key={path.id}
+   414→                initial={{ opacity: 0, y: 12 }}
+   415→                animate={{ opacity: 1, y: 0 }}
+   416→                transition={{ duration: 0.35, delay: 0.05 + i * 0.06, ease: [0.16, 1, 0.3, 1] }}
+   417→              >
+   418→                <PathCard
+   419→                  path={path}
+   420→                  isExpanded={expandedPathId === path.id}
+   421→                  onToggle={() =>
+   422→                    setExpandedPathId((prev) => (prev === path.id ? null : path.id))
+   423→                  }
+   424→                  onStart={() => navigate({ name: "login" })}
+   425→                />
+   426→              </motion.div>
+   427→            ))}
+   428→          </div>
+   429→        </section>
+   430→
+   431→        {/* ====================================================
+   432→            COMPARISON TABLE
+   433→            ==================================================== */}
+   434→        <motion.section
+   435→          initial={{ opacity: 0, y: 12 }}
+   436→          animate={{ opacity: 1, y: 0 }}
+   437→          transition={{ duration: 0.4, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+   438→          className="mb-12"
+   439→          aria-labelledby="compare-heading"
+   440→        >
+   441→          <div className="flex items-center gap-2 mb-6">
+   442→            <span className="text-[10px] font-mono text-cyan-300 tracking-[0.3em]">
+   443→              SIDE-BY-SIDE COMPARISON
+   444→            </span>
+   445→            <span className="h-px flex-1 bg-gradient-to-r from-cyan-500/40 to-transparent" />
+   446→          </div>
+   447→          <h2 id="compare-heading" className="text-2xl lg:text-3xl font-bold tracking-tight mb-6">
+   448→            Weigh them up against each other.
+   449→          </h2>
+   450→
+   451→          <div className="card-premium rounded-xl overflow-hidden">
+   452→            <div className="overflow-x-auto">
+   453→              <table className="w-full text-sm">
+   454→                <thead>
+   455→                  <tr className="border-b border-border/60 bg-muted/30">
+   456→                    <th className="text-left font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground px-4 py-3">Path</th>
+   457→                    <th className="text-left font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground px-4 py-3">Duration</th>
+   458→                    <th className="text-left font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground px-4 py-3">Difficulty</th>
+   459→                    <th className="text-left font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground px-4 py-3">Skills</th>
+   460→                    <th className="text-left font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground px-4 py-3 hidden md:table-cell">Career outcome</th>
+   461→                  </tr>
+   462→                </thead>
+   463→                <tbody>
+   464→                  {LEARNING_PATHS.map((p) => (
+   465→                    <tr
+   466→                      key={p.id}
+   467→                      className="border-b border-border/40 last:border-0 hover:bg-muted/20 transition-colors"
+   468→                    >
+   469→                      <td className="px-4 py-3">
+   470→                        <div className="flex items-center gap-2">
+   471→                          <span className={cn("flex size-7 items-center justify-center rounded-md border", p.tint, p.border, p.color)}>
+   472→                            <p.icon className="size-3.5" />
+   473→                          </span>
+   474→                          <span className="font-medium">{p.name}</span>
+   475→                        </div>
+   476→                      </td>
+   477→                      <td className="px-4 py-3 font-mono text-xs">{p.durationHours}h</td>
+   478→                      <td className="px-4 py-3">
+   479→                        <span className={cn("inline-flex rounded border px-2 py-0.5 text-[10px] font-mono", DIFFICULTY_BADGE[p.difficulty])}>
+   480→                          {p.difficulty}
+   481→                        </span>
+   482→                      </td>
+   483→                      <td className="px-4 py-3 font-mono text-xs">{p.skillsCount}</td>
+   484→                      <td className="px-4 py-3 text-xs text-muted-foreground hidden md:table-cell">{p.careerOutcome}</td>
+   485→                    </tr>
+   486→                  ))}
+   487→                </tbody>
+   488→              </table>
+   489→            </div>
+   490→          </div>
+   491→        </motion.section>
+   492→
+   493→        {/* ====================================================
+   494→            FINAL CTA
+   495→            ==================================================== */}
+   496→        <motion.section
+   497→          initial={{ opacity: 0, y: 12 }}
+   498→          animate={{ opacity: 1, y: 0 }}
+   499→          transition={{ duration: 0.4, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+   500→          className="relative overflow-hidden rounded-2xl border border-cyan-500/30 bg-card/60 backdrop-blur-sm p-8 lg:p-12 text-center"
+   501→        >
+   502→          <div className="absolute inset-0 bg-grid opacity-10 pointer-events-none" />
+   503→          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[400px] h-[200px] bg-cyan-600/15 blur-[100px] rounded-full pointer-events-none" />
+   504→          <div className="relative z-10">
+   505→            <Sparkles className="h-10 w-10 text-cyan-300 mx-auto mb-4" />
+   506→            <h2 className="text-3xl lg:text-4xl font-bold tracking-tight mb-3">
+   507→              Not sure which path?
+   508→            </h2>
+   509→            <p className="text-muted-foreground max-w-xl mx-auto mb-6">
+   510→              Take the 10-minute skill assessment. We&apos;ll match you to the path that closes your biggest gaps fastest.
+   511→            </p>
+   512→            <Button
+   513→              size="lg"
+   514→              onClick={() => navigate({ name: "skill-assessments" })}
+   515→              className="bg-cyan-600 hover:bg-cyan-500 btn-premium group"
+   516→            >
+   517→              <Target className="mr-2 h-4 w-4" />
+   518→              TAKE SKILL ASSESSMENT
+   519→              <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+   520→            </Button>
+   521→          </div>
+   522→        </motion.section>
+   523→      </div>
+   524→    </div>
+   525→  )
+   526→}
+   527→
+   528→/* ============================================================
+   529→   PathCard — rich path card with expand/collapse
+   530→   ============================================================ */
+   531→
+   532→interface PathCardProps {
+   533→  path: LearningPath
+   534→  isExpanded: boolean
+   535→  onToggle: () => void
+   536→  onStart: () => void
+   537→}
+   538→
+   539→function PathCard({ path, isExpanded, onToggle, onStart }: PathCardProps) {
+   540→  return (
+   541→    <div className="card-premium rounded-xl h-full flex flex-col overflow-hidden">
+   542→      {/* Header banner */}
+   543→      <div className={cn("relative bg-gradient-to-br p-5", path.gradient)}>
+   544→        <div className="flex items-start justify-between mb-3">
+   545→          <span className={cn("flex size-12 items-center justify-center rounded-xl border backdrop-blur-sm", path.tint, path.border, path.color)}>
+   546→            <path.icon className="size-6" />
+   547→          </span>
+   548→          <span className={cn("inline-flex rounded border px-2 py-0.5 text-[10px] font-mono font-semibold", DIFFICULTY_BADGE[path.difficulty])}>
+   549→            {path.difficulty}
+   550→          </span>
+   551→        </div>
+   552→        <h3 className="text-xl font-bold tracking-tight mb-1">{path.name}</h3>
+   553→        <p className="text-sm text-muted-foreground">{path.tagline}</p>
+   554→      </div>
+   555→
+   556→      {/* Meta row */}
+   557→      <div className="px-5 pt-4 grid grid-cols-4 gap-2 text-center">
+   558→        <MetaStat icon={Clock} value={`${path.durationHours}h`} label="Duration" />
+   559→        <MetaStat icon={Network} value={path.skillsCount} label="Skills" />
+   560→        <MetaStat icon={Beaker} value={path.labsCount} label="Labs" />
+   561→        <MetaStat icon={Zap} value={path.xpReward.toLocaleString()} label="XP" />
+   562→      </div>
+   563→
+   564→      {/* Skills chips */}
+   565→      <div className="px-5 pt-4">
+   566→        <p className="text-[10px] font-mono text-muted-foreground tracking-[0.2em] mb-2">SKILLS YOU&apos;LL GAIN</p>
+   567→        <div className="flex flex-wrap gap-1.5">
+   568→          {path.skills.slice(0, isExpanded ? path.skills.length : 5).map((s) => (
+   569→            <span
+   570→              key={s}
+   571→              className={cn(
+   572→                "inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-mono",
+   573→                path.tint,
+   574→                path.border,
+   575→                path.color
+   576→              )}
+   577→            >
+   578→              {s}
+   579→            </span>
+   580→          ))}
+   581→          {!isExpanded && path.skills.length > 5 && (
+   582→            <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-mono text-muted-foreground">
+   583→              +{path.skills.length - 5} more
+   584→            </span>
+   585→          )}
+   586→        </div>
+   587→      </div>
+   588→
+   589→      {/* Career outcome */}
+   590→      <div className="px-5 pt-4">
+   591→        <p className="text-[10px] font-mono text-muted-foreground tracking-[0.2em] mb-2">CAREER OUTCOME</p>
+   592→        <div className="flex items-center gap-2 text-sm">
+   593→          <Trophy className={cn("size-4 shrink-0", path.color)} />
+   594→          <span className="text-foreground/90">{path.careerOutcome}</span>
+   595→        </div>
+   596→      </div>
+   597→
+   598→      {/* Progress bar */}
+   599→      <div className="px-5 pt-4">
+   600→        <div className="flex items-center justify-between mb-1.5">
+   601→          <span className="text-[10px] font-mono text-muted-foreground tracking-[0.2em]">PROGRESS</span>
+   602→          <span className={cn("text-xs font-mono font-semibold", path.color)}>{path.progressPercent}%</span>
+   603→        </div>
+   604→        <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+   605→          <motion.div
+   606→            className={cn("h-full rounded-full", path.color.replace("text-", "bg-"))}
+   607→            initial={{ width: 0 }}
+   608→            animate={{ width: `${path.progressPercent}%` }}
+   609→            transition={{ duration: 0.5, ease: "easeOut" }}
+   610→          />
+   611→        </div>
+   612→      </div>
+   613→
+   614→      {/* Action buttons */}
+   615→      <div className="px-5 pt-5 pb-5 mt-auto flex gap-2">
+   616→        <Button
+   617→          onClick={onStart}
+   618→          className={cn("flex-1 btn-premium", path.color.replace("text-", "bg-").replace("300", "600"), "hover:opacity-90")}
+   619→        >
+   620→          <GraduationCap className="mr-1.5 h-4 w-4" />
+   621→          START PATH
+   622→        </Button>
+   623→        <Button
+   624→          variant="outline"
+   625→          onClick={onToggle}
+   626→          aria-expanded={isExpanded}
+   627→          aria-controls={`path-detail-${path.id}`}
+   628→          className="border-border/60"
+   629→        >
+   630→          {isExpanded ? <ArrowLeft className="h-4 w-4 mr-1.5" /> : null}
+   631→          {isExpanded ? "Hide" : "Curriculum"}
+   632→        </Button>
+   633→      </div>
+   634→
+   635→      {/* Expandable curriculum */}
+   636→      <AnimatePresence initial={false}>
+   637→        {isExpanded && (
+   638→          <motion.div
+   639→            key="detail"
+   640→            id={`path-detail-${path.id}`}
+   641→            initial={{ height: 0, opacity: 0 }}
+   642→            animate={{ height: "auto", opacity: 1 }}
+   643→            exit={{ height: 0, opacity: 0 }}
+   644→            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+   645→            className="overflow-hidden border-t border-border/40"
+   646→          >
+   647→            <PathCurriculum path={path} onEnroll={onStart} />
+   648→          </motion.div>
+   649→        )}
+   650→      </AnimatePresence>
+   651→    </div>
+   652→  )
+   653→}
+   654→
+   655→function MetaStat({ icon: Icon, value, label }: { icon: LucideIcon; value: React.ReactNode; label: string }) {
+   656→  return (
+   657→    <div className="flex flex-col items-center gap-1">
+   658→      <Icon className="size-3.5 text-muted-foreground" />
+   659→      <span className="font-mono text-xs font-semibold">{value}</span>
+   660→      <span className="text-[9px] text-muted-foreground uppercase tracking-wider">{label}</span>
+   661→    </div>
+   662→  )
+   663→}
+   664→
+   665→/* ============================================================
+   666→   PathCurriculum — expanded panel inside a path card
+   667→   ============================================================ */
+   668→
+   669→function PathCurriculum({ path, onEnroll }: { path: LearningPath; onEnroll: () => void }) {
+   670→  return (
+   671→    <div className="p-5 bg-muted/20 space-y-5">
+   672→      {/* Prerequisites */}
+   673→      <div>
+   674→        <p className="text-[10px] font-mono text-amber-300 tracking-[0.2em] mb-2">PREREQUISITES</p>
+   675→        <ul className="space-y-1.5">
+   676→          {path.prerequisites.map((p) => (
+   677→            <li key={p} className="flex items-start gap-2 text-xs text-muted-foreground">
+   678→              <Circle className="size-3 mt-0.5 shrink-0 text-muted-foreground/60" />
+   679→              <span>{p}</span>
+   680→            </li>
+   681→          ))}
+   682→        </ul>
+   683→      </div>
+   684→
+   685→      {/* Modules */}
+   686→      <div>
+   687→        <p className="text-[10px] font-mono text-cyan-300 tracking-[0.2em] mb-3">CURRICULUM · {path.modules.length} MODULES</p>
+   688→        <div className="space-y-4">
+   689→          {path.modules.map((mod, mi) => (
+   690→            <div key={mod.name} className="relative">
+   691→              <div className="flex items-center gap-2 mb-2">
+   692→                <span className={cn("flex size-6 items-center justify-center rounded-full border font-mono text-[10px] font-bold", path.tint, path.border, path.color)}>
+   693→                  {mi + 1}
+   694→                </span>
+   695→                <h4 className="text-sm font-semibold">{mod.name}</h4>
+   696→              </div>
+   697→              <ul className="ml-8 space-y-1.5 border-l border-border/40 pl-4">
+   698→                {mod.lessons.map((lesson) => {
+   699→                  const Icon = LESSON_ICONS[lesson.type]
+   700→                  const color = LESSON_COLORS[lesson.type]
+   701→                  return (
+   702→                    <li key={lesson.title} className="flex items-center gap-2 text-xs">
+   703→                      <Icon className={cn("size-3.5 shrink-0", color)} />
+   704→                      <span className="text-foreground/80">{lesson.title}</span>
+   705→                      <span className={cn("ml-auto font-mono text-[9px] uppercase tracking-wider", color)}>
+   706→                        {lesson.type}
+   707→                      </span>
+   708→                    </li>
+   709→                  )
+   710→                })}
+   711→              </ul>
+   712→            </div>
+   713→          ))}
+   714→        </div>
+   715→      </div>
+   716→
+   717→      {/* Career outcome detail */}
+   718→      <div>
+   719→        <p className="text-[10px] font-mono text-emerald-300 tracking-[0.2em] mb-2">CAREER OUTCOMES</p>
+   720→        <ul className="space-y-1.5">
+   721→          {path.careerOutcome.split(" · ").map((role) => (
+   722→            <li key={role} className="flex items-center gap-2 text-xs">
+   723→              <CheckCircle2 className="size-3.5 text-emerald-400 shrink-0" />
+   724→              <span className="text-foreground/90">{role}</span>
+   725→            </li>
+   726→          ))}
+   727→        </ul>
+   728→      </div>
+   729→
+   730→      {/* Estimated time + enroll */}
+   731→      <div className="flex items-center justify-between gap-3 pt-2">
+   732→        <div className="text-xs text-muted-foreground">
+   733→          <Clock className="inline size-3 mr-1" />
+   734→          Est. <span className="font-mono text-foreground/90">{path.durationHours}h</span> · {path.modules.length} modules · {path.labsCount} labs
+   735→        </div>
+   736→        <Button
+   737→          size="sm"
+   738→          onClick={onEnroll}
+   739→          className={cn("btn-premium", path.color.replace("text-", "bg-").replace("300", "600"), "hover:opacity-90")}
+   740→        >
+   741→          ENROLL NOW
+   742→          <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+   743→        </Button>
+   744→      </div>
+   745→    </div>
+   746→  )
+   747→}
+   748→

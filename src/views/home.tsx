@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useQuery } from "@tanstack/react-query"
 import { motion } from "framer-motion"
 import { useAppStore } from "@/store/app-store"
 import { Button } from "@/components/ui/button"
@@ -37,6 +38,7 @@ import {
   ChevronRight,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { getCmsIcon } from "@/lib/cms-icons"
 import { ParticleLogo } from "@/components/platform/particle-logo"
 import { CertificateVerifyCard } from "@/components/platform/certificate-verify-card"
 import { usePageContent, getContent } from "@/lib/use-content"
@@ -69,6 +71,71 @@ const FADE_IN = {
   initial: { opacity: 0 },
   animate: { opacity: 1 },
   transition: { duration: 0.35, ease: "easeOut" },
+}
+
+/* ---------------------------------------------------------------- *
+ *  Types for DB-driven content fetched from the public APIs.       *
+ * ---------------------------------------------------------------- */
+interface TechnologyPartner {
+  id: string
+  name: string
+  category: string
+  description?: string | null
+  url?: string | null
+  icon: string
+  order: number
+  published: boolean
+}
+
+interface PlatformStat {
+  id: string
+  key: string
+  label: string
+  value: string
+  source: string // "manual" | "calculated"
+  displayStatus: string
+  suffix?: string | null
+  icon: string
+  color: string
+  updatedAt: string
+}
+
+interface LearningPathRow {
+  id: string
+  slug: string
+  title: string
+  subtitle?: string | null
+  description: string
+  icon: string
+  color: string
+  tint: string
+  difficulty: string
+  duration: string
+  skillsCount: number
+  labsCount: number
+  xpReward: number
+  careerOutcome?: string | null
+  skills: string[]
+  courses: string[]
+  order: number
+  published: boolean
+  featured: boolean
+}
+
+interface RankRow {
+  id: string
+  name: string
+  displayName: string
+  level: number
+  xpThreshold: number
+  color: string
+  description?: string | null
+  icon: string
+  order: number
+}
+
+interface SessionData {
+  user?: { id?: string; name?: string | null; email?: string | null; role?: string | null } | null
 }
 
 export function HomeView() {
@@ -205,7 +272,12 @@ export function HomeView() {
     "A typical GuardianX learner journey — from day one to the offer letter."
   )
 
-  const trustLabel = getContent(cmsData, "trust", "label", "Trusted by defenders at")
+  const trustLabel = getContent(
+    cmsData,
+    "trust",
+    "label",
+    "Built around technologies used across modern cybersecurity teams"
+  )
 
   const finalCtaTitle = getContent(cmsData, "finalCta", "title", "Become unstoppable.")
   const finalCtaSubtitle = getContent(
@@ -234,6 +306,142 @@ export function HomeView() {
     ],
     []
   )
+
+  /* ------------------------------------------------------------- *
+   *  Real DB-backed content via public APIs                       *
+   *  Each query falls back to a hardcoded array when the API      *
+   *  fails so the homepage never goes blank.                      *
+   * ------------------------------------------------------------- */
+  const { data: sessionData } = useQuery<SessionData | null>({
+    queryKey: ["home-auth-session"],
+    queryFn: async () => {
+      try {
+        const res = await fetch("/api/auth/session", { credentials: "include" })
+        if (!res.ok) return null
+        return (await res.json()) as SessionData
+      } catch {
+        return null
+      }
+    },
+    staleTime: 60_000,
+  })
+  const isLoggedIn = !!sessionData?.user
+
+  const { data: partnersData } = useQuery<{ partners: TechnologyPartner[]; count: number } | null>({
+    queryKey: ["home-technology-partners"],
+    queryFn: async () => {
+      try {
+        const res = await fetch("/api/technology-partners")
+        if (!res.ok) return null
+        return res.json()
+      } catch {
+        return null
+      }
+    },
+    staleTime: 60_000,
+  })
+  const techPartners = partnersData?.partners ?? FALLBACK_PARTNERS
+
+  const { data: statsData } = useQuery<{ stats: PlatformStat[]; count: number } | null>({
+    queryKey: ["home-platform-stats"],
+    queryFn: async () => {
+      try {
+        const res = await fetch("/api/platform-stats")
+        if (!res.ok) return null
+        return res.json()
+      } catch {
+        return null
+      }
+    },
+    staleTime: 60_000,
+  })
+  const platformStats = (statsData?.stats ?? []).slice(0, 4)
+
+  const { data: pathsData } = useQuery<{ learningPaths: LearningPathRow[]; count: number } | null>({
+    queryKey: ["home-learning-paths"],
+    queryFn: async () => {
+      try {
+        const res = await fetch("/api/learning-paths")
+        if (!res.ok) return null
+        return res.json()
+      } catch {
+        return null
+      }
+    },
+    staleTime: 60_000,
+  })
+  const learningPathRows = pathsData?.learningPaths ?? []
+
+  const { data: ranksData } = useQuery<{ ranks: RankRow[]; count: number } | null>({
+    queryKey: ["home-ranks"],
+    queryFn: async () => {
+      try {
+        const res = await fetch("/api/ranks")
+        if (!res.ok) return null
+        return res.json()
+      } catch {
+        return null
+      }
+    },
+    staleTime: 60_000,
+  })
+  const rankRows = ranksData?.ranks ?? []
+
+  // Normalize platform stats into the same shape as the fallback TRUST_STATS
+  // so the JSX below doesn't need runtime `"x" in s` checks.
+  type StatTile = {
+    key: string
+    icon: React.ComponentType<{ className?: string }>
+    value: string
+    suffix: string
+    label: string
+    color: string
+    tint: string
+    isLive: boolean
+  }
+  const statTiles: StatTile[] = React.useMemo(() => {
+    if (platformStats.length > 0) {
+      return platformStats.map((s) => ({
+        key: s.key,
+        icon: getCmsIcon(s.icon),
+        value: s.value,
+        suffix: s.suffix ?? "",
+        label: s.label,
+        color: s.color,
+        tint: "bg-violet-500/10",
+        isLive: s.source === "calculated",
+      }))
+    }
+    return TRUST_STATS.map((s) => ({
+      key: s.label,
+      icon: s.icon,
+      value: s.value,
+      suffix: "",
+      label: s.label,
+      color: s.color,
+      tint: s.tint,
+      isLive: true,
+    }))
+  }, [platformStats])
+
+  // Choose the hero CTAs based on auth state.
+  const heroPrimaryLabel = isLoggedIn ? "CONTINUE LEARNING" : heroCtaPrimary
+  const heroSecondaryLabel = isLoggedIn ? "ENTER CYBER RANGE" : heroCtaSecondary
+  const heroPrimaryTarget = isLoggedIn ? "dashboard" : "login"
+  const heroSecondaryTarget = isLoggedIn ? "labs" : "cyber-range"
+
+  // Live learner count for the hero status dot strip — prefer the real
+  // platform stat when available, fall back to the historical 12,000+ figure.
+  const liveLearnerCount = React.useMemo(() => {
+    const learnerStat = statsData?.stats?.find((s) => s.key === "learner_count")
+    if (!learnerStat) return "12,000+ LEARNERS"
+    const suffix = learnerStat.suffix ?? ""
+    const value = learnerStat.value
+    // Format with thousands separators if numeric
+    const asNum = Number(value)
+    const formatted = Number.isFinite(asNum) ? asNum.toLocaleString() : value
+    return `${formatted}${suffix} LEARNERS`
+  }, [statsData])
 
   return (
     <main className="relative">
@@ -308,22 +516,22 @@ export function HomeView() {
             >
               <Button
                 size="lg"
-                onClick={() => navigate({ name: "login" })}
+                onClick={() => navigate({ name: heroPrimaryTarget })}
                 className="bg-violet-600 hover:bg-violet-500 btn-premium px-7 py-6 text-sm"
-                aria-label={heroCtaPrimary}
+                aria-label={heroPrimaryLabel}
               >
-                {heroCtaPrimary}
+                {heroPrimaryLabel}
                 <ArrowRight className="h-4 w-4 ml-2" aria-hidden />
               </Button>
               <Button
                 size="lg"
                 variant="outline"
-                onClick={() => navigate({ name: "labs" })}
+                onClick={() => navigate({ name: heroSecondaryTarget })}
                 className="px-6 py-6 text-sm"
-                aria-label={heroCtaSecondary}
+                aria-label={heroSecondaryLabel}
               >
                 <Crosshair className="h-4 w-4 mr-2" aria-hidden />
-                {heroCtaSecondary}
+                {heroSecondaryLabel}
               </Button>
             </motion.div>
 
@@ -335,7 +543,7 @@ export function HomeView() {
             >
               <StatusDot status="online" pulse size="sm" label="LABS ONLINE" />
               <StatusDot status="online" pulse size="sm" label="CTF ACTIVE" />
-              <StatusDot status="online" pulse size="sm" label="12,000+ LEARNERS" />
+              <StatusDot status="online" pulse size="sm" label={liveLearnerCount} />
             </motion.div>
           </div>
         </div>
@@ -425,10 +633,20 @@ export function HomeView() {
                 <div className="flex items-center gap-2">
                   <StatusDot status="online" pulse size="sm" label="TARGET ONLINE" />
                 </div>
-                <Badge className="bg-violet-500/15 text-violet-300 border-violet-500/30 font-mono text-[10px]">
-                  DVWA
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-wider text-amber-300">
+                    <Sparkles className="size-3" aria-hidden />
+                    DEMONSTRATION
+                  </span>
+                  <Badge className="bg-violet-500/15 text-violet-300 border-violet-500/30 font-mono text-[10px]">
+                    DVWA
+                  </Badge>
+                </div>
               </div>
+
+              <p className="text-[10px] font-mono text-amber-300/80 mb-4 tracking-wider">
+                Interactive demo — sign up to access live labs
+              </p>
 
               <h3 className="text-base font-semibold mb-4 flex items-center gap-2">
                 <Server className="size-4 text-cyan-300" aria-hidden />
@@ -516,61 +734,98 @@ export function HomeView() {
           </motion.div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
-            {LEARNING_PATHS.map((p, i) => (
-              <motion.div
-                key={p.title}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.35, delay: 0.04 * i, ease: "easeOut" }}
-                className="card-premium rounded-2xl p-5 flex flex-col"
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <div
-                    className={cn(
-                      "flex size-10 items-center justify-center rounded-lg border border-border/50",
-                      p.tint,
-                      p.color
-                    )}
-                    aria-hidden
-                  >
-                    <p.icon className="size-5" />
-                  </div>
-                  <Badge
-                    variant="outline"
-                    className={cn("font-mono text-[10px] border-border/60", p.color)}
-                  >
-                    {p.difficulty}
-                  </Badge>
-                </div>
-
-                <h3 className="text-base font-semibold mb-1">{p.title}</h3>
-                <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
-                  {p.desc}
-                </p>
-
-                <div className="mt-auto grid grid-cols-2 gap-2 mb-4 text-[11px] font-mono">
-                  <div className="rounded-md border border-border/40 bg-[oklch(0.1_0.008_270)] px-2 py-1.5">
-                    <p className="text-muted-foreground uppercase">Duration</p>
-                    <p className="text-foreground">{p.duration}</p>
-                  </div>
-                  <div className="rounded-md border border-border/40 bg-[oklch(0.1_0.008_270)] px-2 py-1.5">
-                    <p className="text-muted-foreground uppercase">Skills</p>
-                    <p className="text-foreground">{p.skills}</p>
-                  </div>
-                </div>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full"
-                  onClick={() => navigate({ name: "catalog" })}
-                  aria-label={`Explore ${p.title} path`}
+            {(() => {
+              type PathCard = {
+                key: string
+                title: string
+                desc: string
+                icon: React.ComponentType<{ className?: string }>
+                difficulty: string
+                duration: string
+                skills: string
+                color: string
+                tint: string
+              }
+              const items: PathCard[] =
+                learningPathRows.length > 0
+                  ? learningPathRows.map((p) => ({
+                      key: p.id,
+                      title: p.title,
+                      desc: p.subtitle || p.description,
+                      icon: getCmsIcon(p.icon),
+                      difficulty: p.difficulty.toUpperCase(),
+                      duration: p.duration,
+                      skills: `${p.skillsCount} skills`,
+                      color: p.color,
+                      tint: p.tint,
+                    }))
+                  : LEARNING_PATHS.map((p) => ({
+                      key: p.title,
+                      title: p.title,
+                      desc: p.desc,
+                      icon: p.icon,
+                      difficulty: p.difficulty,
+                      duration: p.duration,
+                      skills: p.skills,
+                      color: p.color,
+                      tint: p.tint,
+                    }))
+              return items.map((p, i) => (
+                <motion.div
+                  key={p.key}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.35, delay: 0.04 * i, ease: "easeOut" }}
+                  className="card-premium rounded-2xl p-5 flex flex-col"
                 >
-                  EXPLORE PATH
-                  <ArrowRight className="size-3.5 ml-1.5" aria-hidden />
-                </Button>
-              </motion.div>
-            ))}
+                  <div className="flex items-start justify-between mb-3">
+                    <div
+                      className={cn(
+                        "flex size-10 items-center justify-center rounded-lg border border-border/50",
+                        p.tint,
+                        p.color
+                      )}
+                      aria-hidden
+                    >
+                      <p.icon className="size-5" />
+                    </div>
+                    <Badge
+                      variant="outline"
+                      className={cn("font-mono text-[10px] border-border/60", p.color)}
+                    >
+                      {p.difficulty}
+                    </Badge>
+                  </div>
+
+                  <h3 className="text-base font-semibold mb-1">{p.title}</h3>
+                  <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
+                    {p.desc}
+                  </p>
+
+                  <div className="mt-auto grid grid-cols-2 gap-2 mb-4 text-[11px] font-mono">
+                    <div className="rounded-md border border-border/40 bg-[oklch(0.1_0.008_270)] px-2 py-1.5">
+                      <p className="text-muted-foreground uppercase">Duration</p>
+                      <p className="text-foreground">{p.duration}</p>
+                    </div>
+                    <div className="rounded-md border border-border/40 bg-[oklch(0.1_0.008_270)] px-2 py-1.5">
+                      <p className="text-muted-foreground uppercase">Skills</p>
+                      <p className="text-foreground">{p.skills}</p>
+                    </div>
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => navigate({ name: "catalog" })}
+                    aria-label={`Explore ${p.title} path`}
+                  >
+                    EXPLORE PATH
+                    <ArrowRight className="size-3.5 ml-1.5" aria-hidden />
+                  </Button>
+                </motion.div>
+              ))
+            })()}
           </div>
         </div>
       </section>
@@ -703,6 +958,15 @@ export function HomeView() {
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <motion.div {...FADE_UP} className="max-w-2xl mb-6">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="inline-flex items-center gap-1.5 rounded-md border border-cyan-500/40 bg-cyan-500/10 px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-wider text-cyan-300">
+                <Eye className="size-3" aria-hidden />
+                PREVIEW
+              </span>
+              <span className="text-[10px] font-mono text-cyan-300/70 tracking-wider">
+                Illustrative preview — your stats appear here when you log in
+              </span>
+            </div>
             <h2
               id="mission-heading"
               className="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-[-0.02em] mb-3"
@@ -868,17 +1132,26 @@ export function HomeView() {
                 Rank Hierarchy
               </h3>
               <span className="font-mono text-[10px] text-muted-foreground uppercase">
-                8 TIERS · 200–10,000 XP EACH
+                {rankRows.length || 8} TIERS ·{" "}
+                {(() => {
+                  const lo = rankRows[0]?.xpThreshold ?? 0
+                  const hi = rankRows[rankRows.length - 1]?.xpThreshold ?? 100000
+                  return `${lo.toLocaleString()}–${hi.toLocaleString()} XP`
+                })()}{" "}
+                EACH
               </span>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              {RANK_LADDER.map((r, i) => (
+              {(rankRows.length > 0
+                ? rankRows
+                : RANK_LADDER
+              ).map((r, i, arr) => (
                 <React.Fragment key={r.name}>
                   <div className="flex flex-col items-center gap-1">
                     <RankBadge rank={r.name} level={r.level} size="sm" />
                   </div>
-                  {i < RANK_LADDER.length - 1 && (
+                  {i < arr.length - 1 && (
                     <ChevronRight
                       className="size-3 text-muted-foreground/50"
                       aria-hidden
@@ -1239,6 +1512,15 @@ export function HomeView() {
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <motion.div {...FADE_UP} className="max-w-2xl mb-6">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="inline-flex items-center gap-1.5 rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-wider text-amber-300">
+                <Sparkles className="size-3" aria-hidden />
+                ILLUSTRATIVE LEARNER JOURNEY
+              </span>
+              <span className="text-[10px] font-mono text-amber-300/70 tracking-wider">
+                Composite profiles — not real learners
+              </span>
+            </div>
             <h2
               id="stories-heading"
               className="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-[-0.02em] mb-3"
@@ -1328,7 +1610,7 @@ export function HomeView() {
 
                 <div className="rounded-md border border-amber-500/20 bg-amber-500/5 px-2 py-1.5">
                   <p className="font-mono text-[10px] text-amber-300/80 uppercase tracking-wider">
-                    Sample profile · illustrative
+                    ILLUSTRATIVE LEARNER JOURNEY · composite
                   </p>
                 </div>
               </motion.div>
@@ -1353,55 +1635,93 @@ export function HomeView() {
               id="trust-heading"
               className="sr-only"
             >
-              Trusted by defenders at leading companies
+              Technologies used across modern cybersecurity teams
             </h2>
           </motion.div>
 
-          {/* Company name strip */}
+          {/* Technology partner grid — real OSS tools used in GuardianX labs */}
           <motion.div
             {...FADE_IN}
             transition={{ duration: 0.5 }}
-            className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 mb-8"
+            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-8"
           >
-            {TRUST_COMPANIES.map((c) => (
-              <span
-                key={c}
-                className="font-mono text-base lg:text-lg font-semibold text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors"
-              >
-                {c}
-              </span>
-            ))}
+            {techPartners.map((p) => {
+              const Icon = getCmsIcon(p.icon)
+              return (
+                <a
+                  key={p.id ?? p.name}
+                  href={p.url ?? undefined}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={p.description ?? p.name}
+                  className="group flex flex-col items-center justify-center gap-2 rounded-lg border border-border/40 bg-card/40 px-3 py-4 text-center transition-colors hover:border-violet-500/40 hover:bg-violet-500/5"
+                >
+                  <span
+                    className="flex size-9 items-center justify-center rounded-md border border-border/50 bg-violet-500/5 text-violet-300 group-hover:text-violet-200 transition-colors"
+                    aria-hidden
+                  >
+                    <Icon className="size-4" />
+                  </span>
+                  <span className="font-mono text-[11px] font-medium text-muted-foreground group-hover:text-foreground transition-colors leading-tight">
+                    {p.name}
+                  </span>
+                </a>
+              )
+            })}
           </motion.div>
 
-          {/* Stats grid */}
+          {/* Stats grid — sourced from /api/platform-stats (live calculated
+              values from the database for learner_count, course_count,
+              lab_count, cert_count; manual/marketing values for the rest).
+              Each tile shows the source so the user can tell live counts
+              from marketing estimates. */}
           <motion.div
             {...FADE_UP}
             transition={{ duration: 0.4, delay: 0.1 }}
             className="grid grid-cols-2 md:grid-cols-4 gap-3 lg:gap-4"
           >
-            {TRUST_STATS.map((s) => (
-              <div
-                key={s.label}
-                className="card-premium rounded-xl p-4 text-center"
-              >
+            {statTiles.map((s) => {
+              const I = s.icon
+              return (
                 <div
-                  className={cn(
-                    "mx-auto mb-2 flex size-9 items-center justify-center rounded-lg border border-border/50",
-                    s.tint,
-                    s.color
-                  )}
-                  aria-hidden
+                  key={s.key}
+                  className="card-premium rounded-xl p-4 text-center"
                 >
-                  <s.icon className="size-4" />
+                  <div
+                    className={cn(
+                      "mx-auto mb-2 flex size-9 items-center justify-center rounded-lg border border-border/50",
+                      s.tint,
+                      s.color
+                    )}
+                    aria-hidden
+                  >
+                    <I className="size-4" />
+                  </div>
+                  <p className={cn("font-mono text-2xl font-bold tabular-nums", s.color)}>
+                    {s.value}
+                    {s.suffix}
+                  </p>
+                  <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">
+                    {s.label}
+                  </p>
+                  <p
+                    className={cn(
+                      "mt-1 inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-wider",
+                      s.isLive
+                        ? "bg-emerald-500/10 text-emerald-300"
+                        : "bg-amber-500/10 text-amber-300"
+                    )}
+                    title={
+                      s.isLive
+                        ? "Calculated live from the database"
+                        : "Marketing estimate — not a live count"
+                    }
+                  >
+                    {s.isLive ? "LIVE" : "ESTIMATE"}
+                  </p>
                 </div>
-                <p className={cn("font-mono text-2xl font-bold tabular-nums", s.color)}>
-                  {s.value}
-                </p>
-                <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">
-                  {s.label}
-                </p>
-              </div>
-            ))}
+              )
+            })}
           </motion.div>
         </div>
       </section>
@@ -1718,19 +2038,30 @@ const STORIES = [
   },
 ] as const
 
-const TRUST_COMPANIES = [
-  "Google",
-  "Microsoft",
-  "Amazon",
-  "IBM",
-  "Cisco",
-  "Palantir",
-  "CrowdStrike",
-] as const
-
 const TRUST_STATS = [
   { icon: Users, value: "12,000+", label: "Learners", color: "text-violet-300", tint: "bg-violet-500/10" },
   { icon: FlaskConical, value: "31", label: "Labs", color: "text-cyan-300", tint: "bg-cyan-500/10" },
   { icon: BookOpen, value: "28+", label: "Courses", color: "text-amber-300", tint: "bg-amber-500/10" },
   { icon: Building2, value: "150+", label: "Partners", color: "text-emerald-300", tint: "bg-emerald-500/10" },
 ] as const
+
+/**
+ * Fallback list of real OSS technology partners — used only if the
+ * `/api/technology-partners` route fails. Replaces the previous fake
+ * "Trusted by Google / Microsoft / Amazon" strip with the real tools
+ * GuardianX labs are built around.
+ */
+const FALLBACK_PARTNERS: TechnologyPartner[] = [
+  { id: "fb-kali", name: "Kali Linux", category: "tool", description: "Penetration testing OS used across GuardianX offensive labs.", url: "https://www.kali.org/", icon: "Terminal", order: 1, published: true },
+  { id: "fb-nmap", name: "Nmap", category: "tool", description: "Network mapper for discovery and security auditing.", url: "https://nmap.org/", icon: "Radar", order: 2, published: true },
+  { id: "fb-burp", name: "Burp Suite", category: "tool", description: "Web vulnerability scanner and interception proxy.", url: "https://portswigger.net/burp", icon: "Bug", order: 3, published: true },
+  { id: "fb-metasploit", name: "Metasploit", category: "tool", description: "Exploitation framework for penetration testing.", url: "https://www.metasploit.com/", icon: "Swords", order: 4, published: true },
+  { id: "fb-wireshark", name: "Wireshark", category: "tool", description: "Network protocol analyzer for traffic inspection.", url: "https://www.wireshark.org/", icon: "Activity", order: 5, published: true },
+  { id: "fb-docker", name: "Docker", category: "platform", description: "Container runtime powering our cyber range.", url: "https://www.docker.com/", icon: "Container", order: 6, published: true },
+  { id: "fb-hashcat", name: "Hashcat", category: "tool", description: "Advanced password recovery utility.", url: "https://hashcat.net/hashcat/", icon: "Key", order: 7, published: true },
+  { id: "fb-john", name: "John the Ripper", category: "tool", description: "Password cracker for offline hash analysis.", url: "https://www.openwall.com/john/", icon: "KeyRound", order: 8, published: true },
+  { id: "fb-nikto", name: "Nikto", category: "tool", description: "Web server scanner for known vulnerabilities.", url: "https://cirt.net/Nikto2", icon: "ScanLine", order: 9, published: true },
+  { id: "fb-sqlmap", name: "SQLMap", category: "tool", description: "Automatic SQL injection and database takeover tool.", url: "https://sqlmap.org/", icon: "Database", order: 10, published: true },
+  { id: "fb-hydra", name: "Hydra", category: "tool", description: "Fast network logon cracker supporting many protocols.", url: "https://github.com/vanhauser-thc/thc-hydra", icon: "Fingerprint", order: 11, published: true },
+  { id: "fb-gobuster", name: "Gobuster", category: "tool", description: "Directory/file/DNS brute-forcer used in recon labs.", url: "https://github.com/OJ/gobuster", icon: "FolderSearch", order: 12, published: true },
+]

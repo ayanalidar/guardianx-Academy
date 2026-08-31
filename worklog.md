@@ -1585,3 +1585,50 @@ Stage Summary:
 - Header logo gap reduced 40% (gap-2.5 → gap-1.5)
 - Top padding reduced 20% on all pages (pt-20 → pt-16)
 - All hero section paddings reduced ~30-40%
+
+---
+Task ID: 30
+Agent: main (Z.ai Code orchestrator)
+Task: Fix course card blinking + reduce hero gaps further
+
+Work Log:
+
+1. COURSE CARD BLINKING FIXED:
+   - Root cause: Stagger and StaggerItem components used useInView with
+     `hidden: { opacity: 0, y: 30 }` start state. When scrolling past
+     the cards, the useInView would lose track (especially with the
+     -80px margin) and re-trigger the fade-in animation, causing visible
+     blinking/re-animation on every scroll.
+   - Fix: Simplified Stagger and StaggerItem to render as plain <div>
+     wrappers with NO animation at all:
+     * Stagger: was motion.div with useInView + staggerChildren variants
+       → now just <div className={className}>{children}</div>
+     * StaggerItem: was motion.div with hidden/visible opacity variants
+       → now just <div className={className}>{children}</div>
+   - This eliminates blinking on ALL pages that use Stagger (home, catalog,
+     partners, impact, contact) — not just the courses page.
+   - Also removed explicit Stagger/StaggerItem wrappers from course card
+     grids in home.tsx and course-catalog.tsx (replaced with plain divs
+     for clarity, though the simplified components would work too).
+   - Kept the Stagger/StaggerItem exports for backwards compatibility —
+     existing imports still work, they just don't animate anymore.
+
+2. HERO GAPS REDUCED FURTHER:
+   - PublicPageShell: pt-16 → pt-14 (header clearance)
+   - Home hero: min-h-[88vh] → min-h-[80vh], content py-12 → py-4
+   - Contact hero: pt-20 pb-8 lg:pt-24 lg:pb-10 → pt-4 pb-6 lg:pb-8
+   - Partner page container: pt-20 lg:pt-24 → pt-2 lg:pt-4
+   - Course catalog container: pt-16 lg:pt-20 → pt-2 lg:pt-4
+   - Impact hero: min-h-[52vh] → min-h-[48vh], py-8 → py-4
+   - The shell's pt-14 provides the header clearance; hero sections
+     no longer add their own top padding on top of that.
+
+- ESLint: 0 errors
+- Verified: pt-14, py-4, min-h-[80vh], no staggerChildren, no opacity-0
+- Pushed to GitHub (commit 7815c61)
+
+Stage Summary:
+- Course cards no longer blink when scrolling (Stagger animation removed)
+- All hero section top gaps reduced significantly (pt-14 shell + py-4 hero)
+- Home hero section is shorter (80vh vs 88vh)
+- All pages feel tighter and more immediate

@@ -136,14 +136,14 @@ export function HomeView() {
         <div className="absolute top-1/4 left-1/3 w-[500px] h-[500px] bg-violet-600/8 blur-[120px] rounded-full pointer-events-none" />
         <div className="absolute bottom-1/4 right-1/3 w-[400px] h-[400px] bg-cyan-500/6 blur-[100px] rounded-full pointer-events-none" />
 
-        {/* Floating animated logo centerpiece — visible on large screens, behind text */}
+        {/* Floating animated logo centerpiece — DeepSeek-style 3D tilt + specular */}
         <div className="hidden lg:block absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none">
           <motion.div
-            initial={{ opacity: 0, scale: 0.6, rotate: -20 }}
-            animate={{ opacity: 1, scale: 1, rotate: 0 }}
-            transition={{ duration: 1.4, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            initial={{ opacity: 0, scale: 0.6 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1.2, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
           >
-            <AnimatedLogo size={520} showShards showParticles={false} showScanArc parallax />
+            <AnimatedLogo size={520} parallax />
           </motion.div>
         </div>
 
@@ -216,8 +216,8 @@ export function HomeView() {
         </div>
 
         {/* Mobile / tablet — show animated logo inline above text */}
-        <div className="lg:hidden absolute inset-x-0 top-0 h-[50vh] flex items-center justify-center pointer-events-none opacity-50">
-          <AnimatedLogo size={260} showShards showParticles={false} showScanArc parallax={false} />
+        <div className="lg:hidden absolute inset-x-0 top-0 h-[50vh] flex items-center justify-center pointer-events-none opacity-70">
+          <AnimatedLogo size={280} parallax={false} />
         </div>
         <div className="lg:hidden relative z-10 pt-[45vh]" />
       </section>

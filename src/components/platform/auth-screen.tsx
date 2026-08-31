@@ -190,7 +190,7 @@ export function AuthScreen() {
                   SYSTEM ONLINE
                 </div>
                 <div className="flex items-center gap-4">
-                  <AnimatedLogo size={84} showShards showParticles showScanArc parallax={false} />
+                  <AnimatedLogo size={84} parallax={false} />
                   <div>
                     <div className="text-xl font-bold tracking-tight leading-none">
                       Guardian<span className="text-violet-400">X</span> Academy

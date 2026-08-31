@@ -288,7 +288,7 @@ export function InstitutionsSchoolsView() {
                 transition={{ duration: 0.5, delay: 0.2 }}
                 className="relative flex items-center justify-center"
               >
-                <ParticleLogo size={440} interactive showGlow />
+                <ParticleLogo size={680} interactive showGlow />
               </motion.div>
             </div>
           </div>

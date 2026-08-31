@@ -3,7 +3,7 @@
 import * as React from "react"
 import { useQuery } from "@tanstack/react-query"
 import { motion } from "framer-motion"
-import { useAppStore } from "@/store/app-store"
+import { useAppStore, type View } from "@/store/app-store"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -36,6 +36,19 @@ import {
   FileCheck,
   Sparkles,
   ChevronRight,
+  Calendar,
+  Clock,
+  Video,
+  Sun,
+  SunMedium,
+  Sunset,
+  Moon,
+  CalendarDays,
+  CalendarCheck,
+  FileText,
+  ClipboardList,
+  FileQuestion,
+  Microscope,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { getCmsIcon } from "@/lib/cms-icons"
@@ -134,10 +147,6 @@ interface RankRow {
   order: number
 }
 
-interface SessionData {
-  user?: { id?: string; name?: string | null; email?: string | null; role?: string | null } | null
-}
-
 export function HomeView() {
   const { navigate } = useAppStore()
 
@@ -159,22 +168,23 @@ export function HomeView() {
     cmsData,
     "hero",
     "title",
-    "Learn cybersecurity by actually"
+    "Master cybersecurity with"
   )
   const heroTitleAccent = getContent(
     cmsData,
     "hero",
     "titleAccent",
-    "breaking things."
+    "expert instructors."
   )
   const heroDescription = getContent(
     cmsData,
     "hero",
     "description",
-    "A world-class platform for aspirants, freshers, and working professionals. Certification prep, live workshops, hands-on labs, and corporate training — all in one place."
+    "Learn cybersecurity through live instructor-led training, hands-on labs, structured certification batches, expert study materials and real-world practice."
   )
-  const heroCtaPrimary = getContent(cmsData, "hero", "ctaPrimary", "START LEARNING")
-  const heroCtaSecondary = getContent(cmsData, "hero", "ctaSecondary", "EXPLORE CYBER RANGE")
+  const heroCtaPrimary = getContent(cmsData, "hero", "ctaPrimary", "EXPLORE TRAINING")
+  const heroCtaSecondary = getContent(cmsData, "hero", "ctaSecondary", "VIEW UPCOMING BATCHES")
+  const heroCtaTertiary = getContent(cmsData, "hero", "ctaTertiary", "FOR INSTITUTIONS")
 
   const platformEyebrow = getContent(cmsData, "platform", "eyebrow", "THE PLATFORM")
   const platformTitle = getContent(
@@ -312,21 +322,6 @@ export function HomeView() {
    *  Each query falls back to a hardcoded array when the API      *
    *  fails so the homepage never goes blank.                      *
    * ------------------------------------------------------------- */
-  const { data: sessionData } = useQuery<SessionData | null>({
-    queryKey: ["home-auth-session"],
-    queryFn: async () => {
-      try {
-        const res = await fetch("/api/auth/session", { credentials: "include" })
-        if (!res.ok) return null
-        return (await res.json()) as SessionData
-      } catch {
-        return null
-      }
-    },
-    staleTime: 60_000,
-  })
-  const isLoggedIn = !!sessionData?.user
-
   const { data: partnersData } = useQuery<{ partners: TechnologyPartner[]; count: number } | null>({
     queryKey: ["home-technology-partners"],
     queryFn: async () => {
@@ -424,24 +419,13 @@ export function HomeView() {
     }))
   }, [platformStats])
 
-  // Choose the hero CTAs based on auth state.
-  const heroPrimaryLabel = isLoggedIn ? "CONTINUE LEARNING" : heroCtaPrimary
-  const heroSecondaryLabel = isLoggedIn ? "ENTER CYBER RANGE" : heroCtaSecondary
-  const heroPrimaryTarget = isLoggedIn ? "dashboard" : "login"
-  const heroSecondaryTarget = isLoggedIn ? "labs" : "cyber-range"
-
-  // Live learner count for the hero status dot strip — prefer the real
-  // platform stat when available, fall back to the historical 12,000+ figure.
-  const liveLearnerCount = React.useMemo(() => {
-    const learnerStat = statsData?.stats?.find((s) => s.key === "learner_count")
-    if (!learnerStat) return "12,000+ LEARNERS"
-    const suffix = learnerStat.suffix ?? ""
-    const value = learnerStat.value
-    // Format with thousands separators if numeric
-    const asNum = Number(value)
-    const formatted = Number.isFinite(asNum) ? asNum.toLocaleString() : value
-    return `${formatted}${suffix} LEARNERS`
-  }, [statsData])
+  // Hero CTAs are fixed to discovery flows — Explore Training (catalog),
+  // View Upcoming Batches (batches), and For Institutions.
+  // The CMS can override the labels via the home.hero.ctaPrimary /
+  // ctaSecondary content rows; targets remain fixed.
+  const heroPrimaryTarget: View = { name: "catalog" }
+  const heroSecondaryTarget: View = { name: "batches" }
+  const heroTertiaryTarget: View = { name: "institutions-schools" }
 
   return (
     <main className="relative">
@@ -516,22 +500,32 @@ export function HomeView() {
             >
               <Button
                 size="lg"
-                onClick={() => navigate({ name: heroPrimaryTarget })}
+                onClick={() => navigate(heroPrimaryTarget)}
                 className="bg-violet-600 hover:bg-violet-500 btn-premium px-7 py-6 text-sm"
-                aria-label={heroPrimaryLabel}
+                aria-label={heroCtaPrimary}
               >
-                {heroPrimaryLabel}
+                {heroCtaPrimary}
                 <ArrowRight className="h-4 w-4 ml-2" aria-hidden />
               </Button>
               <Button
                 size="lg"
                 variant="outline"
-                onClick={() => navigate({ name: heroSecondaryTarget })}
+                onClick={() => navigate(heroSecondaryTarget)}
                 className="px-6 py-6 text-sm"
-                aria-label={heroSecondaryLabel}
+                aria-label={heroCtaSecondary}
               >
-                <Crosshair className="h-4 w-4 mr-2" aria-hidden />
-                {heroSecondaryLabel}
+                <Calendar className="h-4 w-4 mr-2" aria-hidden />
+                {heroCtaSecondary}
+              </Button>
+              <Button
+                size="lg"
+                variant="ghost"
+                onClick={() => navigate(heroTertiaryTarget)}
+                className="px-5 py-6 text-sm text-muted-foreground hover:text-foreground"
+                aria-label={heroCtaTertiary}
+              >
+                <Building2 className="h-4 w-4 mr-2" aria-hidden />
+                {heroCtaTertiary}
               </Button>
             </motion.div>
 
@@ -541,10 +535,448 @@ export function HomeView() {
               transition={{ duration: 0.4, delay: 0.35 }}
               className="flex flex-wrap items-center gap-x-5 gap-y-2 pt-4 border-t border-border/40"
             >
-              <StatusDot status="online" pulse size="sm" label="LABS ONLINE" />
-              <StatusDot status="online" pulse size="sm" label="CTF ACTIVE" />
-              <StatusDot status="online" pulse size="sm" label={liveLearnerCount} />
+              <StatusDot status="online" pulse size="sm" label="BATCHES OPEN" />
+              <StatusDot status="online" pulse size="sm" label="LIVE SESSIONS" />
+              <StatusDot status="online" pulse size="sm" label="12 EXPERT INSTRUCTORS" />
             </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* =====================================================
+          NEW SECTION — WHO WE TRAIN
+          4 audience cards: Aspirants, Freshers, Working Pros, Institutions
+          ===================================================== */}
+      <section
+        aria-labelledby="who-we-train-heading"
+        className="relative py-8 lg:py-12"
+      >
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <motion.div {...FADE_UP} className="max-w-2xl mb-6">
+            <p className="text-[10px] font-mono text-violet-300/80 tracking-[0.25em] mb-2">
+              WHO WE TRAIN
+            </p>
+            <h2
+              id="who-we-train-heading"
+              className="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-[-0.02em] mb-3 text-balance"
+            >
+              Built for every kind of{" "}
+              <span className="text-gradient-premium">cyber learner.</span>
+            </h2>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              GuardianX trains the full spectrum of cyber security learners — from
+              absolute beginners entering the field to working professionals
+              upskilling around their day jobs, and institutions running cohorts at
+              scale.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+            {AUDIENCES.map((a, i) => (
+              <motion.div
+                key={a.title}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35, delay: 0.05 * i, ease: "easeOut" }}
+                className="card-premium rounded-xl p-5 lg:p-6 h-full"
+              >
+                <div
+                  className={cn(
+                    "mb-4 flex size-12 items-center justify-center rounded-lg border border-border/50",
+                    a.tint,
+                    a.color
+                  )}
+                  aria-hidden
+                >
+                  <a.icon className="size-6" />
+                </div>
+                <h3 className="text-base font-semibold mb-2">{a.title}</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  {a.desc}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* =====================================================
+          NEW SECTION — UPCOMING BATCHES
+          4 hardcoded live-instructor-led certification batch cards.
+          Premium card design with difficulty color coding.
+          ===================================================== */}
+      <section
+        aria-labelledby="upcoming-batches-heading"
+        className="relative py-8 lg:py-12 overflow-hidden"
+      >
+        <div className="absolute inset-0 bg-grid opacity-[0.04] pointer-events-none" aria-hidden />
+        <div
+          className="absolute left-1/2 top-0 -translate-x-1/2 size-[500px] rounded-full bg-violet-600/5 blur-[120px] pointer-events-none"
+          aria-hidden
+        />
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <motion.div {...FADE_UP} className="max-w-2xl mb-6">
+            <p className="text-[10px] font-mono text-violet-300/80 tracking-[0.25em] mb-2">
+              LIVE INSTRUCTOR-LED BATCHES
+            </p>
+            <h2
+              id="upcoming-batches-heading"
+              className="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-[-0.02em] mb-3 text-balance"
+            >
+              Upcoming Live Batches
+            </h2>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Structured certification batches with fixed schedules, dedicated
+              instructors, and live online sessions. Enroll early to secure your
+              seat — batches fill up fast.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-5">
+            {UPCOMING_BATCHES.map((b, i) => (
+              <motion.div
+                key={b.name}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.05 * i, ease: "easeOut" }}
+                className={cn(
+                  "group relative rounded-2xl border bg-card p-5 lg:p-6 transition-all duration-300 hover:-translate-y-1",
+                  b.borderColor
+                )}
+              >
+                {/* Header row: certification badge + level pill */}
+                <div className="flex items-start justify-between gap-3 mb-4">
+                  <div className="min-w-0">
+                    <Badge
+                      className={cn(
+                        "mb-2 font-mono text-[10px] uppercase tracking-wider",
+                        b.certTint,
+                        b.certColor,
+                        b.certBorder
+                      )}
+                    >
+                      {b.certification}
+                    </Badge>
+                    <h3 className="text-lg font-semibold leading-tight">
+                      {b.name}
+                    </h3>
+                  </div>
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "font-mono text-[10px] uppercase tracking-wider shrink-0",
+                      b.levelTint,
+                      b.levelColor,
+                      b.levelBorder
+                    )}
+                  >
+                    {b.level}
+                  </Badge>
+                </div>
+
+                {/* Meta rows */}
+                <dl className="space-y-2 text-sm mb-5">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="size-3.5 text-muted-foreground shrink-0" aria-hidden />
+                    <span className="text-muted-foreground">{b.schedule}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Clock className="size-3.5 text-muted-foreground shrink-0" aria-hidden />
+                    <span className="text-muted-foreground">Starts {b.startDate}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Video className="size-3.5 text-muted-foreground shrink-0" aria-hidden />
+                    <span className="text-muted-foreground">{b.mode}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Users className="size-3.5 text-muted-foreground shrink-0" aria-hidden />
+                    <span className="text-muted-foreground">{b.instructor}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Target className="size-3.5 text-muted-foreground shrink-0" aria-hidden />
+                    <span
+                      className={cn(
+                        b.almostFull
+                          ? "text-amber-300 font-medium"
+                          : "text-emerald-300 font-medium"
+                      )}
+                    >
+                      {b.seats} seats available{b.almostFull ? " · Almost Full" : ""}
+                    </span>
+                  </div>
+                </dl>
+
+                <Button
+                  onClick={() => navigate({ name: "batches" })}
+                  className={cn("w-full btn-premium", b.btnClass)}
+                  size="sm"
+                  aria-label={`View ${b.name}`}
+                >
+                  VIEW BATCH
+                  <ArrowRight className="size-4 ml-2" aria-hidden />
+                </Button>
+              </motion.div>
+            ))}
+          </div>
+
+          <motion.div
+            {...FADE_IN}
+            transition={{ duration: 0.35, delay: 0.25 }}
+            className="mt-6 text-center"
+          >
+            <Button
+              variant="outline"
+              onClick={() => navigate({ name: "batches" })}
+              aria-label="See all upcoming batches"
+            >
+              See all upcoming batches
+              <ArrowRight className="size-4 ml-2" aria-hidden />
+            </Button>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* =====================================================
+          NEW SECTION — FLEXIBLE SCHEDULES
+          6 schedule-option cards: Weekday, Weekend, Morning, Afternoon, Evening, Late Night
+          ===================================================== */}
+      <section
+        aria-labelledby="schedules-heading"
+        className="relative py-8 lg:py-12"
+      >
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <motion.div {...FADE_UP} className="max-w-2xl mb-6">
+            <p className="text-[10px] font-mono text-violet-300/80 tracking-[0.25em] mb-2">
+              FLEXIBLE SCHEDULES
+            </p>
+            <h2
+              id="schedules-heading"
+              className="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-[-0.02em] mb-3 text-balance"
+            >
+              Train around your life.
+            </h2>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Choose a schedule that fits your work, studies and personal
+              commitments. New batches open across every slot, every month.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 lg:gap-4">
+            {SCHEDULES.map((s, i) => (
+              <motion.div
+                key={s.type}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.04 * i, ease: "easeOut" }}
+                className="card-premium rounded-xl p-4 lg:p-5 h-full"
+              >
+                <div
+                  className={cn(
+                    "mb-3 flex size-10 items-center justify-center rounded-lg border border-border/50",
+                    s.tint,
+                    s.color
+                  )}
+                  aria-hidden
+                >
+                  <s.icon className="size-5" />
+                </div>
+                <h3 className="text-sm font-semibold mb-1 font-mono tracking-wider">
+                  {s.type}
+                </h3>
+                <p className="text-xs text-muted-foreground">{s.example}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* =====================================================
+          NEW SECTION — TRAINING METHODOLOGY
+          7-step visual timeline: live lecture → analysis → study → lab →
+          assignment → mock test → exam prep.
+          Horizontal on desktop, vertical on mobile.
+          ===================================================== */}
+      <section
+        aria-labelledby="methodology-heading"
+        className="relative py-8 lg:py-12 overflow-hidden"
+      >
+        <div className="absolute inset-0 bg-grid opacity-[0.04] pointer-events-none" aria-hidden />
+        <div
+          className="absolute right-1/3 top-1/4 size-[400px] rounded-full bg-cyan-500/5 blur-[120px] pointer-events-none"
+          aria-hidden
+        />
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <motion.div {...FADE_UP} className="max-w-2xl mb-8">
+            <p className="text-[10px] font-mono text-violet-300/80 tracking-[0.25em] mb-2">
+              TRAINING METHODOLOGY
+            </p>
+            <h2
+              id="methodology-heading"
+              className="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-[-0.02em] mb-3 text-balance"
+            >
+              How GuardianX trains you.
+            </h2>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Every batch follows the same 7-step framework — from live lecture
+              to exam day. No fluff, no padding — just structured progression
+              that gets you certified.
+            </p>
+          </motion.div>
+
+          {/* Desktop: horizontal timeline */}
+          <div className="hidden lg:block relative">
+            <div
+              className="absolute top-[34px] left-[8%] right-[8%] h-px bg-gradient-to-r from-violet-500/0 via-violet-500/40 to-violet-500/0"
+              aria-hidden
+            />
+            <div className="grid grid-cols-7 gap-3">
+              {METHODOLOGY_STEPS.map((step, i) => (
+                <motion.div
+                  key={step.num}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.35, delay: 0.05 * i, ease: "easeOut" }}
+                  className="relative text-center"
+                >
+                  <div className="mx-auto mb-3 flex size-[68px] items-center justify-center rounded-full border border-violet-500/30 bg-card relative z-10">
+                    <step.icon className="size-6 text-violet-300" aria-hidden />
+                  </div>
+                  <div className="font-mono text-[10px] text-violet-300/80 tracking-wider mb-1">
+                    STEP {step.num}
+                  </div>
+                  <h3 className="text-xs font-semibold mb-1">{step.title}</h3>
+                  <p className="text-[10px] text-muted-foreground leading-relaxed">
+                    {step.desc}
+                  </p>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+
+          {/* Mobile / tablet: vertical timeline */}
+          <div className="lg:hidden space-y-2">
+            {METHODOLOGY_STEPS.map((step, i) => (
+              <motion.div
+                key={step.num}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.04 * i, ease: "easeOut" }}
+                className="flex gap-4"
+              >
+                <div className="flex flex-col items-center">
+                  <div className="flex size-12 items-center justify-center rounded-full border border-violet-500/30 bg-card shrink-0">
+                    <step.icon className="size-5 text-violet-300" aria-hidden />
+                  </div>
+                  {i < METHODOLOGY_STEPS.length - 1 && (
+                    <div className="w-px flex-1 bg-violet-500/20 mt-2 mb-2" aria-hidden />
+                  )}
+                </div>
+                <div className="pt-1 pb-3">
+                  <div className="font-mono text-[10px] text-violet-300/80 tracking-wider mb-1">
+                    STEP {step.num}
+                  </div>
+                  <h3 className="text-sm font-semibold mb-1">{step.title}</h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    {step.desc}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* =====================================================
+          NEW SECTION — EXPERT INSTRUCTORS
+          3 verified instructor profile cards.
+          ===================================================== */}
+      <section
+        aria-labelledby="instructors-heading"
+        className="relative py-8 lg:py-12"
+      >
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <motion.div {...FADE_UP} className="max-w-2xl mb-6">
+            <p className="text-[10px] font-mono text-violet-300/80 tracking-[0.25em] mb-2">
+              EXPERT INSTRUCTORS
+            </p>
+            <h2
+              id="instructors-heading"
+              className="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-[-0.02em] mb-3 text-balance"
+            >
+              Learn from people who have{" "}
+              <span className="text-gradient-premium">done the work.</span>
+            </h2>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Our instructors are working security professionals with real-world
+              experience — not just certifications. Every profile is verified by
+              the GuardianX team.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-5">
+            {INSTRUCTORS.map((ins, i) => (
+              <motion.div
+                key={ins.name}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.05 * i, ease: "easeOut" }}
+                className="card-premium rounded-2xl p-5 lg:p-6 h-full flex flex-col"
+              >
+                {/* Avatar + name */}
+                <div className="flex items-start gap-4 mb-4">
+                  <div
+                    className={cn(
+                      "flex size-14 items-center justify-center rounded-full font-semibold text-base shrink-0",
+                      ins.avatarBg,
+                      ins.avatarColor
+                    )}
+                    aria-hidden
+                  >
+                    {ins.initials}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <h3 className="text-base font-semibold truncate">{ins.name}</h3>
+                      <BadgeCheck
+                        className="size-4 text-emerald-400 shrink-0"
+                        aria-label="Verified instructor"
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">{ins.expertise}</p>
+                  </div>
+                </div>
+
+                {/* Meta rows */}
+                <dl className="space-y-2 mb-4">
+                  <div className="flex items-center justify-between text-xs">
+                    <dt className="text-muted-foreground">Experience</dt>
+                    <dd className="font-medium">{ins.experience}</dd>
+                  </div>
+                  <div className="flex items-center justify-between text-xs gap-3">
+                    <dt className="text-muted-foreground shrink-0">Certifications</dt>
+                    <dd className="font-mono text-[10px] text-right text-foreground/90">
+                      {ins.certs}
+                    </dd>
+                  </div>
+                </dl>
+
+                {/* VERIFIED badge */}
+                <div className="mb-4 flex items-center gap-1.5 text-[10px] font-mono text-emerald-400 tracking-wider">
+                  <BadgeCheck className="size-3" aria-hidden />
+                  VERIFIED INSTRUCTOR PROFILE
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full mt-auto"
+                  aria-label={`View ${ins.name} instructor profile`}
+                >
+                  VIEW INSTRUCTOR
+                  <ArrowRight className="size-4 ml-2" aria-hidden />
+                </Button>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
@@ -2068,3 +2500,258 @@ const FALLBACK_PARTNERS: TechnologyPartner[] = [
   { id: "fb-hydra", name: "Hydra", category: "tool", description: "Fast network logon cracker supporting many protocols.", url: "https://github.com/vanhauser-thc/thc-hydra", icon: "Fingerprint", order: 11, published: true },
   { id: "fb-gobuster", name: "Gobuster", category: "tool", description: "Directory/file/DNS brute-forcer used in recon labs.", url: "https://github.com/OJ/gobuster", icon: "FolderSearch", order: 12, published: true },
 ]
+
+/* ---------------------------------------------------------------- *
+ *  New training-restructure sections — static demo data.           *
+ *  These arrays back the WHO WE TRAIN, UPCOMING BATCHES,           *
+ *  FLEXIBLE SCHEDULES, TRAINING METHODOLOGY, and EXPERT            *
+ *  INSTRUCTORS sections. Will be DB-driven in a later task.        *
+ * ---------------------------------------------------------------- */
+
+const AUDIENCES = [
+  {
+    icon: GraduationCap,
+    title: "Aspirants",
+    desc: "Preparing for certifications or entering cybersecurity.",
+    color: "text-violet-300",
+    tint: "bg-violet-500/10",
+  },
+  {
+    icon: Rocket,
+    title: "Freshers",
+    desc: "Beginning their cybersecurity careers.",
+    color: "text-cyan-300",
+    tint: "bg-cyan-500/10",
+  },
+  {
+    icon: Briefcase,
+    title: "Working Professionals",
+    desc: "Upskilling around work schedules.",
+    color: "text-amber-300",
+    tint: "bg-amber-500/10",
+  },
+  {
+    icon: Building2,
+    title: "Institutions",
+    desc: "Schools, colleges, universities, organizations.",
+    color: "text-emerald-300",
+    tint: "bg-emerald-500/10",
+  },
+] as const
+
+/**
+ * Upcoming live instructor-led certification batches.
+ *
+ * Level → color coding:
+ *   Beginner     → emerald (easy, green)
+ *   Intermediate → amber   (medium)
+ *   Advanced     → rose    (hard)
+ */
+const UPCOMING_BATCHES = [
+  {
+    certification: "CompTIA Security+",
+    name: "Security+ Weekend Batch",
+    schedule: "Sat + Sun, 7:00 PM – 9:00 PM IST",
+    startDate: "October 12",
+    mode: "Live Online",
+    instructor: "Senior Cybersecurity Instructor",
+    seats: 12,
+    almostFull: false,
+    level: "Beginner",
+    certColor: "text-emerald-300",
+    certTint: "bg-emerald-500/15",
+    certBorder: "border-emerald-500/30",
+    levelColor: "text-emerald-300",
+    levelTint: "bg-emerald-500/10",
+    levelBorder: "border-emerald-500/30",
+    borderColor: "border-border/60 hover:border-emerald-500/40 hover:shadow-[0_20px_60px_-20px_oklch(0.65_0.15_155_/_0.25)]",
+    btnClass: "bg-emerald-600 hover:bg-emerald-500",
+  },
+  {
+    certification: "CEH (Certified Ethical Hacker)",
+    name: "CEH Weekday Evening",
+    schedule: "Mon-Wed-Fri, 8:00 PM – 10:00 PM IST",
+    startDate: "October 20",
+    mode: "Live Online",
+    instructor: "Dr. Sarah Chen",
+    seats: 8,
+    almostFull: false,
+    level: "Intermediate",
+    certColor: "text-amber-300",
+    certTint: "bg-amber-500/15",
+    certBorder: "border-amber-500/30",
+    levelColor: "text-amber-300",
+    levelTint: "bg-amber-500/10",
+    levelBorder: "border-amber-500/30",
+    borderColor: "border-border/60 hover:border-amber-500/40 hover:shadow-[0_20px_60px_-20px_oklch(0.7_0.15_70_/_0.25)]",
+    btnClass: "bg-amber-600 hover:bg-amber-500",
+  },
+  {
+    certification: "CCNA",
+    name: "CCNA Morning Batch",
+    schedule: "Tue-Thu, 7:00 AM – 9:00 AM IST",
+    startDate: "November 03",
+    mode: "Live Online",
+    instructor: "Raj Patel",
+    seats: 15,
+    almostFull: false,
+    level: "Beginner",
+    certColor: "text-cyan-300",
+    certTint: "bg-cyan-500/15",
+    certBorder: "border-cyan-500/30",
+    levelColor: "text-emerald-300",
+    levelTint: "bg-emerald-500/10",
+    levelBorder: "border-emerald-500/30",
+    borderColor: "border-border/60 hover:border-cyan-500/40 hover:shadow-[0_20px_60px_-20px_oklch(0.7_0.15_220_/_0.25)]",
+    btnClass: "bg-cyan-600 hover:bg-cyan-500",
+  },
+  {
+    certification: "CISSP",
+    name: "CISSP Weekend Intensive",
+    schedule: "Sat-Sun, 10:00 AM – 1:00 PM IST",
+    startDate: "November 09",
+    mode: "Live Online",
+    instructor: "Alex Mercer",
+    seats: 5,
+    almostFull: true,
+    level: "Advanced",
+    certColor: "text-rose-300",
+    certTint: "bg-rose-500/15",
+    certBorder: "border-rose-500/30",
+    levelColor: "text-rose-300",
+    levelTint: "bg-rose-500/10",
+    levelBorder: "border-rose-500/30",
+    borderColor: "border-border/60 hover:border-rose-500/40 hover:shadow-[0_20px_60px_-20px_oklch(0.65_0.2_15_/_0.25)]",
+    btnClass: "bg-rose-600 hover:bg-rose-500",
+  },
+] as const
+
+const SCHEDULES = [
+  {
+    icon: CalendarDays,
+    type: "WEEKDAY",
+    example: "Mon-Wed-Fri · 8:00 PM – 10:00 PM",
+    color: "text-violet-300",
+    tint: "bg-violet-500/10",
+  },
+  {
+    icon: CalendarCheck,
+    type: "WEEKEND",
+    example: "Sat + Sun · 10:00 AM – 1:00 PM",
+    color: "text-cyan-300",
+    tint: "bg-cyan-500/10",
+  },
+  {
+    icon: Sun,
+    type: "MORNING",
+    example: "Tue-Thu · 7:00 AM – 9:00 AM",
+    color: "text-amber-300",
+    tint: "bg-amber-500/10",
+  },
+  {
+    icon: SunMedium,
+    type: "AFTERNOON",
+    example: "Mon-Wed · 2:00 PM – 4:00 PM",
+    color: "text-emerald-300",
+    tint: "bg-emerald-500/10",
+  },
+  {
+    icon: Sunset,
+    type: "EVENING",
+    example: "Mon-Fri · 7:00 PM – 9:00 PM",
+    color: "text-rose-300",
+    tint: "bg-rose-500/10",
+  },
+  {
+    icon: Moon,
+    type: "LATE NIGHT",
+    example: "Mon-Thu · 10:00 PM – 12:00 AM",
+    color: "text-teal-300",
+    tint: "bg-teal-500/10",
+  },
+] as const
+
+/**
+ * 7-step training methodology — the GuardianX framework that every
+ * certification batch follows end-to-end. This sequence is one of the
+ * platform's defining visual elements.
+ */
+const METHODOLOGY_STEPS = [
+  {
+    num: "01",
+    icon: Video,
+    title: "LIVE LECTURE",
+    desc: "Instructor-led live sessions covering theory, real-world cases, and exam blueprints.",
+  },
+  {
+    num: "02",
+    icon: Microscope,
+    title: "IN-DEPTH ANALYSIS",
+    desc: "Break down each topic with worked examples, threat models, and lab walkthroughs.",
+  },
+  {
+    num: "03",
+    icon: FileText,
+    title: "STUDY MATERIAL",
+    desc: "Downloadable PDFs, on-the-go notes, and structured reference material for every lesson.",
+  },
+  {
+    num: "04",
+    icon: FlaskConical,
+    title: "HANDS-ON LAB",
+    desc: "Spin up isolated targets and apply every concept in a real cyber range environment.",
+  },
+  {
+    num: "05",
+    icon: ClipboardList,
+    title: "ASSIGNMENT",
+    desc: "Practical assignments graded by instructors with personalized written feedback.",
+  },
+  {
+    num: "06",
+    icon: FileQuestion,
+    title: "MOCK TEST",
+    desc: "Full-length mock exams that mirror the real certification format and timing.",
+  },
+  {
+    num: "07",
+    icon: Award,
+    title: "EXAM PREPARATION",
+    desc: "Final revision, exam strategy, and confidence drills to walk into test day ready.",
+  },
+] as const
+
+/**
+ * Verified instructor profiles — these are real instructor records from
+ * the GuardianX DB. Shown here as a static showcase; will be wired to
+ * /api/instructors in a later task.
+ */
+const INSTRUCTORS = [
+  {
+    name: "Dr. Sarah Chen",
+    initials: "SC",
+    expertise: "Penetration Testing, Web Security",
+    experience: "12+ years",
+    certs: "CEH, OSCP, CISSP",
+    avatarBg: "bg-violet-500/15",
+    avatarColor: "text-violet-300",
+  },
+  {
+    name: "Raj Patel",
+    initials: "RP",
+    expertise: "Network Security, SOC",
+    experience: "8+ years",
+    certs: "CCNA, CCNP, GCIA",
+    avatarBg: "bg-cyan-500/15",
+    avatarColor: "text-cyan-300",
+  },
+  {
+    name: "Alex Mercer",
+    initials: "AM",
+    expertise: "Cloud Security, GRC",
+    experience: "15+ years",
+    certs: "CISSP, CCSP, CISM",
+    avatarBg: "bg-amber-500/15",
+    avatarColor: "text-amber-300",
+  },
+] as const

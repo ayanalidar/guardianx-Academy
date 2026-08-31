@@ -14,6 +14,7 @@ import { InstitutionsCollegesView } from "@/views/institutions-colleges"
 import { InstitutionsUniversitiesView } from "@/views/institutions-universities"
 import { DashboardView } from "@/views/dashboard"
 import { CourseCatalogView } from "@/views/course-catalog"
+import { BatchesView } from "@/views/batches"
 import { CourseDetailView } from "@/views/course-detail"
 import { LessonView } from "@/views/lesson-view"
 import { MyLearningView } from "@/views/my-learning"
@@ -60,7 +61,7 @@ const CourseStudioView = dynamic(() => import("@/views/course-studio").then(m =>
 const PUBLIC_VIEWS = new Set([
   "home", "impact", "contact", "institutions", "institutions-schools",
   "institutions-colleges", "institutions-universities",
-  "catalog", "course", "cyber-range", "learning-paths", "skill-tree",
+  "catalog", "batches", "course", "cyber-range", "learning-paths", "skill-tree",
 ])
 
 function ViewRouter() {
@@ -77,6 +78,7 @@ function ViewRouter() {
       {view.name === "institutions-universities" && <InstitutionsUniversitiesView />}
       {view.name === "dashboard" && <DashboardView />}
       {view.name === "catalog" && <CourseCatalogView />}
+      {view.name === "batches" && <BatchesView />}
       {view.name === "course" && <CourseDetailView />}
       {view.name === "lesson" && <LessonView />}
       {view.name === "learning" && <MyLearningView />}

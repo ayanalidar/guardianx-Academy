@@ -3104,3 +3104,86 @@ Stage Summary:
 - 9 new APIs serve real data to frontend
 - Footer rebuilt with proper 6-column structure
 - Platform is truthful — no fake statistics, no fake partners, no fake claims
+
+---
+Task ID: TRAINING-RESTRUCTURE
+Agent: main (Z.ai Code orchestrator)
+Task: Restructure the homepage hero and add 5 new training-focused sections (Who We Train, Upcoming Batches, Flexible Schedules, Training Methodology, Expert Instructors). Build a new dedicated `batches` view with filters + request-a-batch CTA. Wire the new view into the SPA router and public-views set.
+
+Work Log:
+
+**1. Hero updated (`src/views/home.tsx` Section 1)** — Six changes:
+- Headline: `Learn cybersecurity by actually breaking things.` → `Master cybersecurity with expert instructors.` ("expert instructors" wrapped in `text-gradient-premium`). Implemented via the existing `heroTitlePrefix` / `heroTitleAccent` CMS-content split with new fallbacks.
+- Description: → `Learn cybersecurity through live instructor-led training, hands-on labs, structured certification batches, expert study materials and real-world practice.`
+- Primary CTA: `START LEARNING` → `EXPLORE TRAINING`, target `login` → `catalog`.
+- Secondary CTA: `EXPLORE CYBER RANGE` → `VIEW UPCOMING BATCHES`, target `cyber-range` → `batches`.
+- New third CTA: `FOR INSTITUTIONS` → navigates to `{ name: "institutions-schools" }` (ghost button, muted foreground).
+- Live indicators: `LABS ONLINE` / `CTF ACTIVE` / learner-count strip → `BATCHES OPEN` / `LIVE SESSIONS` / `12 EXPERT INSTRUCTORS`.
+- ParticleLogo on the right is untouched.
+
+Removed the previous auth-aware hero CTA logic (the `useQuery("/api/auth/session")` call with queryKey `home-auth-session`, the `isLoggedIn` derived flag, the `liveLearnerCount` memo, the `SessionData` interface, and the four `hero{Primary,Secondary}{Label,Target}` variables). The hero CTAs are now fixed to the discovery flows specified in the task brief. The `statsData` query is preserved because it still powers the trust-stats section.
+
+**2. WHO WE TRAIN section added** (`src/views/home.tsx`) — 4 audience cards in a 1/2/4-col responsive grid (Aspirants / Freshers / Working Professionals / Institutions) with `GraduationCap / Rocket / Briefcase / Building2` icons. Each card uses `card-premium rounded-xl p-5 lg:p-6` and the same violet / cyan / amber / emerald tint system used elsewhere on the page.
+
+**3. UPCOMING BATCHES section added** (`src/views/home.tsx`) — 4 batch cards in a 1/2-col grid with the exact 4 batches specified in the task brief:
+  - CompTIA Security+ — Security+ Weekend Batch — Sat+Sun 7–9 PM IST — Oct 12 — 12 seats — Beginner
+  - CEH — CEH Weekday Evening — Mon-Wed-Fri 8–10 PM IST — Oct 20 — 8 seats — Intermediate
+  - CCNA — CCNA Morning Batch — Tue-Thu 7–9 AM IST — Nov 03 — 15 seats — Beginner
+  - CISSP — CISSP Weekend Intensive — Sat-Sun 10 AM–1 PM IST — Nov 09 — 5 seats (Almost Full) — Advanced
+
+Each card shows certification badge, batch name, schedule, start date, mode, instructor, seats, level, and a `VIEW BATCH` button. Difficulty color coding: Beginner→emerald, Intermediate→amber, Advanced→rose. Hover state lifts the card and adds a colored shadow. The CISSP card surfaces an amber "Almost Full" label. A "See all upcoming batches" button below the grid navigates to the new batches view.
+
+**4. FLEXIBLE SCHEDULES section added** (`src/views/home.tsx`) — 6 schedule-option cards in a 2/3-col grid: WEEKDAY (CalendarDays), WEEKEND (CalendarCheck), MORNING (Sun), AFTERNOON (SunMedium), EVENING (Sunset), LATE NIGHT (Moon). Each card shows an example time slot. Heading: "Train around your life."
+
+**5. TRAINING METHODOLOGY section added** (`src/views/home.tsx`) — 7-step timeline:
+  01 LIVE LECTURE (Video) → 02 IN-DEPTH ANALYSIS (Microscope) → 03 STUDY MATERIAL (FileText) → 04 HANDS-ON LAB (FlaskConical) → 05 ASSIGNMENT (ClipboardList) → 06 MOCK TEST (FileQuestion) → 07 EXAM PREPARATION (Award).
+
+Desktop (`lg:`): horizontal timeline with a gradient connecting line behind 7 circular icon nodes in a 7-col grid. Mobile/tablet: vertical timeline with vertical line segments between nodes. Each step shows number, icon, title, and description. Heading: "How GuardianX trains you."
+
+**6. EXPERT INSTRUCTORS section added** (`src/views/home.tsx`) — 3 verified instructor cards in a 1/3-col grid:
+  - Dr. Sarah Chen — Penetration Testing, Web Security — 12+ years — CEH, OSCP, CISSP (violet avatar)
+  - Raj Patel — Network Security, SOC — 8+ years — CCNA, CCNP, GCIA (cyan avatar)
+  - Alex Mercer — Cloud Security, GRC — 15+ years — CISSP, CCSP, CISM (amber avatar)
+
+Each card: colored circular avatar with initials, name with a `BadgeCheck` icon, expertise line, experience, certifications, a "VERIFIED INSTRUCTOR PROFILE" footer badge (per the task spec), and a `VIEW INSTRUCTOR` outline button. Heading: "Learn from people who have done the work."
+
+**7. Static data arrays appended** at the end of `home.tsx` (after `FALLBACK_PARTNERS`): `AUDIENCES` (4), `UPCOMING_BATCHES` (4 with full color coding), `SCHEDULES` (6), `METHODOLOGY_STEPS` (7), `INSTRUCTORS` (3). All marked with a comment that they will be DB-driven in a later task.
+
+**8. `BatchesView` created** (`src/views/batches.tsx`, new file) — dedicated batches discovery page with four sections:
+  - **Hero**: back-to-home button, "LIVE INSTRUCTOR-LED BATCHES" eyebrow, "Upcoming Certification Batches" headline (with "Certification Batches" in `text-gradient-premium`), description "Live instructor-led training with flexible schedules", live-status strip mirroring the homepage hero (BATCHES OPEN / LIVE SESSIONS / 12 EXPERT INSTRUCTORS).
+  - **Filters**: 4 filter groups in a 1/2/4-col grid:
+    - Certification: native `<select>` (All / Security+ / CEH / CCNA / CISSP)
+    - Schedule: 6 toggle pills (All / Weekday / Weekend / Morning / Evening / Late Night) with icons
+    - Mode: 3 toggle pills (All / Live Online / On-Campus) with icons
+    - Level: 4 toggle pills (All / Beginner / Intermediate / Advanced)
+    
+    An "X active" badge appears when any filter is set, with a "Clear filters" button. Filter state managed with `useState`; the filtered list is memoized. Includes an empty-state card with a "Clear all filters" button when no batches match.
+  - **Batch Grid**: same 4 batches from the homepage, rendered as detailed cards (same visual design). Each card has an "ENROLL NOW" button that navigates to the contact view. Shows "Showing X of Y upcoming batches" above the grid.
+  - **CTA**: "Don't see your batch?" section with a "REQUEST A BATCH" button (navigates to `contact`) and a "BROWSE ALL COURSES" button (navigates to `catalog`). Includes a "Custom batches available worldwide · Online & on-campus" footnote.
+
+**9. View wired into the SPA router**:
+  - `src/store/app-store.ts` — added `| { name: "batches" }` to the `View` union type (after `catalog`).
+  - `src/app/page.tsx` — imported `BatchesView` (static import — matches the pattern for `CourseCatalogView`, `ImpactView`, etc. since batches is a public-facing page that should SSR). Added `"batches"` to the `PUBLIC_VIEWS` set (between `catalog` and `course`). Added `{view.name === "batches" && <BatchesView />}` to `ViewRouter`.
+
+**10. Lint** — `bun run lint` exit code **0** (0 errors, 0 warnings).
+
+Files modified:
+- `src/store/app-store.ts` — added `{ name: "batches" }` view type
+- `src/app/page.tsx` — imported `BatchesView`, added to `PUBLIC_VIEWS`, added to `ViewRouter`
+- `src/views/home.tsx` — updated hero (headline / description / 3 CTAs / live indicators), removed auth-aware CTA logic, added 5 new sections (Who We Train / Upcoming Batches / Flexible Schedules / Training Methodology / Expert Instructors), added 5 new static data arrays at the end
+
+Files created:
+- `src/views/batches.tsx` — new `BatchesView` (hero + filters + batch grid + request CTA)
+- `agent-ctx/TRAINING-RESTRUCTURE-main.md` — work record
+
+Files NOT modified:
+- All 13 existing homepage sections are untouched (Platform Intro, Cyber Range, Learning Paths, Skill Tree, Mission Control, Gamification, Career Center, Institutions, Certifications, Success Stories, Trust / Partners, Final CTA).
+- No Prisma schema, no API routes, no other views touched.
+- No existing functionality broken — the hero CTAs are simply pointed at the new `batches` view (and `catalog` / `institutions-schools` which already existed). The auth-aware CTA logic was only used in the hero, so removing it has no effect on the rest of the app.
+
+Stage Summary:
+- Homepage hero restructured around training discovery (Explore Training / View Upcoming Batches / For Institutions) with batch-focused live indicators.
+- 5 new homepage sections inserted between the hero and the platform intro: Who We Train (4 audience cards), Upcoming Batches (4 live batch cards with difficulty color coding), Flexible Schedules (6 schedule-option cards), Training Methodology (7-step horizontal/vertical timeline), Expert Instructors (3 verified instructor cards).
+- New dedicated `batches` view at `/` (view name `batches`) with hero, 4 filter groups (Certification / Schedule / Mode / Level), detailed batch grid, and a "REQUEST A BATCH" CTA that routes to the contact view.
+- Wired into the SPA router, public-views set, and Zustand view union.
+- Lint result: 0 errors, 0 warnings.

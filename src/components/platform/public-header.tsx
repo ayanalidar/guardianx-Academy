@@ -6,6 +6,7 @@ import {
   FlaskConical, BookOpen, Route, Trophy, Briefcase, Search, Target,
   FileText, School, Building, Landmark, ShieldCheck, Award,
   TrendingUp, Mail, Menu, ChevronDown, Sun, Moon, LogIn,
+  CalendarCheck, Terminal, Shield,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet"
@@ -43,32 +44,62 @@ interface MegaMenuGroup {
 
 const MEGA_MENU_GROUPS: MegaMenuGroup[] = [
   {
-    id: "product",
-    label: "Product",
+    id: "learn",
+    label: "Learn",
     items: [
-      {
-        icon: FlaskConical,
-        title: "Cyber Range",
-        description: "Live virtual targets & hands-on hacking labs",
-        view: { name: "labs" },
-      },
       {
         icon: BookOpen,
         title: "Courses",
-        description: "28+ certification courses — CEH to CISSP",
+        description: "Certification courses — CEH to CISSP",
         view: { name: "catalog" },
+      },
+      {
+        icon: CalendarCheck,
+        title: "Upcoming Batches",
+        description: "Live instructor-led certification batches",
+        view: { name: "batches" },
       },
       {
         icon: Route,
         title: "Learning Paths",
         description: "Curated tracks from beginner to job-ready",
-        view: { name: "catalog" },
+        view: { name: "learning-paths" },
+      },
+      {
+        icon: Shield,
+        title: "Skill Tree",
+        description: "Map your cybersecurity skills",
+        view: { name: "skill-tree" },
+      },
+    ],
+  },
+  {
+    id: "practice",
+    label: "Practice",
+    items: [
+      {
+        icon: FlaskConical,
+        title: "Cyber Range",
+        description: "Live virtual targets & hands-on hacking",
+        view: { name: "cyber-range" },
+      },
+      {
+        icon: Terminal,
+        title: "Labs",
+        description: "31 Docker-powered practice labs",
+        view: { name: "labs" },
       },
       {
         icon: Trophy,
         title: "CTF Arena",
         description: "Compete in capture-the-flag challenges",
         view: { name: "ctf-platform" },
+      },
+      {
+        icon: Target,
+        title: "Weekly Challenges",
+        description: "New security challenges every week",
+        view: { name: "weekly-challenges" },
       },
     ],
   },
@@ -78,21 +109,21 @@ const MEGA_MENU_GROUPS: MegaMenuGroup[] = [
     items: [
       {
         icon: Briefcase,
-        title: "Career Center",
+        title: "Career Paths",
         description: "Plan your path from learner to hire",
         view: { name: "career-planner" },
       },
       {
-        icon: Search,
-        title: "Job Board",
-        description: "Curated cybersecurity job openings",
-        view: { name: "job-board" },
-      },
-      {
         icon: Target,
-        title: "Skill Assessments",
+        title: "Skill Assessment",
         description: "Test your skills against real scenarios",
         view: { name: "skill-assessments" },
+      },
+      {
+        icon: Award,
+        title: "Certifications",
+        description: "Verifiable digital credentials",
+        view: { name: "certificates" },
       },
       {
         icon: FileText,
@@ -109,38 +140,20 @@ const MEGA_MENU_GROUPS: MegaMenuGroup[] = [
       {
         icon: School,
         title: "Schools",
-        description: "Bring cyber education to K-12 classrooms",
+        description: "K-12 cyber education with SMS",
         view: { name: "institutions-schools" },
       },
       {
         icon: Building,
         title: "Colleges",
-        description: "Diploma programs & credit-bearing courses",
+        description: "Certification training & ERP integration",
         view: { name: "institutions-colleges" },
       },
       {
         icon: Landmark,
         title: "Universities",
-        description: "Degree-level curricula & research labs",
+        description: "Degree programs & research labs",
         view: { name: "institutions-universities" },
-      },
-    ],
-  },
-  {
-    id: "certifications",
-    label: "Certifications",
-    items: [
-      {
-        icon: ShieldCheck,
-        title: "Verify Certificate",
-        description: "Confirm any GuardianX credential by ID",
-        view: { name: "home" },
-      },
-      {
-        icon: Award,
-        title: "Certificate Templates",
-        description: "Browse industry-recognized cert designs",
-        view: { name: "home" },
       },
     ],
   },
@@ -157,7 +170,7 @@ const MEGA_MENU_GROUPS: MegaMenuGroup[] = [
       {
         icon: Mail,
         title: "Contact",
-        description: "Reach the GuardianX team for anything",
+        description: "Reach the GuardianX team",
         view: { name: "contact" },
       },
     ],

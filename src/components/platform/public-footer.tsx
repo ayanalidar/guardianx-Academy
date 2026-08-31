@@ -24,9 +24,9 @@ export function PublicFooter() {
       title: "LEARN",
       links: [
         { label: "Courses", view: { name: "catalog" as const } },
+        { label: "Upcoming Batches", view: { name: "batches" as const } },
         { label: "Learning Paths", view: { name: "learning-paths" as const } },
         { label: "Skill Tree", view: { name: "skill-tree" as const } },
-        { label: "Resources", view: { name: "home" as const } },
       ],
     },
     {
@@ -39,25 +39,24 @@ export function PublicFooter() {
       ],
     },
     {
+      title: "INSTITUTIONS",
+      links: [
+        { label: "Schools", view: { name: "institutions-schools" as const } },
+        { label: "Colleges & Universities", view: { name: "institutions-colleges" as const } },
+        { label: "Institution Portal", view: { name: "login" as const } },
+      ],
+    },
+    {
       title: "CAREER",
       links: [
         { label: "Career Paths", view: { name: "career-planner" as const } },
         { label: "Skill Assessment", view: { name: "skill-assessments" as const } },
         { label: "Certifications", view: { name: "certificates" as const } },
-        { label: "Verification", view: { name: "home" as const } },
+        { label: "Resume Builder", view: { name: "resume-builder" as const } },
       ],
     },
     {
-      title: "INSTITUTIONS",
-      links: [
-        { label: "Schools", view: { name: "institutions-schools" as const } },
-        { label: "Colleges", view: { name: "institutions-colleges" as const } },
-        { label: "Universities", view: { name: "institutions-universities" as const } },
-        { label: "Institution Portal", view: { name: "login" as const } },
-      ],
-    },
-    {
-      title: "COMPANY",
+      title: "GUARDIANX",
       links: [
         { label: "About", view: { name: "impact" as const } },
         { label: "Impact", view: { name: "impact" as const } },
@@ -66,12 +65,12 @@ export function PublicFooter() {
       ],
     },
     {
-      title: "RESOURCES",
+      title: "SUPPORT",
       links: [
-        { label: "Guides", view: { name: "catalog" as const } },
-        { label: "Documentation", view: { name: "catalog" as const } },
-        { label: "Events", view: { name: "home" as const } },
         { label: "FAQ", view: { name: "contact" as const } },
+        { label: "Help Center", view: { name: "contact" as const } },
+        { label: "Terms", view: { name: "home" as const } },
+        { label: "Privacy", view: { name: "home" as const } },
       ],
     },
   ]

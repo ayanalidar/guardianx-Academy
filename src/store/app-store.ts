@@ -13,6 +13,7 @@ export type View =
   | { name: "institutions-universities" }
   | { name: "dashboard" }
   | { name: "catalog" }
+  | { name: "batches" }
   | { name: "course"; courseId: string }
   | { name: "lesson"; lessonId: string; courseId: string }
   | { name: "learning" }

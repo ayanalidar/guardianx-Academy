@@ -32,7 +32,7 @@ interface CertItem {
   course: { id: string; title: string; shortName: string; certBody: string; instructor: { name: string } }
 }
 
-// Skills that GuardianX certificates verify — derived from course catalog.
+// Skills that GuardianX certificates verify - derived from course catalog.
 const SKILLS_VERIFIED = [
   "Network Security", "Ethical Hacking", "Penetration Testing",
   "IAM & PAM", "Cloud Security", "Incident Response",
@@ -77,7 +77,7 @@ export function CertificatesView() {
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
         {/* ====================================================
-            HEADER — "Prove what you know."
+            HEADER - "Prove what you know."
             ==================================================== */}
         <ScrollReveal>
           <div className="flex items-center gap-3 mb-6">
@@ -117,7 +117,7 @@ export function CertificatesView() {
         ) : (
           <>
             {/* ====================================================
-                STATS STRIP — Total / Verifications / Skills Verified
+                STATS STRIP - Total / Verifications / Skills Verified
                 ==================================================== */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
               {[
@@ -181,7 +181,7 @@ export function CertificatesView() {
             </section>
 
             {/* ====================================================
-                Footer CTA — Skills verified grid
+                Footer CTA - Skills verified grid
                 ==================================================== */}
             <ScrollReveal delay={0.2}>
               <div className="mt-16 grid lg:grid-cols-2 gap-6">
@@ -236,7 +236,7 @@ export function CertificatesView() {
 }
 
 /* ============================================================
-   EmptyVaultState — premium empty state
+   EmptyVaultState - premium empty state
    ============================================================ */
 function EmptyVaultState() {
   const { navigate } = useAppStore()
@@ -277,7 +277,7 @@ function EmptyVaultState() {
 }
 
 /* ============================================================
-   CredentialCard — premium editorial credential card
+   CredentialCard - premium editorial credential card
    ============================================================ */
 function CredentialCard({
   cert,
@@ -297,7 +297,7 @@ function CredentialCard({
     <CursorGlow color="oklch(0.7 0.15 85 / 0.06)" className="group h-full">
       <article className="relative h-full overflow-hidden rounded-3xl border border-border/60 bg-card/30 transition-all duration-500 group-hover:border-amber-500/30 group-hover:shadow-[0_30px_80px_-30px] group-hover:shadow-amber-500/15 group-hover:-translate-y-1">
         {/* ====================================================
-            VISUAL BANNER — oversized course code + GUARDIANX logo
+            VISUAL BANNER - oversized course code + GUARDIANX logo
             ==================================================== */}
         <div className="relative h-56 lg:h-64 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-amber-950/40 via-violet-950/30 to-cyan-950/20" />
@@ -344,7 +344,7 @@ function CredentialCard({
         </div>
 
         {/* ====================================================
-            CERTIFICATE BODY — metadata rows
+            CERTIFICATE BODY - metadata rows
             ==================================================== */}
         <div className="p-6 lg:p-7">
           <p className="text-[10px] font-mono text-muted-foreground tracking-[0.3em] mb-2">
@@ -385,7 +385,7 @@ function CredentialCard({
             } />
           </div>
 
-          {/* Footer — actions */}
+          {/* Footer - actions */}
           <div className="flex items-center justify-between pt-5 border-t border-border/60">
             <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
               <Lock className="h-3 w-3 text-emerald-300" />
@@ -441,7 +441,7 @@ function MetaRow({ icon: Icon, label, value }: { icon: any; label: string; value
 }
 
 /* ============================================================
-   CertificatePreviewModal — large professional certificate view
+   CertificatePreviewModal - large professional certificate view
    ============================================================ */
 function CertificatePreviewModal({
   cert,
@@ -464,7 +464,7 @@ function CertificatePreviewModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl w-[95vw] bg-background border-amber-500/30 p-0 overflow-hidden">
         <DialogHeader className="sr-only">
-          <DialogTitle>Certificate Preview — {cert.course.title}</DialogTitle>
+          <DialogTitle>Certificate Preview - {cert.course.title}</DialogTitle>
           <DialogDescription>
             Detailed view of certificate {cert.certificateId} issued on{" "}
             {new Date(cert.issuedAt).toLocaleDateString()}.
@@ -510,7 +510,7 @@ function CertificatePreviewModal({
 
             {/* Content */}
             <div className="relative h-full flex flex-col items-center text-center px-6 sm:px-12 py-8">
-              {/* Header — logo + verified badge */}
+              {/* Header - logo + verified badge */}
               <div className="flex items-center justify-between w-full mb-4">
                 <div className="flex items-center gap-2">
                   <div className="inline-flex items-center justify-center size-9 rounded-md border border-amber-500/40 bg-amber-500/10">
@@ -548,7 +548,7 @@ function CertificatePreviewModal({
                   Issued by <span className="text-amber-300 font-medium">{cert.course.certBody || "GuardianX"}</span>
                 </p>
 
-                {/* Seal — circular emblem */}
+                {/* Seal - circular emblem */}
                 <div className="relative mb-6">
                   <div className="absolute inset-0 rounded-full bg-amber-500/20 blur-md" />
                   <div className="relative size-16 rounded-full border-2 border-amber-500/40 bg-amber-500/10 flex items-center justify-center">
@@ -565,7 +565,7 @@ function CertificatePreviewModal({
                 </div>
               </div>
 
-              {/* Footer — signature + QR + verification URL */}
+              {/* Footer - signature + QR + verification URL */}
               <div className="w-full grid grid-cols-3 items-end gap-3 mt-4 pt-4 border-t border-amber-500/20">
                 {/* Instructor signature */}
                 <div className="text-left">

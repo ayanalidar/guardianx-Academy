@@ -169,7 +169,7 @@ export function MessagingView() {
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
         {/* ====================================================
-            HEADER — oversized editorial
+            HEADER - oversized editorial
             ==================================================== */}
         <ScrollReveal>
           <div className="flex items-center gap-2 mb-4">
@@ -204,14 +204,14 @@ export function MessagingView() {
         </ScrollReveal>
 
         {/* ====================================================
-            TWO-PANE — premium glass
+            TWO-PANE - premium glass
             ==================================================== */}
         <ScrollReveal delay={0.2}>
           <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-card/20 backdrop-blur-xl grid md:grid-cols-[340px_1fr] h-[72vh] min-h-[520px]">
             {/* Top accent line */}
             <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-500/30 to-transparent z-20 pointer-events-none" />
 
-            {/* Left pane — thread list */}
+            {/* Left pane - thread list */}
             <section
               className={cn(
                 "border-r border-border/60 flex flex-col bg-background/20",
@@ -305,7 +305,7 @@ export function MessagingView() {
               </ScrollArea>
             </section>
 
-            {/* Right pane — active conversation */}
+            {/* Right pane - active conversation */}
             <section
               className={cn(
                 "flex flex-col",
@@ -465,7 +465,7 @@ function ConversationPane({
         ) : messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center text-sm text-muted-foreground relative">
             <Mail className="h-10 w-10 mb-3 opacity-50" />
-            No messages yet — say hello!
+            No messages yet - say hello!
           </div>
         ) : (
           grouped.map((group) => (

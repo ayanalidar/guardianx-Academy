@@ -4,7 +4,7 @@ import * as React from "react"
 import { motion, useScroll, useTransform, MotionValue } from "framer-motion"
 
 /**
- * NetworkVisualization — GuardianX signature visual element.
+ * NetworkVisualization - GuardianX signature visual element.
  * A living network graph representing threat intelligence / attack surfaces.
  * Appears differently across hero, sections, and footer.
  *
@@ -159,7 +159,7 @@ export function NetworkVisualization({
         const pulse = Math.sin(frame * 0.02 + i * 0.5) * 0.3 + 0.7
 
         if (n.type === "core") {
-          // Core nodes — violet with glow
+          // Core nodes - violet with glow
           const gradient = ctx.createRadialGradient(px, py, 0, px, py, n.radius * 4)
           gradient.addColorStop(0, `rgba(167, 139, 250, ${pulse * 0.8})`)
           gradient.addColorStop(0.5, `rgba(124, 58, 237, ${pulse * 0.3})`)
@@ -174,13 +174,13 @@ export function NetworkVisualization({
           ctx.arc(px, py, n.radius, 0, Math.PI * 2)
           ctx.fill()
         } else if (n.type === "satellite") {
-          // Satellite nodes — cyan
+          // Satellite nodes - cyan
           ctx.fillStyle = `rgba(103, 232, 249, ${pulse * 0.8})`
           ctx.beginPath()
           ctx.arc(px, py, n.radius, 0, Math.PI * 2)
           ctx.fill()
         } else {
-          // Regular nodes — subtle
+          // Regular nodes - subtle
           ctx.fillStyle = `rgba(148, 163, 184, ${pulse * 0.4})`
           ctx.beginPath()
           ctx.arc(px, py, n.radius, 0, Math.PI * 2)
@@ -201,7 +201,7 @@ export function NetworkVisualization({
     }
   }, [nodes, variant])
 
-  // Scroll-reactive transform — always call hooks unconditionally
+  // Scroll-reactive transform - always call hooks unconditionally
   const scale = useTransform(scrollProgress ?? { get: () => 0, on: () => () => {} } as any, [0, 1], [1, 1.15])
   const rotate = useTransform(scrollProgress ?? { get: () => 0, on: () => () => {} } as any, [0, 1], [0, 10])
 

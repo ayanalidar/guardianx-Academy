@@ -30,6 +30,7 @@ import { InstructorAssignmentView } from "@/views/admin-instructor-assignment"
 import { AuditLogView } from "@/views/admin-audit-log"
 import { PlatformHealthView } from "@/views/admin-platform-health"
 import { NotificationCenterView } from "@/views/admin-notifications"
+import { SupportView } from "@/views/support"
 import { CourseDetailView } from "@/views/course-detail"
 import { LessonView } from "@/views/lesson-view"
 import { MyLearningView } from "@/views/my-learning"
@@ -78,7 +79,7 @@ const PUBLIC_VIEWS = new Set([
   "home", "impact", "contact", "institutions", "institutions-schools",
   "institutions-colleges", "institutions-universities",
   "catalog", "batches", "course", "cyber-range", "learning-paths", "skill-tree",
-  "exams", "credentials",
+  "exams", "credentials", "support",
 ])
 
 function ViewRouter() {
@@ -110,6 +111,7 @@ function ViewRouter() {
       {view.name === "admin-audit-log" && <AuditLogView />}
       {view.name === "admin-platform-health" && <PlatformHealthView />}
       {view.name === "admin-notifications" && <NotificationCenterView />}
+      {view.name === "support" && <SupportView />}
       {view.name === "course" && <CourseDetailView />}
       {view.name === "lesson" && <LessonView />}
       {view.name === "learning" && <MyLearningView />}

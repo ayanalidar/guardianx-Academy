@@ -13,14 +13,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { cn } from "@/lib/utils"
 import {
   ArrowLeft, Calendar, ChevronLeft, ChevronRight, Clock,
-  Users, Video, MapPin, User, Plus, X,
+  Users, Video, MapPin, User, Plus, X, FileText,
 } from "lucide-react"
 import { toast } from "sonner"
 
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
-// Mock batch schedule data — in production this would come from /api/batches
+// Mock batch schedule data - in production this would come from /api/batches
 const BATCHES = [
   { id: 1, title: "CEH Weekend Batch", cert: "CEH", instructor: "Dr. Sarah Chen", days: [6, 0], time: "7:00 PM - 9:00 PM", mode: "Online", students: 12, startDate: "2025-10-12", color: "bg-violet-500" },
   { id: 2, title: "Security+ Weekday", cert: "Security+", instructor: "Raj Patel", days: [1, 3, 5], time: "8:00 PM - 10:00 PM", mode: "Online", students: 8, startDate: "2025-10-20", color: "bg-cyan-500" },
@@ -44,6 +44,7 @@ export function BatchCalendarView() {
   const [newBatch, setNewBatch] = React.useState({
     name: "", cert: "CEH", instructor: "", startDate: "",
     schedule: "Sat-Sun", time: "7:00 PM - 9:00 PM", mode: "Online", capacity: 20,
+    googleFormUrl: "",
   })
 
   function prevMonth() { setCurrentDate(new Date(year, month - 1, 1)) }
@@ -130,7 +131,7 @@ export function BatchCalendarView() {
                   <span className={cn("text-[10px] sm:text-xs", isToday ? "text-violet-300 font-bold" : "text-muted-foreground")}>{day}</span>
                   <div className="mt-1 space-y-0.5">
                     {starting.map(b => (
-                      <div key={`start-${b.id}`} className={cn("text-[8px] sm:text-[9px] px-1 py-0.5 rounded text-white font-medium truncate", b.color)} title={`${b.title} — STARTS TODAY`}>
+                      <div key={`start-${b.id}`} className={cn("text-[8px] sm:text-[9px] px-1 py-0.5 rounded text-white font-medium truncate", b.color)} title={`${b.title} - STARTS TODAY`}>
                         ▶ {b.cert}
                       </div>
                     ))}
@@ -204,7 +205,7 @@ export function BatchCalendarView() {
             <div className="space-y-4 py-2">
               <div>
                 <Label className="text-xs">Batch Name *</Label>
-                <Input value={newBatch.name} onChange={e => setNewBatch({ ...newBatch, name: e.target.value })} placeholder="e.g. CEH Weekend Batch — Nov 2025" />
+                <Input value={newBatch.name} onChange={e => setNewBatch({ ...newBatch, name: e.target.value })} placeholder="e.g. CEH Weekend Batch - Nov 2025" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -266,6 +267,42 @@ export function BatchCalendarView() {
                 </Select>
               </div>
             </div>
+
+            {/* Google Form Integration */}
+            <div className="rounded-lg border border-violet-500/20 bg-violet-500/5 p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <FileText className="h-3.5 w-3.5 text-violet-300" />
+                <span className="text-xs font-semibold text-violet-300">Google Form for Batch Enrollment</span>
+              </div>
+              <p className="text-[10px] text-muted-foreground mb-2">
+                Create a Google Form for this specific batch. Student submissions auto-sync to the CRM
+                with the batch name pre-filled.
+              </p>
+              <div className="flex items-center gap-2 mb-2">
+                <Input
+                  placeholder="Paste Google Form URL (optional)"
+                  value={newBatch.googleFormUrl}
+                  onChange={e => setNewBatch({ ...newBatch, googleFormUrl: e.target.value })}
+                  className="text-xs h-8"
+                />
+                <a href="https://forms.new" target="_blank" rel="noreferrer">
+                  <Button size="sm" variant="outline" className="h-8 text-xs shrink-0">
+                    <Plus className="h-3 w-3 mr-1" /> New Form
+                  </Button>
+                </a>
+              </div>
+              <details className="text-[10px] text-muted-foreground">
+                <summary className="cursor-pointer text-violet-300 hover:underline">View Apps Script for this batch</summary>
+                <pre className="mt-2 p-2 rounded bg-muted/30 text-[9px] font-mono overflow-x-auto">
+{`var WEBHOOK_URL = "https://academy.guardianx.cloud/api/crm/webhook";
+var WEBHOOK_TOKEN = "guardianx-crm-webhook-2025";
+var BATCH_NAME = "${newBatch.name || "Batch Name"}";
+var BATCH_CERT = "${newBatch.cert}";
+
+// See full script at /google-forms-webhook.js`}
+                </pre>
+              </details>
+            </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
               <Button
@@ -288,7 +325,7 @@ export function BatchCalendarView() {
                   }
                   setBatchList([...batchList, created])
                   setCreateOpen(false)
-                  setNewBatch({ name: "", cert: "CEH", instructor: "", startDate: "", schedule: "Sat-Sun", time: "7:00 PM - 9:00 PM", mode: "Online", capacity: 20 })
+                  setNewBatch({ name: "", cert: "CEH", instructor: "", startDate: "", schedule: "Sat-Sun", time: "7:00 PM - 9:00 PM", mode: "Online", capacity: 20, googleFormUrl: "" })
                   toast.success("Batch created successfully!")
                   // Also try to save to API
                   fetch("/api/admin/batches", {

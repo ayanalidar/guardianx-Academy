@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils"
 import { StatusDot, type StatusDotStatus } from "./status-dot"
 
 /**
- * LabCard — premium cyber lab mission card used in the labs catalog grid
+ * LabCard - premium cyber lab mission card used in the labs catalog grid
  * and dashboards. Shows mission title, category, difficulty badge, XP,
  * live status, target IP, and exposed services.
  *
@@ -109,7 +109,7 @@ export function LabCard({
       onKeyDown={handleKeyDown}
       role={isInteractive ? "button" : undefined}
       tabIndex={isInteractive ? 0 : undefined}
-      aria-label={`${title} — ${difficulty} — ${statusConf.label}`}
+      aria-label={`${title} - ${difficulty} - ${statusConf.label}`}
       className={cn(
         "card-premium group relative flex cursor-default flex-col gap-4 rounded-xl p-5",
         isInteractive && "cursor-pointer focus-visible:outline-none",
@@ -141,7 +141,7 @@ export function LabCard({
         </span>
       </div>
 
-      {/* Meta row — status, ip, xp */}
+      {/* Meta row - status, ip, xp */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
         <StatusDot status={statusConf.dot} pulse={statusConf.pulse} label={statusConf.label} size="xs" />
         {ip && (

@@ -118,7 +118,7 @@ export function Whiteboard({
         drawSegment(g.points[i - 1], g.points[i], g.color, g.size, g.erase)
       }
       if (g.points.length === 1) {
-        // single-point stroke — draw a dot
+        // single-point stroke - draw a dot
         const p = g.points[0]
         const ctx2 = ctx
         ctx2.globalCompositeOperation = g.erase ? "destination-out" : "source-over"
@@ -177,7 +177,7 @@ export function Whiteboard({
         lastPointRef.current = { x: data.x, y: data.y }
         return
       }
-      // need color/size — we use a small default if we don't know it
+      // need color/size - we use a small default if we don't know it
       drawSegment(last, { x: data.x, y: data.y }, "#10b981", 5, false)
       lastPointRef.current = { x: data.x, y: data.y }
     })

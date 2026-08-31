@@ -69,7 +69,7 @@ export function ProfileView() {
   const earned = achievements.filter((a) => a.earned).slice(0, 6)
   const activities = achData?.activities ?? []
 
-  // Stats strip — 6 metrics
+  // Stats strip - 6 metrics
   const statStrip = [
     { label: "Courses", value: stats?.enrollments ?? 0, accent: "border-violet-500/50", color: "text-violet-300", icon: GraduationCap },
     { label: "Labs", value: stats?.labsDone ?? 0, accent: "border-cyan-500/50", color: "text-cyan-300", icon: FlaskConical },
@@ -93,7 +93,7 @@ export function ProfileView() {
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
         {/* ====================================================
-            HEADER — avatar + oversized name + role
+            HEADER - avatar + oversized name + role
             ==================================================== */}
         <ScrollReveal>
           <div className="flex items-center gap-3 mb-6">
@@ -189,13 +189,13 @@ export function ProfileView() {
         </div>
 
         {/* ====================================================
-            STATS STRIP — border-left editorial, 6 metrics
+            STATS STRIP - border-left editorial, 6 metrics
             ==================================================== */}
         <section className="mb-20">
           <ScrollReveal>
             <div className="flex items-center justify-between mb-8 pb-4 border-b border-border/60">
               <div>
-                <p className="text-[10px] font-mono text-violet-400 tracking-[0.3em] mb-1">01 — STATISTICS</p>
+                <p className="text-[10px] font-mono text-violet-400 tracking-[0.3em] mb-1">01 - STATISTICS</p>
                 <h2 className="text-2xl lg:text-3xl font-bold tracking-tight">The numbers</h2>
               </div>
             </div>
@@ -216,13 +216,13 @@ export function ProfileView() {
         </section>
 
         {/* ====================================================
-            ACHIEVEMENTS PREVIEW — top 6
+            ACHIEVEMENTS PREVIEW - top 6
             ==================================================== */}
         <section className="mb-20">
           <ScrollReveal>
             <div className="flex items-center justify-between mb-8 pb-4 border-b border-border/60">
               <div>
-                <p className="text-[10px] font-mono text-amber-400 tracking-[0.3em] mb-1">02 — ACHIEVEMENTS</p>
+                <p className="text-[10px] font-mono text-amber-400 tracking-[0.3em] mb-1">02 - ACHIEVEMENTS</p>
                 <h2 className="text-2xl lg:text-3xl font-bold tracking-tight">Recent badges</h2>
               </div>
               <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={() => navigate({ name: "achievements" })}>
@@ -274,7 +274,7 @@ export function ProfileView() {
           <ScrollReveal>
             <div className="flex items-center justify-between mb-8 pb-4 border-b border-border/60">
               <div>
-                <p className="text-[10px] font-mono text-cyan-400 tracking-[0.3em] mb-1">03 — ACTIVITY</p>
+                <p className="text-[10px] font-mono text-cyan-400 tracking-[0.3em] mb-1">03 - ACTIVITY</p>
                 <h2 className="text-2xl lg:text-3xl font-bold tracking-tight">Recent timeline</h2>
               </div>
               <span className="text-[10px] font-mono text-muted-foreground tracking-[0.2em]">{activities.length} EVENTS</span>

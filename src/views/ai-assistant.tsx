@@ -35,7 +35,7 @@ import {
 import { toast } from "sonner"
 
 /* ============================================================
-   AIAssistantView — chat with GuardianX AI tutor
+   AIAssistantView - chat with GuardianX AI tutor
    Premium: violet primary, bg-card, message bubbles, session history
    ============================================================ */
 
@@ -68,7 +68,7 @@ interface LabListItem {
 
 const SUGGESTED = [
   "Explain the OWASP Top 10 in 5 lines",
-  "How does a SQL injection work — and how do I prevent it?",
+  "How does a SQL injection work - and how do I prevent it?",
   "Difference between symmetric and asymmetric encryption",
   "What should I learn first for the CEH exam?",
 ]
@@ -138,7 +138,7 @@ export function AIAssistantView() {
       )
     },
     onMutate: async (question) => {
-      // Optimistic update — push user message immediately
+      // Optimistic update - push user message immediately
       setMessages((prev) => [...prev, { role: "user", content: question }])
       setInput("")
     },
@@ -198,13 +198,13 @@ export function AIAssistantView() {
         </ScrollReveal>
         <ScrollReveal delay={0.2}>
           <p className="text-muted-foreground max-w-xl mb-10">
-            An elite cybersecurity tutor — explain concepts, review code, prep for certifications,
+            An elite cybersecurity tutor - explain concepts, review code, prep for certifications,
             and get unstuck on labs in seconds.
           </p>
         </ScrollReveal>
 
         <div className="grid lg:grid-cols-12 gap-6">
-          {/* Session history — left */}
+          {/* Session history - left */}
           <ScrollReveal className="lg:col-span-3" delay={0.25}>
             <div className="rounded-2xl border border-border/60 bg-card/30 backdrop-blur-sm overflow-hidden h-[640px] flex flex-col">
               <div className="p-4 border-b border-border/60 flex items-center justify-between">
@@ -267,7 +267,7 @@ export function AIAssistantView() {
             </div>
           </ScrollReveal>
 
-          {/* Chat panel — right */}
+          {/* Chat panel - right */}
           <ScrollReveal className="lg:col-span-9" delay={0.3}>
             <div className="rounded-2xl border border-border/60 bg-card/30 backdrop-blur-sm overflow-hidden h-[640px] flex flex-col">
               {/* Context selector */}
@@ -293,7 +293,7 @@ export function AIAssistantView() {
                     <SelectContent>
                       {(coursesData?.courses ?? []).map((c) => (
                         <SelectItem key={c.id} value={c.id}>
-                          {c.shortName} — {c.title}
+                          {c.shortName} - {c.title}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -330,7 +330,7 @@ export function AIAssistantView() {
                     </div>
                     <h3 className="text-xl font-semibold mb-2">How can I help you learn?</h3>
                     <p className="text-sm text-muted-foreground mb-6 max-w-md">
-                      Ask about any cybersecurity topic — from networking fundamentals to advanced
+                      Ask about any cybersecurity topic - from networking fundamentals to advanced
                       penetration testing techniques.
                     </p>
                     <div className="grid sm:grid-cols-2 gap-2 max-w-lg w-full">

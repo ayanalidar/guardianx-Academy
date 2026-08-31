@@ -24,7 +24,7 @@ import {
 import { NetworkVisualization } from "@/components/platform/network-visualization"
 
 /* ============================================================
-   LabsView — Cyber Range Catalog
+   LabsView - Cyber Range Catalog
    Premium editorial experience: oversized headline, immersive
    featured mission, editorial lab rows (not a card grid).
    ============================================================ */
@@ -92,7 +92,7 @@ export function LabsView() {
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
         {/* ====================================================
-            HERO — oversized "Enter the range."
+            HERO - oversized "Enter the range."
             ==================================================== */}
         <ScrollReveal>
           <div className="flex items-center gap-2 mb-6">
@@ -111,12 +111,12 @@ export function LabsView() {
 
         <ScrollReveal delay={0.15}>
           <p className="text-muted-foreground max-w-xl text-base lg:text-lg mb-12 text-balance">
-            Practice real-world offensive security challenges. From SQL injection to Active Directory Kerberoasting — solve CTF-style labs and capture the flag.
+            Practice real-world offensive security challenges. From SQL injection to Active Directory Kerberoasting - solve CTF-style labs and capture the flag.
           </p>
         </ScrollReveal>
 
         {/* ====================================================
-            STATS STRIP — open, no card grid
+            STATS STRIP - open, no card grid
             ==================================================== */}
         <ScrollReveal delay={0.2}>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 mb-16 border-t border-b border-border/60 py-8">
@@ -141,7 +141,7 @@ export function LabsView() {
         </ScrollReveal>
 
         {/* ====================================================
-            FEATURED LAB — large, immersive with network viz
+            FEATURED LAB - large, immersive with network viz
             ==================================================== */}
         {featured && featuredCol && (
           <ScrollReveal delay={0.25}>
@@ -154,7 +154,7 @@ export function LabsView() {
         )}
 
         {/* ====================================================
-            PROGRESS DASHBOARD — editorial breakdown
+            PROGRESS DASHBOARD - editorial breakdown
             ==================================================== */}
         <ScrollReveal delay={0.3}>
           <div className="mt-16">
@@ -163,7 +163,7 @@ export function LabsView() {
         </ScrollReveal>
 
         {/* ====================================================
-            FILTER BAR — minimal, open
+            FILTER BAR - minimal, open
             ==================================================== */}
         <div className="mt-16 mb-8">
           <ScrollReveal>
@@ -212,7 +212,7 @@ export function LabsView() {
         </div>
 
         {/* ====================================================
-            LABS LIST — editorial rows, NOT card grid
+            LABS LIST - editorial rows, NOT card grid
             ==================================================== */}
         {isLoading ? (
           <div className="space-y-1">
@@ -222,7 +222,7 @@ export function LabsView() {
           <EmptyState />
         ) : (
           <Stagger staggerChildren={0.05} className="space-y-0">
-            {/* List header — desktop only, technical labels */}
+            {/* List header - desktop only, technical labels */}
             <div className="hidden lg:grid grid-cols-[auto_2fr_1.5fr_1fr_1fr_1fr_auto] items-center gap-6 px-6 py-3 border-b border-border/60 text-[10px] font-mono text-muted-foreground tracking-[0.2em] uppercase">
               <span className="w-12">#</span>
               <span>Title</span>
@@ -249,7 +249,7 @@ export function LabsView() {
 }
 
 /* ============================================================
-   FeaturedLab — large immersive hero lab with network viz
+   FeaturedLab - large immersive hero lab with network viz
    ============================================================ */
 function FeaturedLab({ lab, col, onOpen }: { lab: LabItem; col: any; onOpen: () => void }) {
   const dot = DIFFICULTY_DOTS[lab.difficulty] ?? DIFFICULTY_DOTS.Medium
@@ -263,7 +263,7 @@ function FeaturedLab({ lab, col, onOpen }: { lab: LabItem; col: any; onOpen: () 
         className="group relative overflow-hidden rounded-2xl border border-violet-500/20 bg-card/30 cursor-pointer transition-all duration-500 hover:border-violet-500/40 hover:shadow-[0_20px_60px_-20px_oklch(0.55_0.24_295/0.25)]"
       >
         <div className="grid lg:grid-cols-12 gap-0">
-          {/* Visual side — network viz + giant number */}
+          {/* Visual side - network viz + giant number */}
           <div className="lg:col-span-5 relative aspect-[16/10] lg:aspect-auto overflow-hidden min-h-[280px]">
             <div className="absolute inset-0 bg-gradient-to-br from-violet-950/40 via-background to-cyan-950/20" />
             <div className="absolute inset-0 bg-grid opacity-15" />
@@ -344,7 +344,7 @@ function FeaturedLab({ lab, col, onOpen }: { lab: LabItem; col: any; onOpen: () 
 }
 
 /* ============================================================
-   LabRow — editorial horizontal row
+   LabRow - editorial horizontal row
    ============================================================ */
 function LabRow({ lab, index, onClick }: { lab: LabItem; index: number; onClick: () => void }) {
   const dot = DIFFICULTY_DOTS[lab.difficulty] ?? DIFFICULTY_DOTS.Medium
@@ -375,14 +375,14 @@ function LabRow({ lab, index, onClick }: { lab: LabItem; index: number; onClick:
           <p className="text-xs text-muted-foreground truncate lg:hidden mt-0.5">{lab.category}</p>
         </div>
 
-        {/* Category — desktop only */}
+        {/* Category - desktop only */}
         <div className="hidden lg:block">
           <span className="text-[10px] font-mono uppercase tracking-[0.15em] text-muted-foreground">
             {lab.category}
           </span>
         </div>
 
-        {/* Difficulty — desktop only, dots */}
+        {/* Difficulty - desktop only, dots */}
         <div className="hidden lg:flex items-center gap-1.5">
           {Array.from({ length: 4 }).map((_, i) => (
             <span
@@ -424,7 +424,7 @@ function LabRow({ lab, index, onClick }: { lab: LabItem; index: number; onClick:
 }
 
 /* ============================================================
-   EmptyState — premium with Target icon
+   EmptyState - premium with Target icon
    ============================================================ */
 function EmptyState() {
   return (
@@ -444,7 +444,7 @@ function EmptyState() {
 }
 
 /* ============================================================
-   LabProgressDashboard — editorial breakdown
+   LabProgressDashboard - editorial breakdown
    ============================================================ */
 function LabProgressDashboard() {
   const { data, isLoading } = useQuery<any>({

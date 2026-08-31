@@ -36,7 +36,7 @@ import { toast } from "sonner"
 import { ScrollReveal } from "@/components/platform/motion-system"
 
 /* ============================================================
-   CTFPlatformView — Competition list, jeopardy grid,
+   CTFPlatformView - Competition list, jeopardy grid,
    team creation, flag submission, live leaderboard
    ============================================================ */
 
@@ -180,7 +180,7 @@ export function CTFPlatformView() {
         </ScrollReveal>
         <ScrollReveal delay={0.2}>
           <p className="text-muted-foreground max-w-xl mb-12">
-            Form teams, solve jeopardy-style challenges across web, crypto, forensics, reverse engineering, and pwn — then climb the leaderboard.
+            Form teams, solve jeopardy-style challenges across web, crypto, forensics, reverse engineering, and pwn - then climb the leaderboard.
           </p>
         </ScrollReveal>
 
@@ -299,7 +299,7 @@ export function CTFPlatformView() {
               </ScrollReveal>
 
               <div className="grid lg:grid-cols-3 gap-6">
-                {/* Challenges — jeopardy style */}
+                {/* Challenges - jeopardy style */}
                 <div className="lg:col-span-2 space-y-6">
                   <div>
                     <p className="text-[10px] font-mono text-violet-400 tracking-[0.3em] mb-2">CHALLENGES</p>
@@ -349,7 +349,7 @@ export function CTFPlatformView() {
                     {detail.leaderboard.length === 0 ? (
                       <div className="text-center py-10 text-sm text-muted-foreground">
                         <Trophy className="h-8 w-8 mx-auto mb-2 opacity-40" />
-                        No teams yet — be the first!
+                        No teams yet - be the first!
                       </div>
                     ) : (
                       <div className="space-y-2">
@@ -433,7 +433,7 @@ export function CTFPlatformView() {
 }
 
 /* ============================================================
-   ChallengeCard — opens flag-submission dialog
+   ChallengeCard - opens flag-submission dialog
    ============================================================ */
 function ChallengeCard({
   challenge,

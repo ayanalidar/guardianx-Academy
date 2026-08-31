@@ -4,7 +4,7 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 
 /**
- * ThreatMap — canvas-based animated network visualization representing
+ * ThreatMap - canvas-based animated network visualization representing
  * live lab infrastructure, students connecting to targets, and packet
  * flow between nodes.
  *
@@ -16,9 +16,9 @@ import { cn } from "@/lib/utils"
  *  - Cleans up its rAF + observers on unmount
  *
  * Variants:
- *  - hero    : large, dense, slow — for landing hero
- *  - section : medium — for marketing section panels
- *  - compact : small — for dashboard side widgets
+ *  - hero    : large, dense, slow - for landing hero
+ *  - section : medium - for marketing section panels
+ *  - compact : small - for dashboard side widgets
  */
 
 export interface ThreatMapProps {
@@ -135,7 +135,7 @@ export function ThreatMap({
       pulsePhase: 0,
     })
 
-    // Labs — inner ring
+    // Labs - inner ring
     const labCount = Math.max(3, Math.floor(cfg.nodes * 0.32))
     for (let i = 0; i < labCount; i++) {
       const angle = (i / labCount) * Math.PI * 2 + Math.random() * 0.2
@@ -151,7 +151,7 @@ export function ThreatMap({
       })
     }
 
-    // Targets — outer ring
+    // Targets - outer ring
     const targetCount = Math.max(3, Math.floor(cfg.nodes * 0.34))
     for (let i = 0; i < targetCount; i++) {
       const angle = (i / targetCount) * Math.PI * 2 + Math.random() * 0.3
@@ -167,7 +167,7 @@ export function ThreatMap({
       })
     }
 
-    // Students — scattered periphery
+    // Students - scattered periphery
     const studentCount = Math.max(2, cfg.nodes - labCount - targetCount - 1)
     for (let i = 0; i < studentCount; i++) {
       const angle = Math.random() * Math.PI * 2
@@ -183,7 +183,7 @@ export function ThreatMap({
       })
     }
 
-    // Edges — connect everything sensibly
+    // Edges - connect everything sensibly
     const edges: TMEdge[] = []
     // core -> each lab
     for (let i = 1; i <= labCount; i++) {
@@ -332,7 +332,7 @@ export function ThreatMap({
           ctx.arc(px, py, node.radius, 0, Math.PI * 2)
           ctx.fill()
         } else if (node.type === "target") {
-          // Rose/amber — threat target
+          // Rose/amber - threat target
           const color = `rgba(251, 113, 133, ${0.85 * pulse})`
           ctx.fillStyle = color
           ctx.beginPath()
@@ -353,7 +353,7 @@ export function ThreatMap({
           ctx.lineTo(px, py + s * 2.2)
           ctx.stroke()
         } else {
-          // Student — small slate dot
+          // Student - small slate dot
           ctx.fillStyle = `rgba(148, 163, 184, ${0.7 * pulse})`
           ctx.beginPath()
           ctx.arc(px, py, node.radius, 0, Math.PI * 2)

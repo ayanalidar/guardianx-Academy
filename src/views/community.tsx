@@ -96,13 +96,13 @@ export function CommunityView() {
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
         {/* ====================================================
-            HEADER — oversized headline
+            HEADER - oversized headline
             ==================================================== */}
         <ScrollReveal>
           <div className="flex items-center gap-3 mb-6">
             <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 pulse-dot" />
             <span className="text-[10px] font-mono text-cyan-300/80 tracking-[0.3em]">
-              DISCUSSIONS · {activeCourse?.shortName?.toUpperCase() ?? "—"}
+              DISCUSSIONS · {activeCourse?.shortName?.toUpperCase() ?? "-"}
             </span>
           </div>
         </ScrollReveal>
@@ -121,7 +121,7 @@ export function CommunityView() {
             </ScrollReveal>
           </div>
 
-          {/* Create discussion CTA — premium */}
+          {/* Create discussion CTA - premium */}
           <ScrollReveal delay={0.4}>
             <MagneticButton strength={0.3}>
               <Button
@@ -135,14 +135,14 @@ export function CommunityView() {
         </div>
 
         {/* ====================================================
-            STATS STRIP — border-left editorial
+            STATS STRIP - border-left editorial
             ==================================================== */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
           {[
             { label: "Discussions", value: discussions.length, accent: "border-violet-500/50", color: "text-violet-300", icon: MessageSquare },
             { label: "Replies", value: totalReplies, accent: "border-cyan-500/50", color: "text-cyan-300", icon: Reply },
             { label: "Contributors", value: uniqueAuthors, accent: "border-emerald-500/50", color: "text-emerald-300", icon: Users },
-            { label: "Last activity", value: 0, custom: lastActivity ? timeAgo(lastActivity) : "—", accent: "border-amber-500/50", color: "text-amber-300", icon: Activity },
+            { label: "Last activity", value: 0, custom: lastActivity ? timeAgo(lastActivity) : "-", accent: "border-amber-500/50", color: "text-amber-300", icon: Activity },
           ].map((s, i) => (
             <ScrollReveal key={s.label} delay={0.4 + i * 0.08}>
               <div className={cn("border-l pl-5", s.accent)}>
@@ -156,7 +156,7 @@ export function CommunityView() {
           ))}
         </div>
 
-        {/* Course selector — premium pill row */}
+        {/* Course selector - premium pill row */}
         <ScrollReveal>
           <div className="mb-8">
             <div className="flex items-center gap-2 mb-3">
@@ -183,7 +183,7 @@ export function CommunityView() {
         </ScrollReveal>
 
         {/* ====================================================
-            COMPOSER — collapsible premium panel
+            COMPOSER - collapsible premium panel
             ==================================================== */}
         {showComposer && (
           <ScrollReveal>
@@ -232,7 +232,7 @@ export function CommunityView() {
         )}
 
         {/* ====================================================
-            DISCUSSIONS — editorial list (NOT cards)
+            DISCUSSIONS - editorial list (NOT cards)
             ==================================================== */}
         {isLoading ? (
           <div className="space-y-4">
@@ -265,7 +265,7 @@ export function CommunityView() {
 }
 
 /* ============================================================
-   DiscussionRow — editorial composition
+   DiscussionRow - editorial composition
    ============================================================ */
 function DiscussionRow({
   discussion: d, replyTo, setReplyTo, replyText, setReplyText, onReply, isPending,
@@ -419,7 +419,7 @@ function DiscussionRow({
 }
 
 /* ============================================================
-   Empty state — premium
+   Empty state - premium
    ============================================================ */
 function EmptyCommunityState({ onCompose }: { onCompose: () => void }) {
   return (

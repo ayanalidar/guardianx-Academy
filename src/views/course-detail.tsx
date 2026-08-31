@@ -54,7 +54,7 @@ const LESSON_ICONS: Record<string, any> = {
 }
 
 // ============================================================
-// Upcoming course batches — example static data for the
+// Upcoming course batches - example static data for the
 // auto-rotating batch carousel. Not fetched from API.
 // ============================================================
 type BatchMode = "Online" | "In-Person" | "Hybrid"
@@ -124,7 +124,7 @@ const UPCOMING_BATCHES: CourseBatch[] = [
 ]
 
 // ============================================================
-// BatchCarousel — auto-rotating showcase of upcoming batches
+// BatchCarousel - auto-rotating showcase of upcoming batches
 // ============================================================
 function BatchCarousel({ onEnroll }: { onEnroll: (batch: CourseBatch) => void }) {
   const [currentIndex, setCurrentIndex] = React.useState(0)
@@ -175,7 +175,7 @@ function BatchCarousel({ onEnroll }: { onEnroll: (batch: CourseBatch) => void })
                   {/* Atmospheric accent */}
                   <div className="absolute top-0 right-0 w-[400px] h-[200px] bg-violet-600/5 blur-[100px] rounded-full pointer-events-none" />
                   <div className="relative grid lg:grid-cols-12 gap-6 p-6 sm:p-8">
-                    {/* Left — batch identity */}
+                    {/* Left - batch identity */}
                     <div className="lg:col-span-7">
                       <div className="flex items-center gap-3 mb-4">
                         <span className="text-[10px] font-mono text-violet-300 tracking-[0.3em]">
@@ -223,7 +223,7 @@ function BatchCarousel({ onEnroll }: { onEnroll: (batch: CourseBatch) => void })
                       </div>
                     </div>
 
-                    {/* Right — seats + enroll */}
+                    {/* Right - seats + enroll */}
                     <div className="lg:col-span-5 flex flex-col justify-center">
                       <div className="rounded-xl border border-border/40 bg-background/40 p-5">
                         <div className="flex items-center justify-between mb-2">
@@ -390,7 +390,7 @@ export function CourseDetailView() {
 
       <div className="relative z-10">
         {/* ====================================================
-            HERO — cinematic course introduction
+            HERO - cinematic course introduction
             ==================================================== */}
         <section ref={heroRef} className="relative overflow-hidden">
           {/* Course hero image */}
@@ -406,7 +406,7 @@ export function CourseDetailView() {
           <div className="absolute top-1/3 -right-40 w-[600px] h-[600px] bg-violet-600/10 blur-[140px] rounded-full" />
           <div className="absolute top-1/2 -left-40 w-[500px] h-[500px] bg-cyan-600/5 blur-[140px] rounded-full" />
 
-          {/* Ghost shortName — giant outline text */}
+          {/* Ghost shortName - giant outline text */}
           <div
             style={{ transform: "translateY(0)" }}
             aria-hidden
@@ -428,7 +428,7 @@ export function CourseDetailView() {
             
 
             <div className="grid lg:grid-cols-12 gap-6 items-start">
-              {/* Hero text — col 8 */}
+              {/* Hero text - col 8 */}
               <div className="lg:col-span-8">
                 
                   <div className="flex items-center gap-2 mb-6 flex-wrap">
@@ -488,7 +488,7 @@ export function CourseDetailView() {
                 
               </div>
 
-              {/* Hero right column — enroll / progress card */}
+              {/* Hero right column - enroll / progress card */}
               <div className="lg:col-span-4">
                 
                   <Card className="relative overflow-hidden border-border/60 bg-card/50 backdrop-blur-xl p-6">
@@ -597,7 +597,7 @@ export function CourseDetailView() {
         </section>
 
         {/* ====================================================
-            METADATA STRIP — editorial, numbered, NO cards
+            METADATA STRIP - editorial, numbered, NO cards
             ==================================================== */}
         <section className="border-y border-border/60 bg-background/40 backdrop-blur">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
@@ -628,7 +628,7 @@ export function CourseDetailView() {
         </section>
 
         {/* ====================================================
-            LEARNING OUTCOMES — editorial, no cards
+            LEARNING OUTCOMES - editorial, no cards
             ==================================================== */}
         <section className="py-20 lg:py-28">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -636,7 +636,7 @@ export function CourseDetailView() {
               <div className="lg:col-span-5">
                 <div className="lg:sticky lg:top-8">
                   
-                    <p className="text-[10px] font-mono text-violet-300 tracking-[0.3em] mb-6">01 — OUTCOMES</p>
+                    <p className="text-[10px] font-mono text-violet-300 tracking-[0.3em] mb-6">01 - OUTCOMES</p>
                   
                   
                     <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
@@ -646,7 +646,7 @@ export function CourseDetailView() {
                   
                   
                     <p className="text-muted-foreground mt-6 max-w-md leading-relaxed">
-                      A focused curriculum engineered for real-world application — every lesson
+                      A focused curriculum engineered for real-world application - every lesson
                       builds toward verifiable, hands-on competence.
                     </p>
                   
@@ -676,14 +676,14 @@ export function CourseDetailView() {
         </section>
 
         {/* ====================================================
-            CURRICULUM — premium accordion modules
+            CURRICULUM - premium accordion modules
             ==================================================== */}
         <section className="py-20 lg:py-28 border-t border-border/60 relative">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="flex items-end justify-between mb-12 flex-wrap gap-6">
               
                 <div>
-                  <p className="text-[10px] font-mono text-violet-300 tracking-[0.3em] mb-4">02 — CURRICULUM</p>
+                  <p className="text-[10px] font-mono text-violet-300 tracking-[0.3em] mb-4">02 - CURRICULUM</p>
                   <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
                     Modules &amp;
                     <span className="text-muted-foreground/50"> lessons.</span>
@@ -820,7 +820,7 @@ export function CourseDetailView() {
                       { icon: CheckCircle2, text: "Basic understanding of computer networks and TCP/IP", color: "text-emerald-400" },
                       { icon: CheckCircle2, text: "Familiarity with Linux command line fundamentals", color: "text-emerald-400" },
                       { icon: CheckCircle2, text: "Understanding of basic security concepts (CIA triad)", color: "text-emerald-400" },
-                      { icon: Circle, text: "No prior certification required — beginner-friendly entry", color: "text-muted-foreground" },
+                      { icon: Circle, text: "No prior certification required - beginner-friendly entry", color: "text-muted-foreground" },
                     ].map((req, i) => (
                       <div key={i} className="flex items-start gap-3">
                         <req.icon className={cn("h-5 w-5 mt-0.5 shrink-0", req.color)} />
@@ -891,7 +891,7 @@ export function CourseDetailView() {
         </section>
 
         {/* ====================================================
-            HANDS-ON LABS — dedicated section
+            HANDS-ON LABS - dedicated section
             ==================================================== */}
         <section className="py-20 lg:py-28 border-t border-border/60 relative overflow-hidden">
           <div className="absolute inset-0 bg-grid opacity-8" />
@@ -908,7 +908,7 @@ export function CourseDetailView() {
             
               <p className="text-base text-muted-foreground max-w-lg mb-12">
                 Every GuardianX course includes hands-on labs with Docker-powered live targets.
-                {isEnrolled ? " You're enrolled — launch the lab directly." : " Enroll to access the full lab environment."}
+                {isEnrolled ? " You're enrolled - launch the lab directly." : " Enroll to access the full lab environment."}
               </p>
             
 
@@ -961,7 +961,7 @@ export function CourseDetailView() {
         </section>
 
         {/* ====================================================
-            UPCOMING BATCHES — auto-rotating carousel
+            UPCOMING BATCHES - auto-rotating carousel
             ==================================================== */}
         <section className="py-20 lg:py-28 border-t border-border/60 relative overflow-hidden">
           <div className="absolute inset-0 bg-grid opacity-8" />
@@ -974,7 +974,7 @@ export function CourseDetailView() {
               </h2>
               <p className="text-base text-muted-foreground">
                 New batches start every few weeks. Pick the schedule and mode that works
-                for you — slides auto-advance, or use the arrows to browse.
+                for you - slides auto-advance, or use the arrows to browse.
               </p>
             </div>
 
@@ -993,7 +993,7 @@ export function CourseDetailView() {
         </section>
 
         {/* ====================================================
-            INSTRUCTOR — editorial section
+            INSTRUCTOR - editorial section
             ==================================================== */}
         <section className="py-20 lg:py-28 border-t border-border/60 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-[500px] h-[400px] bg-cyan-600/5 blur-[120px] rounded-full" />
@@ -1001,7 +1001,7 @@ export function CourseDetailView() {
             <div className="grid lg:grid-cols-12 gap-12 items-start">
               <div className="lg:col-span-5">
                 
-                  <p className="text-[10px] font-mono text-cyan-300 tracking-[0.3em] mb-6">03 — INSTRUCTOR</p>
+                  <p className="text-[10px] font-mono text-cyan-300 tracking-[0.3em] mb-6">03 - INSTRUCTOR</p>
                 
                 
                   <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance mb-6">
@@ -1053,7 +1053,7 @@ export function CourseDetailView() {
         </section>
 
         {/* ====================================================
-            ABOUT + LABS — two-column editorial
+            ABOUT + LABS - two-column editorial
             ==================================================== */}
         <section className="py-20 lg:py-28 border-t border-border/60">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -1061,7 +1061,7 @@ export function CourseDetailView() {
               {/* About this course */}
               <div className="lg:col-span-7">
                 
-                  <p className="text-[10px] font-mono text-violet-300 tracking-[0.3em] mb-6">04 — OVERVIEW</p>
+                  <p className="text-[10px] font-mono text-violet-300 tracking-[0.3em] mb-6">04 - OVERVIEW</p>
                 
                 
                   <h2 className="text-[clamp(1.75rem,3.5vw,2.75rem)] font-bold leading-[1.05] tracking-[-0.03em] mb-6">
@@ -1153,7 +1153,7 @@ export function CourseDetailView() {
 
           <div className="relative z-10 mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
             
-              <p className="text-[10px] font-mono text-amber-300 tracking-[0.3em] mb-6 text-center">05 — CERTIFICATION</p>
+              <p className="text-[10px] font-mono text-amber-300 tracking-[0.3em] mb-6 text-center">05 - CERTIFICATION</p>
             
             
               <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance text-center mb-12">
@@ -1200,7 +1200,7 @@ export function CourseDetailView() {
         <section className="py-20 lg:py-28 border-t border-border/60">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             
-              <p className="text-[10px] font-mono text-amber-300 tracking-[0.3em] mb-6">06 — REVIEWS</p>
+              <p className="text-[10px] font-mono text-amber-300 tracking-[0.3em] mb-6">06 - REVIEWS</p>
             
             
               <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance mb-12">
@@ -1212,7 +1212,7 @@ export function CourseDetailView() {
         </section>
 
         {/* ====================================================
-            FINAL CTA — atmospheric
+            FINAL CTA - atmospheric
             ==================================================== */}
         <section className="py-24 lg:py-32 border-t border-border/60 relative overflow-hidden">
           <div className="absolute inset-0">
@@ -1427,7 +1427,7 @@ function ReviewsSection({ courseId, isEnrolled }: { courseId: string; isEnrolled
         
       )}
 
-      {/* Reviews list — editorial */}
+      {/* Reviews list - editorial */}
       {isLoading ? (
         <div className="space-y-3">
           {Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-32 rounded-xl" />)}

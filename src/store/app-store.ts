@@ -72,6 +72,7 @@ export type View =
   | { name: "admin-audit-log" }
   | { name: "admin-platform-health" }
   | { name: "admin-notifications" }
+  | { name: "support" }
 
 interface AppState {
   view: View

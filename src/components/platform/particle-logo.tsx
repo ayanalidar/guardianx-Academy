@@ -3,17 +3,17 @@
 import * as React from "react"
 
 /* ============================================================
-   ParticleLogo — Logo reconstructed from square particles
+   ParticleLogo - Logo reconstructed from square particles
    ------------------------------------------------------------
    Phases:
-   1. ASSEMBLY  — particles scattered outside → spring to target
+   1. ASSEMBLY  - particles scattered outside → spring to target
                   positions sampled from the logo's pixel data.
                   Staggered arrival over ~2s. (skipped if reduced-motion)
-   2. IDLE      — subtle perlin-ish noise floating + opacity flicker.
-   3. MOUSE     — cursor repels nearby particles in a soft radius;
+   2. IDLE      - subtle perlin-ish noise floating + opacity flicker.
+   3. MOUSE     - cursor repels nearby particles in a soft radius;
                   they spring back when the cursor leaves.
 
-   The logo is NEVER rendered as an image — it exists only as the
+   The logo is NEVER rendered as an image - it exists only as the
    collective arrangement of the particles themselves.
    ============================================================ */
 
@@ -248,7 +248,7 @@ export function ParticleLogo({
         p.vx += ax
         p.vy += ay
 
-        // Idle noise — subtle floating (only when mostly assembled)
+        // Idle noise - subtle floating (only when mostly assembled)
         if (phase === "idle" || arrived > 0.8) {
           const noiseAmp = 1.2 * dpr
           const nx = Math.sin(t * 0.8 + p.seed) * Math.cos(t * 0.5 + p.seed * 0.7) * noiseAmp
@@ -290,7 +290,7 @@ export function ParticleLogo({
           }
         }
 
-        // Damping — slightly less damping so shatter feels energetic
+        // Damping - slightly less damping so shatter feels energetic
         p.vx *= 0.84
         p.vy *= 0.84
       }
@@ -334,7 +334,7 @@ export function ParticleLogo({
     }
     init()
 
-    // Mouse tracking — relative to canvas center
+    // Mouse tracking - relative to canvas center
     const onMove = (e: MouseEvent) => {
       const canvas = canvasRef.current
       if (!canvas) return
@@ -368,7 +368,7 @@ export function ParticleLogo({
       }
     }
 
-    // Resize handler — rebuild particles on significant size change
+    // Resize handler - rebuild particles on significant size change
     let resizeTimer: ReturnType<typeof setTimeout>
     const onResize = () => {
       clearTimeout(resizeTimer)

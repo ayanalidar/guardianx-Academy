@@ -93,7 +93,7 @@ const stories = [
     tint: "bg-cyan-500/15 text-cyan-200",
     cert: "CCNP Security",
     quote:
-      "The CCNA + CCNP Security tracks were exactly what I needed. Live sessions with industry experts were invaluable — I now lead security initiatives across enterprise networks.",
+      "The CCNA + CCNP Security tracks were exactly what I needed. Live sessions with industry experts were invaluable - I now lead security initiatives across enterprise networks.",
   },
   {
     name: "Ananya Reddy",
@@ -164,13 +164,13 @@ export function ImpactView() {
   })
   const heroY = useTransform(scrollYProgress, [0, 1], [0, -80])
 
-  // CMS-driven hero copy — falls back to defaults if CMS data missing.
+  // CMS-driven hero copy - falls back to defaults if CMS data missing.
   const cms = usePageContent("impact")
   const cmsData = cms.data
   const heroBadge = getContent(cmsData, "hero", "badge", "OUR IMPACT")
   const heroTitle = getContent(cmsData, "hero", "title", "Transforming careers,")
   const heroTitleAccent = getContent(cmsData, "hero", "titleAccent", "securing the future.")
-  const heroDesc = getContent(cmsData, "hero", "description", "Every number tells a story — a learner who leveled up their career, an institution that transformed its curriculum, and a community quietly making the digital world safer.")
+  const heroDesc = getContent(cmsData, "hero", "description", "Every number tells a story - a learner who leveled up their career, an institution that transformed its curriculum, and a community quietly making the digital world safer.")
   const statsEyebrow = getContent(cmsData, "stats", "eyebrow", "BY THE NUMBERS")
   const statsTitle = getContent(cmsData, "stats", "title", "Scale that creates real opportunity")
   const outcomesEyebrow = getContent(cmsData, "outcomes", "eyebrow", "CAREER OUTCOMES")
@@ -178,10 +178,10 @@ export function ImpactView() {
   const outcomesDesc = getContent(cmsData, "outcomes", "description", "Measured impact on our learners' professional trajectories, tracked 6–12 months post-certification.")
   const storiesEyebrow = getContent(cmsData, "stories", "eyebrow", "SUCCESS STORIES")
   const storiesTitle = getContent(cmsData, "stories", "title", "Learners who became guardians")
-  const storiesDesc = getContent(cmsData, "stories", "description", "Real journeys from our community — verified by their certificates.")
+  const storiesDesc = getContent(cmsData, "stories", "description", "Real journeys from our community - verified by their certificates.")
   const missionEyebrow = getContent(cmsData, "mission", "eyebrow", "PARTNER INSTITUTIONS")
   const missionTitle = getContent(cmsData, "mission", "title", "Educating the next generation")
-  const missionDesc = getContent(cmsData, "mission", "description", "We partner with schools, colleges, and universities to bring cyber security education to their students — verified curricula, shared labs, and joint certifications.")
+  const missionDesc = getContent(cmsData, "mission", "description", "We partner with schools, colleges, and universities to bring cyber security education to their students - verified curricula, shared labs, and joint certifications.")
   const missionCta = getContent(cmsData, "mission", "cta", "Become a Partner")
 
   return (
@@ -495,7 +495,7 @@ export function ImpactView() {
               Learners across India &amp; beyond
             </h2>
             <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto">
-              Distribution of 12,000+ active learners across regions — a
+              Distribution of 12,000+ active learners across regions - a
               community that spans the country and grows globally.
             </p>
           </ScrollReveal>

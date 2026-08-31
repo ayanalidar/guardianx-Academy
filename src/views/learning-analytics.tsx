@@ -115,7 +115,7 @@ export function LearningAnalyticsView() {
         </ScrollReveal>
         <ScrollReveal delay={0.2}>
           <p className="text-muted-foreground max-w-xl mb-12">
-            Auto-computed from your enrollments, lab progress, and quiz attempts — visualized for insight.
+            Auto-computed from your enrollments, lab progress, and quiz attempts - visualized for insight.
           </p>
         </ScrollReveal>
 
@@ -321,7 +321,7 @@ export function LearningAnalyticsView() {
   )
 }
 
-/* ---- SkillRadarSVG — pure SVG radar chart ---- */
+/* ---- SkillRadarSVG - pure SVG radar chart ---- */
 function SkillRadarSVG({ radar }: { radar: SkillRadar }) {
   const entries = Object.entries(radar) as [keyof SkillRadar, number][]
   const size = 220

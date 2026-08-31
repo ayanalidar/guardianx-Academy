@@ -30,7 +30,7 @@ interface NavItem {
 }
 
 // ============================================================
-// STUDENT nav items — shown to STUDENT role (and ADMIN for testing)
+// STUDENT nav items - shown to STUDENT role (and ADMIN for testing)
 // ============================================================
 const STUDENT_NAV: NavItem[] = [
   { label: "Dashboard", icon: LayoutDashboard, view: { name: "dashboard" } },
@@ -66,7 +66,7 @@ const STUDENT_NAV: NavItem[] = [
 ]
 
 // ============================================================
-// INSTRUCTOR nav items — shown to INSTRUCTOR role
+// INSTRUCTOR nav items - shown to INSTRUCTOR role
 // ============================================================
 const INSTRUCTOR_NAV: NavItem[] = [
   { label: "Instructor Dashboard", icon: Presentation, view: { name: "instructor" } },
@@ -81,7 +81,7 @@ const INSTRUCTOR_NAV: NavItem[] = [
 ]
 
 // ============================================================
-// ADMIN nav items — shown to ADMIN role only
+// ADMIN nav items - shown to ADMIN role only
 // ============================================================
 const ADMIN_NAV: NavItem[] = [
   { label: "Admin Console", icon: Shield, view: { name: "admin" } },

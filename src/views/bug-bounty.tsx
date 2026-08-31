@@ -172,7 +172,7 @@ export function BugBountyView() {
         </ScrollReveal>
         <ScrollReveal delay={0.2}>
           <p className="text-muted-foreground max-w-xl mb-12">
-            Discover vulnerability disclosure programs, submit findings, and earn bounties — all tracked in one place.
+            Discover vulnerability disclosure programs, submit findings, and earn bounties - all tracked in one place.
           </p>
         </ScrollReveal>
 

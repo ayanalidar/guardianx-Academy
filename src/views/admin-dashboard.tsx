@@ -34,7 +34,7 @@ import {
 } from "@/components/platform/motion-system"
 
 /* ============================================================
-   Admin Console — Premium Command Center
+   Admin Console - Premium Command Center
    Amber accent (admin) + violet primary + editorial design.
    ============================================================ */
 
@@ -183,7 +183,7 @@ export function AdminDashboardView() {
 }
 
 /* ============================================================
-   Access Denied — non-admin users
+   Access Denied - non-admin users
    ============================================================ */
 function AccessDenied() {
   return (
@@ -213,7 +213,7 @@ function AccessDenied() {
 }
 
 /* ============================================================
-   AdminHero — Oversized headline
+   AdminHero - Oversized headline
    ============================================================ */
 function AdminHero() {
   const { user } = useUser()
@@ -245,7 +245,7 @@ function AdminHero() {
 
       <ScrollReveal delay={0.2}>
         <p className="text-muted-foreground max-w-2xl mb-2">
-          Full-spectrum control over users, courses, labs, certificates, and platform communications — all in one place.
+          Full-spectrum control over users, courses, labs, certificates, and platform communications - all in one place.
         </p>
       </ScrollReveal>
 
@@ -275,7 +275,7 @@ function AdminHero() {
 }
 
 /* ============================================================
-   1. OVERVIEW TAB — platform stats, growth, signups, active labs
+   1. OVERVIEW TAB - platform stats, growth, signups, active labs
    ============================================================ */
 function OverviewTab() {
   const { data, isLoading } = useQuery<OverviewData>({
@@ -506,7 +506,7 @@ function OverviewTab() {
 }
 
 /* ============================================================
-   2. USERS TAB — searchable/filterable user table
+   2. USERS TAB - searchable/filterable user table
    ============================================================ */
 function UsersTab() {
   const [search, setSearch] = React.useState("")
@@ -574,7 +574,7 @@ function UsersTab() {
         </Select>
       </div>
 
-      {/* User rows — editorial div-based */}
+      {/* User rows - editorial div-based */}
       <div className="rounded-2xl border border-border/60 bg-card/20 overflow-hidden">
         {/* Header row */}
         <div className="hidden md:grid grid-cols-12 gap-3 px-5 py-3 border-b border-border/60 bg-muted/20 text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
@@ -887,7 +887,7 @@ function EditUserDialog({ user, open, onOpenChange }: { user: AdminUser; open: b
 }
 
 /* ============================================================
-   3. COURSES TAB — manage all courses
+   3. COURSES TAB - manage all courses
    ============================================================ */
 function CoursesTab() {
   const [search, setSearch] = React.useState("")
@@ -1124,7 +1124,7 @@ function CourseFormFields({ form, setForm, instructors }: { form: any; setForm: 
           <SelectTrigger><SelectValue placeholder="Select instructor" /></SelectTrigger>
           <SelectContent>
             {instructors.map((i) => (
-              <SelectItem key={i.id} value={i.id}>{i.name} — {i.email}</SelectItem>
+              <SelectItem key={i.id} value={i.id}>{i.name} - {i.email}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -1290,7 +1290,7 @@ function EditCourseDialog({ course, open, onOpenChange }: { course: AdminCourse;
 }
 
 /* ============================================================
-   4. LABS TAB — manage all labs
+   4. LABS TAB - manage all labs
    ============================================================ */
 function LabsTab() {
   const [search, setSearch] = React.useState("")
@@ -1716,7 +1716,7 @@ function EditLabDialog({ lab, open, onOpenChange }: { lab: AdminLab; open: boole
 }
 
 /* ============================================================
-   5. CERTIFICATES TAB — list all certificates
+   5. CERTIFICATES TAB - list all certificates
    ============================================================ */
 function CertificatesTab() {
   const [page, setPage] = React.useState(1)
@@ -1816,7 +1816,7 @@ function CertificatesTab() {
 }
 
 /* ============================================================
-   6.5. CONTENT TAB — links to the Content Studio (CMS)
+   6.5. CONTENT TAB - links to the Content Studio (CMS)
    ============================================================ */
 function ContentTab() {
   const { navigate } = useAppStore()
@@ -1843,7 +1843,7 @@ function ContentTab() {
               </div>
               <h2 className="text-2xl font-bold tracking-tight">Edit every word your users see.</h2>
               <p className="text-sm text-muted-foreground mt-2 max-w-xl leading-relaxed">
-                The Content Studio lets you edit hero copy, stats, card arrays, FAQs, and more —
+                The Content Studio lets you edit hero copy, stats, card arrays, FAQs, and more -
                 all stored in Postgres and live on every page instantly.
               </p>
             </div>
@@ -1885,7 +1885,7 @@ function ContentTab() {
 }
 
 /* ============================================================
-   6. EMAILS TAB — email log viewer
+   6. EMAILS TAB - email log viewer
    ============================================================ */
 function EmailsTab() {
   const [statusFilter, setStatusFilter] = React.useState("ALL")
@@ -2020,7 +2020,7 @@ function EmailsTab() {
 }
 
 /* ============================================================
-   7. SETTINGS TAB — platform settings placeholder
+   7. SETTINGS TAB - platform settings placeholder
    ============================================================ */
 function SettingsTab() {
   return (

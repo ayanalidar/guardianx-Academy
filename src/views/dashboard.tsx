@@ -181,7 +181,7 @@ function pseudoIp(seed: string): string {
 }
 
 /* ============================================================
-   DashboardView — main export (kept name for back-compat)
+   DashboardView - main export (kept name for back-compat)
    ============================================================ */
 
 export function DashboardView() {
@@ -273,7 +273,7 @@ export function DashboardView() {
 
   return (
     <div className="relative min-h-screen">
-      {/* Atmospheric background — SOC grid */}
+      {/* Atmospheric background - SOC grid */}
       <div className="absolute inset-0 bg-grid opacity-40 pointer-events-none" />
       <div className="absolute inset-0 bg-mesh opacity-30 pointer-events-none" />
       <div className="absolute top-0 right-0 w-[500px] h-[400px] bg-emerald-500/5 blur-[120px] rounded-full pointer-events-none" />
@@ -281,7 +281,7 @@ export function DashboardView() {
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8 space-y-6">
         {/* ====================================================
-            1. HEADER STRIP — WELCOME BACK, [NAME]
+            1. HEADER STRIP - WELCOME BACK, [NAME]
             ==================================================== */}
         <HeaderStrip
           userName={user?.name ?? "Operator"}
@@ -292,7 +292,7 @@ export function DashboardView() {
         />
 
         {/* ====================================================
-            2. STATS ROW — 4 StatTiles
+            2. STATS ROW - 4 StatTiles
             ==================================================== */}
         <StatsRow
           level={level}
@@ -304,7 +304,7 @@ export function DashboardView() {
         />
 
         {/* ====================================================
-            3. MAIN GRID — LEFT (60%) + RIGHT (40%)
+            3. MAIN GRID - LEFT (60%) + RIGHT (40%)
             ==================================================== */}
         <div className="grid lg:grid-cols-5 gap-6">
           {/* LEFT COLUMN */}
@@ -369,7 +369,7 @@ export function DashboardView() {
         </div>
 
         {/* ====================================================
-            4. ACTIVITY FEED — recent activity timeline
+            4. ACTIVITY FEED - recent activity timeline
             ==================================================== */}
         <ScrollReveal>
           <ActivityFeed activities={activities.slice(0, 5)} loading={userLoading} />
@@ -407,7 +407,7 @@ function HeaderStrip({
     >
       <div className="absolute inset-0 bg-grid-fine opacity-30 pointer-events-none" />
       <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        {/* LEFT — brand + user identity */}
+        {/* LEFT - brand + user identity */}
         <div className="flex items-center gap-3 sm:gap-4 min-w-0">
           <div
             className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
@@ -431,7 +431,7 @@ function HeaderStrip({
           </div>
         </div>
 
-        {/* RIGHT — live status indicators */}
+        {/* RIGHT - live status indicators */}
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
           <StatusDot status="online" pulse size="sm" label="Systems Online" />
           <StatusDot
@@ -451,7 +451,7 @@ function HeaderStrip({
 }
 
 /* ============================================================
-   2. Stats Row — 4 StatTiles
+   2. Stats Row - 4 StatTiles
    ============================================================ */
 
 function StatsRow({
@@ -523,7 +523,7 @@ function StatsRow({
 }
 
 /* ============================================================
-   3a. Current Mission — MissionCard or empty state
+   3a. Current Mission - MissionCard or empty state
    ============================================================ */
 
 function CurrentMission({
@@ -576,7 +576,7 @@ function CurrentMission({
 }
 
 /* ============================================================
-   3b. Continue Learning — courses in progress
+   3b. Continue Learning - courses in progress
    ============================================================ */
 
 function ContinueLearning({
@@ -655,7 +655,7 @@ function ContinueLearning({
 }
 
 /* ============================================================
-   3c. Active Labs — running lab environments
+   3c. Active Labs - running lab environments
    ============================================================ */
 
 function ActiveLabs({
@@ -785,7 +785,7 @@ function DailyObjective({ labsSolvedToday }: { labsSolvedToday: number }) {
 }
 
 /* ============================================================
-   3e. Achievements — recent badges (grid of 6)
+   3e. Achievements - recent badges (grid of 6)
    ============================================================ */
 
 function AchievementsPanel({
@@ -845,7 +845,7 @@ function AchievementsPanel({
                 return (
                   <div
                     key={a.code}
-                    title={`${a.title} — ${a.description}`}
+                    title={`${a.title} - ${a.description}`}
                     className={cn(
                       "group flex flex-col items-center gap-1.5 rounded-lg border p-2 text-center transition-transform hover:scale-[1.04]",
                       colorClass,
@@ -867,7 +867,7 @@ function AchievementsPanel({
 }
 
 /* ============================================================
-   3f. Leaderboard — Top 5 + user's rank
+   3f. Leaderboard - Top 5 + user's rank
    ============================================================ */
 
 function LeaderboardPanel({
@@ -985,7 +985,7 @@ function LeaderboardRow({ entry }: { entry: LeaderboardEntry }) {
 }
 
 /* ============================================================
-   3g. Skill Profile — 6 skill bars
+   3g. Skill Profile - 6 skill bars
    ============================================================ */
 
 function SkillProfile({
@@ -1033,7 +1033,7 @@ function SkillProfile({
 }
 
 /* ============================================================
-   4. Activity Feed — recent activity timeline
+   4. Activity Feed - recent activity timeline
    ============================================================ */
 
 function ActivityFeed({

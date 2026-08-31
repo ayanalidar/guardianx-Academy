@@ -6,7 +6,7 @@ import { Check, Lock, Star, Zap } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 /**
- * SkillNode — single node in a skill-tree visualization. Designed to be
+ * SkillNode - single node in a skill-tree visualization. Designed to be
  * placed inside a relatively-positioned container; absolute positioning of
  * each node is the responsibility of the parent layout.
  *
@@ -160,7 +160,7 @@ export function SkillNode({
         onKeyDown={handleKeyDown}
         role={isInteractive ? "button" : undefined}
         tabIndex={isInteractive ? 0 : undefined}
-        aria-label={`${label} — ${status}${typeof xp === "number" ? `, ${xp} XP` : ""}`}
+        aria-label={`${label} - ${status}${typeof xp === "number" ? `, ${xp} XP` : ""}`}
         aria-disabled={status === "locked"}
         className={cn(
           "relative z-10 flex flex-col items-center justify-center rounded-full border-2 backdrop-blur-sm",

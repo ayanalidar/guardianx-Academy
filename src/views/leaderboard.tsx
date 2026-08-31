@@ -38,7 +38,7 @@ export function LeaderboardView() {
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
         {/* ====================================================
-            HEADER — oversized headline + status
+            HEADER - oversized headline + status
             ==================================================== */}
         <ScrollReveal>
           <div className="flex items-center gap-3 mb-6">
@@ -87,7 +87,7 @@ export function LeaderboardView() {
 }
 
 /* ============================================================
-   Lab Leaderboards — Top 3 podium + editorial list + lab records
+   Lab Leaderboards - Top 3 podium + editorial list + lab records
    ============================================================ */
 function LabLeaderboards({ currentUserId }: { currentUserId?: string }) {
   const { data, isLoading } = useQuery<any>({
@@ -110,13 +110,13 @@ function LabLeaderboards({ currentUserId }: { currentUserId?: string }) {
 
   return (
     <div className="space-y-16">
-      {/* Stats — border-left editorial */}
+      {/* Stats - border-left editorial */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
         {[
           { label: "Total Solves", value: data.totalSolves, accent: "border-emerald-500/50", color: "text-emerald-300", icon: Trophy },
           { label: "Active Solvers", value: data.activeSolvers, accent: "border-cyan-500/50", color: "text-cyan-300", icon: Users },
           { label: "Top XP", value: data.topSolvers[0]?.user?.xp ?? 0, accent: "border-violet-500/50", color: "text-violet-300", icon: Zap },
-          { label: "Fastest Solve", value: data.fastestSolvers[0] ? formatDuration(data.fastestSolvers[0].fastestMs) : "—", custom: data.fastestSolvers[0] ? formatDuration(data.fastestSolvers[0].fastestMs) : "—", accent: "border-amber-500/50", color: "text-amber-300", icon: Clock },
+          { label: "Fastest Solve", value: data.fastestSolvers[0] ? formatDuration(data.fastestSolvers[0].fastestMs) : "-", custom: data.fastestSolvers[0] ? formatDuration(data.fastestSolvers[0].fastestMs) : "-", accent: "border-amber-500/50", color: "text-amber-300", icon: Clock },
         ].map((s, i) => (
           <ScrollReveal key={s.label} delay={i * 0.08}>
             <div className={cn("border-l pl-5", s.accent)}>
@@ -130,7 +130,7 @@ function LabLeaderboards({ currentUserId }: { currentUserId?: string }) {
         ))}
       </div>
 
-      {/* Top 3 podium — premium composition */}
+      {/* Top 3 podium - premium composition */}
       {podium.length > 0 && (
         <Podium entries={podium.map((s: any) => ({
           rank: s.rank,
@@ -142,13 +142,13 @@ function LabLeaderboards({ currentUserId }: { currentUserId?: string }) {
         }))} />
       )}
 
-      {/* Rest of leaderboard — editorial list */}
+      {/* Rest of leaderboard - editorial list */}
       {rest.length > 0 && (
         <section>
           <ScrollReveal>
             <div className="flex items-center justify-between mb-6 pb-4 border-b border-border/60">
               <div>
-                <p className="text-[10px] font-mono text-muted-foreground tracking-[0.3em] mb-1">02 — RANKS {rest[0].rank}–{rest[rest.length - 1].rank}</p>
+                <p className="text-[10px] font-mono text-muted-foreground tracking-[0.3em] mb-1">02 - RANKS {rest[0].rank}–{rest[rest.length - 1].rank}</p>
                 <h2 className="text-2xl lg:text-3xl font-bold tracking-tight">The field</h2>
               </div>
               <span className="text-[10px] font-mono text-muted-foreground tracking-[0.2em]">{rest.length} DEFENDERS</span>
@@ -177,7 +177,7 @@ function LabLeaderboards({ currentUserId }: { currentUserId?: string }) {
           <ScrollReveal>
             <div className="flex items-center justify-between mb-6 pb-4 border-b border-border/60">
               <div>
-                <p className="text-[10px] font-mono text-cyan-400 tracking-[0.3em] mb-1">03 — FASTEST SOLVES</p>
+                <p className="text-[10px] font-mono text-cyan-400 tracking-[0.3em] mb-1">03 - FASTEST SOLVES</p>
                 <h2 className="text-2xl lg:text-3xl font-bold tracking-tight">Speed runners</h2>
               </div>
             </div>
@@ -205,7 +205,7 @@ function LabLeaderboards({ currentUserId }: { currentUserId?: string }) {
           <ScrollReveal>
             <div className="flex items-center justify-between mb-6 pb-4 border-b border-border/60">
               <div>
-                <p className="text-[10px] font-mono text-violet-400 tracking-[0.3em] mb-1">04 — LAB RECORDS</p>
+                <p className="text-[10px] font-mono text-violet-400 tracking-[0.3em] mb-1">04 - LAB RECORDS</p>
                 <h2 className="text-2xl lg:text-3xl font-bold tracking-tight">Per-lab champions</h2>
               </div>
             </div>
@@ -253,7 +253,7 @@ function LabLeaderboards({ currentUserId }: { currentUserId?: string }) {
 }
 
 /* ============================================================
-   Course Leaderboards — podium + editorial + popular courses
+   Course Leaderboards - podium + editorial + popular courses
    ============================================================ */
 function CourseLeaderboards({ currentUserId }: { currentUserId?: string }) {
   const { navigate } = useAppStore()
@@ -315,7 +315,7 @@ function CourseLeaderboards({ currentUserId }: { currentUserId?: string }) {
           <ScrollReveal>
             <div className="flex items-center justify-between mb-6 pb-4 border-b border-border/60">
               <div>
-                <p className="text-[10px] font-mono text-muted-foreground tracking-[0.3em] mb-1">02 — RANKS {rest[0].rank}–{rest[rest.length - 1].rank}</p>
+                <p className="text-[10px] font-mono text-muted-foreground tracking-[0.3em] mb-1">02 - RANKS {rest[0].rank}–{rest[rest.length - 1].rank}</p>
                 <h2 className="text-2xl lg:text-3xl font-bold tracking-tight">The field</h2>
               </div>
               <span className="text-[10px] font-mono text-muted-foreground tracking-[0.2em]">{rest.length} LEARNERS</span>
@@ -343,7 +343,7 @@ function CourseLeaderboards({ currentUserId }: { currentUserId?: string }) {
         <ScrollReveal>
           <div className="flex items-center justify-between mb-6 pb-4 border-b border-border/60">
             <div>
-              <p className="text-[10px] font-mono text-violet-400 tracking-[0.3em] mb-1">03 — MOST ENROLLED</p>
+              <p className="text-[10px] font-mono text-violet-400 tracking-[0.3em] mb-1">03 - MOST ENROLLED</p>
               <h2 className="text-2xl lg:text-3xl font-bold tracking-tight">Popular courses</h2>
             </div>
           </div>
@@ -389,7 +389,7 @@ function CourseLeaderboards({ currentUserId }: { currentUserId?: string }) {
 }
 
 /* ============================================================
-   Podium — premium top-3 composition
+   Podium - premium top-3 composition
    ============================================================ */
 function Podium({ entries }: { entries: any[] }) {
   if (entries.length === 0) return null
@@ -404,7 +404,7 @@ function Podium({ entries }: { entries: any[] }) {
       <ScrollReveal>
         <div className="flex items-center justify-between mb-8 pb-4 border-b border-border/60">
           <div>
-            <p className="text-[10px] font-mono text-amber-400 tracking-[0.3em] mb-1">01 — TOP DEFENDERS</p>
+            <p className="text-[10px] font-mono text-amber-400 tracking-[0.3em] mb-1">01 - TOP DEFENDERS</p>
             <h2 className="text-2xl lg:text-3xl font-bold tracking-tight">The podium</h2>
           </div>
           <span className="text-[10px] font-mono text-muted-foreground tracking-[0.2em]">SEASON LIVE</span>
@@ -532,7 +532,7 @@ function PodiumColumn({ entry, height, isFirst = false }: { entry: any; height: 
 }
 
 /* ============================================================
-   LeaderboardRow — editorial list row with oversized ghost rank
+   LeaderboardRow - editorial list row with oversized ghost rank
    ============================================================ */
 function LeaderboardRow({ rank, user, isMe, primary, secondary, tertiary }: {
   rank: number; user: any; isMe: boolean; primary: string; secondary: string; tertiary: string | null

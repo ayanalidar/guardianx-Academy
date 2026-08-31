@@ -63,7 +63,7 @@ function writeToken(t: string | null) {
   else window.localStorage.removeItem(TOKEN_KEY)
 }
 
-/** Authenticated parent-API helper — attaches the parent token header. */
+/** Authenticated parent-API helper - attaches the parent token header. */
 async function parentApi<T = any>(
   path: string,
   options?: RequestInit & { token?: string }
@@ -151,7 +151,7 @@ function AuthScreen({ onLogin }: { onLogin: (token: string) => void }) {
           </h1>
           <p className="text-muted-foreground text-sm mt-2 max-w-sm mx-auto">
             Track your student&apos;s course progress, certificates, lab
-            completions, and attendance — all in real time.
+            completions, and attendance - all in real time.
           </p>
         </div>
 
@@ -300,7 +300,7 @@ function RegisterForm({ onLogin }: { onLogin: (token: string) => void }) {
         body: JSON.stringify(form),
       }),
     onSuccess: (data) => {
-      toast.success("Parent account created — welcome!")
+      toast.success("Parent account created - welcome!")
       onLogin(data.token)
     },
     onError: (e: any) => toast.error(e.message || "Registration failed"),
@@ -428,7 +428,7 @@ function RegisterForm({ onLogin }: { onLogin: (token: string) => void }) {
 }
 
 // ---------------------------------------------------------------------------
-// Portal shell — once authenticated
+// Portal shell - once authenticated
 // ---------------------------------------------------------------------------
 function PortalShell({ token, onLogout }: { token: string; onLogout: () => void }) {
   const { data, isLoading, isError, error, refetch } = useQuery<any>({
@@ -962,7 +962,7 @@ function AttendanceTab({ attendance }: { attendance: any }) {
                   })}
                 </span>
                 <span className="text-xs text-muted-foreground truncate">
-                  {r.course?.shortName || "—"} · {r.sessionType}
+                  {r.course?.shortName || "-"} · {r.sessionType}
                 </span>
               </div>
               <Badge

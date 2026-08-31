@@ -40,7 +40,7 @@ import {
 import type { LucideIcon } from "lucide-react"
 
 /* ============================================================
-   CyberRangeView — cinematic showcase of the cyber range
+   CyberRangeView - cinematic showcase of the cyber range
    Replaces the prior multiplayer-session management view with
    a marketing-style "what the range IS" experience.
    ============================================================ */
@@ -73,10 +73,10 @@ const NMAP_LINES: TerminalLine[] = [
   { type: "output", text: "Starting Nmap with vuln script suite..." },
   { type: "output", text: "PORT     STATE SERVICE" },
   { type: "output", text: "80/tcp   open  http" },
-  { type: "error", text: "http-enum: Potential vulnerability — /dvwa/login.php" },
+  { type: "error", text: "http-enum: Potential vulnerability - /dvwa/login.php" },
   { type: "error", text: "http-sql-injection: SQLi found in 'id' parameter" },
   { type: "error", text: "mysql-empty-password: root account has no password" },
-  { type: "success", text: "3 exploitable vulnerabilities discovered — start hacking." },
+  { type: "success", text: "3 exploitable vulnerabilities discovered - start hacking." },
 ]
 
 interface LabCategory {
@@ -95,7 +95,7 @@ const LAB_CATEGORIES: LabCategory[] = [
     id: "web",
     name: "Web Security",
     count: 9,
-    description: "SQLi, XSS, SSRF, auth bypass, deserialization — OWASP-style attacks against live web apps.",
+    description: "SQLi, XSS, SSRF, auth bypass, deserialization - OWASP-style attacks against live web apps.",
     icon: Globe,
     color: "text-amber-300",
     tint: "bg-amber-500/10",
@@ -125,7 +125,7 @@ const LAB_CATEGORIES: LabCategory[] = [
     id: "ad",
     name: "Active Directory",
     count: 4,
-    description: "Kerberoasting, AS-REP roasting, GPP abuse, DCSync — full domain compromise.",
+    description: "Kerberoasting, AS-REP roasting, GPP abuse, DCSync - full domain compromise.",
     icon: Shield,
     color: "text-rose-300",
     tint: "bg-rose-500/10",
@@ -176,7 +176,7 @@ const HOW_IT_WORKS: HowItWorksStep[] = [
   {
     id: 3,
     title: "Exploit",
-    description: "Recon, enumerate, attack. Use any tool — nmap, Burp, sqlmap, Metasploit, BloodHound.",
+    description: "Recon, enumerate, attack. Use any tool - nmap, Burp, sqlmap, Metasploit, BloodHound.",
     icon: Swords,
   },
   {
@@ -261,7 +261,7 @@ export function CyberRangeView() {
         </motion.section>
 
         {/* ====================================================
-            LIVE TARGET DEMO — split layout
+            LIVE TARGET DEMO - split layout
             ==================================================== */}
         <motion.section
           initial={{ opacity: 0, y: 16 }}
@@ -300,7 +300,7 @@ export function CyberRangeView() {
                 className="h-full min-h-[420px]"
               />
               <p className="mt-3 text-xs text-muted-foreground font-mono">
-                <span className="text-emerald-300">●</span> LIVE — automated demo replays every 60s.
+                <span className="text-emerald-300">●</span> LIVE - automated demo replays every 60s.
               </p>
             </div>
           </div>
@@ -326,7 +326,7 @@ export function CyberRangeView() {
             Six disciplines. Endless attack paths.
           </h2>
           <p className="text-muted-foreground mb-8 max-w-2xl">
-            From web app pentesting to Active Directory compromise — every category ships with beginner-friendly entry points and insane-mode nightmares.
+            From web app pentesting to Active Directory compromise - every category ships with beginner-friendly entry points and insane-mode nightmares.
           </p>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -363,7 +363,7 @@ export function CyberRangeView() {
         </motion.section>
 
         {/* ====================================================
-            FEATURED LABS — real data from /api/labs
+            FEATURED LABS - real data from /api/labs
             ==================================================== */}
         <motion.section
           initial={{ opacity: 0, y: 16 }}
@@ -432,7 +432,7 @@ export function CyberRangeView() {
         </motion.section>
 
         {/* ====================================================
-            HOW IT WORKS — 4-step process
+            HOW IT WORKS - 4-step process
             ==================================================== */}
         <motion.section
           initial={{ opacity: 0, y: 16 }}
@@ -452,7 +452,7 @@ export function CyberRangeView() {
           </h2>
 
           <div className="relative grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Connecting line — hidden on mobile */}
+            {/* Connecting line - hidden on mobile */}
             <div
               aria-hidden
               className="hidden lg:block absolute top-[34px] left-[12.5%] right-[12.5%] h-px bg-gradient-to-r from-amber-500/0 via-amber-500/30 to-amber-500/0"
@@ -583,7 +583,7 @@ function TargetInfoCard() {
 
       <div className="space-y-3">
         <Row label="TARGET">
-          <span className="font-mono text-violet-200">DVWA — Damn Vulnerable Web App</span>
+          <span className="font-mono text-violet-200">DVWA - Damn Vulnerable Web App</span>
         </Row>
         <Row label="IP ADDR">
           <span className="font-mono text-cyan-200">10.10.24.14</span>

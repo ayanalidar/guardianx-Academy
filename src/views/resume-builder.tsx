@@ -44,7 +44,7 @@ import {
 import { toast } from "sonner"
 
 /* ============================================================
-   ResumeBuilderView — form + live preview + auto-populate
+   ResumeBuilderView - form + live preview + auto-populate
    ============================================================ */
 
 interface ExperienceItem {
@@ -106,7 +106,7 @@ function downloadResumeHtml(r: Resume) {
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>${r.contactInfo.name || "Resume"} — Resume</title>
+<title>${r.contactInfo.name || "Resume"} - Resume</title>
 <style>
   * { box-sizing: border-box; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1a1a1a; max-width: 800px; margin: 40px auto; padding: 0 24px; line-height: 1.55; }
@@ -139,7 +139,7 @@ function downloadResumeHtml(r: Resume) {
   ${r.experience.length > 0 ? `<h2>Experience</h2>${r.experience.map(e => `
     <div class="item">
       <div class="item-head">${e.title}</div>
-      <div class="item-sub">${e.company} · ${e.startDate} — ${e.endDate || "Present"}</div>
+      <div class="item-sub">${e.company} · ${e.startDate} - ${e.endDate || "Present"}</div>
       <div>${e.description.replace(/\n/g, "<br/>")}</div>
     </div>
   `).join("")}` : ""}
@@ -147,12 +147,12 @@ function downloadResumeHtml(r: Resume) {
   ${r.education.length > 0 ? `<h2>Education</h2>${r.education.map(e => `
     <div class="item">
       <div class="item-head">${e.degree}</div>
-      <div class="item-sub">${e.institution} · ${e.startDate} — ${e.endDate || "Present"}</div>
+      <div class="item-sub">${e.institution} · ${e.startDate} - ${e.endDate || "Present"}</div>
     </div>
   `).join("")}` : ""}
 
   ${r.certifications.length > 0 ? `<h2>Certifications</h2><ul>${r.certifications.map(c => `
-    <li><strong>${c.title}</strong> — ${c.issuer} (${c.date})${c.verificationId ? ` · ID: ${c.verificationId}` : ""}</li>
+    <li><strong>${c.title}</strong> - ${c.issuer} (${c.date})${c.verificationId ? ` · ID: ${c.verificationId}` : ""}</li>
   `).join("")}</ul>` : ""}
 
   ${r.skills.length > 0 ? `<h2>Skills</h2><div class="skills">${r.skills.map(s => `<span class="skill">${s}</span>`).join("")}</div>` : ""}
@@ -683,7 +683,7 @@ export function ResumeBuilderView() {
                 }
               >
                 {form.certifications.length === 0 ? (
-                  <EmptyHint text="No certifications yet — use Auto-populate to import from your GuardianX profile." />
+                  <EmptyHint text="No certifications yet - use Auto-populate to import from your GuardianX profile." />
                 ) : (
                   <div className="space-y-1.5">
                     {form.certifications.map((c, i) => (
@@ -852,7 +852,7 @@ export function ResumeBuilderView() {
                           <div className="flex items-baseline justify-between">
                             <p className="text-sm font-semibold text-neutral-900">{e.title}</p>
                             <p className="text-[10px] text-neutral-500">
-                              {e.startDate} — {e.endDate || "Present"}
+                              {e.startDate} - {e.endDate || "Present"}
                             </p>
                           </div>
                           <p className="text-[11px] text-violet-700 mb-1">{e.company}</p>
@@ -870,7 +870,7 @@ export function ResumeBuilderView() {
                           <div className="flex items-baseline justify-between">
                             <p className="text-sm font-semibold text-neutral-900">{e.degree}</p>
                             <p className="text-[10px] text-neutral-500">
-                              {e.startDate} — {e.endDate || "Present"}
+                              {e.startDate} - {e.endDate || "Present"}
                             </p>
                           </div>
                           <p className="text-[11px] text-violet-700">{e.institution}</p>
@@ -885,7 +885,7 @@ export function ResumeBuilderView() {
                       <ul className="space-y-1">
                         {form.certifications.map((c, i) => (
                           <li key={i} className="text-xs text-neutral-700">
-                            <span className="font-semibold">{c.title}</span> — {c.issuer} ({c.date})
+                            <span className="font-semibold">{c.title}</span> - {c.issuer} ({c.date})
                           </li>
                         ))}
                       </ul>

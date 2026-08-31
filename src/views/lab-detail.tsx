@@ -25,7 +25,7 @@ import {
 import { NetworkVisualization } from "@/components/platform/network-visualization"
 
 /* ============================================================
-   LabDetailView — Cyber Range Mission
+   LabDetailView - Cyber Range Mission
    Premium cinematic experience: oversized mission title,
    immersive header with network viz, sticky briefing,
    objective checklist, premium terminal, collapsible hints.
@@ -106,7 +106,7 @@ export function LabDetailView() {
         </ScrollReveal>
 
         {/* ====================================================
-            HEADER — oversized title with network viz background
+            HEADER - oversized title with network viz background
             ==================================================== */}
         <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-card/30 mb-10">
           <div className="absolute inset-0 bg-gradient-to-br from-violet-950/40 via-background to-cyan-950/15" />
@@ -174,7 +174,7 @@ export function LabDetailView() {
         </div>
 
         {/* ====================================================
-            SUCCESS BANNER — if lab completed
+            SUCCESS BANNER - if lab completed
             ==================================================== */}
         {done && (
           <ScaleReveal className="mb-8">
@@ -183,12 +183,12 @@ export function LabDetailView() {
         )}
 
         {/* ====================================================
-            MAIN GRID — content + sticky sidebar
+            MAIN GRID - content + sticky sidebar
             ==================================================== */}
         <div className="grid lg:grid-cols-12 gap-6">
           {/* Left: Main content (briefing, objectives, terminal, hints) */}
           <div className="lg:col-span-8 space-y-6">
-            {/* Mission Briefing — with sticky header */}
+            {/* Mission Briefing - with sticky header */}
             <ScrollReveal>
               <MissionBriefing scenario={lab.scenario} />
             </ScrollReveal>
@@ -223,7 +223,7 @@ export function LabDetailView() {
               />
             </ScrollReveal>
 
-            {/* Hints — collapsible */}
+            {/* Hints - collapsible */}
             <ScrollReveal>
               <HintsPanel
                 slug={slug}
@@ -275,7 +275,7 @@ export function LabDetailView() {
                     />
                     <SidebarStat
                       label="Time Spent"
-                      value={progress?.timeSpentMs ? formatDuration(progress.timeSpentMs) : "—"}
+                      value={progress?.timeSpentMs ? formatDuration(progress.timeSpentMs) : "-"}
                       mono
                     />
                     <SidebarStat
@@ -318,7 +318,7 @@ export function LabDetailView() {
 }
 
 /* ============================================================
-   HeaderStat — small inline stat for header
+   HeaderStat - small inline stat for header
    ============================================================ */
 function HeaderStat({ icon: Icon, label, value, color }: { icon: any; label: string; value: string; color: string }) {
   return (
@@ -333,7 +333,7 @@ function HeaderStat({ icon: Icon, label, value, color }: { icon: any; label: str
 }
 
 /* ============================================================
-   SidebarStat — key/value row
+   SidebarStat - key/value row
    ============================================================ */
 function SidebarStat({ label, value, color, valueColor, mono }: { label: string; value: string; color?: string; valueColor?: string; mono?: boolean }) {
   return (
@@ -345,7 +345,7 @@ function SidebarStat({ label, value, color, valueColor, mono }: { label: string;
 }
 
 /* ============================================================
-   MissionBriefing — sticky header within briefing card
+   MissionBriefing - sticky header within briefing card
    ============================================================ */
 function MissionBriefing({ scenario }: { scenario: string }) {
   return (
@@ -372,7 +372,7 @@ function MissionBriefing({ scenario }: { scenario: string }) {
 }
 
 /* ============================================================
-   ObjectiveRow — single objective with checkmark state
+   ObjectiveRow - single objective with checkmark state
    ============================================================ */
 function ObjectiveRow({ index, text, done }: { index: number; text: string; done: boolean }) {
   return (
@@ -395,7 +395,7 @@ function ObjectiveRow({ index, text, done }: { index: number; text: string; done
 }
 
 /* ============================================================
-   SuccessBanner — celebration on completion
+   SuccessBanner - celebration on completion
    ============================================================ */
 function SuccessBanner({ points }: { points: number }) {
   return (
@@ -422,7 +422,7 @@ function SuccessBanner({ points }: { points: number }) {
 }
 
 /* ============================================================
-   HintsPanel — collapsible hints section
+   HintsPanel - collapsible hints section
    ============================================================ */
 function HintsPanel({ slug, hintsString, hintsUsed, difficulty }: { slug: string; hintsString: string; hintsUsed: number; difficulty: string }) {
   const qc = useQueryClient()
@@ -532,7 +532,7 @@ function HintsPanel({ slug, hintsString, hintsUsed, difficulty }: { slug: string
 }
 
 /* ============================================================
-   LabTerminal — premium terminal with violet accent
+   LabTerminal - premium terminal with violet accent
    ============================================================ */
 function LabTerminal({ labSlug, labTitle, commands, flag, started, done, onStart }: {
   labSlug: string; labTitle: string; commands: string[]; flag: string; started: boolean; done: boolean; onStart: () => void

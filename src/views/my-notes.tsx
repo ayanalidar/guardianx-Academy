@@ -84,7 +84,7 @@ export function MyNotesView() {
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
         {/* ====================================================
-            HEADER — oversized editorial
+            HEADER - oversized editorial
             ==================================================== */}
         <ScrollReveal>
           <div className="flex items-center gap-2 mb-4">
@@ -117,7 +117,7 @@ export function MyNotesView() {
         </ScrollReveal>
 
         {/* ====================================================
-            SEARCH + STATS BAR — open, editorial
+            SEARCH + STATS BAR - open, editorial
             ==================================================== */}
         <ScrollReveal delay={0.2}>
           <div className="flex flex-col sm:flex-row gap-4 mb-12">
@@ -145,7 +145,7 @@ export function MyNotesView() {
         </ScrollReveal>
 
         {/* ====================================================
-            EDITOR — premium floating panel
+            EDITOR - premium floating panel
             ==================================================== */}
         {showEditor && (
           <FadeIn className="mb-12">
@@ -280,7 +280,7 @@ export function MyNotesView() {
 }
 
 /* ============================================================
-   Empty State — editorial
+   Empty State - editorial
    ============================================================ */
 function EmptyState({ hasQuery, onCreate }: { hasQuery: boolean; onCreate: () => void }) {
   return (
@@ -310,7 +310,7 @@ function EmptyState({ hasQuery, onCreate }: { hasQuery: boolean; onCreate: () =>
 }
 
 /* ============================================================
-   Note Card — premium with color coding
+   Note Card - premium with color coding
    ============================================================ */
 function NoteCard({
   note,

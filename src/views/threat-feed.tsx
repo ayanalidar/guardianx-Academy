@@ -35,7 +35,7 @@ import {
 import { toast } from "sonner"
 
 /* ============================================================
-   ThreatFeedView — Live threat intelligence dashboard
+   ThreatFeedView - Live threat intelligence dashboard
    ============================================================ */
 
 interface ThreatItem {
@@ -129,7 +129,7 @@ export function ThreatFeedView() {
       if (q) params.set("q", q)
       return api(`/api/threat-feed?${params.toString()}`)
     },
-    refetchInterval: 60000, // refresh every minute — "live"
+    refetchInterval: 60000, // refresh every minute - "live"
   })
 
   const items = data?.items ?? []
@@ -165,7 +165,7 @@ export function ThreatFeedView() {
         </ScrollReveal>
         <ScrollReveal delay={0.2}>
           <p className="text-muted-foreground max-w-xl mb-8">
-            Real-time cybersecurity threat intelligence — vulnerabilities, breaches, malware
+            Real-time cybersecurity threat intelligence - vulnerabilities, breaches, malware
             campaigns, and security advisories from across the globe.
           </p>
         </ScrollReveal>

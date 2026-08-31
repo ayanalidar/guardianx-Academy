@@ -5,7 +5,7 @@ import { PublicHeader } from "@/components/platform/public-header"
 import { PublicFooter } from "@/components/platform/public-footer"
 
 /**
- * PublicPageShell — wraps public-facing pages with the sticky header + footer.
+ * PublicPageShell - wraps public-facing pages with the sticky header + footer.
  * Used for Home, Impact, Contact, and other unauthenticated pages.
  */
 export function PublicPageShell({ children }: { children: React.ReactNode }) {

@@ -158,7 +158,7 @@ function InstructorHero() {
               Welcome back, <span className="text-cyan-400">{user?.name?.split(" ")[0]}</span>
             </h1>
             <p className="text-muted-foreground max-w-xl">
-              Manage your courses, host live workshops, track student progress, and analyze engagement — all in one place.
+              Manage your courses, host live workshops, track student progress, and analyze engagement - all in one place.
             </p>
           </div>
           <div className="hidden lg:flex items-center gap-3">
@@ -781,7 +781,7 @@ function NewModuleForm({ courseId, onClose }: { courseId: string; onClose: () =>
         <span className="text-sm font-semibold">New Module</span>
         <Button size="sm" variant="ghost" className="ml-auto h-7" onClick={onClose}><X className="h-3.5 w-3.5" /></Button>
       </div>
-      <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Module title (e.g. Module 09 — Cloud Security)" />
+      <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Module title (e.g. Module 09 - Cloud Security)" />
       <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Description (optional)" />
       <Button size="sm" onClick={() => create.mutate()} disabled={!title.trim() || create.isPending}>
         <Plus className="h-3.5 w-3.5 mr-1" /> {create.isPending ? "Creating..." : "Create Module"}
@@ -893,7 +893,7 @@ function QuizEditor({ lessonId, courseId }: { lessonId: string; courseId: string
     }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["instructor", "lesson", lessonId, "quiz"] })
-      toast.success("Quiz created — now add questions!")
+      toast.success("Quiz created - now add questions!")
     },
     onError: (e: any) => toast.error(e.message),
   })
@@ -1255,7 +1255,7 @@ function LiveSessionsTab() {
     }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["live-sessions"] })
-      toast.success("Session started — taking you to the live room")
+      toast.success("Session started - taking you to the live room")
       navigate({ name: "live" })
     },
     onError: (e: any) => toast.error(e.message),
@@ -1372,7 +1372,7 @@ function LiveSessionsTab() {
                   <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="">No course</SelectItem>
-                    {myCourses.map((c) => <SelectItem key={c.id} value={c.id}>{c.shortName} — {c.title}</SelectItem>)}
+                    {myCourses.map((c) => <SelectItem key={c.id} value={c.id}>{c.shortName} - {c.title}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>

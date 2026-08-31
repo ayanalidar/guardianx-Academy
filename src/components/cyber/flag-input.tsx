@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
 /**
- * FlagInput — specialized input for capturing CTF / lab flags.
+ * FlagInput - specialized input for capturing CTF / lab flags.
  *
  *  - Mono font, "GX{...}" format enforced visually with prefix + suffix chips
  *  - Enter key submits
@@ -45,7 +45,7 @@ export function FlagInput({
   const [value, setValue] = React.useState("")
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Strip any literal "GX{" / "}" the user types — we add them visually
+    // Strip any literal "GX{" / "}" the user types - we add them visually
     let v = e.target.value
     v = v.replace(/^GX\{/i, "").replace(/\}$/, "")
     setValue(v)

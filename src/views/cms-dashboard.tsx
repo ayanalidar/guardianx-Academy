@@ -106,7 +106,7 @@ const SECTION_LABELS: Record<string, string> = {
    ============================================================ */
 
 function formatTimeAgo(iso?: string | null): string {
-  if (!iso) return "—"
+  if (!iso) return "-"
   const d = new Date(iso)
   const diff = Date.now() - d.getTime()
   const min = Math.floor(diff / 60_000)
@@ -209,7 +209,7 @@ function Hero() {
             </h1>
             <p className="text-sm text-muted-foreground mt-2 max-w-xl leading-relaxed">
               Pick a page from the left, expand any section, edit text or arrays, and hit Save Changes.
-              Updates are live instantly across the platform — no redeploy needed.
+              Updates are live instantly across the platform - no redeploy needed.
             </p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
@@ -700,7 +700,7 @@ function SectionKeysEditor({
 }
 
 /* ============================================================
-   Key editor — dispatches by value type
+   Key editor - dispatches by value type
    ============================================================ */
 
 function KeyEditor({
@@ -877,7 +877,7 @@ function StringArrayEditor({
     <div className="space-y-1.5">
       {items.length === 0 && (
         <div className="text-[10px] text-muted-foreground italic px-1 py-1">
-          Empty array — add items below.
+          Empty array - add items below.
         </div>
       )}
       {items.map((item, i) => (
@@ -931,7 +931,7 @@ function StringArrayEditor({
 }
 
 /* ============================================================
-   Object array editor — card-based with all fields
+   Object array editor - card-based with all fields
    ============================================================ */
 
 function ObjectArrayEditor({
@@ -1105,7 +1105,7 @@ function ObjectArrayEditor({
 }
 
 /* ============================================================
-   Object editor — single object with mixed value types
+   Object editor - single object with mixed value types
    ============================================================ */
 
 function ObjectEditor({

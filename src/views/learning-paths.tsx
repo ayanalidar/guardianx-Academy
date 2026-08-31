@@ -33,7 +33,7 @@ import {
 import type { LucideIcon } from "lucide-react"
 
 /* ============================================================
-   LearningPathsView — guided cybersecurity career paths
+   LearningPathsView - guided cybersecurity career paths
    ============================================================ */
 
 type Difficulty = "Beginner" | "Intermediate" | "Advanced"
@@ -90,7 +90,7 @@ interface LearningPathRow {
 }
 
 /* ---------------------------------------------------------------- *
- *  Color variants — Tailwind needs the literal class names on     *
+ *  Color variants - Tailwind needs the literal class names on     *
  *  disk so JIT can include them; we cannot build these            *
  *  dynamically with template strings.                             *
  * ---------------------------------------------------------------- */
@@ -201,7 +201,7 @@ const DIFFICULTY_BADGE: Record<Difficulty, string> = {
 }
 
 /**
- * Hardcoded fallback — only shown if /api/learning-paths is unreachable.
+ * Hardcoded fallback - only shown if /api/learning-paths is unreachable.
  * Mirrors the production DB rows seeded by prisma/seed-production.ts.
  */
 const LEARNING_PATHS: LearningPath[] = [
@@ -686,7 +686,7 @@ export function LearningPathsView() {
 }
 
 /* ============================================================
-   PathCard — rich path card with expand/collapse
+   PathCard - rich path card with expand/collapse
    ============================================================ */
 
 interface PathCardProps {
@@ -823,7 +823,7 @@ function MetaStat({ icon: Icon, value, label }: { icon: LucideIcon; value: React
 }
 
 /* ============================================================
-   PathCurriculum — expanded panel inside a path card
+   PathCurriculum - expanded panel inside a path card
    ============================================================ */
 
 function PathCurriculum({ path, onEnroll }: { path: LearningPath; onEnroll: () => void }) {

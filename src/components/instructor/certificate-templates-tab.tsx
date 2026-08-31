@@ -335,7 +335,7 @@ function TemplateCard({
               onClick={onDelete}
               disabled={!canDelete}
               aria-label="Delete template"
-              title={canDelete ? "Delete template" : "Referenced by certificates — cannot delete"}
+              title={canDelete ? "Delete template" : "Referenced by certificates - cannot delete"}
             >
               <Trash2 className={cn("h-4 w-4", canDelete ? "text-rose-400" : "text-muted-foreground/40")} />
             </Button>

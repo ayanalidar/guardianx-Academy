@@ -47,7 +47,7 @@ export function EmailCampaignView() {
   }
 
   const templates = [
-    { name: "Batch Announcement", subject: "New Certification Batch Starting Soon!", body: "Dear {{name}},\n\nA new batch for {{cert}} is starting on {{date}}. Seats are limited — enroll today!\n\nBest regards,\nGuardianX Academy" },
+    { name: "Batch Announcement", subject: "New Certification Batch Starting Soon!", body: "Dear {{name}},\n\nA new batch for {{cert}} is starting on {{date}}. Seats are limited - enroll today!\n\nBest regards,\nGuardianX Academy" },
     { name: "Exam Reminder", subject: "Your GuardianX Exam is Approaching", body: "Dear {{name}},\n\nYour proctored exam for {{cert}} is scheduled. Please complete your preparation.\n\nGuardianX Academy" },
     { name: "Certificate Issued", subject: "Your GuardianX Credential is Ready!", body: "Dear {{name}},\n\nCongratulations! You've earned the {{cert}} certification. Your credential ID is {{credId}}.\n\nVerify at: academy.guardianx.cloud/verify" },
     { name: "Course Completion", subject: "Well Done! Course Completed", body: "Dear {{name}},\n\nYou've successfully completed {{course}}. Keep up the great work!\n\nGuardianX Academy" },

@@ -25,7 +25,7 @@ import { cn } from "@/lib/utils"
 import { usePageContent, getContent } from "@/lib/use-content"
 import { AnimatedLogo } from "@/components/platform/animated-logo"
 
-// Demo accounts — only shown in development, never in production
+// Demo accounts - only shown in development, never in production
 const IS_DEV = process.env.NODE_ENV !== "production"
 const DEMO_ACCOUNTS = IS_DEV ? [
   { label: "Student", email: "student@academy.guardianx.cloud", password: "student123", icon: GraduationCap, color: "text-violet-300", tint: "bg-violet-500/10 border-violet-500/30" },
@@ -55,12 +55,12 @@ export function AuthScreen() {
   const [showPass, setShowPass] = React.useState(false)
   const [activeTab, setActiveTab] = React.useState("login")
 
-  // CMS-driven hero copy — falls back to defaults.
+  // CMS-driven hero copy - falls back to defaults.
   const cms = usePageContent("auth")
   const cmsData = cms.data
   const heroTitle = getContent(cmsData, "hero", "title", "Master Cyber Security.")
   const heroTitleAccent = getContent(cmsData, "hero", "titleAccent", "Become a Guardian.")
-  const heroDesc = getContent(cmsData, "hero", "description", "Industry-leading certification prep, live screen-sharing workshops, and hands-on offensive security labs — all in one platform built for defenders.")
+  const heroDesc = getContent(cmsData, "hero", "description", "Industry-leading certification prep, live screen-sharing workshops, and hands-on offensive security labs - all in one platform built for defenders.")
   const heroTagline = getContent(cmsData, "hero", "tagline", "cyber security · certification · labs")
   const trustFooter = getContent(cmsData, "hero", "trustFooter", "Encrypted · SOC2-aligned · Built for defenders")
   const loginTitle = getContent(cmsData, "tabs", "loginTitle", "Sign in to continue")
@@ -70,7 +70,7 @@ export function AuthScreen() {
   const registerTitle = getContent(cmsData, "tabs", "registerTitle", "Create your account")
   const registerSubtitle = getContent(cmsData, "tabs", "registerSubtitle", "Start your cyber security journey today.")
 
-  // Standard login state — empty by default (no pre-filled credentials)
+  // Standard login state - empty by default (no pre-filled credentials)
   const [loginEmail, setLoginEmail] = React.useState("")
   const [loginPass, setLoginPass] = React.useState("")
 
@@ -191,7 +191,7 @@ export function AuthScreen() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
             {/* ============================================================
-                LEFT — Branding (desktop only)
+                LEFT - Branding (desktop only)
                 ============================================================ */}
             <section className="hidden lg:flex lg:flex-col gap-8 lg:sticky lg:top-28">
               {/* Logo + tagline */}
@@ -219,7 +219,7 @@ export function AuthScreen() {
                 </p>
               </div>
 
-              {/* Feature highlights — solid cards */}
+              {/* Feature highlights - solid cards */}
               <div className="grid grid-cols-2 gap-3">
                 {FEATURES.map((f) => (
                   <div
@@ -235,7 +235,7 @@ export function AuthScreen() {
                 ))}
               </div>
 
-              {/* Stats strip — solid card */}
+              {/* Stats strip - solid card */}
               <div className="rounded-xl border border-border bg-card shadow-lg p-5">
                 <div className="grid grid-cols-3 gap-4">
                   {STATS.map((s, i) => (
@@ -258,7 +258,7 @@ export function AuthScreen() {
             </section>
 
             {/* ============================================================
-                RIGHT — Auth form (solid card, shadow-lg)
+                RIGHT - Auth form (solid card, shadow-lg)
                 ============================================================ */}
             <section className="w-full">
               {/* Mobile logo (shown only on small screens) */}
@@ -271,7 +271,7 @@ export function AuthScreen() {
                 </div>
               </div>
 
-              {/* Form card — solid, shadowed */}
+              {/* Form card - solid, shadowed */}
               <Card className="bg-card shadow-lg border border-border p-6 sm:p-8">
                 <motion.div
                   initial={{ opacity: 0, y: 8 }}
@@ -514,40 +514,9 @@ export function AuthScreen() {
                     </form>
                   </TabsContent>
                 </Tabs>
-
-                {/* ===== Quick demo access — clean grid, no overlap ===== */}
-                {(activeTab === "login" || activeTab === "register") && (
-                  <div className="mt-8">
-                    <div className="relative">
-                      <Separator />
-                      <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-3 text-[10px] text-muted-foreground font-mono tracking-[0.15em]">
-                        QUICK DEMO ACCESS
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2.5 mt-4">
-                      {DEMO_ACCOUNTS.map((acc) => (
-                        <button
-                          key={acc.label}
-                          type="button"
-                          onClick={() => quickLogin(acc.email, acc.password)}
-                          disabled={loading}
-                          className={cn(
-                            "group rounded-lg border bg-card p-3 text-left transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:pointer-events-none",
-                            acc.tint,
-                            "hover:shadow-md"
-                          )}
-                        >
-                          <acc.icon className={cn("h-4 w-4 mb-2", acc.color)} />
-                          <div className="text-xs font-semibold">{acc.label}</div>
-                          <div className="text-[10px] text-muted-foreground font-mono mt-0.5">1-click</div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </Card>
 
-              {/* ===== Certificate Verify Card — solid wrapper below the form ===== */}
+              {/* ===== Certificate Verify Card - solid wrapper below the form ===== */}
               <div className="mt-6">
                 <CertificateVerifyCard />
               </div>

@@ -29,14 +29,14 @@ const ACTION_COLORS: Record<string, string> = {
   change: "text-blue-300", submit: "text-violet-300",
 }
 
-// Mock audit log entries — in production from /api/admin/audit-logs
+// Mock audit log entries - in production from /api/admin/audit-logs
 const LOGS = [
   { id: 1, action: "cert_issue", actor: "admin@academy.guardianx.cloud", target: "student@academy.guardianx.cloud", detail: "Issued GX-CERT-2025-0001 (CEH)", timestamp: "2025-08-31T15:30:00Z" },
   { id: 2, action: "course_publish", actor: "admin@academy.guardianx.cloud", target: "Ethical Hacking Fundamentals", detail: "Published course", timestamp: "2025-08-31T14:20:00Z" },
-  { id: 3, action: "user_create", actor: "system", target: "raj@academy.guardianx.cloud", detail: "Bulk import — 5 students", timestamp: "2025-08-31T13:15:00Z" },
+  { id: 3, action: "user_create", actor: "system", target: "raj@academy.guardianx.cloud", detail: "Bulk import - 5 students", timestamp: "2025-08-31T13:15:00Z" },
   { id: 4, action: "settings_change", actor: "admin@academy.guardianx.cloud", target: "platform", detail: "Updated NEXTAUTH_URL", timestamp: "2025-08-31T12:00:00Z" },
-  { id: 5, action: "exam_submit", actor: "student@academy.guardianx.cloud", target: "GX Security Analyst Exam", detail: "Score: 85% — PASSED", timestamp: "2025-08-31T11:45:00Z" },
-  { id: 6, action: "cert_revoke", actor: "admin@academy.guardianx.cloud", target: "GX-CERT-2025-0003", detail: "Revoked — academic integrity violation", timestamp: "2025-08-30T18:30:00Z" },
+  { id: 5, action: "exam_submit", actor: "student@academy.guardianx.cloud", target: "GX Security Analyst Exam", detail: "Score: 85% - PASSED", timestamp: "2025-08-31T11:45:00Z" },
+  { id: 6, action: "cert_revoke", actor: "admin@academy.guardianx.cloud", target: "GX-CERT-2025-0003", detail: "Revoked - academic integrity violation", timestamp: "2025-08-30T18:30:00Z" },
   { id: 7, action: "batch_create", actor: "admin@academy.guardianx.cloud", target: "CEH Weekend Batch", detail: "Created batch GX-BATCH-2025-001", timestamp: "2025-08-30T16:00:00Z" },
   { id: 8, action: "course_update", actor: "instructor@academy.guardianx.cloud", target: "Web Application Security", detail: "Updated module 3 lesson 2", timestamp: "2025-08-30T14:30:00Z" },
 ]

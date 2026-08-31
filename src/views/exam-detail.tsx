@@ -28,7 +28,7 @@ import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 
 /* ============================================================
-   ExamDetailView — full proctored exam experience
+   ExamDetailView - full proctored exam experience
    Phases: detail → setup → exam → results
    ============================================================ */
 
@@ -343,7 +343,7 @@ export function ExamDetailView() {
 }
 
 /* ============================================================
-   Phase 1 — Exam detail (info + eligibility + start)
+   Phase 1 - Exam detail (info + eligibility + start)
    ============================================================ */
 
 function ExamDetailPhase({
@@ -510,7 +510,7 @@ function ExamDetailPhase({
               />
               <EligRow
                 label="Best Score"
-                value={uc.bestScore > 0 ? `${uc.bestScore}%` : "—"}
+                value={uc.bestScore > 0 ? `${uc.bestScore}%` : "-"}
                 ok={uc.bestScore >= exam.passingScore}
               />
               <EligRow
@@ -556,7 +556,7 @@ function ExamDetailPhase({
               )}
               {uc.hasInProgress && (
                 <p className="text-[11px] text-amber-300 text-center">
-                  You have an in-progress attempt — resuming now.
+                  You have an in-progress attempt - resuming now.
                 </p>
               )}
             </div>
@@ -631,7 +631,7 @@ function EligRow({ label, value, ok }: { label: string; value: string; ok: boole
 }
 
 /* ============================================================
-   Phase 2 — Pre-exam setup (identity + environment + camera)
+   Phase 2 - Pre-exam setup (identity + environment + camera)
    ============================================================ */
 
 function PreExamSetup({
@@ -878,7 +878,7 @@ function SetupStep({
 }
 
 /* ============================================================
-   Phase 3 — Exam runner (timer + questions + proctoring)
+   Phase 3 - Exam runner (timer + questions + proctoring)
    ============================================================ */
 
 interface ExamRunnerProps {
@@ -967,7 +967,7 @@ function ExamRunner({ startData, onSubmit, onExit }: ExamRunnerProps) {
   // Auto-submit when time runs out
   React.useEffect(() => {
     if (remainingSec <= 0 && !showSubmitDialog) {
-      toast.warning("Time's up — auto-submitting your exam.")
+      toast.warning("Time's up - auto-submitting your exam.")
       handleSubmit(true)
     }
   }, [remainingSec])
@@ -1023,7 +1023,7 @@ function ExamRunner({ startData, onSubmit, onExit }: ExamRunnerProps) {
       containerRef.current.requestFullscreen?.().then(() => {
         setIsFullscreen(true)
       }).catch(() => {
-        // User denied — keep going but flag
+        // User denied - keep going but flag
         addProctorFlag({
           type: "fullscreen_denied",
           timestamp: Date.now(),
@@ -1538,7 +1538,7 @@ function ProctorPill({
 }
 
 /* ============================================================
-   Phase 4 — Results
+   Phase 4 - Results
    ============================================================ */
 
 function ExamResults({
@@ -1590,7 +1590,7 @@ function ExamResults({
         <p className="mt-2 text-sm text-muted-foreground">
           {passed
             ? `You've earned the ${result.exam.certificationName ?? "GuardianX certification"}.`
-            : `You scored ${score}% — passing score is ${result.exam.passingScore}%. Review and try again.`}
+            : `You scored ${score}% - passing score is ${result.exam.passingScore}%. Review and try again.`}
         </p>
 
         <div className="mt-6 grid grid-cols-3 gap-3 max-w-lg mx-auto">
@@ -1610,7 +1610,7 @@ function ExamResults({
             <div className="text-2xl font-bold text-violet-300">
               {result.attempt.timeSpent != null
                 ? `${Math.floor(result.attempt.timeSpent / 60)}m`
-                : "—"}
+                : "-"}
             </div>
             <div className="text-[10px] text-muted-foreground uppercase">Time</div>
           </div>

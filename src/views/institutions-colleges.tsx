@@ -16,7 +16,7 @@ import {
 } from "lucide-react"
 
 // ============================================================
-// College features — SMS mentioned as one of the features
+// College features - SMS mentioned as one of the features
 // ============================================================
 const COLLEGE_FEATURES = [
   {
@@ -36,7 +36,7 @@ const COLLEGE_FEATURES = [
   {
     icon: Users,
     title: "Student Admissions",
-    desc: "Online application, merit list generation, document verification, and seat allotment — all in one workflow.",
+    desc: "Online application, merit list generation, document verification, and seat allotment - all in one workflow.",
     color: "text-emerald-300",
     bg: "bg-emerald-500/10",
   },
@@ -71,7 +71,7 @@ const COLLEGE_FEATURES = [
   {
     icon: Database,
     title: "School Management System",
-    desc: "Complimentary access to GuardianX's School Management System — manage admissions, attendance, grades, fees, and parent communication for any affiliated school programs.",
+    desc: "Complimentary access to GuardianX's School Management System - manage admissions, attendance, grades, fees, and parent communication for any affiliated school programs.",
     color: "text-emerald-300",
     bg: "bg-emerald-500/10",
     highlight: true,
@@ -121,7 +121,7 @@ const INTEGRATION_OPTIONS = [
   {
     icon: Database,
     title: "White-label Solution",
-    desc: "Fully branded as your college's own platform. Custom domain, custom logo, custom certificates — GuardianX runs the engine.",
+    desc: "Fully branded as your college's own platform. Custom domain, custom logo, custom certificates - GuardianX runs the engine.",
     color: "text-emerald-300",
     bg: "bg-emerald-500/10",
   },
@@ -148,7 +148,7 @@ export function InstitutionsCollegesView() {
                 <span className="text-gradient-premium">cyber security training.</span>
               </motion.h1>
               <motion.p initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.2 }} className="text-base lg:text-lg text-muted-foreground max-w-xl mb-5 leading-relaxed">
-                ERP-grade college management integrated with industry-aligned cyber security training. Manage departments, courses, exams, and placements — while students train on real cyber labs and earn verifiable certifications.
+                ERP-grade college management integrated with industry-aligned cyber security training. Manage departments, courses, exams, and placements - while students train on real cyber labs and earn verifiable certifications.
               </motion.p>
               <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.3 }} className="flex items-center gap-3 flex-wrap">
                 <Button size="lg" onClick={() => navigate({ name: "contact" })} className="bg-cyan-600 hover:bg-cyan-500 btn-premium px-8 py-6 text-sm">

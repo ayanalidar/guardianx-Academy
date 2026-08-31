@@ -322,7 +322,7 @@ export function WeeklyChallengesView() {
                                 </div>
                                 {!result.correct && (
                                   <div className="text-xs text-muted-foreground mt-0.5">
-                                    Your single attempt has been used — better luck next week!
+                                    Your single attempt has been used - better luck next week!
                                   </div>
                                 )}
                               </div>
@@ -345,7 +345,7 @@ export function WeeklyChallengesView() {
                                 }}
                               />
                               <p className="text-[10px] text-muted-foreground">
-                                ⚠ You only get ONE submission — make it count.
+                                ⚠ You only get ONE submission - make it count.
                               </p>
                             </div>
                             {challenge.hint && (

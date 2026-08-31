@@ -22,7 +22,7 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://academy.guardianx.cloud"),
-  title: "GuardianX Academy — Cyber Security Training Operating System",
+  title: "GuardianX Academy - Cyber Security Training Operating System",
   description:
     "Master cybersecurity by actually breaking things. Real cyber range, hands-on labs, certification tracks, CTF arena, and career paths. Learn. Break. Defend. Prove.",
   keywords: [
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
     canonical: "/",
   },
   openGraph: {
-    title: "GuardianX Academy — Cyber Security Training Operating System",
+    title: "GuardianX Academy - Cyber Security Training Operating System",
     description:
       "Master cybersecurity by actually breaking things. Real cyber range, hands-on labs, certification tracks, CTF arena, and career paths. Learn. Break. Defend. Prove.",
     url: "https://academy.guardianx.cloud",
@@ -54,7 +54,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "GuardianX Academy — Cyber Security Training Operating System",
+    title: "GuardianX Academy - Cyber Security Training Operating System",
     description:
       "Master cybersecurity by actually breaking things. Real cyber range, hands-on labs, certification tracks, CTF arena, and career paths. Learn. Break. Defend. Prove.",
   },

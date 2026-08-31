@@ -16,7 +16,7 @@ import {
 } from "lucide-react"
 
 // ============================================================
-// University features — SMS mentioned as one of the features
+// University features - SMS mentioned as one of the features
 // ============================================================
 const UNIVERSITY_FEATURES = [
   {
@@ -71,7 +71,7 @@ const UNIVERSITY_FEATURES = [
   {
     icon: Database,
     title: "School Management System",
-    desc: "Complimentary access to GuardianX's School Management System — manage any affiliated schools, K-12 programs, or feeder institutions under your university umbrella.",
+    desc: "Complimentary access to GuardianX's School Management System - manage any affiliated schools, K-12 programs, or feeder institutions under your university umbrella.",
     color: "text-emerald-300",
     bg: "bg-emerald-500/10",
     highlight: true,
@@ -104,7 +104,7 @@ const UNIVERSITY_DASHBOARD_STATS = [
 // Research capabilities
 // ============================================================
 const RESEARCH_CAPS = [
-  { icon: Server, title: "Dedicated Cyber Range", desc: "Your own isolated lab infrastructure for research — spin up vulnerable environments, test exploits, and publish findings.", color: "text-violet-300", bg: "bg-violet-500/10" },
+  { icon: Server, title: "Dedicated Cyber Range", desc: "Your own isolated lab infrastructure for research - spin up vulnerable environments, test exploits, and publish findings.", color: "text-violet-300", bg: "bg-violet-500/10" },
   { icon: Trophy, title: "CTF Arena Hosting", desc: "Host inter-university CTF competitions on your branded arena. Build challenges, manage teams, publish leaderboards.", color: "text-cyan-300", bg: "bg-cyan-500/10" },
   { icon: FileText, title: "Joint Publications", desc: "Collaborate with GuardianX researchers on papers, whitepapers, and industry reports. Co-authorship opportunities.", color: "text-amber-300", bg: "bg-amber-500/10" },
   { icon: Briefcase, title: "Industry-Sponsored Research", desc: "Connect with industry partners for funded research projects in AI security, cloud security, and zero-trust architecture.", color: "text-emerald-300", bg: "bg-emerald-500/10" },
@@ -131,7 +131,7 @@ export function InstitutionsUniversitiesView() {
                 <span className="text-gradient-premium">for universities.</span>
               </motion.h1>
               <motion.p initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.2 }} className="text-base lg:text-lg text-muted-foreground max-w-xl mb-5 leading-relaxed">
-                Full university administration integrated with advanced cyber range infrastructure. Manage programs, research, admissions, and industry collaboration — while students and PhD scholars train on real-world security challenges.
+                Full university administration integrated with advanced cyber range infrastructure. Manage programs, research, admissions, and industry collaboration - while students and PhD scholars train on real-world security challenges.
               </motion.p>
               <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.3 }} className="flex items-center gap-3 flex-wrap">
                 <Button size="lg" onClick={() => navigate({ name: "contact" })} className="bg-violet-600 hover:bg-violet-500 btn-premium px-8 py-6 text-sm">

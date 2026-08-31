@@ -275,7 +275,7 @@ export function LessonView() {
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
         {/* ====================================================
-            HEADER — breadcrumb + course position
+            HEADER - breadcrumb + course position
             ==================================================== */}
         <FadeIn>
           <button
@@ -290,10 +290,10 @@ export function LessonView() {
         </FadeIn>
 
         {/* ====================================================
-            HEADER — oversized lesson title with ghost shortName
+            HEADER - oversized lesson title with ghost shortName
             ==================================================== */}
         <div className="relative">
-          {/* Ghost shortName — oversized outline text */}
+          {/* Ghost shortName - oversized outline text */}
           <div
             aria-hidden
             className="absolute -top-8 right-0 text-[clamp(4rem,12vw,12rem)] font-bold tracking-[-0.06em] text-outline-violet opacity-30 pointer-events-none select-none leading-none hidden md:block"
@@ -343,7 +343,7 @@ export function LessonView() {
         </div>
 
         {/* ====================================================
-            PROGRESS BAR — position in course
+            PROGRESS BAR - position in course
             ==================================================== */}
         <ScrollReveal delay={0.2}>
           <div className="mt-10 mb-12 max-w-4xl">
@@ -374,7 +374,7 @@ export function LessonView() {
         </ScrollReveal>
 
         {/* ====================================================
-            MAIN LAYOUT — content + sticky sidebar
+            MAIN LAYOUT - content + sticky sidebar
             ==================================================== */}
         <div className="grid lg:grid-cols-12 gap-8">
           {/* ============= MAIN CONTENT ============= */}
@@ -639,7 +639,7 @@ export function LessonView() {
                 </Button>
               </Card>
 
-              {/* Notes — floating panel */}
+              {/* Notes - floating panel */}
               {notesOpen && (
                 <Card className="relative overflow-hidden border-border/60 bg-card/30 backdrop-blur p-5">
                   <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent" />
@@ -766,7 +766,7 @@ function PdfStyleViewer({ content, title, totalPages, page, onPageChange }: {
           </div>
         </div>
 
-        {/* Page frame — premium document look */}
+        {/* Page frame - premium document look */}
         <div className="relative rounded-xl border border-border/60 bg-[oklch(0.97_0.005_150)] dark:bg-[oklch(0.13_0.015_200)] overflow-hidden shadow-2xl shadow-violet-950/20">
           {/* Top atmospheric edge */}
           <div className="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-black/5 to-transparent dark:from-white/5 pointer-events-none" />

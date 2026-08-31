@@ -156,7 +156,7 @@ export function TeamMissionsView() {
         </ScrollReveal>
         <ScrollReveal delay={0.2}>
           <p className="text-muted-foreground max-w-xl mb-12">
-            Tackle multi-stage scenarios as a coordinated unit. Pick a role — scanner, exploiter, reporter — and execute the playbook together.
+            Tackle multi-stage scenarios as a coordinated unit. Pick a role - scanner, exploiter, reporter - and execute the playbook together.
           </p>
         </ScrollReveal>
 

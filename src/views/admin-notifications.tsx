@@ -23,13 +23,13 @@ const NOTIF_COLORS: Record<string, string> = {
   exam: "text-rose-300", system: "text-amber-300",
 }
 
-// Mock notifications — in production from /api/admin/notifications
+// Mock notifications - in production from /api/admin/notifications
 const NOTIFICATIONS = [
   { id: 1, type: "enrollment", title: "New Enrollment", message: "Jamie Rivera enrolled in CEH Weekend Batch", time: "2 min ago", read: false },
   { id: 2, type: "certificate", title: "Certificate Issued", message: "GX-CERT-2025-0001 issued to student@academy.guardianx.cloud", time: "15 min ago", read: false },
   { id: 3, type: "contact", title: "New Contact Form Submission", message: "School inquiry from Delhi Public School", time: "1 hour ago", read: false },
   { id: 4, type: "lab", title: "Lab Completed", message: "SQL Injection lab completed by Jamie Rivera", time: "2 hours ago", read: true },
-  { id: 5, type: "exam", title: "Exam Submitted", message: "Security+ exam submitted — Score: 85% (PASSED)", time: "3 hours ago", read: true },
+  { id: 5, type: "exam", title: "Exam Submitted", message: "Security+ exam submitted - Score: 85% (PASSED)", time: "3 hours ago", read: true },
   { id: 6, type: "system", title: "System Update", message: "Security headers added to next.config.ts", time: "5 hours ago", read: true },
   { id: 7, type: "enrollment", title: "New Registration", message: "New student registered: test-vapt@academy.guardianx.cloud", time: "8 hours ago", read: true },
 ]

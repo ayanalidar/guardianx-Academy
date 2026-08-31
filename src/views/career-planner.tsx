@@ -52,7 +52,7 @@ import {
 import { toast } from "sonner"
 
 /* ============================================================
-   CareerPlannerView — Career Command Center
+   CareerPlannerView - Career Command Center
    Skill assessment, job readiness, paths, certs, timeline
    ============================================================ */
 
@@ -132,7 +132,7 @@ function mapRowToCareerRole(row: CareerPathRoleRow): CareerRole {
   }
 }
 
-/** Hardcoded fallback — used only if /api/career-roles is unreachable. */
+/** Hardcoded fallback - used only if /api/career-roles is unreachable. */
 const FALLBACK_ROLES: CareerRole[] = [
   {
     id: "fb-junior-pentester",
@@ -160,7 +160,7 @@ const FALLBACK_ROLES: CareerRole[] = [
     id: "fb-security-engineer",
     title: "Security Engineer",
     description:
-      "Designs, deploys, and maintains defensive security infrastructure — firewalls, EDR, IAM, WAF. Bridges blue-team and DevOps.",
+      "Designs, deploys, and maintains defensive security infrastructure - firewalls, EDR, IAM, WAF. Bridges blue-team and DevOps.",
     avgSalary: "$110,000 – $155,000",
     requiredSkills: ["Networking", "Linux", "Defensive", "Engineering", "Cloud"],
     recommendedCourses: [],
@@ -248,7 +248,7 @@ const CATEGORY_COLOR: Record<string, string> = {
 }
 
 // ============================================================
-// Skill Assessment — 6 cyber skills with animated percentages
+// Skill Assessment - 6 cyber skills with animated percentages
 // ============================================================
 interface SkillAssessment {
   name: string
@@ -275,7 +275,7 @@ function getSkillStatus(pct: number): { label: string; color: string } {
 }
 
 // ============================================================
-// Job Readiness — 3 role cards
+// Job Readiness - 3 role cards
 // ============================================================
 interface JobReadiness {
   role: string
@@ -340,7 +340,7 @@ const DIFFICULTY_COLOR: Record<RecommendedCert["difficulty"], string> = {
 }
 
 // ============================================================
-// Career Timeline — Current → 3 months → 6 months → 1 year
+// Career Timeline - Current → 3 months → 6 months → 1 year
 // ============================================================
 interface TimelineMilestone {
   period: string
@@ -461,7 +461,7 @@ export function CareerPlannerView() {
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 lg:py-12 space-y-12 lg:space-y-16">
         {/* ====================================================
-            SECTION 1: HERO — "Turn skills into careers."
+            SECTION 1: HERO - "Turn skills into careers."
             ==================================================== */}
         <section>
           <ScrollReveal>
@@ -634,7 +634,7 @@ export function CareerPlannerView() {
                       "transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_20px_60px_-20px_oklch(0.6_0.2_295_/_0.25)]",
                       accent
                     )}>
-                      {/* Header — role + readiness score */}
+                      {/* Header - role + readiness score */}
                       <div className="flex items-start justify-between mb-4">
                         <div>
                           <p className="text-[10px] font-mono text-muted-foreground tracking-wider uppercase mb-1">
@@ -986,7 +986,7 @@ export function CareerPlannerView() {
         </section>
 
         {/* ====================================================
-            SECTION 7: TARGET ROLE PICKER (existing — kept)
+            SECTION 7: TARGET ROLE PICKER (existing - kept)
             ==================================================== */}
         <section>
           <ScrollReveal>
@@ -1042,7 +1042,7 @@ export function CareerPlannerView() {
           )}
         </section>
 
-        {/* Selected role detail + roadmap form (existing — kept) */}
+        {/* Selected role detail + roadmap form (existing - kept) */}
         {selectedRole && (
           <ScrollReveal>
             <div className="grid lg:grid-cols-12 gap-6">

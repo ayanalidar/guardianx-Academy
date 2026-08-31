@@ -28,15 +28,15 @@ import {
 } from "lucide-react"
 
 /* ============================================================
-   BatchesView — dedicated batches discovery page.
+   BatchesView - dedicated batches discovery page.
 
    Structure:
-   1. Hero — "Upcoming Certification Batches"
-   2. Filters — Certification, Schedule, Mode, Level
-   3. Batch Grid — detailed batch cards
-   4. CTA — "Don't see your batch?" request flow
+   1. Hero - "Upcoming Certification Batches"
+   2. Filters - Certification, Schedule, Mode, Level
+   3. Batch Grid - detailed batch cards
+   4. CTA - "Don't see your batch?" request flow
 
-   Data is hardcoded for now — will be DB-driven in a later task.
+   Data is hardcoded for now - will be DB-driven in a later task.
    ============================================================ */
 
 interface Batch {
@@ -289,7 +289,7 @@ export function BatchesView() {
               className="text-base lg:text-lg text-muted-foreground max-w-2xl mb-6 leading-relaxed"
             >
               Live instructor-led training with flexible schedules. Choose a batch
-              that fits your certification goal, time zone, and skill level — then
+              that fits your certification goal, time zone, and skill level - then
               enroll before seats fill up.
             </motion.p>
 
@@ -466,7 +466,7 @@ export function BatchesView() {
                 </div>
                 <h3 className="text-base font-semibold mb-2">No batches match your filters</h3>
                 <p className="text-sm text-muted-foreground mb-5 max-w-md mx-auto">
-                  Try adjusting or clearing your filters to see all upcoming batches —
+                  Try adjusting or clearing your filters to see all upcoming batches -
                   or request a custom batch below.
                 </p>
                 <Button variant="outline" onClick={clearFilters}>
@@ -565,7 +565,7 @@ export function BatchesView() {
         </section>
 
         {/* ====================================================
-            SECTION 4: CTA — Don't see your batch?
+            SECTION 4: CTA - Don't see your batch?
             ==================================================== */}
         <section className="py-12 lg:py-16 border-t border-border/40 relative overflow-hidden">
           <div className="absolute inset-0 bg-mesh opacity-60 pointer-events-none" aria-hidden />
@@ -588,7 +588,7 @@ export function BatchesView() {
 
               <p className="text-base text-muted-foreground max-w-xl mx-auto mb-7 leading-relaxed">
                 Tell us the certification you want, your preferred schedule, and your
-                time zone. We&apos;ll open a batch when we have enough learners — or
+                time zone. We&apos;ll open a batch when we have enough learners - or
                 arrange a 1-on-1 cohort for your team.
               </p>
 
@@ -627,7 +627,7 @@ export function BatchesView() {
 }
 
 /* ---------------------------------------------------------------- *
- *  FilterGroup + FilterSelect — small presentational helpers        *
+ *  FilterGroup + FilterSelect - small presentational helpers        *
  * ---------------------------------------------------------------- */
 
 function FilterGroup({ label, children }: { label: string; children: React.ReactNode }) {
@@ -650,7 +650,7 @@ function FilterSelect({
   onChange: (v: string) => void
   options: { value: string; label: string }[]
 }) {
-  // Native select — accessible, fast, no extra dep.
+  // Native select - accessible, fast, no extra dep.
   return (
     <select
       value={value}

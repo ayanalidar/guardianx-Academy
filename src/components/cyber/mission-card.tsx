@@ -9,7 +9,7 @@ import { FlagInput } from "./flag-input"
 import { StatusDot } from "./status-dot"
 
 /**
- * MissionCard — cinematic "current mission" card for dashboards. Shows the
+ * MissionCard - cinematic "current mission" card for dashboards. Shows the
  * active objective, difficulty, time elapsed, XP reward, a flag capture
  * input, and a primary CTA to launch the lab environment.
  *
@@ -65,7 +65,7 @@ export function MissionCard({
         }}
       />
 
-      {/* Header — live status + difficulty */}
+      {/* Header - live status + difficulty */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <StatusDot status="online" pulse size="sm" label="ACTIVE" />
@@ -94,7 +94,7 @@ export function MissionCard({
         </p>
       </div>
 
-      {/* Meta row — time elapsed + XP */}
+      {/* Meta row - time elapsed + XP */}
       <div className="grid grid-cols-2 gap-3">
         {timeElapsed && (
           <div className="rounded-lg border border-border/40 bg-[oklch(0.1_0.008_270)] px-3 py-2">

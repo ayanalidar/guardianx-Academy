@@ -67,13 +67,13 @@ import {
 import type { TerminalLine } from "@/components/cyber"
 
 /* ---------------------------------------------------------------- *
- *  HomeView — GuardianX Academy cinematic 13-section homepage      *
+ *  HomeView - GuardianX Academy cinematic 13-section homepage      *
  *  Tells the full story: hero → products → range → paths →         *
  *  skills → missions → gamification → careers → institutions →     *
  *  certifications → stories → trust → final CTA.                   *
  * ---------------------------------------------------------------- */
 
-// Shared animation variants — no scroll triggers, just simple fades.
+// Shared animation variants - no scroll triggers, just simple fades.
 const FADE_UP = {
   initial: { opacity: 0, y: 10 },
   animate: { opacity: 1, y: 0 },
@@ -197,7 +197,7 @@ export function HomeView() {
     cmsData,
     "platform",
     "description",
-    "GuardianX is an end-to-end cyber security training platform — from beginner foundations through advanced certifications and real-world practice labs."
+    "GuardianX is an end-to-end cyber security training platform - from beginner foundations through advanced certifications and real-world practice labs."
   )
 
   const rangeTitle = getContent(
@@ -210,7 +210,7 @@ export function HomeView() {
     cmsData,
     "range",
     "description",
-    "Spin up a real isolated target in seconds. Probe it, break it, capture the flag — all from your browser."
+    "Spin up a real isolated target in seconds. Probe it, break it, capture the flag - all from your browser."
   )
 
   const pathsTitle = getContent(cmsData, "paths", "title", "Choose your mission.")
@@ -218,7 +218,7 @@ export function HomeView() {
     cmsData,
     "paths",
     "description",
-    "Structured learning paths that take you from zero to certified — each with a clear outcome and timeline."
+    "Structured learning paths that take you from zero to certified - each with a clear outcome and timeline."
   )
 
   const skillsTitle = getContent(cmsData, "skills", "title", "Map your skills.")
@@ -279,7 +279,7 @@ export function HomeView() {
     cmsData,
     "stories",
     "description",
-    "A typical GuardianX learner journey — from day one to the offer letter."
+    "A typical GuardianX learner journey - from day one to the offer letter."
   )
 
   const trustLabel = getContent(
@@ -312,7 +312,7 @@ export function HomeView() {
       { type: "output", text: "22/tcp   open  ssh      OpenSSH 8.2p1 Ubuntu" },
       { type: "output", text: "80/tcp   open  http     Apache httpd 2.4.41 ((DVWA))" },
       { type: "output", text: "3306/tcp open  mysql    MySQL 5.7.31" },
-      { type: "success", text: "3 services discovered — DVWA target mapped" },
+      { type: "success", text: "3 services discovered - DVWA target mapped" },
     ],
     []
   )
@@ -419,7 +419,7 @@ export function HomeView() {
     }))
   }, [platformStats])
 
-  // Hero CTAs are fixed to discovery flows — Explore Training (catalog),
+  // Hero CTAs are fixed to discovery flows - Explore Training (catalog),
   // View Upcoming Batches (batches), and For Institutions.
   // The CMS can override the labels via the home.hero.ctaPrimary /
   // ctaSecondary content rows; targets remain fixed.
@@ -430,7 +430,7 @@ export function HomeView() {
   return (
     <main className="relative">
       {/* =====================================================
-          SECTION 1 — HERO
+          SECTION 1 - HERO
           ===================================================== */}
       <section
         aria-labelledby="hero-heading"
@@ -544,7 +544,7 @@ export function HomeView() {
       </section>
 
       {/* =====================================================
-          NEW SECTION — WHO WE TRAIN
+          NEW SECTION - WHO WE TRAIN
           4 audience cards: Aspirants, Freshers, Working Pros, Institutions
           ===================================================== */}
       <section
@@ -564,7 +564,7 @@ export function HomeView() {
               <span className="text-gradient-premium">cyber learner.</span>
             </h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              GuardianX trains the full spectrum of cyber security learners — from
+              GuardianX trains the full spectrum of cyber security learners - from
               absolute beginners entering the field to working professionals
               upskilling around their day jobs, and institutions running cohorts at
               scale.
@@ -601,7 +601,7 @@ export function HomeView() {
       </section>
 
       {/* =====================================================
-          NEW SECTION — UPCOMING BATCHES
+          NEW SECTION - UPCOMING BATCHES
           4 hardcoded live-instructor-led certification batch cards.
           Premium card design with difficulty color coding.
           ===================================================== */}
@@ -628,7 +628,7 @@ export function HomeView() {
             <p className="text-sm text-muted-foreground leading-relaxed">
               Structured certification batches with fixed schedules, dedicated
               instructors, and live online sessions. Enroll early to secure your
-              seat — batches fill up fast.
+              seat - batches fill up fast.
             </p>
           </motion.div>
 
@@ -737,7 +737,7 @@ export function HomeView() {
       </section>
 
       {/* =====================================================
-          NEW SECTION — FLEXIBLE SCHEDULES
+          NEW SECTION - FLEXIBLE SCHEDULES
           6 schedule-option cards: Weekday, Weekend, Morning, Afternoon, Evening, Late Night
           ===================================================== */}
       <section
@@ -791,7 +791,7 @@ export function HomeView() {
       </section>
 
       {/* =====================================================
-          NEW SECTION — TRAINING METHODOLOGY
+          NEW SECTION - TRAINING METHODOLOGY
           7-step visual timeline: live lecture → analysis → study → lab →
           assignment → mock test → exam prep.
           Horizontal on desktop, vertical on mobile.
@@ -817,8 +817,8 @@ export function HomeView() {
               How GuardianX trains you.
             </h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Every batch follows the same 7-step framework — from live lecture
-              to exam day. No fluff, no padding — just structured progression
+              Every batch follows the same 7-step framework - from live lecture
+              to exam day. No fluff, no padding - just structured progression
               that gets you certified.
             </p>
           </motion.div>
@@ -887,7 +887,7 @@ export function HomeView() {
       </section>
 
       {/* =====================================================
-          NEW SECTION — EXPERT INSTRUCTORS
+          NEW SECTION - EXPERT INSTRUCTORS
           3 verified instructor profile cards.
           ===================================================== */}
       <section
@@ -908,7 +908,7 @@ export function HomeView() {
             </h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
               Our instructors are working security professionals with real-world
-              experience — not just certifications. Every profile is verified by
+              experience - not just certifications. Every profile is verified by
               the GuardianX team.
             </p>
           </motion.div>
@@ -982,7 +982,7 @@ export function HomeView() {
       </section>
 
       {/* =====================================================
-          SECTION 2 — PLATFORM INTRODUCTION (6 pillars)
+          SECTION 2 - PLATFORM INTRODUCTION (6 pillars)
           ===================================================== */}
       <section
         aria-labelledby="platform-heading"
@@ -1034,7 +1034,7 @@ export function HomeView() {
       </section>
 
       {/* =====================================================
-          SECTION 3 — CYBER RANGE SHOWCASE
+          SECTION 3 - CYBER RANGE SHOWCASE
           ===================================================== */}
       <section
         aria-labelledby="range-heading"
@@ -1077,7 +1077,7 @@ export function HomeView() {
               </div>
 
               <p className="text-[10px] font-mono text-amber-300/80 mb-4 tracking-wider">
-                Interactive demo — sign up to access live labs
+                Interactive demo - sign up to access live labs
               </p>
 
               <h3 className="text-base font-semibold mb-4 flex items-center gap-2">
@@ -1128,7 +1128,7 @@ export function HomeView() {
               </Button>
             </motion.div>
 
-            {/* Cyber terminal — nmap scan */}
+            {/* Cyber terminal - nmap scan */}
             <motion.div
               {...FADE_UP}
               transition={{ duration: 0.4, delay: 0.15 }}
@@ -1146,7 +1146,7 @@ export function HomeView() {
       </section>
 
       {/* =====================================================
-          SECTION 4 — LEARNING PATHS
+          SECTION 4 - LEARNING PATHS
           ===================================================== */}
       <section
         aria-labelledby="paths-heading"
@@ -1263,7 +1263,7 @@ export function HomeView() {
       </section>
 
       {/* =====================================================
-          SECTION 5 — SKILL TREE PREVIEW
+          SECTION 5 - SKILL TREE PREVIEW
           ===================================================== */}
       <section
         aria-labelledby="skills-heading"
@@ -1292,7 +1292,7 @@ export function HomeView() {
             transition={{ duration: 0.4, delay: 0.1 }}
             className="card-premium rounded-2xl p-6 lg:p-8"
           >
-            {/* Visual tree — central node with 6 branch nodes around it */}
+            {/* Visual tree - central node with 6 branch nodes around it */}
             <div className="relative mx-auto aspect-square max-w-[520px]">
               {/* SVG connection lines */}
               <svg
@@ -1382,7 +1382,7 @@ export function HomeView() {
       </section>
 
       {/* =====================================================
-          SECTION 6 — MISSION CONTROL PREVIEW
+          SECTION 6 - MISSION CONTROL PREVIEW
           ===================================================== */}
       <section
         aria-labelledby="mission-heading"
@@ -1396,7 +1396,7 @@ export function HomeView() {
                 PREVIEW
               </span>
               <span className="text-[10px] font-mono text-cyan-300/70 tracking-wider">
-                Illustrative preview — your stats appear here when you log in
+                Illustrative preview - your stats appear here when you log in
               </span>
             </div>
             <h2
@@ -1411,7 +1411,7 @@ export function HomeView() {
           </motion.div>
 
           <div className="grid lg:grid-cols-3 gap-4 lg:gap-6">
-            {/* Left column — stat tiles + XP + rank */}
+            {/* Left column - stat tiles + XP + rank */}
             <motion.div
               {...FADE_UP}
               transition={{ duration: 0.4, delay: 0.05 }}
@@ -1462,13 +1462,13 @@ export function HomeView() {
               </div>
             </motion.div>
 
-            {/* Middle column — current mission */}
+            {/* Middle column - current mission */}
             <motion.div
               {...FADE_UP}
               transition={{ duration: 0.4, delay: 0.12 }}
             >
               <MissionCard
-                title="SQL Injection — Login Bypass"
+                title="SQL Injection - Login Bypass"
                 objective="Exploit the DVWA login form to bypass authentication. Capture the flag stored in the admin panel."
                 difficulty="MEDIUM"
                 xp={450}
@@ -1478,7 +1478,7 @@ export function HomeView() {
               />
             </motion.div>
 
-            {/* Right column — daily objective */}
+            {/* Right column - daily objective */}
             <motion.div
               {...FADE_UP}
               transition={{ duration: 0.4, delay: 0.2 }}
@@ -1532,7 +1532,7 @@ export function HomeView() {
       </section>
 
       {/* =====================================================
-          SECTION 7 — GAMIFICATION
+          SECTION 7 - GAMIFICATION
           ===================================================== */}
       <section
         aria-labelledby="gamify-heading"
@@ -1636,7 +1636,7 @@ export function HomeView() {
       </section>
 
       {/* =====================================================
-          SECTION 8 — CAREER CENTER
+          SECTION 8 - CAREER CENTER
           ===================================================== */}
       <section
         aria-labelledby="career-heading"
@@ -1754,7 +1754,7 @@ export function HomeView() {
       </section>
 
       {/* =====================================================
-          SECTION 9 — INSTITUTIONS
+          SECTION 9 - INSTITUTIONS
           ===================================================== */}
       <section
         aria-labelledby="institutions-heading"
@@ -1825,7 +1825,7 @@ export function HomeView() {
       </section>
 
       {/* =====================================================
-          SECTION 10 — CERTIFICATIONS
+          SECTION 10 - CERTIFICATIONS
           ===================================================== */}
       <section
         aria-labelledby="cert-heading"
@@ -1891,7 +1891,7 @@ export function HomeView() {
                     Has successfully completed
                   </p>
                   <p className="text-base font-semibold text-gradient-premium">
-                    Certified Ethical Hacker (CEH) — Practical
+                    Certified Ethical Hacker (CEH) - Practical
                   </p>
                 </div>
 
@@ -1936,7 +1936,7 @@ export function HomeView() {
       </section>
 
       {/* =====================================================
-          SECTION 11 — SUCCESS STORIES
+          SECTION 11 - SUCCESS STORIES
           ===================================================== */}
       <section
         aria-labelledby="stories-heading"
@@ -1950,7 +1950,7 @@ export function HomeView() {
                 ILLUSTRATIVE LEARNER JOURNEY
               </span>
               <span className="text-[10px] font-mono text-amber-300/70 tracking-wider">
-                Composite profiles — not real learners
+                Composite profiles - not real learners
               </span>
             </div>
             <h2
@@ -2000,7 +2000,7 @@ export function HomeView() {
             </div>
           </motion.div>
 
-          {/* Story cards — placeholder data, clearly marked */}
+          {/* Story cards - placeholder data, clearly marked */}
           <div className="grid md:grid-cols-3 gap-3 lg:gap-4">
             {STORIES.map((s, i) => (
               <motion.div
@@ -2052,7 +2052,7 @@ export function HomeView() {
       </section>
 
       {/* =====================================================
-          SECTION 12 — TRUST / PARTNERS
+          SECTION 12 - TRUST / PARTNERS
           ===================================================== */}
       <section
         aria-labelledby="trust-heading"
@@ -2071,7 +2071,7 @@ export function HomeView() {
             </h2>
           </motion.div>
 
-          {/* Technology partner grid — real OSS tools used in GuardianX labs */}
+          {/* Technology partner grid - real OSS tools used in GuardianX labs */}
           <motion.div
             {...FADE_IN}
             transition={{ duration: 0.5 }}
@@ -2102,7 +2102,7 @@ export function HomeView() {
             })}
           </motion.div>
 
-          {/* Stats grid — sourced from /api/platform-stats (live calculated
+          {/* Stats grid - sourced from /api/platform-stats (live calculated
               values from the database for learner_count, course_count,
               lab_count, cert_count; manual/marketing values for the rest).
               Each tile shows the source so the user can tell live counts
@@ -2146,7 +2146,7 @@ export function HomeView() {
                     title={
                       s.isLive
                         ? "Calculated live from the database"
-                        : "Marketing estimate — not a live count"
+                        : "Marketing estimate - not a live count"
                     }
                   >
                     {s.isLive ? "LIVE" : "ESTIMATE"}
@@ -2159,7 +2159,7 @@ export function HomeView() {
       </section>
 
       {/* =====================================================
-          SECTION 13 — FINAL CTA
+          SECTION 13 - FINAL CTA
           ===================================================== */}
       <section
         aria-labelledby="final-cta-heading"
@@ -2225,7 +2225,7 @@ export function HomeView() {
 }
 
 /* ---------------------------------------------------------------- *
- *  Static demo data — clearly marked placeholders                  *
+ *  Static demo data - clearly marked placeholders                  *
  * ---------------------------------------------------------------- */
 
 const PILLARS = [
@@ -2313,7 +2313,7 @@ const LEARNING_PATHS = [
   {
     icon: Cloud,
     title: "Cloud Security",
-    desc: "AWS, Azure, GCP security — containers, Kubernetes, IAM hardening.",
+    desc: "AWS, Azure, GCP security - containers, Kubernetes, IAM hardening.",
     duration: "5 months",
     skills: "20 skills",
     difficulty: "ADVANCED",
@@ -2333,7 +2333,7 @@ const LEARNING_PATHS = [
   {
     icon: GraduationCap,
     title: "CISSP Track",
-    desc: "Certified Information Systems Security Professional prep — full domain coverage.",
+    desc: "Certified Information Systems Security Professional prep - full domain coverage.",
     duration: "5 months",
     skills: "8 domains",
     difficulty: "EXPERT",
@@ -2481,7 +2481,7 @@ const TRUST_STATS = [
 ] as const
 
 /**
- * Fallback list of real OSS technology partners — used only if the
+ * Fallback list of real OSS technology partners - used only if the
  * `/api/technology-partners` route fails. Replaces the previous fake
  * "Trusted by Google / Microsoft / Amazon" strip with the real tools
  * GuardianX labs are built around.
@@ -2502,7 +2502,7 @@ const FALLBACK_PARTNERS: TechnologyPartner[] = [
 ]
 
 /* ---------------------------------------------------------------- *
- *  New training-restructure sections — static demo data.           *
+ *  New training-restructure sections - static demo data.           *
  *  These arrays back the WHO WE TRAIN, UPCOMING BATCHES,           *
  *  FLEXIBLE SCHEDULES, TRAINING METHODOLOGY, and EXPERT            *
  *  INSTRUCTORS sections. Will be DB-driven in a later task.        *
@@ -2672,7 +2672,7 @@ const SCHEDULES = [
 ] as const
 
 /**
- * 7-step training methodology — the GuardianX framework that every
+ * 7-step training methodology - the GuardianX framework that every
  * certification batch follows end-to-end. This sequence is one of the
  * platform's defining visual elements.
  */
@@ -2722,7 +2722,7 @@ const METHODOLOGY_STEPS = [
 ] as const
 
 /**
- * Verified instructor profiles — these are real instructor records from
+ * Verified instructor profiles - these are real instructor records from
  * the GuardianX DB. Shown here as a static showcase; will be wired to
  * /api/instructors in a later task.
  */

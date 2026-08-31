@@ -33,7 +33,7 @@ const EVENT_COLORS: Record<CalendarEvent["type"], { dot: string; bg: string; tex
 }
 
 interface CalendarWidgetProps {
-  /** Override the events source — if provided, the widget uses these events instead of fetching. */
+  /** Override the events source - if provided, the widget uses these events instead of fetching. */
   events?: CalendarEvent[]
   /** Role context for fetching events (defaults to fetching live sessions + me/courses) */
   fetchLive?: boolean

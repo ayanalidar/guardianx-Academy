@@ -48,7 +48,7 @@ import {
 import { toast } from "sonner"
 
 /* ============================================================
-   JobBoardView — job listings with filters + apply dialog
+   JobBoardView - job listings with filters + apply dialog
    ============================================================ */
 
 interface JobItem {
@@ -164,7 +164,7 @@ export function JobBoardView() {
         </ScrollReveal>
         <ScrollReveal delay={0.2}>
           <p className="text-muted-foreground max-w-xl mb-8">
-            Curated cybersecurity jobs from top employers — SOC analysts, pentesters, cloud
+            Curated cybersecurity jobs from top employers - SOC analysts, pentesters, cloud
             security engineers, and more. Apply directly with your GuardianX profile.
           </p>
         </ScrollReveal>
@@ -433,7 +433,7 @@ export function JobBoardView() {
             <div className="rounded-md border border-violet-500/30 bg-violet-500/5 p-3 text-[11px] text-violet-300/80 flex items-start gap-2">
               <ShieldCheck className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
               <span>
-                We&apos;ll attach your GuardianX transcript automatically — completed courses,
+                We&apos;ll attach your GuardianX transcript automatically - completed courses,
                 earned certifications, and solved labs.
               </span>
             </div>

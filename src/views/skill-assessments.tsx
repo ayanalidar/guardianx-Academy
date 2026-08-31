@@ -126,7 +126,7 @@ export function SkillAssessmentsView() {
     onSuccess: (data) => {
       setResult(data.result)
       setPhase("results")
-      toast.success(`Assessment complete — scored ${data.result.score}%`)
+      toast.success(`Assessment complete - scored ${data.result.score}%`)
       qc.invalidateQueries({ queryKey: ["skill-assessments"] })
     },
     onError: (e: Error) => toast.error(e.message),
@@ -418,7 +418,7 @@ export function SkillAssessmentsView() {
                     result.passed ? "bg-emerald-500/15 text-emerald-300" : "bg-amber-500/15 text-amber-300"
                   )}>
                     {result.passed ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
-                    {result.passed ? "Passed!" : "Did not pass — retake to improve"}
+                    {result.passed ? "Passed!" : "Did not pass - retake to improve"}
                   </div>
                 </div>
               </div>

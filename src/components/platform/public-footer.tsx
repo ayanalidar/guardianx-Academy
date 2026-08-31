@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 
 /**
- * PublicFooter — 6-column structure per Part 51 spec.
+ * PublicFooter - 6-column structure per Part 51 spec.
  * Links are CMS-driven via usePageContent("global") with fallbacks.
  * Removed: fake "SOC2-ALIGNED" badge, fake "12,000+ defenders" claim.
  */
@@ -67,10 +67,10 @@ export function PublicFooter() {
     {
       title: "SUPPORT",
       links: [
-        { label: "FAQ", view: { name: "contact" as const } },
-        { label: "Help Center", view: { name: "contact" as const } },
-        { label: "Terms", view: { name: "home" as const } },
-        { label: "Privacy", view: { name: "home" as const } },
+        { label: "FAQ", view: { name: "support" as const } },
+        { label: "Help Center", view: { name: "support" as const } },
+        { label: "Terms", view: { name: "support" as const } },
+        { label: "Privacy", view: { name: "support" as const } },
       ],
     },
   ]
@@ -103,7 +103,7 @@ export function PublicFooter() {
         </div>
       </div>
 
-      {/* Footer content — 6-column structure */}
+      {/* Footer content - 6-column structure */}
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-8">
           {/* Brand column */}

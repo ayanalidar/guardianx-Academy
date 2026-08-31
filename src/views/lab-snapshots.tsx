@@ -256,7 +256,7 @@ export function LabSnapshotsView() {
                 <div>
                   <h3 className="font-semibold mb-1">How snapshots work</h3>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    A snapshot stores the lab&apos;s terminal history, environment variables, and progress checkpoint as a JSON blob. Load it from any device to resume the engagement — perfect for long-running labs where you need to pause and continue later. Export to JSON for offline archival.
+                    A snapshot stores the lab&apos;s terminal history, environment variables, and progress checkpoint as a JSON blob. Load it from any device to resume the engagement - perfect for long-running labs where you need to pause and continue later. Export to JSON for offline archival.
                   </p>
                 </div>
               </div>
@@ -334,7 +334,7 @@ export function LabSnapshotsView() {
               <RotateCcw className="h-4 w-4 text-violet-300" /> Restore snapshot
             </DialogTitle>
             <DialogDescription>
-              {restoreSnap?.name} — saved {restoreSnap ? new Date(restoreSnap.createdAt).toLocaleString() : ""}
+              {restoreSnap?.name} - saved {restoreSnap ? new Date(restoreSnap.createdAt).toLocaleString() : ""}
             </DialogDescription>
           </DialogHeader>
           {restoreSnap && (
@@ -352,7 +352,7 @@ export function LabSnapshotsView() {
                 </pre>
               </div>
               <div className="rounded-md border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-xs text-amber-200/90">
-                Loading a snapshot will overwrite the current lab session state. This is a demo of the restore flow — in production this would rehydrate the live lab terminal.
+                Loading a snapshot will overwrite the current lab session state. This is a demo of the restore flow - in production this would rehydrate the live lab terminal.
               </div>
             </div>
           )}
@@ -375,7 +375,7 @@ export function LabSnapshotsView() {
           <DialogHeader>
             <DialogTitle>Delete snapshot?</DialogTitle>
             <DialogDescription>
-              {deleteTarget?.name} — this action cannot be undone.
+              {deleteTarget?.name} - this action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

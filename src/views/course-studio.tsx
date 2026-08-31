@@ -71,7 +71,7 @@ import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 
 // ---------------------------------------------------------------------------
-// Types — mirror the API's config shape
+// Types - mirror the API's config shape
 // ---------------------------------------------------------------------------
 type LessonType = "reading" | "pdf" | "video" | "lab"
 
@@ -170,7 +170,7 @@ export function CourseStudioView() {
 }
 
 // ---------------------------------------------------------------------------
-// List view — show all authored courses
+// List view - show all authored courses
 // ---------------------------------------------------------------------------
 function ListView({ onOpen }: { onOpen: (id: string) => void }) {
   const qc = useQueryClient()
@@ -197,7 +197,7 @@ function ListView({ onOpen }: { onOpen: (id: string) => void }) {
         }),
       }),
     onSuccess: (data) => {
-      toast.success("Draft created — start building!")
+      toast.success("Draft created - start building!")
       qc.invalidateQueries({ queryKey: ["course-studio-list"] })
       setCreateOpen(false)
       setNewTitle("")
@@ -241,7 +241,7 @@ function ListView({ onOpen }: { onOpen: (id: string) => void }) {
             </h1>
             <p className="text-muted-foreground text-sm max-w-xl">
               Design modules, craft lessons, and publish production-ready
-              courses — visually, with a JSON-configurable backbone.
+              courses - visually, with a JSON-configurable backbone.
             </p>
           </div>
           <Button
@@ -310,7 +310,7 @@ function ListView({ onOpen }: { onOpen: (id: string) => void }) {
             <div className="space-y-2">
               <Label>Course Title</Label>
               <Input
-                placeholder="e.g. Certified Ethical Hacker — CEH v13"
+                placeholder="e.g. Certified Ethical Hacker - CEH v13"
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
                 minLength={3}
@@ -468,7 +468,7 @@ function CourseCard({
 }
 
 // ---------------------------------------------------------------------------
-// Editor view — three-pane visual builder
+// Editor view - three-pane visual builder
 // ---------------------------------------------------------------------------
 function EditorView({ courseId, onBack }: { courseId: string; onBack: () => void }) {
   const qc = useQueryClient()
@@ -781,7 +781,7 @@ function EditorView({ courseId, onBack }: { courseId: string; onBack: () => void
 
       {/* Three-pane editor */}
       <div className="grid lg:grid-cols-[300px_1fr_340px] gap-4">
-        {/* LEFT — outline */}
+        {/* LEFT - outline */}
         <Card className="bg-card shadow-lg p-3 flex flex-col max-h-[80vh] overflow-hidden">
           <div className="flex items-center justify-between px-2 py-2 mb-1">
             <h3 className="text-sm font-semibold flex items-center gap-2">
@@ -944,7 +944,7 @@ function EditorView({ courseId, onBack }: { courseId: string; onBack: () => void
           </div>
         </Card>
 
-        {/* CENTER — editor */}
+        {/* CENTER - editor */}
         <Card className="bg-card shadow-lg p-5 max-h-[80vh] overflow-y-auto">
           {!selectedModule ? (
             <EmptyEditor
@@ -970,7 +970,7 @@ function EditorView({ courseId, onBack }: { courseId: string; onBack: () => void
           )}
         </Card>
 
-        {/* RIGHT — preview / json / settings */}
+        {/* RIGHT - preview / json / settings */}
         <Card className="bg-card shadow-lg p-0 max-h-[80vh] overflow-hidden flex flex-col">
           <div className="flex border-b border-border">
             <TabBtn
@@ -1278,7 +1278,7 @@ Write your lesson content here. Markdown is supported."
 }
 
 // ---------------------------------------------------------------------------
-// Right pane — preview / json / settings
+// Right pane - preview / json / settings
 // ---------------------------------------------------------------------------
 function TabBtn({
   active,

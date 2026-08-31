@@ -23,10 +23,10 @@ export function CertBulkIssuanceView() {
 
   // Mock batch data with enrolled students
   const batches = [
-    { id: "batch-1", name: "CEH Weekend Batch — Oct 2025", cert: "CEH", students: 12, completed: 10 },
-    { id: "batch-2", name: "Security+ Weekday — Oct 2025", cert: "Security+", students: 8, completed: 6 },
-    { id: "batch-3", name: "CCNA Morning — Nov 2025", cert: "CCNA", students: 15, completed: 0 },
-    { id: "batch-4", name: "CISSP Weekend — Nov 2025", cert: "CISSP", students: 5, completed: 3 },
+    { id: "batch-1", name: "CEH Weekend Batch - Oct 2025", cert: "CEH", students: 12, completed: 10 },
+    { id: "batch-2", name: "Security+ Weekday - Oct 2025", cert: "Security+", students: 8, completed: 6 },
+    { id: "batch-3", name: "CCNA Morning - Nov 2025", cert: "CCNA", students: 15, completed: 0 },
+    { id: "batch-4", name: "CISSP Weekend - Nov 2025", cert: "CISSP", students: 5, completed: 3 },
   ]
 
   const selectedBatchData = batches.find(b => b.id === selectedBatch)

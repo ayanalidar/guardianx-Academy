@@ -171,7 +171,7 @@ export function OfficeHoursView() {
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
         {/* ====================================================
-            HEADER — oversized editorial
+            HEADER - oversized editorial
             ==================================================== */}
         <ScrollReveal>
           <div className="flex items-center gap-2 mb-4">
@@ -191,7 +191,7 @@ export function OfficeHoursView() {
         <ScrollReveal delay={0.15}>
           <p className="text-muted-foreground max-w-xl mb-12 text-sm leading-relaxed">
             Reserve focused, individual time with your instructors.
-            Choose video, in-person, or chat — come prepared, leave with clarity.
+            Choose video, in-person, or chat - come prepared, leave with clarity.
           </p>
         </ScrollReveal>
 
@@ -278,7 +278,7 @@ function EmptySlotsState() {
           </div>
           <h3 className="text-2xl font-bold mb-2 tracking-[-0.02em]">No upcoming office hours</h3>
           <p className="text-sm text-muted-foreground max-w-md mx-auto">
-            Your instructors haven&apos;t opened any slots yet. Check back soon — slots appear here in real time.
+            Your instructors haven&apos;t opened any slots yet. Check back soon - slots appear here in real time.
           </p>
         </div>
       </div>
@@ -287,7 +287,7 @@ function EmptySlotsState() {
 }
 
 /* ------------------------------------------------------------------ */
-/* Slot Card — premium                                                */
+/* Slot Card - premium                                                */
 /* ------------------------------------------------------------------ */
 
 function SlotCard({
@@ -494,7 +494,7 @@ function BookSlotDialog({
                 className="bg-background/50"
               />
               <p className="text-[10px] text-muted-foreground">
-                Optional — gives your instructor a heads-up.
+                Optional - gives your instructor a heads-up.
               </p>
             </div>
 

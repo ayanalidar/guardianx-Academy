@@ -6,12 +6,12 @@ import { toast } from "sonner"
 import { Trophy, Zap, Flame, Crown, Sparkles } from "lucide-react"
 
 // Listens for gamification events embedded in mutation responses and shows celebratory toasts.
-// Mutations return { gamification: { newAchievements, leveledUp, newLevel } } — we surface those here.
+// Mutations return { gamification: { newAchievements, leveledUp, newLevel } } - we surface those here.
 export function GamificationToaster() {
   const qc = useQueryClient()
 
   React.useEffect(() => {
-    // patch fetch to intercept gamification payloads — but that's heavy.
+    // patch fetch to intercept gamification payloads - but that's heavy.
     // Instead, expose a global helper that mutations can call.
     ;(window as any).__showGamificationToast = (g: any) => {
       if (!g) return

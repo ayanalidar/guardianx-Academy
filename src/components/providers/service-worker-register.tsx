@@ -10,7 +10,7 @@ import * as React from "react"
  * - Listens for the `controllerchange` event to inform the user when a new
  *   version has been downloaded and is ready to activate.
  * - On `message { type: "SKIP_WAITING" }` we explicitly tell the waiting SW
- *   to skip waiting — the SW itself already calls `self.skipWaiting()`, this
+ *   to skip waiting - the SW itself already calls `self.skipWaiting()`, this
  *   is just defensive in case a future version doesn't.
  */
 export function ServiceWorkerRegister() {

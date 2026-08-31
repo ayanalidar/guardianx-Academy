@@ -17,7 +17,7 @@ import { useAppStore, type View } from "@/store/app-store"
 import { AnimatedLogoMark } from "@/components/platform/animated-logo"
 
 /* ============================================================
-   PublicHeader — floating mega-menu navigation
+   PublicHeader - floating mega-menu navigation
    ------------------------------------------------------------
    - Transparent → glass surface → compact on scroll
    - Hides on scroll-down past 300px, shows on scroll-up
@@ -50,7 +50,7 @@ const MEGA_MENU_GROUPS: MegaMenuGroup[] = [
       {
         icon: BookOpen,
         title: "Courses",
-        description: "Certification courses — CEH to CISSP",
+        description: "Certification courses - CEH to CISSP",
         view: { name: "catalog" },
       },
       {
@@ -201,7 +201,7 @@ export function PublicHeader() {
   const lastScroll = React.useRef(0)
   const closeTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Scroll behaviour — preserve from original header
+  // Scroll behaviour - preserve from original header
   useMotionValueEvent(scrollY, "change", (latest) => {
     setScrolled(latest > 40)
     if (latest > 300 && latest > lastScroll.current + 10) {
@@ -294,7 +294,7 @@ export function PublicHeader() {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           className="flex items-center gap-1.5 group shrink-0"
-          aria-label="GuardianX — go to home"
+          aria-label="GuardianX - go to home"
         >
           <AnimatedLogoMark size={32} />
           <div className="text-left">

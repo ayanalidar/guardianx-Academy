@@ -49,7 +49,7 @@ const LEVEL_STYLES: Record<string, { badge: string; dot: string }> = {
   Advanced: { badge: "border-violet-500/40 text-violet-300 bg-violet-500/10", dot: "bg-violet-400" },
 }
 
-/* Career Path Selector — interactive filter shortcuts */
+/* Career Path Selector - interactive filter shortcuts */
 const CAREER_PATHS = [
   {
     title: "Offensive Security",
@@ -93,7 +93,7 @@ const CAREER_PATHS = [
   },
 ]
 
-/* Certification ticker — scrolling marquee */
+/* Certification ticker - scrolling marquee */
 const CERT_TICKER = [
   "CEH", "CISSP", "CCNA", "CCNP", "RHCSA", "OSCP", "CISM", "WAPT",
   "Security+", "CyberArk PAM", "CISA", "CCSP", "PNPT", "CRTP",
@@ -106,7 +106,7 @@ export function CourseCatalogView() {
   const [level, setLevel] = React.useState("All")
   const [status, setStatus] = React.useState("all")
 
-  // CMS-driven hero copy — falls back to defaults.
+  // CMS-driven hero copy - falls back to defaults.
   const cms = usePageContent("catalog")
   const cmsData = cms.data
   const heroEyebrow = getContent(cmsData, "hero", "eyebrow", "CATALOG")
@@ -144,7 +144,7 @@ export function CourseCatalogView() {
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
         {/* ====================================================
-            HERO — cinematic, out-of-the-box career path selector
+            HERO - cinematic, out-of-the-box career path selector
             ==================================================== */}
         <section className="relative mb-6 lg:mb-12">
           {/* Background glow */}
@@ -167,12 +167,12 @@ export function CourseCatalogView() {
               <span className="text-gradient-premium">{heroTitleAccent}</span>
             </h1>
             <p className="text-base lg:text-lg text-muted-foreground max-w-2xl leading-relaxed">
-              {courses.length} certification tracks across ethical hacking, networking, web security, IAM, and more —
+              {courses.length} certification tracks across ethical hacking, networking, web security, IAM, and more -
               from beginner fundamentals to advanced specializations.
             </p>
           </motion.div>
 
-          {/* Career Path Selector — interactive, clickable cards */}
+          {/* Career Path Selector - interactive, clickable cards */}
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -225,7 +225,7 @@ export function CourseCatalogView() {
             </div>
           </motion.div>
 
-          {/* Stats strip — compact, inline */}
+          {/* Stats strip - compact, inline */}
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -238,7 +238,7 @@ export function CourseCatalogView() {
             <StatCard icon={Star} label="Avg Rating" value={Math.round(avgRating || 4.7)} suffix="/5" color="text-emerald-300" tint="bg-emerald-500/10" />
           </motion.div>
 
-          {/* Certification ticker — scrolling marquee */}
+          {/* Certification ticker - scrolling marquee */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -257,7 +257,7 @@ export function CourseCatalogView() {
         </section>
 
         {/* ====================================================
-            FILTER BAR — search + 3 selects, all on a solid card
+            FILTER BAR - search + 3 selects, all on a solid card
             ==================================================== */}
         <div className="rounded-2xl border border-border/60 bg-card shadow-lg p-4 sm:p-5 mb-6">
           <div className="flex flex-wrap items-center gap-3">
@@ -331,12 +331,12 @@ export function CourseCatalogView() {
           </div>
         ) : (
           <>
-            {/* Featured course — large immersive card */}
+            {/* Featured course - large immersive card */}
             {featured && (
               <FeaturedCourse course={featured} />
             )}
 
-            {/* Rest — sophisticated grid */}
+            {/* Rest - sophisticated grid */}
             {rest.length > 0 && (
               <div className="mt-8 lg:mt-10">
                 <div className="flex items-center justify-between mb-6">
@@ -387,7 +387,7 @@ export function CourseCatalogView() {
 }
 
 /* ============================================================
-   StatCard — small solid premium card for stats strip
+   StatCard - small solid premium card for stats strip
    ============================================================ */
 function StatCard({
   icon: Icon, label, value, color, tint, suffix,
@@ -410,7 +410,7 @@ function StatCard({
 }
 
 /* ============================================================
-   FilterChip — tiny removable filter pill
+   FilterChip - tiny removable filter pill
    ============================================================ */
 function FilterChip({ label, onClear }: { label: string; onClear: () => void }) {
   return (
@@ -424,7 +424,7 @@ function FilterChip({ label, onClear }: { label: string; onClear: () => void }) 
 }
 
 /* ============================================================
-   FeaturedCourse — large immersive featured card
+   FeaturedCourse - large immersive featured card
    ============================================================ */
 function FeaturedCourse({ course }: { course: CourseItem }) {
   const { navigate } = useAppStore()
@@ -471,7 +471,7 @@ function FeaturedCourse({ course }: { course: CourseItem }) {
             )}
           </div>
 
-          {/* Course short name overlay — oversized */}
+          {/* Course short name overlay - oversized */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <motion.div
               whileHover={{ scale: 1.04 }}
@@ -514,7 +514,7 @@ function FeaturedCourse({ course }: { course: CourseItem }) {
           </div>
         </div>
 
-        {/* Metadata strip — solid bg-card */}
+        {/* Metadata strip - solid bg-card */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 p-5 lg:p-6 border-t border-border/40">
           {[
             { label: "Category", value: course.category, icon: Layers },
@@ -577,7 +577,7 @@ function FeaturedMeta({
 }
 
 /* ============================================================
-   CourseCard — sophisticated, interactive, full-data card
+   CourseCard - sophisticated, interactive, full-data card
    ============================================================ */
 function CourseCard({ course, index }: { course: CourseItem; index: number }) {
   const { navigate } = useAppStore()

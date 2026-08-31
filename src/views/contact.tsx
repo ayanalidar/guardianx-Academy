@@ -103,7 +103,7 @@ const FAQS = [
   },
   {
     q: "Are the certificates verifiable?",
-    a: "Yes! Every certificate issued by GuardianX has a unique ID (GX-XXXXX) that can be publicly verified on our homepage by employers and recruiters — no login required.",
+    a: "Yes! Every certificate issued by GuardianX has a unique ID (GX-XXXXX) that can be publicly verified on our homepage by employers and recruiters - no login required.",
   },
   {
     q: "How do hands-on labs work?",
@@ -132,13 +132,13 @@ export function ContactView() {
   const [message, setMessage] = React.useState("")
   const [submitted, setSubmitted] = React.useState(false)
 
-  // CMS-driven hero + form copy — falls back to defaults.
+  // CMS-driven hero + form copy - falls back to defaults.
   const cms = usePageContent("contact")
   const cmsData = cms.data
   const heroBadge = getContent(cmsData, "hero", "badge", "CONTACT US")
   const heroTitle = getContent(cmsData, "hero", "title", "Let's build a")
   const heroTitleAccent = getContent(cmsData, "hero", "titleAccent", "safer world together")
-  const heroDesc = getContent(cmsData, "hero", "description", "Have questions about courses, partnerships, or anything else? We'd love to hear from you — our team responds fast.")
+  const heroDesc = getContent(cmsData, "hero", "description", "Have questions about courses, partnerships, or anything else? We'd love to hear from you - our team responds fast.")
   const formTitle = getContent(cmsData, "formFields", "title", "Send us a message")
   const formSubtitle = getContent(cmsData, "formFields", "subtitle", "Fill out the form and our team will respond within 24 hours.")
   const nameLabel = getContent(cmsData, "formFields", "nameLabel", "Full Name")
@@ -176,7 +176,7 @@ export function ContactView() {
   return (
     <div className="relative">
       {/* ============================================================
-          SECTION 1 — HERO
+          SECTION 1 - HERO
           ============================================================ */}
       <section className="relative pt-4 pb-6 lg:pb-8 overflow-hidden border-b border-border">
         <div className="absolute inset-0 bg-mesh pointer-events-none" />
@@ -206,7 +206,7 @@ export function ContactView() {
       </section>
 
       {/* ============================================================
-          SECTION 2 — CONTACT METHODS (4 solid cards)
+          SECTION 2 - CONTACT METHODS (4 solid cards)
           ============================================================ */}
       <section className="py-8 lg:py-10">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -234,7 +234,7 @@ export function ContactView() {
       </section>
 
       {/* ============================================================
-          SECTION 3 — FORM + INFO (2 columns, no overlap)
+          SECTION 3 - FORM + INFO (2 columns, no overlap)
           ============================================================ */}
       <section className="py-8 lg:py-10 border-t border-border">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -412,7 +412,7 @@ export function ContactView() {
                     </div>
                   </div>
 
-                  {/* Map placeholder — styled, not real */}
+                  {/* Map placeholder - styled, not real */}
                   <div className="mt-5 rounded-xl border border-border bg-background/40 h-44 flex items-center justify-center relative overflow-hidden">
                     <div className="absolute inset-0 bg-grid opacity-30" />
                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
@@ -442,7 +442,7 @@ export function ContactView() {
                 </Card>
               </ScrollReveal>
 
-              {/* Connect with us — socials */}
+              {/* Connect with us - socials */}
               <ScrollReveal delay={0.3}>
                 <Card className="bg-card shadow-lg border border-border p-6">
                   <h3 className="font-semibold flex items-center gap-2 mb-4">
@@ -470,7 +470,7 @@ export function ContactView() {
       </section>
 
       {/* ============================================================
-          SECTION 4 — FAQ
+          SECTION 4 - FAQ
           ============================================================ */}
       <section className="py-8 lg:py-10 border-t border-border bg-card/20 relative overflow-hidden">
         <div className="absolute inset-0 bg-grid opacity-15 pointer-events-none" />

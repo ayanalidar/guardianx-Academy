@@ -5,7 +5,7 @@ import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
 
 /**
- * RankBadge — color-coded rank indicator that reflects the GuardianX
+ * RankBadge - color-coded rank indicator that reflects the GuardianX
  * progression hierarchy:
  *
  *   RECRUIT → ANALYST → HUNTER → OPERATOR → SPECIALIST →
@@ -99,7 +99,7 @@ const SIZE_MAP: Record<NonNullable<RankBadgeProps["size"]>, { badge: string; tex
 function normalizeRank(rank: string): RankName {
   const upper = rank.trim().toUpperCase()
   if (upper in RANK_CONFIG) return upper as RankName
-  // Loose match — contains
+  // Loose match - contains
   if (upper.includes("ELITE")) return "ELITE GUARDIAN"
   if (upper.includes("GUARDIAN")) return "GUARDIAN"
   if (upper.includes("SENTINEL")) return "SENTINEL"

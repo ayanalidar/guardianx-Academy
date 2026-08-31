@@ -5,7 +5,7 @@ import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
 
 /**
- * XPBar — animated experience progress bar with optional level badge.
+ * XPBar - animated experience progress bar with optional level badge.
  * Fills with a violet→cyan gradient and has subtle animated stripes while
  * "active" (still progressing). Used in dashboards, header widgets, and
  * the achievements page.

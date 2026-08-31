@@ -35,7 +35,7 @@ import {
 import type { LucideIcon } from "lucide-react"
 
 /* ============================================================
-   SkillTreeView — interactive radial skill tree visualization
+   SkillTreeView - interactive radial skill tree visualization
    ============================================================ */
 
 type SkillStatus = SkillNodeStatus
@@ -145,7 +145,7 @@ function mapCategoryToBranch(cat: SkillCategoryRow): SkillBranch {
     skills: (cat.skills ?? []).map((s) => ({
       id: s.slug,
       label: toLabel(s.name),
-      description: s.description ?? `Master ${s.name} — ${s.difficulty} level skill worth ${s.xp} XP.`,
+      description: s.description ?? `Master ${s.name} - ${s.difficulty} level skill worth ${s.xp} XP.`,
       status: coerceStatus(s.status),
       xp: s.xp,
       prerequisites: Array.isArray(s.prerequisites) ? s.prerequisites : [],
@@ -157,7 +157,7 @@ function mapCategoryToBranch(cat: SkillCategoryRow): SkillBranch {
 }
 
 /**
- * Hardcoded fallback — only shown if /api/skills is unreachable.
+ * Hardcoded fallback - only shown if /api/skills is unreachable.
  * Mirrors the production DB rows seeded by prisma/seed-production.ts.
  */
 const BRANCHES: SkillBranch[] = [
@@ -202,7 +202,7 @@ const BRANCHES: SkillBranch[] = [
       { id: "tcp", label: "TCP/IP", description: "Deep understanding of TCP/IP stack, packet structure, and routing.", status: "completed", xp: 180, prerequisites: [], relatedCourses: ["Networking Essentials"], relatedLabs: ["Packet Capture"], assessments: ["TCP/IP Quiz"] },
       { id: "sniff", label: "Sniffing", description: "Capture and analyze network traffic with Wireshark and tcpdump.", status: "completed", xp: 200, prerequisites: ["tcp"], relatedCourses: ["Wireshark Mastery"], relatedLabs: ["Analyze a Breach"], assessments: ["PCAP Analysis"] },
       { id: "firewall", label: "Firewalls", description: "Configure and bypass next-gen firewalls, IDS/IPS, and WAFs.", status: "in-progress", xp: 280, prerequisites: ["sniff"], relatedCourses: ["Firewall Engineering"], relatedLabs: ["IDS Evasion"], assessments: ["Firewall Rules Quiz"] },
-      { id: "vpn", label: "VPN/Tunnel", description: "Build and attack VPN tunnels — IPsec, OpenVPN, and SSH tunnels.", status: "available", xp: 320, prerequisites: ["firewall"], relatedCourses: ["VPN Architecture"], relatedLabs: ["VPN Pivot"], assessments: ["Tunneling Concepts"] },
+      { id: "vpn", label: "VPN/Tunnel", description: "Build and attack VPN tunnels - IPsec, OpenVPN, and SSH tunnels.", status: "available", xp: 320, prerequisites: ["firewall"], relatedCourses: ["VPN Architecture"], relatedLabs: ["VPN Pivot"], assessments: ["Tunneling Concepts"] },
       { id: "zero-trust", label: "Zero Trust", description: "Design zero-trust networks with identity-based segmentation.", status: "locked", xp: 380, prerequisites: ["vpn"], relatedCourses: ["Zero Trust Design"], relatedLabs: ["Segment a Network"], assessments: ["ZTA Framework"] },
     ],
   },
@@ -214,10 +214,10 @@ const BRANCHES: SkillBranch[] = [
     tint: "bg-amber-500/10",
     stroke: "oklch(0.7 0.15 85 / 0.7)",
     skills: [
-      { id: "owasp", label: "OWASP", description: "Master the OWASP Top 10 — injection, broken auth, XSS, SSRF, and more.", status: "completed", xp: 200, prerequisites: [], relatedCourses: ["Web Sec Fundamentals"], relatedLabs: ["DVWA Walkthrough"], assessments: ["OWASP Top 10"] },
+      { id: "owasp", label: "OWASP", description: "Master the OWASP Top 10 - injection, broken auth, XSS, SSRF, and more.", status: "completed", xp: 200, prerequisites: [], relatedCourses: ["Web Sec Fundamentals"], relatedLabs: ["DVWA Walkthrough"], assessments: ["OWASP Top 10"] },
       { id: "sqli", label: "SQLi", description: "Exploit SQL injection: union, boolean-blind, time-blind, and OOB.", status: "completed", xp: 260, prerequisites: ["owasp"], relatedCourses: ["SQLi Mastery"], relatedLabs: ["SQLi to RCE"], assessments: ["Injection Patterns"] },
-      { id: "xss", label: "XSS", description: "Reflected, stored, and DOM-based XSS — bypass filters and CSP.", status: "in-progress", xp: 280, prerequisites: ["sqli"], relatedCourses: ["XSS Deep-Dive"], relatedLabs: ["Stored XSS Chain"], assessments: ["XSS Bypass Quiz"] },
-      { id: "ssrf", label: "SSRF", description: "Server-side request forgery — pivot to cloud metadata and internal services.", status: "available", xp: 320, prerequisites: ["xss"], relatedCourses: ["Advanced Web Attacks"], relatedLabs: ["SSRF to IAM"], assessments: ["SSRF Scenarios"] },
+      { id: "xss", label: "XSS", description: "Reflected, stored, and DOM-based XSS - bypass filters and CSP.", status: "in-progress", xp: 280, prerequisites: ["sqli"], relatedCourses: ["XSS Deep-Dive"], relatedLabs: ["Stored XSS Chain"], assessments: ["XSS Bypass Quiz"] },
+      { id: "ssrf", label: "SSRF", description: "Server-side request forgery - pivot to cloud metadata and internal services.", status: "available", xp: 320, prerequisites: ["xss"], relatedCourses: ["Advanced Web Attacks"], relatedLabs: ["SSRF to IAM"], assessments: ["SSRF Scenarios"] },
       { id: "auth", label: "AuthBypass", description: "Bypass authentication: JWT manipulation, OAuth flaws, session hijacking.", status: "locked", xp: 360, prerequisites: ["ssrf"], relatedCourses: ["Auth & Identity"], relatedLabs: ["JWT Attack"], assessments: ["Auth Attacks"] },
     ],
   },
@@ -229,11 +229,11 @@ const BRANCHES: SkillBranch[] = [
     tint: "bg-emerald-500/10",
     stroke: "oklch(0.7 0.15 155 / 0.7)",
     skills: [
-      { id: "iam", label: "IAM", description: "AWS / Azure IAM — roles, policies, trust relationships, and privesc paths.", status: "available", xp: 260, prerequisites: [], relatedCourses: ["AWS Security"], relatedLabs: ["IAM Privesc"], assessments: ["IAM Policies"] },
+      { id: "iam", label: "IAM", description: "AWS / Azure IAM - roles, policies, trust relationships, and privesc paths.", status: "available", xp: 260, prerequisites: [], relatedCourses: ["AWS Security"], relatedLabs: ["IAM Privesc"], assessments: ["IAM Policies"] },
       { id: "s3", label: "S3", description: "Identify and exploit misconfigured object storage (S3, GCS, Azure Blob).", status: "locked", xp: 220, prerequisites: ["iam"], relatedCourses: ["Cloud Storage Sec"], relatedLabs: ["S3 Bucket Hunt"], assessments: ["Storage Misconfig"] },
-      { id: "k8s", label: "K8s", description: "Kubernetes attack surface — RBAC, pod escape, etcd theft, container breakouts.", status: "locked", xp: 360, prerequisites: ["iam"], relatedCourses: ["K8s Security"], relatedLabs: ["Container Escape"], assessments: ["K8s Threat Model"] },
+      { id: "k8s", label: "K8s", description: "Kubernetes attack surface - RBAC, pod escape, etcd theft, container breakouts.", status: "locked", xp: 360, prerequisites: ["iam"], relatedCourses: ["K8s Security"], relatedLabs: ["Container Escape"], assessments: ["K8s Threat Model"] },
       { id: "iac", label: "IaC", description: "Audit Terraform, CloudFormation, and Pulumi for security regressions.", status: "locked", xp: 300, prerequisites: ["s3", "k8s"], relatedCourses: ["Terraform Security"], relatedLabs: ["IaC Audit"], assessments: ["IaC Scanning"] },
-      { id: "serverless", label: "FaaS", description: "Serverless security — Lambda exploits, event injection, and cold-start risks.", status: "locked", xp: 340, prerequisites: ["iac"], relatedCourses: ["Serverless Security"], relatedLabs: ["Lambda Injection"], assessments: ["FaaS Quiz"] },
+      { id: "serverless", label: "FaaS", description: "Serverless security - Lambda exploits, event injection, and cold-start risks.", status: "locked", xp: 340, prerequisites: ["iac"], relatedCourses: ["Serverless Security"], relatedLabs: ["Lambda Injection"], assessments: ["FaaS Quiz"] },
     ],
   },
   {
@@ -244,11 +244,11 @@ const BRANCHES: SkillBranch[] = [
     tint: "bg-teal-500/10",
     stroke: "oklch(0.7 0.12 180 / 0.7)",
     skills: [
-      { id: "disk", label: "Disk", description: "Acquire, mount, and analyze disk images — partition tables, file systems.", status: "available", xp: 240, prerequisites: [], relatedCourses: ["Disk Forensics"], relatedLabs: ["Carve a Disk"], assessments: ["Disk Imaging"] },
-      { id: "memory", label: "Memory", description: "Memory forensics with Volatility — processes, connections, injected code.", status: "locked", xp: 300, prerequisites: ["disk"], relatedCourses: ["Memory Forensics"], relatedLabs: ["RAM Analysis"], assessments: ["Volatility Basics"] },
+      { id: "disk", label: "Disk", description: "Acquire, mount, and analyze disk images - partition tables, file systems.", status: "available", xp: 240, prerequisites: [], relatedCourses: ["Disk Forensics"], relatedLabs: ["Carve a Disk"], assessments: ["Disk Imaging"] },
+      { id: "memory", label: "Memory", description: "Memory forensics with Volatility - processes, connections, injected code.", status: "locked", xp: 300, prerequisites: ["disk"], relatedCourses: ["Memory Forensics"], relatedLabs: ["RAM Analysis"], assessments: ["Volatility Basics"] },
       { id: "logs", label: "Logs", description: "Correlate Windows event logs, Linux syslog, and cloud trails into timelines.", status: "locked", xp: 280, prerequisites: ["disk"], relatedCourses: ["Log Analysis"], relatedLabs: ["Build a Timeline"], assessments: ["Log Forensics"] },
       { id: "stego", label: "Stego", description: "Detect and extract hidden data in images, audio, and network protocols.", status: "locked", xp: 260, prerequisites: ["logs"], relatedCourses: ["Steganography"], relatedLabs: ["Hidden Payload"], assessments: ["Stego Techniques"] },
-      { id: "malware", label: "Malware", description: "Static and dynamic malware analysis — unpacking, sandboxing, IOCs.", status: "locked", xp: 380, prerequisites: ["memory", "stego"], relatedCourses: ["Malware Analysis"], relatedLabs: ["Analyze a Sample"], assessments: ["MA Fundamentals"] },
+      { id: "malware", label: "Malware", description: "Static and dynamic malware analysis - unpacking, sandboxing, IOCs.", status: "locked", xp: 380, prerequisites: ["memory", "stego"], relatedCourses: ["Malware Analysis"], relatedLabs: ["Analyze a Sample"], assessments: ["MA Fundamentals"] },
     ],
   },
   {
@@ -260,9 +260,9 @@ const BRANCHES: SkillBranch[] = [
     stroke: "oklch(0.6 0.18 320 / 0.7)",
     skills: [
       { id: "arch", label: "Arch", description: "Design defensible system architecture with defense-in-depth principles.", status: "locked", xp: 320, prerequisites: [], relatedCourses: ["Security Architecture"], relatedLabs: ["Design Review"], assessments: ["Architecture Quiz"] },
-      { id: "threat-model", label: "ThreatModel", description: "Threat model with STRIDE, PASTA, and attack trees — turn models into controls.", status: "locked", xp: 280, prerequisites: ["arch"], relatedCourses: ["Threat Modeling"], relatedLabs: ["STRIDE a Service"], assessments: ["STRIDE Patterns"] },
-      { id: "sdlc", label: "SDLC", description: "Bake security into the SDLC — SAST, DAST, SCA, and secure code review.", status: "locked", xp: 340, prerequisites: ["threat-model"], relatedCourses: ["Secure SDLC"], relatedLabs: ["SAST Triangulation"], assessments: ["SDLC Gates"] },
-      { id: "crypto", label: "Crypto", description: "Apply cryptographic primitives correctly — avoid the classic implementation pitfalls.", status: "locked", xp: 360, prerequisites: ["arch"], relatedCourses: ["Applied Cryptography"], relatedLabs: ["Crypto Failures"], assessments: ["Crypto Pitfalls"] },
+      { id: "threat-model", label: "ThreatModel", description: "Threat model with STRIDE, PASTA, and attack trees - turn models into controls.", status: "locked", xp: 280, prerequisites: ["arch"], relatedCourses: ["Threat Modeling"], relatedLabs: ["STRIDE a Service"], assessments: ["STRIDE Patterns"] },
+      { id: "sdlc", label: "SDLC", description: "Bake security into the SDLC - SAST, DAST, SCA, and secure code review.", status: "locked", xp: 340, prerequisites: ["threat-model"], relatedCourses: ["Secure SDLC"], relatedLabs: ["SAST Triangulation"], assessments: ["SDLC Gates"] },
+      { id: "crypto", label: "Crypto", description: "Apply cryptographic primitives correctly - avoid the classic implementation pitfalls.", status: "locked", xp: 360, prerequisites: ["arch"], relatedCourses: ["Applied Cryptography"], relatedLabs: ["Crypto Failures"], assessments: ["Crypto Pitfalls"] },
       { id: "compliance", label: "Compliance", description: "Map technical controls to SOC 2, ISO 27001, PCI-DSS, and NIST 800-53.", status: "locked", xp: 300, prerequisites: ["sdlc"], relatedCourses: ["GRC Foundations"], relatedLabs: ["Map Controls"], assessments: ["Compliance 101"] },
     ],
   },
@@ -458,7 +458,7 @@ export function SkillTreeView() {
           </h1>
 
           <p className="text-muted-foreground max-w-2xl text-base lg:text-lg text-balance">
-            Visualize your cybersecurity knowledge graph. Every skill unlocks the next — completed nodes glow, available ones pulse, locked ones wait.
+            Visualize your cybersecurity knowledge graph. Every skill unlocks the next - completed nodes glow, available ones pulse, locked ones wait.
           </p>
         </motion.section>
 

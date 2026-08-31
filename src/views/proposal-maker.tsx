@@ -61,10 +61,10 @@ const SLIDES = [
 
 const WHY_CHOOSE_US = [
   { icon: ShieldCheck, title: "Expert Instructors", desc: "Certified cybersecurity professionals with 10+ years of industry experience.", color: "text-violet-300", bg: "bg-violet-500/10" },
-  { icon: FlaskConical, title: "Hands-on Labs (31 Docker-powered)", desc: "Real vulnerable environments — not simulations. Each lab is a complete challenge.", color: "text-cyan-300", bg: "bg-cyan-500/10" },
+  { icon: FlaskConical, title: "Hands-on Labs (31 Docker-powered)", desc: "Real vulnerable environments - not simulations. Each lab is a complete challenge.", color: "text-cyan-300", bg: "bg-cyan-500/10" },
   { icon: CalendarDays, title: "Flexible Batches", desc: "Weekday, weekend, evening, and late-night schedules to suit every learner.", color: "text-emerald-300", bg: "bg-emerald-500/10" },
   { icon: Crosshair, title: "Proctored Examinations", desc: "Camera + screen monitoring with tab-switch detection for exam integrity.", color: "text-amber-300", bg: "bg-amber-500/10" },
-  { icon: Award, title: "Verifiable Credentials", desc: "GuardianX certifications with public verification — employers can validate any credential.", color: "text-rose-300", bg: "bg-rose-500/10" },
+  { icon: Award, title: "Verifiable Credentials", desc: "GuardianX certifications with public verification - employers can validate any credential.", color: "text-rose-300", bg: "bg-rose-500/10" },
   { icon: Building2, title: "Institution-Focused", desc: "MoU partnerships, ERP/SMS integration, and custom curriculum for institutions.", color: "text-fuchsia-300", bg: "bg-fuchsia-500/10" },
 ]
 
@@ -339,7 +339,7 @@ export function ProposalMakerView() {
 
   function handlePrint() {
     window.print()
-    toast.success("Proposal print dialog opened — save as multi-page PDF")
+    toast.success("Proposal print dialog opened - save as multi-page PDF")
   }
 
   function scrollToSlide(id: number) {
@@ -627,7 +627,7 @@ export function ProposalMakerView() {
                     <img src="/guardianx-logo-v2.png" alt="GuardianX" className="w-12 h-12 object-contain" style={{ filter: "drop-shadow(0 0 8px rgba(167,139,250,0.4))" }} />
                     <div>
                       <p className="text-sm font-semibold">Trusted cybersecurity training partner</p>
-                      <p className="text-xs text-muted-foreground">Built around real OSS tools — Kali Linux, Nmap, Burp Suite, Metasploit, Docker, Hashcat</p>
+                      <p className="text-xs text-muted-foreground">Built around real OSS tools - Kali Linux, Nmap, Burp Suite, Metasploit, Docker, Hashcat</p>
                     </div>
                   </div>
                 </div>
@@ -952,7 +952,7 @@ export function ProposalMakerView() {
         </div>
       </div>
 
-      {/* Print styles — multi-page A4 */}
+      {/* Print styles - multi-page A4 */}
       <style jsx global>{`
         @media print {
           @page {

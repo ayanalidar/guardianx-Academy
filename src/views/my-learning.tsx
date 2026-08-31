@@ -75,7 +75,7 @@ export function MyLearningView() {
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
         {/* ====================================================
-            HEADER — oversized headline
+            HEADER - oversized headline
             ==================================================== */}
         <ScrollReveal>
           <div className="flex items-center gap-3 mb-6">
@@ -110,13 +110,13 @@ export function MyLearningView() {
           </div>
         ) : courses.length === 0 ? (
           /* ====================================================
-              EMPTY STATE — premium
+              EMPTY STATE - premium
               ==================================================== */
           <EmptyLearningState />
         ) : (
           <>
             {/* ====================================================
-                CONTINUE LEARNING — dominant element
+                CONTINUE LEARNING - dominant element
                 ==================================================== */}
             {resumeLoading ? (
               <Skeleton className="h-72 mb-16" />
@@ -127,7 +127,7 @@ export function MyLearningView() {
             ) : null}
 
             {/* ====================================================
-                STATS STRIP — border-left editorial
+                STATS STRIP - border-left editorial
                 ==================================================== */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 mb-16 mt-8">
               {[
@@ -149,7 +149,7 @@ export function MyLearningView() {
             </div>
 
             {/* ====================================================
-                IN-PROGRESS COURSES — editorial list with progress bars
+                IN-PROGRESS COURSES - editorial list with progress bars
                 ==================================================== */}
             {inProgress.length > 0 && (
               <section className="mb-20">
@@ -157,7 +157,7 @@ export function MyLearningView() {
                   <div className="flex items-center justify-between mb-8 pb-4 border-b border-border/60">
                     <div>
                       <p className="text-[10px] font-mono text-violet-400 tracking-[0.3em] mb-1">
-                        {inProgress.length > 0 && completed.length === 0 ? "01" : "01"} — IN PROGRESS
+                        {inProgress.length > 0 && completed.length === 0 ? "01" : "01"} - IN PROGRESS
                       </p>
                       <h2 className="text-2xl lg:text-3xl font-bold tracking-tight">Continue your journey</h2>
                     </div>
@@ -176,7 +176,7 @@ export function MyLearningView() {
             )}
 
             {/* ====================================================
-                COMPLETED COURSES — with certificate links
+                COMPLETED COURSES - with certificate links
                 ==================================================== */}
             {completed.length > 0 && (
               <section>
@@ -184,7 +184,7 @@ export function MyLearningView() {
                   <div className="flex items-center justify-between mb-8 pb-4 border-b border-border/60">
                     <div>
                       <p className="text-[10px] font-mono text-emerald-400 tracking-[0.3em] mb-1">
-                        {inProgress.length > 0 ? "02" : "01"} — COMPLETED
+                        {inProgress.length > 0 ? "02" : "01"} - COMPLETED
                       </p>
                       <h2 className="text-2xl lg:text-3xl font-bold tracking-tight">Earned credentials</h2>
                     </div>
@@ -209,7 +209,7 @@ export function MyLearningView() {
 }
 
 /* ============================================================
-   ContinueLearning — dominant hero element (matches dashboard CurrentMission)
+   ContinueLearning - dominant hero element (matches dashboard CurrentMission)
    ============================================================ */
 function ContinueLearning({ resume }: { resume: ResumeData }) {
   const { navigate } = useAppStore()
@@ -305,7 +305,7 @@ function ContinueLearning({ resume }: { resume: ResumeData }) {
 }
 
 /* ============================================================
-   EnrolledCourseRow — editorial list row with progress bar
+   EnrolledCourseRow - editorial list row with progress bar
    ============================================================ */
 function EnrolledCourseRow({ course: c }: { course: CourseItem }) {
   const { navigate } = useAppStore()
@@ -392,7 +392,7 @@ function EnrolledCourseRow({ course: c }: { course: CourseItem }) {
 }
 
 /* ============================================================
-   CompletedCourseRow — with certificate link
+   CompletedCourseRow - with certificate link
    ============================================================ */
 function CompletedCourseRow({ course: c }: { course: CourseItem }) {
   const { navigate } = useAppStore()
@@ -460,7 +460,7 @@ function CompletedCourseRow({ course: c }: { course: CourseItem }) {
 }
 
 /* ============================================================
-   Empty state — premium
+   Empty state - premium
    ============================================================ */
 function EmptyLearningState() {
   const { navigate } = useAppStore()

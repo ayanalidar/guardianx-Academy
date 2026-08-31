@@ -129,7 +129,7 @@ export function StudyGroupsView() {
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
         {/* ====================================================
-            HEADER — oversized editorial with network accent
+            HEADER - oversized editorial with network accent
             ==================================================== */}
         <ScrollReveal>
           <div className="flex items-center gap-2 mb-4">
@@ -329,7 +329,7 @@ function EmptyGroupsState({ hasSearch, onCreate }: { hasSearch: boolean; onCreat
 }
 
 /* ------------------------------------------------------------------ */
-/* Group Card — premium                                               */
+/* Group Card - premium                                               */
 /* ------------------------------------------------------------------ */
 
 function GroupCard({
@@ -592,10 +592,10 @@ function CreateGroupDialog({
                 value={form.courseId}
                 onChange={(e) => setForm({ ...form, courseId: e.target.value })}
               >
-                <option value="">— None —</option>
+                <option value="">- None -</option>
                 {courses.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.shortName} — {c.title}
+                    {c.shortName} - {c.title}
                   </option>
                 ))}
               </select>
@@ -782,7 +782,7 @@ function GroupDetailDialog({
           </DialogTitle>
           <DialogDescription>
             {group?.course
-              ? `Linked to ${group.course.shortName} — ${group.course.title}`
+              ? `Linked to ${group.course.shortName} - ${group.course.title}`
               : "Standalone study group"}
           </DialogDescription>
         </DialogHeader>

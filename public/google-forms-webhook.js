@@ -24,6 +24,13 @@
 var WEBHOOK_URL = "https://academy.guardianx.cloud/api/crm/webhook";
 var WEBHOOK_TOKEN = "guardianx-crm-webhook-2025";
 
+// BATCH-SPECIFIC: Set these to auto-tag leads with the correct batch
+// When creating a Google Form for a specific batch, set these variables
+// to the batch name and certification. All leads from this form will be
+// tagged with this batch info automatically.
+var BATCH_NAME = "";  // e.g. "CEH Weekend Batch - Nov 2025"
+var BATCH_CERT = "";  // e.g. "CEH"
+
 function setupTriggers() {
   // Remove existing triggers
   var triggers = ScriptApp.getProjectTriggers();
@@ -78,6 +85,15 @@ function onFormSubmit(e) {
     });
     
     // Send to GuardianX webhook
+    // Add batch info if set
+    if (BATCH_NAME) {
+      lead.batchName = BATCH_NAME;
+      lead.certification = BATCH_CERT;
+      if (!lead.requirement) {
+        lead.requirement = "Enrollment for " + BATCH_NAME + " (" + BATCH_CERT + ")";
+      }
+    }
+
     var payload = {
       token: WEBHOOK_TOKEN,
       formId: FormApp.getActiveForm().getId(),

@@ -28,7 +28,7 @@ interface VerifyResult {
 }
 
 /**
- * CertificateVerifyCard — full-width trust system, not a basic card.
+ * CertificateVerifyCard - full-width trust system, not a basic card.
  * A premium verification experience with animated states.
  */
 export function CertificateVerifyCard() {
@@ -179,7 +179,7 @@ export function CertificateVerifyCard() {
                     ))}
                   </div>
 
-                  {/* Footer — credential ID + instructor */}
+                  {/* Footer - credential ID + instructor */}
                   <div className="flex items-center justify-between p-4 border-t border-emerald-500/20 bg-background/30">
                     <div className="flex items-center gap-2 text-[10px] font-mono text-muted-foreground">
                       <Lock className="h-3 w-3" />

@@ -4,7 +4,7 @@ import * as React from "react"
 import { motion, useMotionValue, useSpring, useTransform, useMotionTemplate } from "framer-motion"
 
 /* ============================================================
-   GuardianX Animated Logo — DeepSeek-style 3D tilt + specular
+   GuardianX Animated Logo - DeepSeek-style 3D tilt + specular
    ------------------------------------------------------------
    Behaviour (replicated from DeepSeek reference video):
    - The logo is a single solid 3D object (the transparent PNG).
@@ -14,11 +14,11 @@ import { motion, useMotionValue, useSpring, useTransform, useMotionTemplate } fr
        mouse DOWN   → logo rotates +X (nods down)
        mouse UP     → logo rotates -X (nods up)
    - A specular highlight (radial gradient overlay) tracks the
-     cursor position across the logo's surface — the glint moves
+     cursor position across the logo's surface - the glint moves
      to wherever the mouse is pointing.
    - Motion is springy / damped (not instant 1:1).
    - Minimal Z rotation (stays upright).
-   - No particles, no shards, no scan arc — just clean 3D + light.
+   - No particles, no shards, no scan arc - just clean 3D + light.
    ============================================================ */
 
 interface AnimatedLogoProps {
@@ -49,7 +49,7 @@ export function AnimatedLogo({
   const mx = useMotionValue(0)
   const my = useMotionValue(0)
 
-  // Spring-smoothed values — gives the "heavy / premium" damped feel
+  // Spring-smoothed values - gives the "heavy / premium" damped feel
   const sx = useSpring(mx, { stiffness: 90, damping: 18, mass: 0.8 })
   const sy = useSpring(my, { stiffness: 90, damping: 18, mass: 0.8 })
 
@@ -77,7 +77,7 @@ export function AnimatedLogo({
     ([x, y]: number[]) => 1 - (Math.abs(x) + Math.abs(y)) * 0.04
   )
 
-  // Outer bloom opacity — intensifies slightly with movement
+  // Outer bloom opacity - intensifies slightly with movement
   const bloomOpacity = useTransform(
     [sx, sy],
     ([x, y]: number[]) => 0.4 + (Math.abs(x) + Math.abs(y)) * 0.4
@@ -107,7 +107,7 @@ export function AnimatedLogo({
         position: "relative",
       }}
     >
-      {/* Outer atmospheric bloom — soft glow behind the logo */}
+      {/* Outer atmospheric bloom - soft glow behind the logo */}
       {showBloom && (
         <motion.div
           aria-hidden
@@ -131,7 +131,7 @@ export function AnimatedLogo({
           scale,
         }}
       >
-        {/* The actual transparent logo PNG — the core 3D object */}
+        {/* The actual transparent logo PNG - the core 3D object */}
         <motion.img
           src="/guardianx-logo-v2.png"
           alt="GuardianX Logo"
@@ -144,7 +144,7 @@ export function AnimatedLogo({
           draggable={false}
         />
 
-        {/* Specular highlight overlay — the glint that tracks the cursor.
+        {/* Specular highlight overlay - the glint that tracks the cursor.
             This is clipped to the logo's alpha shape by using the logo
             image as a mask, so the highlight only appears ON the logo
             surface (not in the transparent corners). */}
@@ -168,7 +168,7 @@ export function AnimatedLogo({
           }}
         />
 
-        {/* Ambient color glow overlay — also masked to logo shape,
+        {/* Ambient color glow overlay - also masked to logo shape,
             adds the violet/cyan tint shift as the cursor moves. */}
         <motion.div
           aria-hidden
@@ -189,7 +189,7 @@ export function AnimatedLogo({
           }}
         />
 
-        {/* Edge rim-light — a thin Fresnel-style outline that appears
+        {/* Edge rim-light - a thin Fresnel-style outline that appears
             when the logo tilts away, simulating light catching the edge. */}
         <div
           aria-hidden
@@ -211,7 +211,7 @@ export function AnimatedLogo({
         />
       </motion.div>
 
-      {/* Ground reflection — mirrors the logo below with a fade */}
+      {/* Ground reflection - mirrors the logo below with a fade */}
       {showReflection && (
         <div
           aria-hidden
@@ -239,7 +239,7 @@ export function AnimatedLogo({
   )
 }
 
-/* Lightweight variant for nav/footer — static with hover tilt */
+/* Lightweight variant for nav/footer - static with hover tilt */
 export function AnimatedLogoMark({
   size = 36,
   className,

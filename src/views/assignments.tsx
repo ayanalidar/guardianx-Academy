@@ -284,7 +284,7 @@ export function AssignmentsView() {
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
         {/* ====================================================
-            HEADER — oversized editorial
+            HEADER - oversized editorial
             ==================================================== */}
         <ScrollReveal>
           <div className="flex items-center gap-2 mb-4">
@@ -304,12 +304,12 @@ export function AssignmentsView() {
         <ScrollReveal delay={0.15}>
           <p className="text-muted-foreground max-w-xl mb-12 text-sm leading-relaxed">
             Your pending and graded work across all enrolled courses. Track due dates,
-            submit work, and review your peers — all in one command center.
+            submit work, and review your peers - all in one command center.
           </p>
         </ScrollReveal>
 
         {/* ====================================================
-            STATS — open editorial, not card grid
+            STATS - open editorial, not card grid
             ==================================================== */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 mb-16">
           {isLoading
@@ -430,7 +430,7 @@ function EmptyAssignments({ tab, onBrowse }: { tab: FilterTab; onBrowse: () => v
 }
 
 /* ------------------------------------------------------------------ */
-/* Assignment Card — editorial, horizontal                            */
+/* Assignment Card - editorial, horizontal                            */
 /* ------------------------------------------------------------------ */
 
 function AssignmentCard({

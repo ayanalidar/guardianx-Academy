@@ -165,9 +165,9 @@ function toLocalDateTimeInputValue(iso: string | null): string {
 }
 
 function formatDate(iso: string | null): string {
-  if (!iso) return "—"
+  if (!iso) return "-"
   const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return "—"
+  if (Number.isNaN(d.getTime())) return "-"
   return d.toLocaleString(undefined, {
     month: "short",
     day: "numeric",
@@ -689,7 +689,7 @@ function AssignmentFormDialog({
                   <SelectValue placeholder="No module" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">— None —</SelectItem>
+                  <SelectItem value="">- None -</SelectItem>
                   {modules.map((m) => (
                     <SelectItem key={m.id} value={m.id}>
                       {m.title}
@@ -707,7 +707,7 @@ function AssignmentFormDialog({
                 <SelectValue placeholder="No rubric" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">— None —</SelectItem>
+                <SelectItem value="">- None -</SelectItem>
                 {rubrics.map((r) => (
                   <SelectItem key={r.id} value={r.id}>
                     {r.title}

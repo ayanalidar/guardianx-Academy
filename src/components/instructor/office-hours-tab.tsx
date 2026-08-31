@@ -117,7 +117,7 @@ function toLocalDateTimeInputValue(iso: string | null): string {
 
 function formatDateTime(iso: string) {
   const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return "—"
+  if (Number.isNaN(d.getTime())) return "-"
   return d.toLocaleString(undefined, {
     weekday: "short",
     month: "short",
@@ -130,7 +130,7 @@ function formatDateTime(iso: string) {
 function formatTimeRange(start: string, end: string) {
   const s = new Date(start)
   const e = new Date(end)
-  if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime())) return "—"
+  if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime())) return "-"
   const fmt = (d: Date) =>
     d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })
   const durMin = Math.round((e.getTime() - s.getTime()) / 60000)
@@ -264,7 +264,7 @@ function SlotCard({ slot }: { slot: OfficeHourSlot }) {
       const cancelled = r?.cancelledBookings ?? 0
       toast.success(
         cancelled > 0
-          ? `Slot deleted — ${cancelled} booking${cancelled !== 1 ? "s" : ""} cancelled`
+          ? `Slot deleted - ${cancelled} booking${cancelled !== 1 ? "s" : ""} cancelled`
           : "Slot deleted"
       )
       qc.invalidateQueries({ queryKey: ["instructor", "office-hours"] })
@@ -552,7 +552,7 @@ function CreateSlotDialog({
                 <SelectValue placeholder="No specific course" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">— None —</SelectItem>
+                <SelectItem value="">- None -</SelectItem>
                 {courses.map((c) => (
                   <SelectItem key={c.id} value={c.id}>
                     {c.shortName || c.title}

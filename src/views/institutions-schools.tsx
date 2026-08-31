@@ -32,7 +32,7 @@ import {
 } from "lucide-react"
 
 // ============================================================
-// SMS — School Management System (K-12) feature set
+// SMS - School Management System (K-12) feature set
 // ============================================================
 const SMS_FEATURES = [
   {
@@ -80,21 +80,21 @@ const SMS_FEATURES = [
   {
     icon: Users,
     title: "Guardian Portal",
-    desc: "Parents view attendance, grades, fee status, and teacher remarks in real time — no phone calls, no paperwork.",
+    desc: "Parents view attendance, grades, fee status, and teacher remarks in real time - no phone calls, no paperwork.",
     color: "text-fuchsia-300",
     bg: "bg-fuchsia-500/10",
   },
   {
     icon: ShieldCheck,
     title: "Cyber Security Curriculum",
-    desc: "Grades 9–12 cyber security modules aligned with the school syllabus — digital safety, ethical hacking basics, careers.",
+    desc: "Grades 9–12 cyber security modules aligned with the school syllabus - digital safety, ethical hacking basics, careers.",
     color: "text-emerald-300",
     bg: "bg-emerald-500/10",
   },
 ]
 
 // ============================================================
-// Cyber curriculum for K-12 — two stages
+// Cyber curriculum for K-12 - two stages
 // ============================================================
 const SCHOOL_CYBER_STAGES = [
   {
@@ -114,7 +114,7 @@ const SCHOOL_CYBER_STAGES = [
   {
     stage: "Grades 11–12",
     title: "Cyber Security Elective",
-    desc: "An academic elective aligned with STEM — prepares students for cyber degrees and certifications.",
+    desc: "An academic elective aligned with STEM - prepares students for cyber degrees and certifications.",
     color: "text-emerald-300",
     bg: "bg-emerald-500/10",
     border: "border-emerald-500/40",
@@ -122,13 +122,13 @@ const SCHOOL_CYBER_STAGES = [
       "Ethical hacking basics (theory + lab)",
       "Network fundamentals and the OSI model",
       "Linux command line and scripting",
-      "Career guidance — degrees, certs, internships",
+      "Career guidance - degrees, certs, internships",
     ],
   },
 ]
 
 // ============================================================
-// Dashboard preview stats — school admin view
+// Dashboard preview stats - school admin view
 // ============================================================
 const SCHOOL_DASHBOARD_STATS = [
   { icon: Users, label: "Total Students", value: 1248, suffix: "", color: "text-emerald-300", tint: "bg-emerald-500/10", trend: { value: 6, direction: "up" as const } },
@@ -140,7 +140,7 @@ const SCHOOL_DASHBOARD_STATS = [
 ]
 
 // ============================================================
-// Partnership models — school-specific
+// Partnership models - school-specific
 // ============================================================
 const SCHOOL_PARTNERSHIP_MODELS = [
   {
@@ -156,7 +156,7 @@ const SCHOOL_PARTNERSHIP_MODELS = [
   {
     icon: Database,
     title: "Annual License",
-    desc: "Per-student pricing for the SMS platform. Full access for a single academic year — roll over year-to-year as you grow.",
+    desc: "Per-student pricing for the SMS platform. Full access for a single academic year - roll over year-to-year as you grow.",
     color: "text-cyan-300",
     bg: "bg-cyan-500/10",
     border: "hover:border-cyan-500/40",
@@ -165,7 +165,7 @@ const SCHOOL_PARTNERSHIP_MODELS = [
   {
     icon: Layers,
     title: "Full Integration",
-    desc: "SMS + LMS + Cyber Range + Labs — the complete GuardianX stack tightly integrated with your school's academic calendar.",
+    desc: "SMS + LMS + Cyber Range + Labs - the complete GuardianX stack tightly integrated with your school's academic calendar.",
     color: "text-violet-300",
     bg: "bg-violet-500/10",
     border: "hover:border-violet-500/40",
@@ -190,7 +190,7 @@ export function InstitutionsSchoolsView() {
         <section className="py-8 lg:py-12">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="grid lg:grid-cols-2 gap-8 items-center">
-              {/* Left — text */}
+              {/* Left - text */}
               <div>
                 <motion.div
                   initial={{ opacity: 0, y: 8 }}
@@ -231,7 +231,7 @@ export function InstitutionsSchoolsView() {
                   className="text-base lg:text-lg text-muted-foreground max-w-xl mb-6 leading-relaxed"
                 >
                   Complete K-12 cyber security education platform with a complimentary School Management System
-                  for MoU partners. Manage students, attendance, fees, grades, and parent communication — all in
+                  for MoU partners. Manage students, attendance, fees, grades, and parent communication - all in
                   one place.
                 </motion.p>
                 <motion.div
@@ -272,7 +272,7 @@ export function InstitutionsSchoolsView() {
                         COMPLIMENTARY FOR MOU PARTNERS
                       </div>
                       <p className="text-xs text-muted-foreground leading-relaxed">
-                        The School Management System is a separate product — it is not the GuardianX training
+                        The School Management System is a separate product - it is not the GuardianX training
                         platform. Sign an MoU and the SMS is included at no extra cost, alongside on-premises
                         cyber training for your students.
                       </p>
@@ -281,7 +281,7 @@ export function InstitutionsSchoolsView() {
                 </motion.div>
               </div>
 
-              {/* Right — particle logo */}
+              {/* Right - particle logo */}
               <motion.div
                 initial={{ opacity: 0, scale: 0.85 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -295,7 +295,7 @@ export function InstitutionsSchoolsView() {
         </section>
 
         {/* ====================================================
-            SECTION 2: SMS OVERVIEW — 8 K-12 feature cards
+            SECTION 2: SMS OVERVIEW - 8 K-12 feature cards
             ==================================================== */}
         <section className="py-8 lg:py-12 border-t border-border/40">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -311,7 +311,7 @@ export function InstitutionsSchoolsView() {
                 <span className="text-gradient-premium">School Management System</span>
               </h2>
               <p className="text-base text-muted-foreground mt-4">
-                Eight purpose-built modules that handle the day-to-day running of a K-12 school — from
+                Eight purpose-built modules that handle the day-to-day running of a K-12 school - from
                 admissions and attendance to fee collection and parent communication.
               </p>
             </motion.div>
@@ -337,7 +337,7 @@ export function InstitutionsSchoolsView() {
         </section>
 
         {/* ====================================================
-            SECTION 3: SCHOOL CYBER TRAINING — 2-card grid
+            SECTION 3: SCHOOL CYBER TRAINING - 2-card grid
             ==================================================== */}
         <section className="py-8 lg:py-12 border-t border-border/40 relative overflow-hidden">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[280px] bg-emerald-600/5 blur-[120px] rounded-full pointer-events-none" />
@@ -353,7 +353,7 @@ export function InstitutionsSchoolsView() {
                 Cyber security education for schools
               </h2>
               <p className="text-base text-muted-foreground mt-4">
-                A two-stage curriculum that grows with students — from safe digital habits in grade 9 to an
+                A two-stage curriculum that grows with students - from safe digital habits in grade 9 to an
                 academic cyber security elective in grades 11–12.
               </p>
             </motion.div>
@@ -395,7 +395,7 @@ export function InstitutionsSchoolsView() {
         </section>
 
         {/* ====================================================
-            SECTION 4: SCHOOL DASHBOARD PREVIEW — mockup
+            SECTION 4: SCHOOL DASHBOARD PREVIEW - mockup
             ==================================================== */}
         <section className="py-8 lg:py-12 border-t border-border/40 relative overflow-hidden">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[260px] bg-emerald-600/5 blur-[120px] rounded-full pointer-events-none" />
@@ -412,7 +412,7 @@ export function InstitutionsSchoolsView() {
                   Your school, at a glance.
                 </h2>
                 <p className="text-base text-muted-foreground max-w-xl mt-3">
-                  A live view of students, classes, teachers, attendance, active courses, and certificates — the
+                  A live view of students, classes, teachers, attendance, active courses, and certificates - the
                   command center for your school admin team.
                 </p>
               </div>
@@ -456,7 +456,7 @@ export function InstitutionsSchoolsView() {
                     <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider mb-1">
                       Delhi Cyber Sciences Academy
                     </p>
-                    <h3 className="text-base font-semibold">Q3 2024 — School Overview</h3>
+                    <h3 className="text-base font-semibold">Q3 2024 - School Overview</h3>
                   </div>
                   <Badge variant="outline" className="text-[10px] font-mono tracking-wider border-border/60">
                     <span className="size-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse" /> Synced 2 min ago
@@ -507,7 +507,7 @@ export function InstitutionsSchoolsView() {
         </section>
 
         {/* ====================================================
-            SECTION 5: PARTNERSHIP MODELS — 3 cards
+            SECTION 5: PARTNERSHIP MODELS - 3 cards
             ==================================================== */}
         <section className="py-8 lg:py-12 border-t border-border/40">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -523,7 +523,7 @@ export function InstitutionsSchoolsView() {
               </h2>
               <p className="text-base text-muted-foreground mt-4">
                 Whether you want a complimentary SMS under an MoU, an annual license, or a fully integrated
-                cyber education stack — there is a model that fits your school.
+                cyber education stack - there is a model that fits your school.
               </p>
             </motion.div>
 

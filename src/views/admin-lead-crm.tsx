@@ -268,7 +268,7 @@ export function LeadCrmView() {
   }
 
   function handleCreateProposal(lead: Lead) {
-    // We can't easily pre-fill the proposal view (it's a separate view) — store in sessionStorage
+    // We can't easily pre-fill the proposal view (it's a separate view) - store in sessionStorage
     if (typeof window !== "undefined") {
       window.sessionStorage.setItem(
         "guardianx-proposal-prefill",
@@ -351,7 +351,7 @@ export function LeadCrmView() {
               </h3>
               <p className="text-xs text-muted-foreground mb-3">
                 Create a Google Form for lead capture. Responses sync automatically to this CRM
-                via Google Apps Script webhook — no manual entry needed.
+                via Google Apps Script webhook - no manual entry needed.
               </p>
 
               {/* Webhook URL */}
@@ -512,7 +512,7 @@ export function LeadCrmView() {
                       return (
                         <tr key={lead.id} className="border-t border-border/40 hover:bg-muted/30 cursor-pointer" onClick={() => setSelectedLeadId(lead.id)}>
                           <td className="py-3 px-4 text-sm font-medium">{lead.name}</td>
-                          <td className="py-3 px-4 text-sm text-muted-foreground">{lead.organization || "—"}</td>
+                          <td className="py-3 px-4 text-sm text-muted-foreground">{lead.organization || "-"}</td>
                           <td className="py-3 px-4"><Badge variant="outline" className="text-[9px]"><TypeIcon className="h-3 w-3 mr-1" />{lead.type}</Badge></td>
                           <td className="py-3 px-4"><Badge className={cn("text-[9px] border", statusMeta.bg, statusMeta.color, statusMeta.border)}>{lead.status}</Badge></td>
                           <td className="py-3 px-4"><Badge variant="outline" className={cn("text-[9px]", SOURCE_COLORS[lead.source] || "")}>{lead.source}</Badge></td>
@@ -761,9 +761,9 @@ function LeadDetailDialog({
         <div className="space-y-4">
           {/* Contact info */}
           <div className="grid sm:grid-cols-2 gap-3">
-            <InfoRow icon={Building2} label="Organization" value={lead.organization || "—"} />
-            <InfoRow icon={Mail} label="Email" value={lead.email || "—"} />
-            <InfoRow icon={Phone} label="Phone" value={lead.phone || "—"} />
+            <InfoRow icon={Building2} label="Organization" value={lead.organization || "-"} />
+            <InfoRow icon={Mail} label="Email" value={lead.email || "-"} />
+            <InfoRow icon={Phone} label="Phone" value={lead.phone || "-"} />
             <InfoRow icon={Calendar} label="Created" value={new Date(lead.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })} />
           </div>
 

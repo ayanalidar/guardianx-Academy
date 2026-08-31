@@ -46,7 +46,7 @@ export function LiveSessionsView() {
 }
 
 /* ============================================================
-   SESSION LIST — editorial, oversized
+   SESSION LIST - editorial, oversized
    ============================================================ */
 function SessionList({ onJoin }: { onJoin: (s: LiveSessionItem) => void }) {
   const qc = useQueryClient()
@@ -88,7 +88,7 @@ function SessionList({ onJoin }: { onJoin: (s: LiveSessionItem) => void }) {
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
         {/* ====================================================
-            HEADER — oversized editorial
+            HEADER - oversized editorial
             ==================================================== */}
         <ScrollReveal>
           <div className="flex items-center gap-2 mb-4">
@@ -146,7 +146,7 @@ function SessionList({ onJoin }: { onJoin: (s: LiveSessionItem) => void }) {
         </ScrollReveal>
 
         {/* ====================================================
-            SESSIONS — editorial list, not card grid
+            SESSIONS - editorial list, not card grid
             ==================================================== */}
         {isLoading ? (
           <div className="space-y-4">
@@ -256,7 +256,7 @@ function SessionList({ onJoin }: { onJoin: (s: LiveSessionItem) => void }) {
 }
 
 /* ============================================================
-   Empty Sessions — editorial empty state
+   Empty Sessions - editorial empty state
    ============================================================ */
 function EmptySessions() {
   return (
@@ -279,7 +279,7 @@ function EmptySessions() {
 }
 
 /* ============================================================
-   Session Row — editorial (not card grid)
+   Session Row - editorial (not card grid)
    ============================================================ */
 function SessionRow({ session, onJoin, ended }: { session: LiveSessionItem; onJoin: (s: LiveSessionItem) => void; ended?: boolean }) {
   const isLive = session.status === "live"
@@ -376,7 +376,7 @@ function SessionRow({ session, onJoin, ended }: { session: LiveSessionItem; onJo
 }
 
 /* ============================================================
-   LIVE ROOM (WebRTC) — premium dark glass with violet accents
+   LIVE ROOM (WebRTC) - premium dark glass with violet accents
    All WebRTC functionality preserved
    ============================================================ */
 function LiveRoom({ session, onLeave, userName, userId, isHost }: {
@@ -483,7 +483,7 @@ function LiveRoom({ session, onLeave, userName, userId, isHost }: {
 
   function requestPresent() {
     webrtcRef.current?.requestPresent()
-    toast.success("Requested to present — waiting for host approval")
+    toast.success("Requested to present - waiting for host approval")
   }
 
   function approveRequest(req: any) {
@@ -577,7 +577,7 @@ function LiveRoom({ session, onLeave, userName, userId, isHost }: {
 
   return (
     <div className="relative min-h-screen">
-      {/* Atmospheric background — premium dark */}
+      {/* Atmospheric background - premium dark */}
       <div className="absolute inset-0 bg-mesh opacity-50 pointer-events-none" />
       <div className="absolute top-0 left-1/4 w-[500px] h-[400px] bg-rose-500/5 blur-[120px] rounded-full pointer-events-none" />
       <div className="absolute top-40 right-0 w-[400px] h-[300px] bg-violet-600/5 blur-[100px] rounded-full pointer-events-none" />

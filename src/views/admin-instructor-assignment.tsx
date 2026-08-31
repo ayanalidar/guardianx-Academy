@@ -657,7 +657,7 @@ function AddInstructorDialog({
 
           {/* Password */}
           <div>
-            <Label className="text-xs">Initial Password (optional — defaults to GuardianX@123)</Label>
+            <Label className="text-xs">Initial Password (optional - defaults to GuardianX@123)</Label>
             <Input type="text" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Instructor can reset later" className="text-xs" />
           </div>
 

@@ -276,7 +276,7 @@ function CsvInput({
       ),
     onSuccess: (r) => {
       setPreview(r.rows)
-      toast.success(`Preview ready — ${r.validRows}/${r.totalRows} valid rows`)
+      toast.success(`Preview ready - ${r.validRows}/${r.totalRows} valid rows`)
     },
     onError: (e: Error) => toast.error(e.message),
   })
@@ -361,7 +361,7 @@ function ManualInput({
     })
     setPreview(mapped)
     const valid = mapped.filter((r) => r.valid).length
-    toast.success(`Preview ready — ${valid}/${mapped.length} valid rows`)
+    toast.success(`Preview ready - ${valid}/${mapped.length} valid rows`)
   }
 
   return (
@@ -462,9 +462,9 @@ function PreviewTable({ rows }: { rows: PreviewRow[] }) {
             {rows.map((r, i) => (
               <TableRow key={i}>
                 <TableCell className="font-mono text-xs text-muted-foreground">{i + 1}</TableCell>
-                <TableCell className="font-medium">{r.name || <span className="text-muted-foreground/40">—</span>}</TableCell>
-                <TableCell className="text-sm">{r.email || <span className="text-muted-foreground/40">—</span>}</TableCell>
-                <TableCell className="text-sm text-muted-foreground">{r.title || "—"}</TableCell>
+                <TableCell className="font-medium">{r.name || <span className="text-muted-foreground/40">-</span>}</TableCell>
+                <TableCell className="text-sm">{r.email || <span className="text-muted-foreground/40">-</span>}</TableCell>
+                <TableCell className="text-sm text-muted-foreground">{r.title || "-"}</TableCell>
                 <TableCell className="text-right">
                   {r.valid ? (
                     <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
@@ -515,7 +515,7 @@ function ImportAction({
       })
     },
     onSuccess: (r) => {
-      toast.success(`Import complete — ${r.created} created, ${r.enrolled} enrolled, ${r.skipped} skipped`)
+      toast.success(`Import complete - ${r.created} created, ${r.enrolled} enrolled, ${r.skipped} skipped`)
       onImported(r)
       setConfirmOpen(false)
     },
@@ -614,7 +614,7 @@ function ImportResults({
             <div className="flex-1">
               <p className="text-sm font-medium text-amber-400">Temp passwords generated</p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Share these credentials with students via a secure channel (not email — they&apos;ve already received their own copy). Treat them as sensitive.
+                Share these credentials with students via a secure channel (not email - they&apos;ve already received their own copy). Treat them as sensitive.
               </p>
             </div>
             <Button size="sm" variant="outline" onClick={copyAllPasswords}>
@@ -656,7 +656,7 @@ function ImportResults({
                     {r.tempPassword ? (
                       <span className="text-emerald-400">{r.tempPassword}</span>
                     ) : (
-                      <span className="text-muted-foreground/40">—</span>
+                      <span className="text-muted-foreground/40">-</span>
                     )}
                     {r.error && (
                       <span className="block text-[10px] text-rose-400">{r.error}</span>

@@ -38,7 +38,7 @@ import {
 import { toast } from "sonner"
 
 /* ============================================================
-   MockInterviewView — interactive interview practice
+   MockInterviewView - interactive interview practice
    ============================================================ */
 
 interface InterviewQuestion {
@@ -155,7 +155,7 @@ export function MockInterviewView() {
       setActiveInterview(data.interview)
       setPhase("results")
       qc.invalidateQueries({ queryKey: ["interviews"] })
-      toast.success(`Interview graded — score: ${data.interview.score}/100`)
+      toast.success(`Interview graded - score: ${data.interview.score}/100`)
     },
     onError: (err: any) => toast.error(err?.message || "Failed to grade interview"),
   })
@@ -294,7 +294,7 @@ export function MockInterviewView() {
               ) : (qData?.questions ?? []).length > 0 ? (
                 <div>
                   <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider mb-2">
-                    {(qData?.questions ?? []).length} question{((qData?.questions ?? []).length !== 1) ? "s" : ""} available — first 5 will be picked
+                    {(qData?.questions ?? []).length} question{((qData?.questions ?? []).length !== 1) ? "s" : ""} available - first 5 will be picked
                   </p>
                   <ScrollArea className="max-h-48 rounded-lg border border-border/40 bg-background/30">
                     <div className="p-3 space-y-1.5">
@@ -338,7 +338,7 @@ export function MockInterviewView() {
         {phase === "active" && currentQ && (
           <ScrollReveal>
             <div className="rounded-2xl border border-border/60 bg-card/30 backdrop-blur-sm p-6 mb-6">
-              {/* Top bar — progress + timer */}
+              {/* Top bar - progress + timer */}
               <div className="flex items-center gap-4 mb-6">
                 <div className="flex-1">
                   <div className="flex items-center justify-between text-xs mb-1">
@@ -437,7 +437,7 @@ export function MockInterviewView() {
                   </div>
                 </div>
 
-                {/* Side panel — question nav */}
+                {/* Side panel - question nav */}
                 <div className="lg:col-span-5">
                   <div className="rounded-xl border border-border/60 bg-background/30 p-4">
                     <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider mb-3">
@@ -558,7 +558,7 @@ export function MockInterviewView() {
           </ScrollReveal>
         )}
 
-        {/* History — always visible in setup */}
+        {/* History - always visible in setup */}
         {phase === "setup" && (
           <ScrollReveal delay={0.3}>
             <div className="mt-12">

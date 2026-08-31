@@ -20,7 +20,7 @@ import { ScrollReveal } from "@/components/platform/motion-system"
 
 /* ============================================================
    PrerequisitesVisualizerView
-   Pure CSS / SVG graph — courses as nodes, prereqs as edges.
+   Pure CSS / SVG graph - courses as nodes, prereqs as edges.
    Click a course to see details.
    ============================================================ */
 
@@ -94,7 +94,7 @@ export function PrerequisitesVisualizerView() {
     levelBuckets[k].sort((a, b) => a.category.localeCompare(b.category) || a.shortName.localeCompare(b.shortName))
   }
 
-  // Position calc — column per level, vertical spread within
+  // Position calc - column per level, vertical spread within
   const colWidth = 280
   const rowHeight = 110
   const padX = 60
@@ -307,7 +307,7 @@ export function PrerequisitesVisualizerView() {
               </div>
             </div>
 
-            {/* Side panel — selected course details */}
+            {/* Side panel - selected course details */}
             <div>
               <div className="mb-4">
                 <p className="text-[10px] font-mono text-violet-400 tracking-[0.3em] mb-2">DETAILS</p>
@@ -368,7 +368,7 @@ export function PrerequisitesVisualizerView() {
                         PREREQUISITES ({selectedPrereqs.length})
                       </div>
                       {selectedPrereqs.length === 0 ? (
-                        <div className="text-xs text-muted-foreground">None — this is an entry point.</div>
+                        <div className="text-xs text-muted-foreground">None - this is an entry point.</div>
                       ) : (
                         <div className="space-y-1.5">
                           {selectedPrereqs.map((p) => (

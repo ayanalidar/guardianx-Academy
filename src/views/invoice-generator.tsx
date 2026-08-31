@@ -170,7 +170,7 @@ export function InvoiceGeneratorView() {
 
   function handlePrint() {
     window.print()
-    toast.success("Invoice print dialog opened — save as PDF")
+    toast.success("Invoice print dialog opened - save as PDF")
   }
 
   function handleCopyInvoiceNumber() {
@@ -205,7 +205,7 @@ export function InvoiceGeneratorView() {
 
   return (
     <div className="relative min-h-screen bg-mesh">
-      {/* Header bar — hidden on print */}
+      {/* Header bar - hidden on print */}
       <div className="print:hidden border-b border-border/40 bg-card/60 backdrop-blur sticky top-0 z-30">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3">
@@ -335,10 +335,10 @@ export function InvoiceGeneratorView() {
                   <Select value={currency} onValueChange={setCurrency}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="INR">₹ INR — Indian Rupee</SelectItem>
-                      <SelectItem value="USD">$ USD — US Dollar</SelectItem>
-                      <SelectItem value="EUR">€ EUR — Euro</SelectItem>
-                      <SelectItem value="GBP">£ GBP — Pound</SelectItem>
+                      <SelectItem value="INR">₹ INR - Indian Rupee</SelectItem>
+                      <SelectItem value="USD">$ USD - US Dollar</SelectItem>
+                      <SelectItem value="EUR">€ EUR - Euro</SelectItem>
+                      <SelectItem value="GBP">£ GBP - Pound</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -364,7 +364,7 @@ export function InvoiceGeneratorView() {
                       className="size-4 rounded border-border accent-violet-500"
                     />
                     <Label htmlFor="gst-split" className="text-xs cursor-pointer">
-                      Split GST into CGST + SGST (9% + 9% for 18% GST — India format)
+                      Split GST into CGST + SGST (9% + 9% for 18% GST - India format)
                     </Label>
                   </div>
                 )}
@@ -536,7 +536,7 @@ export function InvoiceGeneratorView() {
                   <div className="absolute -top-20 -right-10 w-60 h-60 rounded-full bg-violet-600/20 blur-3xl pointer-events-none" />
                   <div className="absolute -bottom-20 -left-10 w-60 h-60 rounded-full bg-fuchsia-600/15 blur-3xl pointer-events-none" />
                   <div className="relative flex items-start justify-between flex-wrap gap-4">
-                    {/* Company branding — particle logo + tagline */}
+                    {/* Company branding - particle logo + tagline */}
                     <div className="flex items-center gap-4">
                       <div className="relative">
                         <div className="absolute inset-0 rounded-xl bg-violet-500/30 blur-lg" />
@@ -646,7 +646,7 @@ export function InvoiceGeneratorView() {
                               <div className={cn("inline-flex p-1.5 rounded-md border border-border/40", cfg.bg)}>
                                 <cfg.icon className={cn("h-3.5 w-3.5", cfg.color)} />
                               </div>
-                              <span className="text-sm text-foreground">{item.description || "—"}</span>
+                              <span className="text-sm text-foreground">{item.description || "-"}</span>
                             </div>
                           </td>
                           <td className="py-3 text-center text-sm text-muted-foreground tabular-nums">{item.quantity}</td>
@@ -788,7 +788,7 @@ export function InvoiceGeneratorView() {
         </div>
       </div>
 
-      {/* Print styles — landscape A4 */}
+      {/* Print styles - landscape A4 */}
       <style jsx global>{`
         @media print {
           @page {

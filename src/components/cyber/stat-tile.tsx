@@ -6,7 +6,7 @@ import { ArrowDownRight, ArrowUpRight, type LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 /**
- * StatTile — compact premium dashboard stat tile. Big number + label + icon,
+ * StatTile - compact premium dashboard stat tile. Big number + label + icon,
  * with optional suffix and trend indicator.
  *
  * Used across the dashboard, instructor metrics, and lab progress overview.

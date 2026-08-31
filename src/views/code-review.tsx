@@ -35,7 +35,7 @@ import {
 import { toast } from "sonner"
 
 /* ============================================================
-   CodeReviewView — AI-powered code security review
+   CodeReviewView - AI-powered code security review
    ============================================================ */
 
 const LANGUAGES = [
@@ -141,7 +141,7 @@ export function CodeReviewView() {
     onSuccess: (data) => {
       setResult(data)
       qc.invalidateQueries({ queryKey: ["code-reviews"] })
-      toast.success(`Code review complete — score: ${data.score}/100`)
+      toast.success(`Code review complete - score: ${data.score}/100`)
     },
     onError: (err: any) => {
       toast.error(err?.message || "Code review failed")
@@ -186,12 +186,12 @@ export function CodeReviewView() {
         <ScrollReveal delay={0.2}>
           <p className="text-muted-foreground max-w-xl mb-10">
             Paste your code below and let our AI scan for vulnerabilities, anti-patterns, and
-            security best practices — with a clear score and actionable fixes.
+            security best practices - with a clear score and actionable fixes.
           </p>
         </ScrollReveal>
 
         <div className="grid lg:grid-cols-12 gap-6">
-          {/* Editor — left */}
+          {/* Editor - left */}
           <ScrollReveal className="lg:col-span-7" delay={0.25}>
             <div className="rounded-2xl border border-border/60 bg-card/30 backdrop-blur-sm overflow-hidden">
               <div className="p-4 border-b border-border/60 flex items-center gap-3">
@@ -237,7 +237,7 @@ export function CodeReviewView() {
             </div>
           </ScrollReveal>
 
-          {/* Results — right */}
+          {/* Results - right */}
           <ScrollReveal className="lg:col-span-5" delay={0.3}>
             <div className="rounded-2xl border border-border/60 bg-card/30 backdrop-blur-sm overflow-hidden">
               <div className="p-4 border-b border-border/60 flex items-center gap-2">
@@ -403,7 +403,7 @@ export function CodeReviewView() {
                         setResult({
                           reviewId: r.id,
                           score: r.score,
-                          summary: "Past review — see issues below.",
+                          summary: "Past review - see issues below.",
                           issues: r.issues,
                           goodPractices: [],
                           language: r.language,

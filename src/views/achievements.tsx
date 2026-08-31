@@ -137,7 +137,7 @@ export function AchievementsView() {
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
         {/* ====================================================
-            HEADER — oversized headline + status pill
+            HEADER - oversized headline + status pill
             ==================================================== */}
         <ScrollReveal>
           <div className="flex items-center gap-3 mb-6">
@@ -164,7 +164,7 @@ export function AchievementsView() {
         </ScrollReveal>
 
         {/* ====================================================
-            STATS STRIP — border-left editorial, NO cards
+            STATS STRIP - border-left editorial, NO cards
             ==================================================== */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
           {[
@@ -186,7 +186,7 @@ export function AchievementsView() {
         </div>
 
         {/* ====================================================
-            LEVEL PROGRESS BAR — open, premium
+            LEVEL PROGRESS BAR - open, premium
             ==================================================== */}
         <ScrollReveal delay={0.5}>
           <div className="mb-20 max-w-3xl">
@@ -206,7 +206,7 @@ export function AchievementsView() {
         </ScrollReveal>
 
         {/* ====================================================
-            TIER-GROUPED ACHIEVEMENTS — editorial sections
+            TIER-GROUPED ACHIEVEMENTS - editorial sections
             ==================================================== */}
         <div className="space-y-20">
           {tierGroups.map((group, gi) => (
@@ -216,7 +216,7 @@ export function AchievementsView() {
                 <div className="flex items-end justify-between mb-8 pb-4 border-b border-border/60">
                   <div>
                     <p className="text-[10px] font-mono text-muted-foreground tracking-[0.3em] mb-2">
-                      {String(gi + 1).padStart(2, "0")} — TIER {group.config.label.toUpperCase()}
+                      {String(gi + 1).padStart(2, "0")} - TIER {group.config.label.toUpperCase()}
                     </p>
                     <h2 className="flex items-baseline gap-3">
                       <span className={cn("text-[clamp(2rem,5vw,3.5rem)] font-bold leading-none tracking-[-0.03em]", group.config.text)}>
@@ -250,7 +250,7 @@ export function AchievementsView() {
         </div>
 
         {/* ====================================================
-            ACTIVITY + LEADERBOARD + HEATMAP — sidebar grid
+            ACTIVITY + LEADERBOARD + HEATMAP - sidebar grid
             ==================================================== */}
         <div className="mt-24 grid lg:grid-cols-3 gap-6">
           {/* Heatmap */}
@@ -382,7 +382,7 @@ export function AchievementsView() {
 }
 
 /* ============================================================
-   AchievementTile — editorial tile with glow-on-hover
+   AchievementTile - editorial tile with glow-on-hover
    ============================================================ */
 function AchievementTile({ a, tier }: { a: any; tier: string }) {
   const Icon = ICONS[a.icon] ?? Award
@@ -402,7 +402,7 @@ function AchievementTile({ a, tier }: { a: any; tier: string }) {
             : "border-dashed border-border/50 opacity-60",
         )}
       >
-        {/* Gradient background wash — earned only */}
+        {/* Gradient background wash - earned only */}
         {a.earned && (
           <div className={cn("absolute inset-0 bg-gradient-to-br opacity-60 pointer-events-none", cfg.bg)} />
         )}

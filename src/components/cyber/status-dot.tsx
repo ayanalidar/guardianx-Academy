@@ -4,7 +4,7 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 
 /**
- * StatusDot — small status indicator dot used in cards, headers, and dashboards.
+ * StatusDot - small status indicator dot used in cards, headers, and dashboards.
  *
  * Colors map to standard cyber operations palette:
  *  - online  → emerald (system healthy / target up)
@@ -54,7 +54,7 @@ export function StatusDot({
   const dotSize = SIZE_MAP[size]
   const color = COLOR_MAP[status]
 
-  // Reduced motion preference — disable pulse animation
+  // Reduced motion preference - disable pulse animation
   const prefersReducedMotion = React.useMemo(() => {
     if (typeof window === "undefined") return false
     return window.matchMedia("(prefers-reduced-motion: reduce)").matches

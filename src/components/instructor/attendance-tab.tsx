@@ -259,7 +259,7 @@ function MarkAttendance({
       const upserted = r?.upserted ?? 0
       const errors = r?.errors?.length ?? 0
       if (errors > 0) {
-        toast.warning(`Saved ${upserted} record(s) — ${errors} error(s)`)
+        toast.warning(`Saved ${upserted} record(s) - ${errors} error(s)`)
       } else {
         toast.success(`Attendance saved (${upserted} record${upserted !== 1 ? "s" : ""})`)
       }
@@ -423,7 +423,7 @@ function AttendanceHistory({ courseId }: { courseId: string }) {
   // Stats
   const stats = React.useMemo(() => {
     if (records.length === 0) {
-      return { totalSessions: 0, attendanceRate: 0, mostCommon: "—" }
+      return { totalSessions: 0, attendanceRate: 0, mostCommon: "-" }
     }
     const sessionKeys = Object.keys(byDate)
     const totalSessions = sessionKeys.length
@@ -590,7 +590,7 @@ function AttendanceHistory({ courseId }: { courseId: string }) {
                       if (!rec) {
                         return (
                           <TableCell key={s.key} className="text-center text-muted-foreground/40">
-                            —
+                            -
                           </TableCell>
                         )
                       }
@@ -599,7 +599,7 @@ function AttendanceHistory({ courseId }: { courseId: string }) {
                         <TableCell key={s.key} className="text-center">
                           <span
                             className={cn("inline-flex items-center justify-center w-6 h-6 rounded-full", meta.bg)}
-                            title={`${rec.status} — ${formatDateShort(s.date)}`}
+                            title={`${rec.status} - ${formatDateShort(s.date)}`}
                           >
                             <meta.icon className={cn("h-3 w-3", meta.color)} />
                           </span>

@@ -5,7 +5,7 @@ import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
 
 /**
- * CyberTerminal — a realistic terminal that types out command / output lines
+ * CyberTerminal - a realistic terminal that types out command / output lines
  * character-by-character. Designed for lab briefings, hero animations, and
  * command simulation panels.
  *
@@ -85,7 +85,7 @@ export function CyberTerminal({
     const currentLine = lines[visibleLineCount]
     if (!currentLine) return
 
-    // Already fully shown — advance to next line after a brief pause
+    // Already fully shown - advance to next line after a brief pause
     if (visibleChars >= currentLine.text.length) {
       const pause = currentLine.type === "command" ? 220 : 90
       const t = setTimeout(() => {
@@ -123,7 +123,7 @@ export function CyberTerminal({
         className
       )}
     >
-      {/* Title bar — mac-style dots + title */}
+      {/* Title bar - mac-style dots + title */}
       <div className="flex items-center gap-2 border-b border-border/40 bg-[oklch(0.12_0.01_270)] px-3 py-2">
         <div className="flex gap-1.5" aria-hidden>
           <span className="size-2.5 rounded-full bg-rose-400/80" />
@@ -131,7 +131,7 @@ export function CyberTerminal({
           <span className="size-2.5 rounded-full bg-emerald-400/80" />
         </div>
         <span className="ml-2 font-mono text-xs text-muted-foreground">
-          guardian@kali — bash — 80×24
+          guardian@kali - bash - 80×24
         </span>
       </div>
 

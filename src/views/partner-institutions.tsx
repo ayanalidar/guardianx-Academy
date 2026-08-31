@@ -27,7 +27,7 @@ import { ParticleLogo } from "@/components/platform/particle-logo"
 import { usePageContent, getContent } from "@/lib/use-content"
 
 // ============================================================
-// Partner types — three institutional segments GuardianX serves
+// Partner types - three institutional segments GuardianX serves
 // with on-premises training. Each has its own login portal.
 // ============================================================
 type PartnerType = "School" | "College" | "University"
@@ -84,7 +84,7 @@ const PARTNER_TYPES: PartnerTypeConfig[] = [
 ]
 
 // ============================================================
-// Featured partner profiles — example placeholders only.
+// Featured partner profiles - example placeholders only.
 // Not real institutions. Designed to demonstrate the partner
 // profile card pattern.
 // ============================================================
@@ -201,13 +201,13 @@ const FEATURED_PARTNERS: FeaturedPartner[] = [
 ]
 
 // ============================================================
-// Four institutional pillars — Teach. Practice. Track. Certify.
+// Four institutional pillars - Teach. Practice. Track. Certify.
 // ============================================================
 const INSTITUTIONAL_PILLARS = [
   {
     icon: Presentation,
     title: "Teach",
-    desc: "Instructor-led classes on your campus with GuardianX curriculum, slides, labs, and live coding walkthroughs — delivered by certified cyber security instructors.",
+    desc: "Instructor-led classes on your campus with GuardianX curriculum, slides, labs, and live coding walkthroughs - delivered by certified cyber security instructors.",
     color: "text-violet-300",
     bg: "bg-violet-500/10",
     border: "hover:border-violet-500/40",
@@ -216,7 +216,7 @@ const INSTITUTIONAL_PILLARS = [
   {
     icon: FlaskConical,
     title: "Practice",
-    desc: "31 Docker-powered cyber labs. Students run real tools against live targets in an isolated cyber range — no setup, no infrastructure, just practice.",
+    desc: "31 Docker-powered cyber labs. Students run real tools against live targets in an isolated cyber range - no setup, no infrastructure, just practice.",
     color: "text-cyan-300",
     bg: "bg-cyan-500/10",
     border: "hover:border-cyan-500/40",
@@ -243,7 +243,7 @@ const INSTITUTIONAL_PILLARS = [
 ]
 
 // ============================================================
-// Institution Dashboard Preview — mock stats shown to prospects
+// Institution Dashboard Preview - mock stats shown to prospects
 // ============================================================
 const DASHBOARD_PREVIEW_STATS = [
   { icon: Users, label: "Total Students", value: 1248, suffix: "", color: "text-violet-300", tint: "bg-violet-500/10", trend: { value: 8, direction: "up" as const } },
@@ -255,7 +255,7 @@ const DASHBOARD_PREVIEW_STATS = [
 ]
 
 // ============================================================
-// Partner benefits — the original 6 institutional benefits
+// Partner benefits - the original 6 institutional benefits
 // ============================================================
 const BENEFITS = [
   {
@@ -269,7 +269,7 @@ const BENEFITS = [
   {
     icon: FlaskConical,
     title: "31 Docker Labs",
-    desc: "Docker-powered hands-on labs with live targets. No setup required — students start practicing on day one, on-premises.",
+    desc: "Docker-powered hands-on labs with live targets. No setup required - students start practicing on day one, on-premises.",
     color: "text-violet-400",
     bg: "bg-violet-500/10",
     tag: "Cyber range",
@@ -285,7 +285,7 @@ const BENEFITS = [
   {
     icon: Server,
     title: "On-Premises Training",
-    desc: "We deliver training at your campus — your classrooms, your labs, your schedule. Our instructors travel to your institution.",
+    desc: "We deliver training at your campus - your classrooms, your labs, your schedule. Our instructors travel to your institution.",
     color: "text-cyan-400",
     bg: "bg-cyan-500/10",
     tag: "In-person",
@@ -309,7 +309,7 @@ const BENEFITS = [
 ]
 
 // ============================================================
-// Features grid — 8 institutional platform features
+// Features grid - 8 institutional platform features
 // ============================================================
 const INSTITUTIONAL_FEATURES = [
   { icon: UserCog, title: "Student Management", desc: "Student profiles, batches, cohorts, and enrollment tracking.", color: "text-violet-300", bg: "bg-violet-500/10" },
@@ -323,7 +323,7 @@ const INSTITUTIONAL_FEATURES = [
 ]
 
 // ============================================================
-// Cyber range flow — Students → Courses → Labs → Assessments → Certificates → Career Ready
+// Cyber range flow - Students → Courses → Labs → Assessments → Certificates → Career Ready
 // ============================================================
 const CYBER_RANGE_FLOW = [
   { step: "Students", icon: Users, color: "text-violet-300", bg: "bg-violet-500/10", border: "border-violet-500/30" },
@@ -375,13 +375,13 @@ const PARTNERSHIP_MODELS = [
 export function PartnerInstitutionsView() {
   const { navigate } = useAppStore()
 
-  // CMS-driven hero copy — falls back to defaults if CMS data missing.
+  // CMS-driven hero copy - falls back to defaults if CMS data missing.
   const cms = usePageContent("institutions")
   const cmsData = cms.data
   const heroEyebrow = getContent(cmsData, "hero", "eyebrow", "INSTITUTIONAL PARTNERSHIPS")
   const heroTitle = getContent(cmsData, "hero", "title", "On-premises training for")
   const heroTitleAccent = getContent(cmsData, "hero", "titleAccent", "schools, colleges & universities.")
-  const heroDesc = getContent(cmsData, "hero", "description", "GuardianX delivers cybersecurity training directly at your campus — your classrooms, your labs, your schedule. From secondary schools to research universities, we build job-ready defenders through a single, integrated platform.")
+  const heroDesc = getContent(cmsData, "hero", "description", "GuardianX delivers cybersecurity training directly at your campus - your classrooms, your labs, your schedule. From secondary schools to research universities, we build job-ready defenders through a single, integrated platform.")
   const heroCtaPrimary = getContent(cmsData, "hero", "ctaPrimary", "Sign an MoU")
   const heroCtaSecondary = getContent(cmsData, "hero", "ctaSecondary", "Build Your Cybersecurity Program")
 
@@ -398,7 +398,7 @@ export function PartnerInstitutionsView() {
         <section className="py-6 lg:py-8">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="grid lg:grid-cols-2 gap-8 items-center">
-              {/* Left — text */}
+              {/* Left - text */}
               <div>
                 <motion.div
                   initial={{ opacity: 0, y: 8 }}
@@ -476,7 +476,7 @@ export function PartnerInstitutionsView() {
                 </motion.div>
               </div>
 
-              {/* Right — particle logo centerpiece (same size as home page) */}
+              {/* Right - particle logo centerpiece (same size as home page) */}
               <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -491,7 +491,7 @@ export function PartnerInstitutionsView() {
 
         {/* ====================================================
             SECTION 2: TEACH. PRACTICE. TRACK. CERTIFY.
-            Four institutional pillars — the value proposition.
+            Four institutional pillars - the value proposition.
             ==================================================== */}
         <section className="py-6 lg:py-10 border-t border-border/40">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -502,7 +502,7 @@ export function PartnerInstitutionsView() {
               </h2>
               <p className="text-base text-muted-foreground max-w-2xl mx-auto mt-4">
                 Four pillars define every GuardianX institutional partnership. Together they form a
-                closed loop — from classroom instruction to verifiable, industry-recognized credentials.
+                closed loop - from classroom instruction to verifiable, industry-recognized credentials.
               </p>
             </ScrollReveal>
 
@@ -514,7 +514,7 @@ export function PartnerInstitutionsView() {
                       "relative h-full flex flex-col rounded-2xl border border-border/60 bg-card shadow-lg p-5 transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_20px_60px_-20px_oklch(0.6_0.2_295_/_0.25)]",
                       p.border
                     )}>
-                      {/* Header — icon + tag */}
+                      {/* Header - icon + tag */}
                       <div className="flex items-start justify-between mb-4">
                         <motion.div
                           initial={false}
@@ -542,7 +542,7 @@ export function PartnerInstitutionsView() {
 
         {/* ====================================================
             SECTION 3: INSTITUTION DASHBOARD PREVIEW
-            Mock stats + REQUEST DEMO button — shows prospects
+            Mock stats + REQUEST DEMO button - shows prospects
             what their GuardianX admin dashboard looks like.
             ==================================================== */}
         <section className="py-6 lg:py-10 border-t border-border/40 relative overflow-hidden">
@@ -558,7 +558,7 @@ export function PartnerInstitutionsView() {
                     <span className="text-gradient-premium">at a glance.</span>
                   </h2>
                   <p className="text-base text-muted-foreground max-w-xl mt-3">
-                    A live, real-time view of every student, every cohort, every lab — and every
+                    A live, real-time view of every student, every cohort, every lab - and every
                     certificate earned. This is the command center for your faculty and program directors.
                   </p>
                 </div>
@@ -603,7 +603,7 @@ export function PartnerInstitutionsView() {
                       <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider mb-1">
                         Mumbai Institute of Technology
                       </p>
-                      <h3 className="text-base font-semibold">Q3 2024 — Cyber Security Cohort Overview</h3>
+                      <h3 className="text-base font-semibold">Q3 2024 - Cyber Security Cohort Overview</h3>
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge variant="outline" className="text-[10px] font-mono tracking-wider border-border/60">
@@ -637,9 +637,9 @@ export function PartnerInstitutionsView() {
                       </p>
                       <div className="space-y-2.5">
                         {[
-                          { name: "B.Tech CSE — Semester 5", pct: 87, color: "from-violet-500 to-violet-400" },
-                          { name: "M.Tech Cyber Sec — Year 1", pct: 64, color: "from-cyan-500 to-cyan-400" },
-                          { name: "Weekend Bootcamp — Batch 12", pct: 92, color: "from-emerald-500 to-emerald-400" },
+                          { name: "B.Tech CSE - Semester 5", pct: 87, color: "from-violet-500 to-violet-400" },
+                          { name: "M.Tech Cyber Sec - Year 1", pct: 64, color: "from-cyan-500 to-cyan-400" },
+                          { name: "Weekend Bootcamp - Batch 12", pct: 92, color: "from-emerald-500 to-emerald-400" },
                         ].map((row) => (
                           <div key={row.name}>
                             <div className="flex items-center justify-between text-[10px] font-mono mb-1">
@@ -691,7 +691,7 @@ export function PartnerInstitutionsView() {
         </section>
 
         {/* ====================================================
-            SECTION 4: FEATURES GRID — 8 institutional features
+            SECTION 4: FEATURES GRID - 8 institutional features
             ==================================================== */}
         <section className="py-6 lg:py-10 border-t border-border/40">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -701,7 +701,7 @@ export function PartnerInstitutionsView() {
                 Eight tools your faculty gets.
               </h2>
               <p className="text-base text-muted-foreground max-w-2xl mt-3">
-                Every GuardianX institutional partner unlocks the full platform — student management,
+                Every GuardianX institutional partner unlocks the full platform - student management,
                 instructor tooling, attendance, grade books, analytics, and custom curriculum mapping.
               </p>
             </ScrollReveal>
@@ -750,7 +750,7 @@ export function PartnerInstitutionsView() {
                       "relative h-full flex flex-col rounded-2xl border border-border/60 bg-card shadow-lg p-6 transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_20px_60px_-20px_oklch(0.6_0.2_295_/_0.25)]",
                       pt.border
                     )}>
-                      {/* Header — icon + type badge */}
+                      {/* Header - icon + type badge */}
                       <div className="flex items-start justify-between mb-5">
                         <div className={cn("inline-flex items-center justify-center h-12 w-12 rounded-xl transition-transform duration-500 group-hover:scale-110", pt.bg)}>
                           <pt.icon className={cn("h-6 w-6", pt.accent)} />
@@ -825,7 +825,7 @@ export function PartnerInstitutionsView() {
               </h2>
               <p className="text-base text-muted-foreground max-w-2xl mt-4">
                 On-premises training delivery, a dedicated cyber range, a separate School Management System
-                for MoU partners, and full program analytics — all in one partnership.
+                for MoU partners, and full program analytics - all in one partnership.
               </p>
             </ScrollReveal>
 
@@ -876,7 +876,7 @@ export function PartnerInstitutionsView() {
                   <StaggerItem key={p.name}>
                     <CursorGlow className="group h-full" color="oklch(0.6 0.2 295 / 0.04)">
                       <div className="relative h-full flex flex-col rounded-xl border border-border/60 bg-card shadow-lg p-6 transition-all duration-500 hover:-translate-y-1 hover:border-violet-500/40 hover:shadow-[0_20px_60px_-20px_oklch(0.6_0.2_295_/_0.25)]">
-                        {/* Header — logo + type badge */}
+                        {/* Header - logo + type badge */}
                         <div className="flex items-start justify-between mb-5">
                           <div className={cn(
                             "inline-flex items-center justify-center h-12 w-12 rounded-full transition-transform duration-500 group-hover:scale-110",
@@ -980,7 +980,7 @@ export function PartnerInstitutionsView() {
                 <span className="text-gradient-premium">Our cyber range.</span>
               </h2>
               <p className="text-base text-muted-foreground max-w-2xl mx-auto">
-                From onboarding students to issuing industry-recognized certificates — every step runs
+                From onboarding students to issuing industry-recognized certificates - every step runs
                 inside the GuardianX platform, on your premises.
               </p>
             </ScrollReveal>
@@ -1072,7 +1072,7 @@ export function PartnerInstitutionsView() {
         </section>
 
         {/* ====================================================
-            SECTION 7: FINAL CTA — Ready to transform your institution?
+            SECTION 7: FINAL CTA - Ready to transform your institution?
             ==================================================== */}
         <section className="py-6 lg:py-10 border-t border-border/40 relative overflow-hidden">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-violet-600/8 blur-[100px] rounded-full pointer-events-none" />

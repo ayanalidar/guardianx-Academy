@@ -12,7 +12,7 @@ const EASE = [0.16, 1, 0.3, 1] as const
 const EASE_OUT = [0.22, 1, 0.36, 1] as const
 
 /* ============================================================
-   ScrollReveal — fade + slide up, refined
+   ScrollReveal - fade + slide up, refined
    ============================================================ */
 export function ScrollReveal({
   children,
@@ -44,7 +44,7 @@ export function ScrollReveal({
 }
 
 /* ============================================================
-   ClipReveal — clip-path mask reveal for images/sections
+   ClipReveal - clip-path mask reveal for images/sections
    ============================================================ */
 export function ClipReveal({
   children,
@@ -81,7 +81,7 @@ export function ClipReveal({
 }
 
 /* ============================================================
-   TextReveal — word-by-word reveal with blur
+   TextReveal - word-by-word reveal with blur
    ============================================================ */
 export function TextReveal({
   text,
@@ -132,7 +132,7 @@ export function TextReveal({
 }
 
 /* ============================================================
-   Stagger — stagger children container
+   Stagger - stagger children container
    (Simplified: no scroll-triggered animation to prevent blinking.
     Children render immediately. Kept for backwards compatibility.)
    ============================================================ */
@@ -173,7 +173,7 @@ export function StaggerItem({
 }
 
 /* ============================================================
-   MagneticButton — cursor-following magnetic effect
+   MagneticButton - cursor-following magnetic effect
    ============================================================ */
 export function MagneticButton({
   children,
@@ -222,7 +222,7 @@ export function MagneticButton({
 }
 
 /* ============================================================
-   Parallax — scroll-based parallax movement
+   Parallax - scroll-based parallax movement
    ============================================================ */
 export function Parallax({
   children,
@@ -245,7 +245,7 @@ export function Parallax({
 }
 
 /* ============================================================
-   Counter — animated number count-up
+   Counter - animated number count-up
    ============================================================ */
 export function Counter({
   value,
@@ -271,7 +271,7 @@ export function Counter({
 }
 
 /* ============================================================
-   CursorGlow — cursor-responsive lighting on hover
+   CursorGlow - cursor-responsive lighting on hover
    ============================================================ */
 export function CursorGlow({
   children,
@@ -311,7 +311,7 @@ export function CursorGlow({
 }
 
 /* ============================================================
-   PinnedSection — sticky/pinned section that stays while content scrolls
+   PinnedSection - sticky/pinned section that stays while content scrolls
    ============================================================ */
 export function PinnedSection({
   children,
@@ -335,7 +335,7 @@ export function PinnedSection({
 }
 
 /* ============================================================
-   HorizontalScroll — vertical scroll drives horizontal movement
+   HorizontalScroll - vertical scroll drives horizontal movement
    ============================================================ */
 export function HorizontalScroll({
   children,
@@ -366,7 +366,7 @@ export function HorizontalScroll({
 }
 
 /* ============================================================
-   ScrollText — large typography that transforms on scroll
+   ScrollText - large typography that transforms on scroll
    ============================================================ */
 export function ScrollText({
   text,
@@ -393,7 +393,7 @@ export function ScrollText({
 }
 
 /* ============================================================
-   FadeIn / ScaleIn — simple entrance
+   FadeIn / ScaleIn - simple entrance
    ============================================================ */
 export function FadeIn({
   children,
@@ -419,7 +419,7 @@ export function FadeIn({
 }
 
 /* ============================================================
-   ScaleReveal — scale + fade on scroll into view
+   ScaleReveal - scale + fade on scroll into view
    ============================================================ */
 export function ScaleReveal({
   children,
@@ -447,7 +447,7 @@ export function ScaleReveal({
 }
 
 /* ============================================================
-   BlurReveal — blur to focus on scroll
+   BlurReveal - blur to focus on scroll
    ============================================================ */
 export function BlurReveal({
   children,

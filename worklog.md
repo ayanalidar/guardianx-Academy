@@ -1372,3 +1372,49 @@ Stage Summary:
 - Mouse interaction: repulsion + brightness boost on hover
 - All accessibility and performance requirements met
 - VLM-verified: recognizable shield+X shape, blue/cyan colors, futuristic aesthetic
+
+---
+Task ID: 26
+Agent: main (Z.ai Code orchestrator)
+Task: Make logo bigger + add shatter effect + reduce gaps between sections
+
+Work Log:
+- User shared screenshot ("fix the gaps.jpg") with red circles highlighting huge vertical gaps between header and hero content, and between sections
+- Analyzed screenshot with VLM: confirmed excessive whitespace (10-15% of screen height) between nav bar and hero, and between sections
+- Three changes requested: bigger logo, shatter effect near mouse, reduce gaps everywhere
+
+1. BIGGER LOGO:
+   - Desktop: ParticleLogo size 560px → 680px (21% bigger)
+   - Mobile: 300px → 340px (13% bigger)
+   - Moved logo container from right-0 to right-[-40px] to let it bleed slightly off-screen edge
+   - Changed pointer-events from none to auto so mouse interaction works on the logo area
+
+2. SHATTER EFFECT (particle-logo.tsx):
+   - Replaced gentle repulsion with violent shatter near cursor
+   - Inner zone (0-40% of radius): force = (1 - normDist/0.4) * 18 — violent explosion
+   - Outer zone (40-100%): force = (1 - normDist) * 0.6 * 4 — gentle push
+   - Increased shatter radius: 80px → 110px (DPR-scaled)
+   - Reduced damping: 0.82 → 0.84 (less friction = more energetic movement)
+   - Shattered particles within 50% radius get 50% opacity boost (brighten)
+   - Hover brightness zone: 1.8x radius, 25% boost
+
+3. REDUCED GAPS (home.tsx + impact + contact + partner-institutions + course-catalog):
+   - Section vertical padding: py-20 lg:py-28 → py-12 lg:py-16 (40% reduction)
+   - Section header margins: mb-12 → mb-8, mb-4 → mb-3
+   - Hero internal: py-20 → py-12, mb-6→mb-4, mb-8→mb-6, mb-12→mb-8, pt-8→pt-6
+   - Trust bar: py-8 → py-6, mb-5 → mb-3
+   - Final CTA: mb-6→mb-4, mb-8→mb-6
+   - CinematicLabs section: mb-12→mb-8, mb-4→mb-3
+   - Applied same reductions across all 4 other public views via sed
+
+- VLM verification: "logo is very large and prominent", "layout is well-balanced",
+  "particle logo is highly visible and clearly recognizable"
+- Canvas verified: 680x680 (was 560x560)
+- ESLint: 0 errors
+- Pushed to GitHub (commit c70e573)
+
+Stage Summary:
+- Logo is now 680px (21% bigger) and dominates the hero
+- Mouse shatter effect: particles violently explode near cursor then spring back
+- All vertical gaps reduced ~40% across home, impact, contact, institutions, catalog
+- Layout is tighter and more polished

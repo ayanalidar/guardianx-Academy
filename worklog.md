@@ -1418,3 +1418,65 @@ Stage Summary:
 - Mouse shatter effect: particles violently explode near cursor then spring back
 - All vertical gaps reduced ~40% across home, impact, contact, institutions, catalog
 - Layout is tighter and more polished
+
+---
+Task ID: 27
+Agent: main (Z.ai Code orchestrator)
+Task: Move logo 20% left, fix late text loading, make platform fast, redesign courses page
+
+Work Log:
+
+1. LOGO REPOSITIONED 20% LEFT:
+   - Changed hero logo container from `right-[-40px]` (extreme right edge, bleeding off-screen) to `right-[8%]` (moved ~20% inward toward center)
+   - Logo now sits comfortably in the right-center area without clipping
+
+2. FIXED LATE TEXT LOADING:
+   - Root causes identified: (a) CMS API fetch is async, text only appears after fetch completes; (b) TextReveal/ScrollReveal use useInView with large margins that don't trigger for above-the-fold content; (c) Animation delays were too long (0.6s, 0.8s, 1s, 1.2s)
+   - CMS content now cached in localStorage with 5-min TTL (src/lib/use-content.ts):
+     * `readCache()` reads synchronously on mount → `initialData` passed to useQuery
+     * `writeCache()` saves after each successful fetch
+     * `refetchOnMount: false`, `refetchOnWindowFocus: false` to prevent unnecessary refetches
+     * `staleTime: 60s`, `gcTime: 10min`
+   - TextReveal component optimized (motion-system.tsx):
+     * `useInView` margin `-50px` → `amount: 0` (triggers as soon as any pixel is visible)
+     * Word animation duration: 0.7s → 0.4s
+     * Blur: 10px → 6px, Y offset: 0.6em → 0.4em
+   - ScrollReveal component optimized:
+     * `useInView` margin `-100px` → `amount: 0.05`
+     * Duration: 0.9s → 0.5s
+   - Hero motion delays reduced: 0.6→0.4, 0.8→0.3, 1.0→0.4, 1.2→0.5
+
+3. COURSES PAGE COMPLETELY REDESIGNED (course-catalog.tsx):
+   - Removed old ScrollReveal-wrapped hero (was slow to animate)
+   - New cinematic hero with:
+     * Oversized headline (clamp up to 5rem, was 4.5rem)
+     * Background glow orbs (violet + cyan)
+     * Instant render via motion.div (no ScrollReveal wrapper)
+   - Interactive Career Path Selector — 4 clickable cards:
+     * Offensive Security (violet, Swords icon → filters "Ethical Hacking")
+     * Defensive Security (cyan, ShieldCheck icon → filters "Networking")
+     * Cloud & Infrastructure (amber, Cloud icon → filters "System Administration")
+     * Governance & Risk (emerald, Scale icon → filters "Identity & Access")
+   - Each path card: icon, title, description, live course count, active state with colored glow + top bar
+   - Clicking a path card sets the category filter instantly; clicking again clears it
+   - Compact stats strip (4 StatCards in a tighter grid)
+   - Scrolling certification ticker marquee (CEH, CISSP, CCNA, CCNP, RHCSA, OSCP, CISM, WAPT, Security+, CyberArk PAM, CISA, CCSP, PNPT, CRTP)
+   - Added `@keyframes scroll` to globals.css for the marquee animation
+   - Filter bar no longer wrapped in ScrollReveal (instant render)
+
+4. PLATFORM SPEED:
+   - localStorage CMS cache eliminates flash of fallback text on subsequent loads
+   - Reduced all animation durations and delays by ~50%
+   - useInView triggers earlier (amount: 0 vs margin: -50px/-100px)
+   - refetchOnMount/refetchOnWindowFocus disabled for CMS queries
+
+- ESLint: 0 errors
+- VLM verified courses page: "interactive career path selector with 4 cards", "modern out-of-the-box design", "gradient typography", "tech-centric UI"
+- agent-browser verified: hasCareerPath=true, hasPaths=true, hasCertTicker=true
+- Pushed to GitHub (commit c16a234)
+
+Stage Summary:
+- Logo moved 20% left from extreme right edge (right-[-40px] → right-[8%])
+- Text loads instantly via localStorage CMS cache + faster animations
+- Courses page redesigned with interactive career path selector + cert ticker marquee
+- Platform feels faster: shorter animations, cached content, no unnecessary refetches

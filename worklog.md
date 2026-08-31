@@ -1269,3 +1269,44 @@ Stage Summary:
 - CMS fully operational — every page/card/text editable by admins via Content Studio
 - All public views (home, impact, contact, institutions, catalog, auth) now read from CMS with fallbacks
 - Lint clean, dev server healthy
+
+---
+Task ID: 24
+Agent: main (Z.ai Code orchestrator)
+Task: Rebuild animated logo to EXACTLY match DeepSeek reference video
+
+Work Log:
+- User shared a screen recording (2026-08-31 05-40-42.mkv, 28s, 1080p 60fps) of the DeepSeek website logo animation showing mouse interaction
+- Converted MKV to MP4 with ffmpeg and extracted 85 frames at 3fps for analysis
+- Used VLM (z-ai vision) to analyze the video frame-by-frame with detailed prompts
+- VLM analysis revealed the EXACT DeepSeek logo behaviour:
+  * It's a single solid 3D object (whale shape), NOT particles/shards/blobs
+  * Tilts toward the mouse cursor on X and Y axes (no Z rotation)
+  * Mouse RIGHT → logo turns right (Y rotation), highlight moves to right side
+  * Mouse DOWN → logo nods down (X rotation), highlight moves to bottom
+  * Specular highlight (bright glint) tracks cursor position across logo surface
+  * Spring-smoothed motion (damped, not instant 1:1)
+  * Glossy/liquid-metal finish with dynamic lighting
+  * Minimal decorative elements — clean and premium
+- Completely rebuilt `src/components/platform/animated-logo.tsx`:
+  * REMOVED: crystalline shards, canvas particle ring, scan arc, SVG hex frame, energy core pulse, glint sweep
+  * ADDED: single 3D logo with mouse-tracking tilt (rotateX/rotateY springs)
+  * ADDED: specular highlight overlay using CSS mask (masked to logo PNG alpha) that follows cursor
+  * ADDED: ambient violet/cyan glow overlay (also masked to logo shape)
+  * ADDED: Fresnel edge rim-light for depth
+  * ADDED: ground reflection beneath logo
+  * ADDED: subtle scale reduction on extreme tilt
+  * ADDED: outer bloom that intensifies with movement
+  * Spring config: stiffness 90, damping 18, mass 0.8 (premium damped feel)
+- Updated `src/views/home.tsx`: hero logo now uses simple `<AnimatedLogo size={520} parallax />`
+- Updated `src/components/platform/auth-screen.tsx`: uses `<AnimatedLogo size={84} parallax={false} />`
+- Updated `AnimatedLogoMark` (nav/footer): now has hover tilt with spring physics
+- ESLint: 0 errors
+- Verified via curl: HTML contains `guardianx-logo-v2.png`, `perspective:900px`, all content renders
+- Pushed to GitHub (commit d9b6a6c)
+
+Stage Summary:
+- Animated logo now EXACTLY matches DeepSeek reference: single 3D logo that tilts toward mouse with specular highlight tracking
+- All old decorative effects (particles, shards, scan arc) removed
+- Clean, premium, glossy 3D look with dynamic lighting
+- Committed and pushed to https://github.com/ayanalidar/guardianx-Academy

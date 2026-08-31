@@ -14,19 +14,19 @@
   "dir": "ltr",
   "icons": [
     {
-      "src": "/logo.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/guardianx-logo-v2.png",
+      "sizes": "192x192",
+      "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/guardianx-logo.png",
+      "src": "/guardianx-logo-v2.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/guardianx-logo.png",
+      "src": "/guardianx-logo-v2.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"

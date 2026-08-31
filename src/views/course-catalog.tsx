@@ -142,11 +142,11 @@ export function CourseCatalogView() {
       <div className="absolute inset-0 bg-mesh opacity-50 pointer-events-none" />
       <div className="absolute top-0 right-0 w-[600px] h-[400px] bg-violet-600/5 blur-[120px] rounded-full pointer-events-none" />
 
-      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
         {/* ====================================================
             HERO — cinematic, out-of-the-box career path selector
             ==================================================== */}
-        <section className="relative mb-10 lg:mb-12">
+        <section className="relative mb-6 lg:mb-12">
           {/* Background glow */}
           <div className="absolute top-0 left-1/4 w-[400px] h-[300px] bg-violet-600/8 blur-[100px] rounded-full pointer-events-none" />
           <div className="absolute top-20 right-1/4 w-[300px] h-[300px] bg-cyan-500/6 blur-[100px] rounded-full pointer-events-none" />
@@ -177,7 +177,7 @@ export function CourseCatalogView() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.2 }}
-            className="mb-8"
+            className="mb-6"
           >
             <p className="text-[10px] font-mono text-cyan-400 tracking-[0.25em] mb-3">CHOOSE YOUR PATH</p>
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -230,7 +230,7 @@ export function CourseCatalogView() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.3 }}
-            className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8"
+            className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6"
           >
             <StatCard icon={BookOpen} label="Total Courses" value={courses.length || 27} color="text-violet-300" tint="bg-violet-500/10" />
             <StatCard icon={Users} label="Total Students" value={totalStudents || 12000} color="text-cyan-300" tint="bg-cyan-500/10" />
@@ -245,7 +245,7 @@ export function CourseCatalogView() {
             transition={{ duration: 0.4, delay: 0.4 }}
             className="relative overflow-hidden py-3 border-y border-border/40"
           >
-            <div className="flex items-center gap-8 animate-[scroll_30s_linear_infinite] whitespace-nowrap">
+            <div className="flex items-center gap-6 animate-[scroll_30s_linear_infinite] whitespace-nowrap">
               {[...CERT_TICKER, ...CERT_TICKER].map((cert, i) => (
                 <span key={i} className="text-xs font-mono text-muted-foreground/60 tracking-wider flex items-center gap-2">
                   <span className="h-1 w-1 rounded-full bg-violet-400/40" />
@@ -259,7 +259,7 @@ export function CourseCatalogView() {
         {/* ====================================================
             FILTER BAR — search + 3 selects, all on a solid card
             ==================================================== */}
-        <div className="rounded-2xl border border-border/60 bg-card shadow-lg p-4 sm:p-5 mb-8">
+        <div className="rounded-2xl border border-border/60 bg-card shadow-lg p-4 sm:p-5 mb-6">
           <div className="flex flex-wrap items-center gap-3">
             <div className="relative flex-1 min-w-[220px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -338,8 +338,8 @@ export function CourseCatalogView() {
 
             {/* Rest — sophisticated grid */}
             {rest.length > 0 && (
-              <div className="mt-12 lg:mt-16">
-                <div className="flex items-center justify-between mb-8">
+              <div className="mt-8 lg:mt-10">
+                <div className="flex items-center justify-between mb-6">
                   <div>
                     <p className="text-[10px] font-mono text-violet-400 tracking-[0.25em] mb-2">ALL COURSES</p>
                     <h2 className="text-2xl lg:text-3xl font-bold tracking-tight">Explore the catalog</h2>
@@ -358,7 +358,7 @@ export function CourseCatalogView() {
 
             {/* Bottom CTA */}
             <ScrollReveal delay={0.1}>
-              <div className="mt-16 lg:mt-20 rounded-2xl border border-border/60 bg-card shadow-lg p-8 lg:p-12 text-center relative overflow-hidden">
+              <div className="mt-10 lg:mt-20 rounded-2xl border border-border/60 bg-card shadow-lg p-8 lg:p-12 text-center relative overflow-hidden">
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[250px] bg-violet-600/8 blur-[100px] rounded-full pointer-events-none" />
                 <div className="relative z-10">
                   <Sparkles className="h-8 w-8 text-violet-300 mx-auto mb-4" />

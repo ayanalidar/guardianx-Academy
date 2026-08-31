@@ -174,7 +174,7 @@ function BatchCarousel({ onEnroll }: { onEnroll: (batch: CourseBatch) => void })
                 <div className="relative rounded-2xl border border-border/60 bg-card shadow-lg overflow-hidden">
                   {/* Atmospheric accent */}
                   <div className="absolute top-0 right-0 w-[400px] h-[200px] bg-violet-600/5 blur-[100px] rounded-full pointer-events-none" />
-                  <div className="relative grid lg:grid-cols-12 gap-8 p-6 sm:p-8">
+                  <div className="relative grid lg:grid-cols-12 gap-6 p-6 sm:p-8">
                     {/* Left — batch identity */}
                     <div className="lg:col-span-7">
                       <div className="flex items-center gap-3 mb-4">
@@ -420,14 +420,14 @@ export function CourseDetailView() {
             
               <button
                 onClick={() => navigate({ name: "catalog" })}
-                className="group inline-flex items-center gap-2 text-xs font-mono text-muted-foreground hover:text-violet-300 transition-colors tracking-[0.2em] mb-10"
+                className="group inline-flex items-center gap-2 text-xs font-mono text-muted-foreground hover:text-violet-300 transition-colors tracking-[0.2em] mb-6"
               >
                 <ChevronLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-1" />
                 <span className="uppercase">Back to Catalog</span>
               </button>
             
 
-            <div className="grid lg:grid-cols-12 gap-8 items-start">
+            <div className="grid lg:grid-cols-12 gap-6 items-start">
               {/* Hero text — col 8 */}
               <div className="lg:col-span-8">
                 
@@ -471,7 +471,7 @@ export function CourseDetailView() {
 
                 {/* Instructor info inline */}
                 
-                  <div className="mt-8 flex items-center gap-3">
+                  <div className="mt-5 flex items-center gap-3">
                     <Avatar className="h-10 w-10 border border-violet-500/30">
                       <AvatarFallback className="bg-violet-500/10 text-violet-300 text-xs font-mono">
                         {course.instructor.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
@@ -833,7 +833,7 @@ export function CourseDetailView() {
                 {/* Prerequisite courses */}
                 {prereqData?.prerequisites && prereqData.prerequisites.length > 0 && (
                   
-                    <div className="mt-8 pt-6 border-t border-border/40">
+                    <div className="mt-5 pt-6 border-t border-border/40">
                       <p className="text-[10px] font-mono text-muted-foreground tracking-[0.2em] mb-4">RECOMMENDED PRIOR COURSES</p>
                       <div className="space-y-2">
                         {prereqData.prerequisites.map((p) => (
@@ -1004,7 +1004,7 @@ export function CourseDetailView() {
                   <p className="text-[10px] font-mono text-cyan-300 tracking-[0.3em] mb-6">03 — INSTRUCTOR</p>
                 
                 
-                  <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance mb-8">
+                  <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance mb-6">
                     Learn from a
                     <span className="text-gradient-cyan"> practitioner.</span>
                   </h2>
@@ -1064,7 +1064,7 @@ export function CourseDetailView() {
                   <p className="text-[10px] font-mono text-violet-300 tracking-[0.3em] mb-6">04 — OVERVIEW</p>
                 
                 
-                  <h2 className="text-[clamp(1.75rem,3.5vw,2.75rem)] font-bold leading-[1.05] tracking-[-0.03em] mb-8">
+                  <h2 className="text-[clamp(1.75rem,3.5vw,2.75rem)] font-bold leading-[1.05] tracking-[-0.03em] mb-6">
                     About this course.
                   </h2>
                 
@@ -1226,7 +1226,7 @@ export function CourseDetailView() {
               <p className="text-[10px] font-mono text-violet-300 tracking-[0.3em] mb-6">READY?</p>
             
             
-              <h2 className="text-[clamp(2.5rem,6vw,5rem)] font-bold leading-[0.92] tracking-[-0.04em] text-balance mb-8">
+              <h2 className="text-[clamp(2.5rem,6vw,5rem)] font-bold leading-[0.92] tracking-[-0.04em] text-balance mb-6">
                 {isEnrolled ? (
                   <>Continue your <span className="text-gradient-premium">journey.</span></>
                 ) : (
@@ -1235,7 +1235,7 @@ export function CourseDetailView() {
               </h2>
             
             
-              <p className="text-lg text-muted-foreground max-w-xl mx-auto mb-10 leading-relaxed">
+              <p className="text-lg text-muted-foreground max-w-xl mx-auto mb-6 leading-relaxed">
                 {isEnrolled
                   ? `You're ${progressPct}% through this course. Keep the momentum going.`
                   : "Join thousands of security professionals mastering their craft on GuardianX."}

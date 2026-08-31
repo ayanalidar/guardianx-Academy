@@ -183,7 +183,7 @@ export function HomeView() {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.4 }}
-              className="flex items-center gap-4 mb-8"
+              className="flex items-center gap-4 mb-6"
             >
               <MagneticButton strength={0.3}>
                 <Button size="lg" onClick={() => navigate({ name: "catalog" })} className="bg-violet-600 hover:bg-violet-500 btn-premium px-8 py-6 text-sm">
@@ -202,7 +202,7 @@ export function HomeView() {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.5 }}
-              className="flex items-center gap-8 pt-6 border-t border-border/40"
+              className="flex items-center gap-6 pt-6 border-t border-border/40"
             >
               {heroStats.map((s, i) => (
                 <div key={s.label}>
@@ -242,9 +242,9 @@ export function HomeView() {
       {/* ====================================================
           SECTION 3: WHO WE SERVE — three audiences
           ==================================================== */}
-      <section className="py-12 lg:py-16 relative">
+      <section className="py-6 lg:py-10 relative">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <ScrollReveal className="text-center mb-8">
+          <ScrollReveal className="text-center mb-6">
             <p className="text-[10px] font-mono text-violet-400 tracking-[0.25em] mb-3">{audiencesEyebrow}</p>
             <h2 className="text-[clamp(2rem,4vw,3rem)] font-bold leading-[1.05] tracking-[-0.02em] mb-3 text-balance">
               {audiencesTitle}
@@ -276,9 +276,9 @@ export function HomeView() {
       {/* ====================================================
           SECTION 4: COURSES
           ==================================================== */}
-      <section className="py-12 lg:py-16 border-t border-border/40 relative">
+      <section className="py-6 lg:py-10 border-t border-border/40 relative">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <ScrollReveal className="mb-8">
+          <ScrollReveal className="mb-6">
             <div className="flex items-end justify-between flex-wrap gap-4">
               <div>
                 <p className="text-[10px] font-mono text-violet-400 tracking-[0.25em] mb-3">{coursesEyebrow}</p>
@@ -321,9 +321,9 @@ export function HomeView() {
       {/* ====================================================
           SECTION 6: CORPORATE TRAINING + WORKSHOPS + WEBINARS
           ==================================================== */}
-      <section className="py-12 lg:py-16 border-t border-border/40 relative">
+      <section className="py-6 lg:py-10 border-t border-border/40 relative">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <ScrollReveal className="text-center mb-8">
+          <ScrollReveal className="text-center mb-6">
             <p className="text-[10px] font-mono text-cyan-400 tracking-[0.25em] mb-3">{corporateEyebrow}</p>
             <h2 className="text-[clamp(2rem,4vw,3rem)] font-bold leading-[1.05] tracking-[-0.02em] mb-3 text-balance">
               {corporateTitle}
@@ -368,7 +368,7 @@ export function HomeView() {
       {/* ====================================================
           SECTION 7: CERTIFICATE VERIFICATION
           ==================================================== */}
-      <section className="py-12 lg:py-16 border-t border-border/40">
+      <section className="py-6 lg:py-10 border-t border-border/40">
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
           <ScrollReveal>
             <CertificateVerifyCard />
@@ -379,9 +379,9 @@ export function HomeView() {
       {/* ====================================================
           SECTION 8: PARTNER INSTITUTIONS + BENEFITS
           ==================================================== */}
-      <section className="py-12 lg:py-16 border-t border-border/40 relative">
+      <section className="py-6 lg:py-10 border-t border-border/40 relative">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <ScrollReveal className="text-center mb-8">
+          <ScrollReveal className="text-center mb-6">
             <p className="text-[10px] font-mono text-violet-400 tracking-[0.25em] mb-3">{partnersEyebrow}</p>
             <h2 className="text-[clamp(2rem,4vw,3rem)] font-bold leading-[1.05] tracking-[-0.02em] mb-3 text-balance">
               {partnersTitle}
@@ -394,7 +394,7 @@ export function HomeView() {
           </ScrollReveal>
 
           {/* Three partner types — each with own CTA */}
-          <div className="grid sm:grid-cols-3 gap-6 mb-8">
+          <div className="grid sm:grid-cols-3 gap-6 mb-6">
             {partners.map((p, i) => {
               const Icon = getCmsIcon(p.icon)
               return (
@@ -421,7 +421,7 @@ export function HomeView() {
 
           {/* Partner benefits */}
           <ScrollReveal delay={0.2}>
-            <div className="text-center mb-8">
+            <div className="text-center mb-6">
               <p className="text-[10px] font-mono text-cyan-400 tracking-[0.25em] mb-3">{benefitsEyebrow}</p>
               <h3 className="text-[clamp(1.5rem,3vw,2.25rem)] font-bold tracking-[-0.02em] text-balance">
                 {benefitsTitle}
@@ -429,7 +429,7 @@ export function HomeView() {
             </div>
           </ScrollReveal>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-6">
             {benefits.map((b, i) => {
               const Icon = getCmsIcon(b.icon)
               return (
@@ -462,7 +462,7 @@ export function HomeView() {
       {/* ====================================================
           SECTION 9: FINAL CTA
           ==================================================== */}
-      <section className="py-12 lg:py-16 border-t border-border/40 relative overflow-hidden">
+      <section className="py-6 lg:py-10 border-t border-border/40 relative overflow-hidden">
         <div className="absolute inset-0 bg-mesh opacity-50" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-violet-600/8 blur-[100px] rounded-full pointer-events-none" />
 
@@ -534,13 +534,13 @@ function CinematicLabsSection() {
   }, [labs.length])
 
   return (
-    <section className="py-12 lg:py-16 border-t border-border/40 relative overflow-hidden">
+    <section className="py-6 lg:py-10 border-t border-border/40 relative overflow-hidden">
       <div className="absolute inset-0 bg-grid opacity-8" />
       <div className="absolute top-0 right-0 w-[500px] h-[400px] bg-cyan-600/5 blur-[120px] rounded-full" />
       <div className="absolute bottom-0 left-0 w-[400px] h-[300px] bg-violet-600/5 blur-[100px] rounded-full" />
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
-        <ScrollReveal className="mb-8">
+        <ScrollReveal className="mb-6">
           <p className="text-[10px] font-mono text-cyan-400 tracking-[0.25em] mb-3">{labsEyebrow}</p>
           <h2 className="text-[clamp(2rem,4vw,3rem)] font-bold leading-[1.05] tracking-[-0.02em] mb-3 text-balance">
             {labsTitle}
@@ -552,7 +552,7 @@ function CinematicLabsSection() {
         </ScrollReveal>
 
         {/* Holographic lab scope — animated */}
-        <div className="grid lg:grid-cols-2 gap-8 items-center">
+        <div className="grid lg:grid-cols-2 gap-6 items-center">
           {/* Left — animated scope visualization */}
           <ScrollReveal>
             <div className="relative aspect-square max-w-md mx-auto">
@@ -631,7 +631,7 @@ function CinematicLabsSection() {
           {/* Right — lab features + tech stack */}
           <div>
             <ScrollReveal delay={0.1}>
-              <div className="space-y-4 mb-8">
+              <div className="space-y-4 mb-6">
                 {labsFeatures.map((f, i) => {
                   const Icon = getCmsIcon(f.icon)
                   return (

@@ -105,13 +105,32 @@ export const authOptions: NextAuthOptions = {
       return session
     },
   },
-  // Allow cross-origin session checks for preview environments
+  // Cross-origin session cookies — use "lax" which works in both
+  // same-origin and most preview/iframe environments without requiring
+  // HTTPS. ("none" requires secure:true which breaks localhost HTTP.)
   cookies: {
     sessionToken: {
       name: `next-auth.session-token`,
       options: {
         httpOnly: true,
-        sameSite: "none",
+        sameSite: "lax",
+        path: "/",
+        secure: false,
+      },
+    },
+    csrfToken: {
+      name: `next-auth.csrf-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: false,
+      },
+    },
+    callbackUrl: {
+      name: `next-auth.callback-url`,
+      options: {
+        sameSite: "lax",
         path: "/",
         secure: false,
       },

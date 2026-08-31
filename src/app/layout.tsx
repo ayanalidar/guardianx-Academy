@@ -50,18 +50,19 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      {
-        url: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23052e1a'/><path d='M50 12 L80 24 V52 C80 70 66 84 50 90 C34 84 20 70 20 52 V24 Z' fill='none' stroke='%2310b981' stroke-width='5'/><path d='M38 50 L46 58 L64 40' fill='none' stroke='%2310b981' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'/></svg>",
-      },
-      { url: "/logo.svg", type: "image/svg+xml" },
-      { url: "/guardianx-logo.png", type: "image/png", sizes: "512x512" },
+      { url: "/guardianx-logo-v2.png", type: "image/png", sizes: "32x32" },
+      { url: "/guardianx-logo-v2.png", type: "image/png", sizes: "192x192" },
+      { url: "/guardianx-logo-v2.png", type: "image/png", sizes: "512x512" },
     ],
     apple: [
-      { url: "/guardianx-logo.png", sizes: "180x180", type: "image/png" },
-      { url: "/guardianx-logo.png", sizes: "192x192", type: "image/png" },
-      { url: "/guardianx-logo.png", sizes: "512x512", type: "image/png" },
+      { url: "/guardianx-logo-v2.png", sizes: "180x180", type: "image/png" },
+      { url: "/guardianx-logo-v2.png", sizes: "192x192", type: "image/png" },
+      { url: "/guardianx-logo-v2.png", sizes: "512x512", type: "image/png" },
     ],
-    shortcut: ["/guardianx-logo.png"],
+    shortcut: ["/guardianx-logo-v2.png"],
+    other: [
+      { rel: "mask-icon", url: "/guardianx-logo-v2.png", color: "#7c3aed" },
+    ],
   },
   openGraph: {
     title: "GuardianX — Cyber Security LMS",
@@ -97,12 +98,15 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="GuardianX" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-touch-fullscreen" content="yes" />
-        <link rel="apple-touch-icon" href="/guardianx-logo.png" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/guardianx-logo.png" />
-        <link rel="apple-touch-icon" sizes="192x192" href="/guardianx-logo.png" />
-        <link rel="apple-touch-icon" sizes="512x512" href="/guardianx-logo.png" />
-        <link rel="icon" type="image/svg+xml" href="/logo.svg" />
-        <link rel="mask-icon" href="/logo.svg" color="#7c3aed" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/guardianx-logo-v2.png" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/guardianx-logo-v2.png" />
+        <link rel="icon" type="image/png" sizes="512x512" href="/guardianx-logo-v2.png" />
+        <link rel="apple-touch-icon" href="/guardianx-logo-v2.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/guardianx-logo-v2.png" />
+        <link rel="apple-touch-icon" sizes="192x192" href="/guardianx-logo-v2.png" />
+        <link rel="apple-touch-icon" sizes="512x512" href="/guardianx-logo-v2.png" />
+        <link rel="shortcut icon" href="/guardianx-logo-v2.png" />
+        <link rel="mask-icon" href="/guardianx-logo-v2.png" color="#7c3aed" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${jetbrainsMono.variable} antialiased bg-background text-foreground`}

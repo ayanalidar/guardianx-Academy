@@ -240,12 +240,12 @@ export function ContactView() {
           ============================================================ */}
       <section className="py-14 lg:py-12 border-t border-border">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-8 items-start">
+          <div className="grid lg:grid-cols-2 gap-6 items-start">
             {/* ---- LEFT: Contact Form (solid card) ---- */}
             <ScrollReveal>
               <Card className="bg-card shadow-lg border border-border p-6 sm:p-8 lg:p-10">
                 <h2 className="text-2xl font-bold tracking-tight mb-2">{formTitle}</h2>
-                <p className="text-sm text-muted-foreground mb-8">
+                <p className="text-sm text-muted-foreground mb-6">
                   {formSubtitle}
                 </p>
 
@@ -477,7 +477,7 @@ export function ContactView() {
       <section className="py-14 lg:py-12 border-t border-border bg-card/20 relative overflow-hidden">
         <div className="absolute inset-0 bg-grid opacity-15 pointer-events-none" />
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 relative">
-          <ScrollReveal className="text-center mb-8">
+          <ScrollReveal className="text-center mb-6">
             <Badge variant="outline" className="mb-4 border-amber-500/20 text-amber-300 bg-amber-500/5">
               <Heart className="h-3 w-3 mr-1" /> FAQ
             </Badge>

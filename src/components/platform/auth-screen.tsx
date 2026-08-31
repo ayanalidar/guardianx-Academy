@@ -83,22 +83,31 @@ export function AuthScreen() {
   const [regPass, setRegPass] = React.useState("")
 
   // After successful auth, fetch the user's role and route accordingly.
+  // Retries up to 3 times with 300ms delay to handle session propagation.
   async function routeByRole() {
-    try {
-      const data = await api<{ user: { role: string } | null }>("/api/me")
-      const role = data?.user?.role
-      if (role === "SCHOOL_ADMIN") {
-        navigate({ name: "school" })
-      } else if (role === "INSTRUCTOR") {
-        navigate({ name: "instructor" })
-      } else if (role === "ADMIN") {
-        navigate({ name: "admin" })
-      } else {
-        navigate({ name: "dashboard" })
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const data = await api<{ user: { role: string } | null }>("/api/me")
+        const role = data?.user?.role
+        if (role) {
+          if (role === "SCHOOL_ADMIN") {
+            navigate({ name: "school" })
+          } else if (role === "INSTRUCTOR") {
+            navigate({ name: "instructor" })
+          } else if (role === "ADMIN") {
+            navigate({ name: "admin" })
+          } else {
+            navigate({ name: "dashboard" })
+          }
+          return
+        }
+      } catch {
+        // ignore and retry
       }
-    } catch {
-      navigate({ name: "dashboard" })
+      await new Promise(r => setTimeout(r, 300))
     }
+    // Fallback: go to dashboard
+    navigate({ name: "dashboard" })
   }
 
   async function handleLogin(e: React.FormEvent) {

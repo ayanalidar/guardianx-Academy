@@ -19,6 +19,7 @@ import {
   MagneticButton, Counter, CursorGlow,
 } from "@/components/platform/motion-system"
 import { NetworkVisualization } from "@/components/platform/network-visualization"
+import { ParticleLogo } from "@/components/platform/particle-logo"
 import { usePageContent, getContent } from "@/lib/use-content"
 
 // ============================================================
@@ -322,7 +323,7 @@ export function PartnerInstitutionsView() {
         {/* ====================================================
             SECTION 1: HERO
             ==================================================== */}
-        <section className="py-10 lg:py-14">
+        <section className="py-8 lg:py-10">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="grid lg:grid-cols-2 gap-12 items-center">
               {/* Left — text */}
@@ -343,7 +344,7 @@ export function PartnerInstitutionsView() {
                   </h1>
                 </ScrollReveal>
                 <ScrollReveal delay={0.2}>
-                  <p className="text-base lg:text-lg text-muted-foreground max-w-xl mb-8 leading-relaxed">
+                  <p className="text-base lg:text-lg text-muted-foreground max-w-xl mb-6 leading-relaxed">
                     {heroDesc}
                   </p>
                 </ScrollReveal>
@@ -373,7 +374,7 @@ export function PartnerInstitutionsView() {
 
                 {/* Hero stats */}
                 <ScrollReveal delay={0.4}>
-                  <div className="grid grid-cols-3 gap-4 mt-10 pt-8 border-t border-border/40">
+                  <div className="grid grid-cols-3 gap-4 mt-10 pt-5 border-t border-border/40">
                     {[
                       { value: 150, suffix: "+", label: "Institutions", color: "text-violet-300" },
                       { value: 12000, suffix: "+", label: "Students", color: "text-cyan-300" },
@@ -390,26 +391,10 @@ export function PartnerInstitutionsView() {
                 </ScrollReveal>
               </div>
 
-              {/* Right — institutional visualization */}
+              {/* Right — particle logo centerpiece */}
               <ScrollReveal delay={0.2}>
-                <div className="relative aspect-[4/3] rounded-2xl border border-border/60 bg-card shadow-lg overflow-hidden">
-                  <NetworkVisualization variant="section" className="w-full h-full opacity-70" />
-                  <div className="absolute top-4 left-4 flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 pulse-dot" />
-                    <span className="text-[9px] font-mono text-emerald-300/80 tracking-[0.2em]">EDUCATIONAL NETWORK</span>
-                  </div>
-                  <div className="absolute bottom-4 left-4 right-4 grid grid-cols-3 gap-3">
-                    {[
-                      { label: "Schools", value: "85+", color: "text-emerald-300" },
-                      { label: "Colleges", value: "42+", color: "text-cyan-300" },
-                      { label: "Universities", value: "23+", color: "text-violet-300" },
-                    ].map((s) => (
-                      <div key={s.label} className="rounded-lg border border-border/60 bg-card/80 backdrop-blur p-3">
-                        <div className={cn("text-lg font-bold", s.color)}>{s.value}</div>
-                        <div className="text-[9px] text-muted-foreground uppercase tracking-wider">{s.label}</div>
-                      </div>
-                    ))}
-                  </div>
+                <div className="relative flex items-center justify-center">
+                  <ParticleLogo size={440} interactive showGlow />
                 </div>
               </ScrollReveal>
             </div>
@@ -419,9 +404,9 @@ export function PartnerInstitutionsView() {
         {/* ====================================================
             SECTION 2: THREE PARTNER TYPES
             ==================================================== */}
-        <section className="py-12 lg:py-16 border-t border-border/40">
+        <section className="py-6 lg:py-10 border-t border-border/40">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <ScrollReveal className="mb-8 text-center">
+            <ScrollReveal className="mb-6 text-center">
               <p className="text-[10px] font-mono text-violet-400 tracking-[0.25em] mb-4">WHO WE PARTNER WITH</p>
               <h2 className="text-[clamp(2rem,4vw,3rem)] font-bold leading-[1.05] tracking-[-0.02em] text-balance">
                 Three institution types.
@@ -504,9 +489,9 @@ export function PartnerInstitutionsView() {
         {/* ====================================================
             SECTION 3: PARTNER BENEFITS
             ==================================================== */}
-        <section className="py-12 lg:py-16 border-t border-border/40">
+        <section className="py-6 lg:py-10 border-t border-border/40">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <ScrollReveal className="mb-8">
+            <ScrollReveal className="mb-6">
               <p className="text-[10px] font-mono text-violet-400 tracking-[0.25em] mb-4">PARTNER BENEFITS</p>
               <h2 className="text-[clamp(2rem,4vw,3rem)] font-bold leading-[1.05] tracking-[-0.02em] text-balance">
                 Everything your institution unlocks.
@@ -543,10 +528,10 @@ export function PartnerInstitutionsView() {
         {/* ====================================================
             SECTION 4: FEATURED PARTNERS
             ==================================================== */}
-        <section className="py-12 lg:py-16 border-t border-border/40 relative overflow-hidden">
+        <section className="py-6 lg:py-10 border-t border-border/40 relative overflow-hidden">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-violet-600/5 blur-[120px] rounded-full pointer-events-none" />
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
-            <ScrollReveal className="mb-8">
+            <ScrollReveal className="mb-6">
               <p className="text-[10px] font-mono text-violet-400 tracking-[0.25em] mb-4">FEATURED PARTNERS</p>
               <h2 className="text-[clamp(2rem,4vw,3rem)] font-bold leading-[1.05] tracking-[-0.02em] text-balance mb-4">
                 Institutions growing with GuardianX.
@@ -657,10 +642,10 @@ export function PartnerInstitutionsView() {
         {/* ====================================================
             SECTION 5: YOUR INSTITUTION. OUR CYBER RANGE.
             ==================================================== */}
-        <section className="py-12 lg:py-16 border-t border-border/40 relative overflow-hidden">
+        <section className="py-6 lg:py-10 border-t border-border/40 relative overflow-hidden">
           <div className="absolute inset-0 bg-grid opacity-10" />
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
-            <ScrollReveal className="text-center mb-8">
+            <ScrollReveal className="text-center mb-6">
               <p className="text-[10px] font-mono text-violet-400 tracking-[0.25em] mb-4">THE PATH</p>
               <h2 className="text-[clamp(2rem,4vw,3rem)] font-bold leading-[1.05] tracking-[-0.02em] mb-4 text-balance">
                 Your institution.
@@ -713,9 +698,9 @@ export function PartnerInstitutionsView() {
         {/* ====================================================
             SECTION 6: PARTNERSHIP MODELS
             ==================================================== */}
-        <section className="py-12 lg:py-16 border-t border-border/40">
+        <section className="py-6 lg:py-10 border-t border-border/40">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <ScrollReveal className="mb-8">
+            <ScrollReveal className="mb-6">
               <p className="text-[10px] font-mono text-violet-400 tracking-[0.25em] mb-4">PARTNERSHIP MODELS</p>
               <h2 className="text-[clamp(2rem,4vw,3rem)] font-bold leading-[1.05] tracking-[-0.02em] text-balance">
                 Choose your partnership.
@@ -762,7 +747,7 @@ export function PartnerInstitutionsView() {
         {/* ====================================================
             SECTION 7: FINAL CTA — Sign an MoU + Build Your Program
             ==================================================== */}
-        <section className="py-12 lg:py-16 border-t border-border/40 relative overflow-hidden">
+        <section className="py-6 lg:py-10 border-t border-border/40 relative overflow-hidden">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-violet-600/8 blur-[100px] rounded-full pointer-events-none" />
           <div className="relative z-10 mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
             <ScrollReveal>
@@ -779,7 +764,7 @@ export function PartnerInstitutionsView() {
               </h2>
             </ScrollReveal>
             <ScrollReveal delay={0.2}>
-              <p className="text-base lg:text-lg text-muted-foreground max-w-xl mx-auto mb-8">
+              <p className="text-base lg:text-lg text-muted-foreground max-w-xl mx-auto mb-6">
                 Let&apos;s transform your institution&apos;s cyber education together — on your premises,
                 with our cyber range, instructors, and a dedicated School Management System for MoU partners.
               </p>
@@ -812,7 +797,7 @@ export function PartnerInstitutionsView() {
 
             {/* Trust footer */}
             <ScrollReveal delay={0.4}>
-              <div className="mt-12 pt-8 border-t border-border/40 grid grid-cols-2 sm:grid-cols-4 gap-6">
+              <div className="mt-8 pt-5 border-t border-border/40 grid grid-cols-2 sm:grid-cols-4 gap-6">
                 {[
                   { label: "MoU Setup", value: "2-4 weeks", icon: FileCheck, color: "text-violet-300" },
                   { label: "On-Prem Visit", value: "Scheduled", icon: Server, color: "text-cyan-300" },

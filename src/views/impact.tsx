@@ -225,7 +225,7 @@ export function ImpactView() {
               {heroDesc}
             </p>
 
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-3 text-xs text-muted-foreground">
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-3 text-xs text-muted-foreground">
               <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-card border border-border shadow-sm">
                 <ShieldCheck className="h-3.5 w-3.5 text-violet-300" /> Verified outcomes
               </span>
@@ -241,9 +241,9 @@ export function ImpactView() {
       </section>
 
       {/* ===== KEY STATS ===== */}
-      <section className="py-10 lg:py-14">
+      <section className="py-8 lg:py-10">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <ScrollReveal className="text-center mb-8">
+          <ScrollReveal className="text-center mb-6">
             <Badge
               variant="outline"
               className="mb-3 border-violet-500/20 text-violet-300 bg-violet-500/5"
@@ -290,7 +290,7 @@ export function ImpactView() {
       </section>
 
       {/* ===== CAREER OUTCOMES ===== */}
-      <section className="py-10 lg:py-14 border-t border-border bg-card/20 relative overflow-hidden">
+      <section className="py-8 lg:py-10 border-t border-border bg-card/20 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-[500px] h-[320px] bg-violet-500/5 blur-[100px] rounded-full pointer-events-none" />
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
           <ScrollReveal className="text-center mb-14">
@@ -344,7 +344,7 @@ export function ImpactView() {
       </section>
 
       {/* ===== SUCCESS STORIES ===== */}
-      <section className="py-10 lg:py-14 border-t border-border relative">
+      <section className="py-8 lg:py-10 border-t border-border relative">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <ScrollReveal className="text-center mb-14">
             <Badge
@@ -413,7 +413,7 @@ export function ImpactView() {
       </section>
 
       {/* ===== PARTNER INSTITUTIONS ===== */}
-      <section className="py-10 lg:py-14 border-t border-border bg-card/20 relative overflow-hidden">
+      <section className="py-8 lg:py-10 border-t border-border bg-card/20 relative overflow-hidden">
         <div className="absolute inset-0 bg-grid opacity-20" />
         <div className="absolute top-1/2 -translate-y-1/2 left-0 w-[400px] h-[300px] bg-cyan-500/5 blur-[100px] rounded-full pointer-events-none" />
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
@@ -436,7 +436,7 @@ export function ImpactView() {
           </ScrollReveal>
 
           <Stagger
-            className="grid sm:grid-cols-3 gap-6 mb-10"
+            className="grid sm:grid-cols-3 gap-6 mb-6"
             staggerChildren={0.12}
           >
             {partners.map((p) => (
@@ -479,7 +479,7 @@ export function ImpactView() {
       </section>
 
       {/* ===== REGIONAL REACH ===== */}
-      <section className="py-10 lg:py-14 border-t border-border">
+      <section className="py-8 lg:py-10 border-t border-border">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <ScrollReveal className="text-center mb-14">
             <Badge
@@ -533,7 +533,7 @@ export function ImpactView() {
       </section>
 
       {/* ===== FINAL CTA ===== */}
-      <section className="py-10 lg:py-14 border-t border-border relative overflow-hidden">
+      <section className="py-8 lg:py-10 border-t border-border relative overflow-hidden">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
           <ScrollReveal>
             <div className="relative overflow-hidden rounded-3xl border border-violet-500/20 bg-card shadow-lg p-10 lg:p-16 scanlines">
@@ -558,7 +558,7 @@ export function ImpactView() {
                 >
                   Be the next success story
                 </h2>
-                <p className="text-muted-foreground max-w-xl mx-auto mb-8 text-base sm:text-lg">
+                <p className="text-muted-foreground max-w-xl mx-auto mb-6 text-base sm:text-lg">
                   Join thousands of learners who transformed their careers with
                   GuardianX Academy. Your certification, your impact, your future.
                 </p>

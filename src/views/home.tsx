@@ -137,12 +137,12 @@ export function HomeView() {
         <div className="absolute top-1/4 left-1/3 w-[500px] h-[500px] bg-violet-600/8 blur-[120px] rounded-full pointer-events-none" />
         <div className="absolute bottom-1/4 right-1/3 w-[400px] h-[400px] bg-cyan-500/6 blur-[100px] rounded-full pointer-events-none" />
 
-        {/* Floating particle-reconstructed logo centerpiece — BIGGER, shatters near mouse */}
-        <div className="hidden lg:block absolute right-[-40px] top-1/2 -translate-y-1/2 pointer-events-auto">
+        {/* Floating particle-reconstructed logo centerpiece — moved 20% inward from right edge */}
+        <div className="hidden lg:block absolute right-[8%] top-1/2 -translate-y-1/2 pointer-events-auto">
           <motion.div
             initial={{ opacity: 0, scale: 0.7 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1.2, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
           >
             <ParticleLogo size={680} interactive showGlow />
           </motion.div>
@@ -151,9 +151,9 @@ export function HomeView() {
         <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full py-12">
           <div className="max-w-3xl">
             <motion.div
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
+              transition={{ duration: 0.4 }}
               className="flex items-center gap-2 mb-4"
             >
               <span className="h-1.5 w-1.5 rounded-full bg-violet-400 pulse-dot" />
@@ -171,18 +171,18 @@ export function HomeView() {
             </h1>
 
             <motion.p
-              initial={{ opacity: 0, y: 15 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.8 }}
+              transition={{ duration: 0.4, delay: 0.3 }}
               className="text-base lg:text-lg text-muted-foreground max-w-xl mb-6 leading-relaxed"
             >
               {heroDescription}
             </motion.p>
 
             <motion.div
-              initial={{ opacity: 0, y: 15 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 1 }}
+              transition={{ duration: 0.4, delay: 0.4 }}
               className="flex items-center gap-4 mb-8"
             >
               <MagneticButton strength={0.3}>
@@ -199,9 +199,9 @@ export function HomeView() {
             </motion.div>
 
             <motion.div
-              initial={{ opacity: 0, y: 15 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 1.2 }}
+              transition={{ duration: 0.4, delay: 0.5 }}
               className="flex items-center gap-8 pt-6 border-t border-border/40"
             >
               {heroStats.map((s, i) => (

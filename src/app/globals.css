@@ -796,3 +796,11 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* ============================================================
+   Marquee — horizontal scrolling animation for cert ticker
+   ============================================================ */
+@keyframes scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}

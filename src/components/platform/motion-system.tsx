@@ -28,14 +28,14 @@ export function ScrollReveal({
   once?: boolean
 }) {
   const ref = React.useRef(null)
-  const isInView = useInView(ref, { once, margin: "-100px" })
+  const isInView = useInView(ref, { once, amount: 0.05 })
 
   return (
     <motion.div
       ref={ref}
       initial={{ opacity: 0, y }}
       animate={isInView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.9, delay, ease: EASE }}
+      transition={{ duration: 0.5, delay, ease: EASE }}
       className={className}
     >
       {children}
@@ -97,7 +97,7 @@ export function TextReveal({
   once?: boolean
 }) {
   const ref = React.useRef(null)
-  const isInView = useInView(ref, { once, margin: "-50px" })
+  const isInView = useInView(ref, { once, amount: 0 })
   const words = text.split(" ")
 
   return (
@@ -115,10 +115,10 @@ export function TextReveal({
         <motion.span
           key={i}
           variants={{
-            hidden: { opacity: 0, y: "0.6em", filter: "blur(10px)" },
+            hidden: { opacity: 0, y: "0.4em", filter: "blur(6px)" },
             visible: {
               opacity: 1, y: 0, filter: "blur(0px)",
-              transition: { duration: 0.7, ease: EASE },
+              transition: { duration: 0.4, ease: EASE },
             },
           }}
           className="inline-block"

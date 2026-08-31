@@ -16,6 +16,7 @@ import {
   Search, Star, Clock, BookOpen, Users, Shield, Bookmark, BookmarkCheck,
   ArrowRight, Layers, Sparkles, FlaskConical, GraduationCap, Tag,
   Gauge, PlayCircle, CheckCircle2, Award,
+  Swords, ShieldCheck, Cloud, Scale,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
@@ -47,6 +48,56 @@ const LEVEL_STYLES: Record<string, { badge: string; dot: string }> = {
   Intermediate: { badge: "border-cyan-500/40 text-cyan-300 bg-cyan-500/10", dot: "bg-cyan-400" },
   Advanced: { badge: "border-violet-500/40 text-violet-300 bg-violet-500/10", dot: "bg-violet-400" },
 }
+
+/* Career Path Selector — interactive filter shortcuts */
+const CAREER_PATHS = [
+  {
+    title: "Offensive Security",
+    desc: "Ethical hacking, pentesting, red team operations. Break things to learn how they work.",
+    icon: Swords,
+    color: "text-violet-300",
+    tint: "bg-violet-500/10",
+    barColor: "bg-violet-500",
+    glow: "shadow-[0_0_30px_-8px] shadow-violet-500/30",
+    categoryFilter: "Ethical Hacking",
+  },
+  {
+    title: "Defensive Security",
+    desc: "Network defense, SOC, blue team. Detect, respond, and protect critical infrastructure.",
+    icon: ShieldCheck,
+    color: "text-cyan-300",
+    tint: "bg-cyan-500/10",
+    barColor: "bg-cyan-500",
+    glow: "shadow-[0_0_30px_-8px] shadow-cyan-500/30",
+    categoryFilter: "Networking",
+  },
+  {
+    title: "Cloud & Infrastructure",
+    desc: "Linux, cloud platforms, system administration. Build and secure the backbone.",
+    icon: Cloud,
+    color: "text-amber-300",
+    tint: "bg-amber-500/10",
+    barColor: "bg-amber-500",
+    glow: "shadow-[0_0_30px_-8px] shadow-amber-500/30",
+    categoryFilter: "System Administration",
+  },
+  {
+    title: "Governance & Risk",
+    desc: "IAM, compliance, security management. Strategy, policy, and access control.",
+    icon: Scale,
+    color: "text-emerald-300",
+    tint: "bg-emerald-500/10",
+    barColor: "bg-emerald-500",
+    glow: "shadow-[0_0_30px_-8px] shadow-emerald-500/30",
+    categoryFilter: "Identity & Access",
+  },
+]
+
+/* Certification ticker — scrolling marquee */
+const CERT_TICKER = [
+  "CEH", "CISSP", "CCNA", "CCNP", "RHCSA", "OSCP", "CISM", "WAPT",
+  "Security+", "CyberArk PAM", "CISA", "CCSP", "PNPT", "CRTP",
+]
 
 export function CourseCatalogView() {
   const { navigate } = useAppStore()
@@ -91,126 +142,174 @@ export function CourseCatalogView() {
       <div className="absolute inset-0 bg-mesh opacity-50 pointer-events-none" />
       <div className="absolute top-0 right-0 w-[600px] h-[400px] bg-violet-600/5 blur-[120px] rounded-full pointer-events-none" />
 
-      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
         {/* ====================================================
-            HEADER — editorial, premium
+            HERO — cinematic, out-of-the-box career path selector
             ==================================================== */}
-        <div className="mb-10 lg:mb-8">
-          <ScrollReveal>
-            <div className="flex items-center gap-2 mb-4">
+        <section className="relative mb-10 lg:mb-12">
+          {/* Background glow */}
+          <div className="absolute top-0 left-1/4 w-[400px] h-[300px] bg-violet-600/8 blur-[100px] rounded-full pointer-events-none" />
+          <div className="absolute top-20 right-1/4 w-[300px] h-[300px] bg-cyan-500/6 blur-[100px] rounded-full pointer-events-none" />
+
+          {/* Eyebrow + headline */}
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="relative mb-6"
+          >
+            <div className="flex items-center gap-2 mb-3">
               <span className="h-1.5 w-1.5 rounded-full bg-violet-400 pulse-dot" />
               <span className="text-[10px] font-mono text-violet-300/80 tracking-[0.3em]">{heroEyebrow}</span>
             </div>
-          </ScrollReveal>
-          <ScrollReveal delay={0.1}>
-            <h1 className="text-[clamp(2.25rem,6vw,4.5rem)] font-bold leading-[0.95] tracking-[-0.04em] mb-4 text-balance">
-              <TextReveal text={heroTitle} />{" "}
-              <span className="text-gradient-premium">
-                <TextReveal text={heroTitleAccent} delay={0.3} />
-              </span>
+            <h1 className="text-[clamp(2.5rem,7vw,5rem)] font-bold leading-[0.9] tracking-[-0.04em] mb-4 text-balance">
+              {heroTitle}{" "}
+              <span className="text-gradient-premium">{heroTitleAccent}</span>
             </h1>
-          </ScrollReveal>
-          <ScrollReveal delay={0.2}>
             <p className="text-base lg:text-lg text-muted-foreground max-w-2xl leading-relaxed">
               {courses.length} certification tracks across ethical hacking, networking, web security, IAM, and more —
               from beginner fundamentals to advanced specializations.
             </p>
-          </ScrollReveal>
-        </div>
+          </motion.div>
 
-        {/* ====================================================
-            STATS STRIP — premium solid cards
-            ==================================================== */}
-        <ScrollReveal delay={0.25}>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10 lg:mb-8">
-            <StatCard
-              icon={BookOpen}
-              label="Total Courses"
-              value={courses.length || 27}
-              color="text-violet-300"
-              tint="bg-violet-500/10"
-            />
-            <StatCard
-              icon={Users}
-              label="Total Students"
-              value={totalStudents || 12000}
-              color="text-cyan-300"
-              tint="bg-cyan-500/10"
-            />
-            <StatCard
-              icon={FlaskConical}
-              label="Practice Labs"
-              value={totalLabs}
-              color="text-amber-300"
-              tint="bg-amber-500/10"
-            />
-            <StatCard
-              icon={Star}
-              label="Avg Rating"
-              value={Math.round(avgRating || 4.7)}
-              suffix="/5"
-              color="text-emerald-300"
-              tint="bg-emerald-500/10"
-            />
-          </div>
-        </ScrollReveal>
+          {/* Career Path Selector — interactive, clickable cards */}
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.2 }}
+            className="mb-8"
+          >
+            <p className="text-[10px] font-mono text-cyan-400 tracking-[0.25em] mb-3">CHOOSE YOUR PATH</p>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {CAREER_PATHS.map((path, i) => {
+                const isActive = category === path.categoryFilter
+                const Icon = path.icon
+                const count = path.categoryFilter === "All"
+                  ? courses.length
+                  : courses.filter(c => c.category === path.categoryFilter).length
+                return (
+                  <button
+                    key={path.title}
+                    onClick={() => setCategory(isActive ? "All" : path.categoryFilter)}
+                    className={cn(
+                      "group relative text-left rounded-xl border p-4 transition-all duration-300 overflow-hidden",
+                      isActive
+                        ? cn("border-transparent bg-card shadow-lg", path.glow)
+                        : "border-border/60 bg-card/60 hover:bg-card hover:border-violet-500/30"
+                    )}
+                  >
+                    {/* Active indicator bar */}
+                    {isActive && (
+                      <div className={cn("absolute top-0 left-0 right-0 h-0.5", path.barColor)} />
+                    )}
+                    <div className="flex items-start justify-between mb-3">
+                      <div className={cn("inline-flex p-2.5 rounded-lg transition-transform group-hover:scale-110", path.tint)}>
+                        <Icon className={cn("h-5 w-5", path.color)} />
+                      </div>
+                      <span className={cn("text-[10px] font-mono tabular-nums", path.color)}>
+                        {count} {count === 1 ? "COURSE" : "COURSES"}
+                      </span>
+                    </div>
+                    <h3 className="font-semibold text-sm mb-1">{path.title}</h3>
+                    <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-2">{path.desc}</p>
+                    {/* Hover arrow */}
+                    <div className="flex items-center gap-1 mt-3">
+                      <span className={cn("text-[10px] font-mono tracking-wider", isActive ? path.color : "text-muted-foreground")}>
+                        {isActive ? "ACTIVE" : "EXPLORE"}
+                      </span>
+                      <ArrowRight className={cn("h-3 w-3 transition-transform", isActive ? path.color : "text-muted-foreground", "group-hover:translate-x-0.5")} />
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          </motion.div>
+
+          {/* Stats strip — compact, inline */}
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.3 }}
+            className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8"
+          >
+            <StatCard icon={BookOpen} label="Total Courses" value={courses.length || 27} color="text-violet-300" tint="bg-violet-500/10" />
+            <StatCard icon={Users} label="Total Students" value={totalStudents || 12000} color="text-cyan-300" tint="bg-cyan-500/10" />
+            <StatCard icon={FlaskConical} label="Practice Labs" value={totalLabs} color="text-amber-300" tint="bg-amber-500/10" />
+            <StatCard icon={Star} label="Avg Rating" value={Math.round(avgRating || 4.7)} suffix="/5" color="text-emerald-300" tint="bg-emerald-500/10" />
+          </motion.div>
+
+          {/* Certification ticker — scrolling marquee */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.4, delay: 0.4 }}
+            className="relative overflow-hidden py-3 border-y border-border/40"
+          >
+            <div className="flex items-center gap-8 animate-[scroll_30s_linear_infinite] whitespace-nowrap">
+              {[...CERT_TICKER, ...CERT_TICKER].map((cert, i) => (
+                <span key={i} className="text-xs font-mono text-muted-foreground/60 tracking-wider flex items-center gap-2">
+                  <span className="h-1 w-1 rounded-full bg-violet-400/40" />
+                  {cert}
+                </span>
+              ))}
+            </div>
+          </motion.div>
+        </section>
 
         {/* ====================================================
             FILTER BAR — search + 3 selects, all on a solid card
             ==================================================== */}
-        <ScrollReveal delay={0.3}>
-          <div className="rounded-2xl border border-border/60 bg-card shadow-lg p-4 sm:p-5 mb-10 lg:mb-8">
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="relative flex-1 min-w-[220px]">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search courses, certifications, topics..."
-                  className="pl-9"
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                />
-              </div>
-              <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger className="w-full sm:w-[180px]"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                </SelectContent>
-              </Select>
-              <Select value={level} onValueChange={setLevel}>
-                <SelectTrigger className="w-full sm:w-[150px]"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {LEVELS.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}
-                </SelectContent>
-              </Select>
-              <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger className="w-full sm:w-[160px]"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {STATUSES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
+        <div className="rounded-2xl border border-border/60 bg-card shadow-lg p-4 sm:p-5 mb-8">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative flex-1 min-w-[220px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search courses, certifications, topics..."
+                className="pl-9"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+              />
             </div>
-            {(q || category !== "All" || level !== "All" || status !== "all") && (
-              <div className="mt-3 pt-3 border-t border-border/40 flex items-center gap-2 flex-wrap">
-                <span className="text-[10px] font-mono text-muted-foreground tracking-[0.2em]">ACTIVE FILTERS:</span>
-                {q && <FilterChip label={`"${q}"`} onClear={() => setQ("")} />}
-                {category !== "All" && <FilterChip label={category} onClear={() => setCategory("All")} />}
-                {level !== "All" && <FilterChip label={level} onClear={() => setLevel("All")} />}
-                {status !== "all" && (
-                  <FilterChip
-                    label={STATUSES.find((s) => s.value === status)?.label || status}
-                    onClear={() => setStatus("all")}
-                  />
-                )}
-                <button
-                  onClick={() => { setQ(""); setCategory("All"); setLevel("All"); setStatus("all") }}
-                  className="text-[10px] font-mono text-violet-300 hover:text-violet-200 tracking-wider ml-1"
-                >
-                  CLEAR ALL
-                </button>
-              </div>
-            )}
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger className="w-full sm:w-[180px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={level} onValueChange={setLevel}>
+              <SelectTrigger className="w-full sm:w-[150px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {LEVELS.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={status} onValueChange={setStatus}>
+              <SelectTrigger className="w-full sm:w-[160px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {STATUSES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
-        </ScrollReveal>
+          {(q || category !== "All" || level !== "All" || status !== "all") && (
+            <div className="mt-3 pt-3 border-t border-border/40 flex items-center gap-2 flex-wrap">
+              <span className="text-[10px] font-mono text-muted-foreground tracking-[0.2em]">ACTIVE FILTERS:</span>
+              {q && <FilterChip label={`"${q}"`} onClear={() => setQ("")} />}
+              {category !== "All" && <FilterChip label={category} onClear={() => setCategory("All")} />}
+              {level !== "All" && <FilterChip label={level} onClear={() => setLevel("All")} />}
+              {status !== "all" && (
+                <FilterChip
+                  label={STATUSES.find((s) => s.value === status)?.label || status}
+                  onClear={() => setStatus("all")}
+                />
+              )}
+              <button
+                onClick={() => { setQ(""); setCategory("All"); setLevel("All"); setStatus("all") }}
+                className="text-[10px] font-mono text-violet-300 hover:text-violet-200 tracking-wider ml-1"
+              >
+                CLEAR ALL
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* ====================================================
             COURSES

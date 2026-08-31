@@ -356,11 +356,16 @@ function PageEditor({ page }: { page: PageId }) {
   const { data, isLoading, isError, refetch } = useQuery<PageDataShape>({
     queryKey: ["cms-content", page],
     queryFn: async () => {
-      const res = await fetch(`/api/cms/${page}`)
-      if (!res.ok) throw new Error("Failed to load content")
-      return res.json()
+      try {
+        const res = await fetch(`/api/cms/${page}`)
+        if (!res.ok) return { page, sections: {}, updatedAt: null }
+        return res.json()
+      } catch {
+        return { page, sections: {}, updatedAt: null }
+      }
     },
     staleTime: 30_000,
+    retry: false,
   })
 
   // Reset draft whenever data changes (initial load + invalidations)

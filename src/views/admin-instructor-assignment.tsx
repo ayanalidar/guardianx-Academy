@@ -31,7 +31,7 @@ import {
   UserCog, Clock, Plus, Search, Mail, Phone, Linkedin, Award,
   Briefcase, Sparkles, X, Filter, UserPlus, BadgeCheck,
   Shield, Network, Cloud, Bug, Globe, Eye, Zap, Layers,
-  Sword, BookOpen,
+  Sword, BookOpen, Trash2,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -203,6 +203,22 @@ export function InstructorAssignmentView() {
     toast.success(`Assigned ${instructorName} to batch`)
   }
 
+  // Delete instructor
+  async function handleDeleteInstructor(id: string) {
+    if (!confirm("Are you sure you want to delete this instructor? This cannot be undone.")) return
+    try {
+      const res = await fetch(`/api/admin/instructors/${id}`, { method: "DELETE" })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || "Failed to delete")
+      }
+      toast.success("Instructor deleted")
+      queryClient.invalidateQueries({ queryKey: ["admin-instructors"] })
+    } catch (e: any) {
+      toast.error(e.message || "Failed to delete instructor")
+    }
+  }
+
   function hasConflict(batch: (typeof BATCHES)[number]): boolean {
     return batches.some((b) => b.id !== batch.id && b.instructor === batch.instructor && b.schedule === batch.schedule)
   }
@@ -284,6 +300,7 @@ export function InstructorAssignmentView() {
                     key={inst.id}
                     instructor={inst}
                     onViewProfile={() => setViewProfile(inst)}
+                    onDelete={() => handleDeleteInstructor(inst.id)}
                     index={idx}
                   />
                 ))}
@@ -377,7 +394,7 @@ function ExpertiseLabel({ id }: { id: string }) {
   return <>{opt?.label ?? id}</>
 }
 
-function InstructorCard({ instructor: inst, onViewProfile, index }: { instructor: Instructor; onViewProfile: () => void; index: number }) {
+function InstructorCard({ instructor: inst, onViewProfile, onDelete, index }: { instructor: Instructor; onViewProfile: () => void; onDelete: () => void; index: number }) {
   const initials = inst.name
     .split(" ")
     .map((p) => p[0])
@@ -462,10 +479,15 @@ function InstructorCard({ instructor: inst, onViewProfile, index }: { instructor
         </div>
       </div>
 
-      {/* Action button */}
-      <Button size="sm" variant="outline" className="w-full" onClick={onViewProfile}>
-        <Eye className="h-3.5 w-3.5 mr-1.5" /> View Profile
-      </Button>
+      {/* Action buttons */}
+      <div className="flex gap-2">
+        <Button size="sm" variant="outline" className="flex-1" onClick={onViewProfile}>
+          <Eye className="h-3.5 w-3.5 mr-1.5" /> View Profile
+        </Button>
+        <Button size="sm" variant="outline" className="text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 border-rose-500/20" onClick={onDelete}>
+          <Trash2 className="h-3.5 w-3.5" />
+        </Button>
+      </div>
     </motion.div>
   )
 }

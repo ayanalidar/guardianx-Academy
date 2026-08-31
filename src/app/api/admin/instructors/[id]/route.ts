@@ -1,0 +1,38 @@
+import { NextRequest, NextResponse } from "next/server"
+import { db } from "@/lib/db"
+import { getCurrentUser } from "@/lib/session"
+
+export const runtime = "nodejs"
+
+// DELETE /api/admin/instructors/[id] — delete an instructor
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const currentUser = await getCurrentUser()
+  if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  if (currentUser.role !== "ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
+
+  const { id } = await params
+
+  // Prevent self-deletion
+  if (id === currentUser.id) {
+    return NextResponse.json({ error: "Cannot delete your own account" }, { status: 400 })
+  }
+
+  const instructor = await db.user.findUnique({ where: { id } })
+  if (!instructor) {
+    return NextResponse.json({ error: "Instructor not found" }, { status: 404 })
+  }
+  if (instructor.role !== "INSTRUCTOR") {
+    return NextResponse.json({ error: "User is not an instructor" }, { status: 400 })
+  }
+
+  // Delete instructor profile first (if exists), then the user
+  await db.instructorProfile.deleteMany({ where: { userId: id } }).catch(() => {})
+  await db.user.delete({ where: { id } })
+
+  return NextResponse.json({ success: true, message: "Instructor deleted" })
+}

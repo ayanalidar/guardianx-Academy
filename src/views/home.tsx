@@ -49,6 +49,11 @@ import {
   ClipboardList,
   FileQuestion,
   Microscope,
+  Swords,
+  ShieldCheck,
+  Scale,
+  Search,
+  Network,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { getCmsIcon } from "@/lib/cms-icons"
@@ -1263,19 +1268,24 @@ export function HomeView() {
       </section>
 
       {/* =====================================================
-          SECTION 5 - SKILL TREE PREVIEW
+          SECTION 5 - ADVANCED SKILL TREE PREVIEW
           ===================================================== */}
       <section
         aria-labelledby="skills-heading"
         className="relative py-8 lg:py-12 overflow-hidden"
       >
         <div className="absolute inset-0 bg-grid opacity-[0.04] pointer-events-none" aria-hidden />
-        <div
-          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 size-[460px] rounded-full bg-violet-600/6 blur-[100px] pointer-events-none"
-          aria-hidden
-        />
+        <div className="absolute left-1/4 top-1/3 w-[400px] h-[300px] bg-violet-600/8 blur-[100px] rounded-full pointer-events-none" aria-hidden />
+        <div className="absolute right-1/4 bottom-1/3 w-[300px] h-[300px] bg-cyan-500/6 blur-[100px] rounded-full pointer-events-none" aria-hidden />
+
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
           <motion.div {...FADE_UP} className="max-w-2xl mb-6">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="inline-flex items-center gap-1.5 rounded-md border border-violet-500/40 bg-violet-500/10 px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-wider text-violet-300">
+                <Network className="size-3" aria-hidden />
+                SKILL MAP
+              </span>
+            </div>
             <h2
               id="skills-heading"
               className="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-[-0.02em] mb-3"
@@ -1287,97 +1297,57 @@ export function HomeView() {
             </p>
           </motion.div>
 
+          {/* Interactive Skill Map */}
           <motion.div
             {...FADE_UP}
             transition={{ duration: 0.4, delay: 0.1 }}
-            className="card-premium rounded-2xl p-6 lg:p-8"
+            className="card-premium rounded-2xl p-4 lg:p-6"
           >
-            {/* Visual tree - central node with 6 branch nodes around it */}
-            <div className="relative mx-auto aspect-square max-w-[520px]">
-              {/* SVG connection lines */}
-              <svg
-                aria-hidden
-                className="absolute inset-0 w-full h-full"
-                viewBox="0 0 100 100"
-                preserveAspectRatio="none"
-              >
-                {BRANCH_ANGLES.map((angle, i) => {
-                  const rad = (angle * Math.PI) / 180
-                  const x = 50 + 38 * Math.cos(rad)
-                  const y = 50 + 38 * Math.sin(rad)
-                  return (
-                    <line
-                      key={i}
-                      x1="50"
-                      y1="50"
-                      x2={x}
-                      y2={y}
-                      stroke="oklch(0.6 0.2 295 / 0.4)"
-                      strokeWidth="0.4"
-                      strokeDasharray="1 1.5"
-                    />
-                  )
-                })}
-              </svg>
-
-              {/* Central node */}
-              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
-                <div
-                  className="flex size-20 lg:size-24 flex-col items-center justify-center rounded-full border-2 border-violet-500/60 bg-violet-500/15 text-violet-200 shadow-[0_0_24px_-4px_oklch(0.6_0.2_295_/_0.7)]"
-                  aria-label="Central skill: Cybersecurity"
-                >
-                  <Shield className="size-5 lg:size-6" aria-hidden />
-                  <span className="mt-0.5 font-mono text-[8px] lg:text-[9px] font-bold uppercase tracking-wider text-center px-1">
-                    CYBERSECURITY
-                  </span>
-                </div>
-              </div>
-
-              {/* Branch nodes */}
-              {BRANCHES.map((b, i) => {
-                const angle = BRANCH_ANGLES[i]
-                const rad = (angle * Math.PI) / 180
-                const x = 50 + 38 * Math.cos(rad)
-                const y = 50 + 38 * Math.sin(rad)
-                return (
-                  <div
-                    key={b.label}
-                    className="absolute z-10"
-                    style={{
-                      left: `${x}%`,
-                      top: `${y}%`,
-                      transform: "translate(-50%, -50%)",
-                    }}
-                  >
-                    <SkillNode
-                      label={b.label}
-                      status={b.status}
-                      size={72}
-                      className="lg:hidden"
-                    />
-                    <SkillNode
-                      label={b.label}
-                      status={b.status}
-                      xp={b.xp}
-                      size={84}
-                      className="hidden lg:flex"
-                    />
-                  </div>
-                )
-              })}
-            </div>
-
-            <div className="mt-6 flex justify-center">
-              <Button
-                variant="outline"
-                onClick={() => navigate({ name: "skill-assessments" })}
-                aria-label="Explore skill tree"
-              >
-                EXPLORE SKILL TREE
-                <ArrowRight className="size-4 ml-2" aria-hidden />
-              </Button>
-            </div>
+            <AdvancedSkillMap />
           </motion.div>
+
+          {/* Skill domain cards below the map */}
+          <motion.div
+            {...FADE_UP}
+            transition={{ duration: 0.4, delay: 0.2 }}
+            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2 lg:gap-3 mt-4"
+          >
+            {SKILL_DOMAINS.map((d, i) => (
+              <motion.div
+                key={d.name}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.05 * i }}
+                className={cn("rounded-lg border p-3 transition-all hover:-translate-y-1", d.border, d.bg)}
+              >
+                <d.icon className={cn("h-4 w-4 mb-2", d.color)} />
+                <h3 className="text-[10px] font-bold uppercase tracking-wider mb-1">{d.name}</h3>
+                <div className="flex items-center gap-1">
+                  <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
+                    <div className={cn("h-full rounded-full", d.barColor)} style={{ width: `${d.progress}%` }} />
+                  </div>
+                  <span className="text-[9px] font-mono text-muted-foreground">{d.skills} skills</span>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+
+          <div className="mt-6 flex items-center justify-center gap-3 flex-wrap">
+            <Button
+              variant="outline"
+              onClick={() => navigate({ name: "skill-tree" })}
+              aria-label="Explore full skill tree"
+            >
+              EXPLORE FULL SKILL TREE
+              <ArrowRight className="size-4 ml-2" aria-hidden />
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => navigate({ name: "skill-assessments" })}
+            >
+              TAKE SKILL ASSESSMENT
+            </Button>
+          </div>
         </div>
       </section>
 
@@ -2353,6 +2323,234 @@ const BRANCHES = [
   { label: "CLOUD", status: "locked" as const, xp: 0 },
   { label: "FORENSICS", status: "locked" as const, xp: 0 },
 ] as const
+
+/* Advanced Skill Map data - 7 domains with sub-skills */
+const SKILL_DOMAINS = [
+  { name: "Offensive", icon: Swords, color: "text-violet-300", bg: "bg-violet-500/10", border: "border-violet-500/30", barColor: "bg-violet-500", progress: 85, skills: 15 },
+  { name: "Defensive", icon: ShieldCheck, color: "text-cyan-300", bg: "bg-cyan-500/10", border: "border-cyan-500/30", barColor: "bg-cyan-500", progress: 60, skills: 12 },
+  { name: "Network", icon: Network, color: "text-amber-300", bg: "bg-amber-500/10", border: "border-amber-500/30", barColor: "bg-amber-500", progress: 72, skills: 10 },
+  { name: "Web", icon: Globe, color: "text-emerald-300", bg: "bg-emerald-500/10", border: "border-emerald-500/30", barColor: "bg-emerald-500", progress: 45, skills: 8 },
+  { name: "Cloud", icon: Cloud, color: "text-rose-300", bg: "bg-rose-500/10", border: "border-rose-500/30", barColor: "bg-rose-500", progress: 20, skills: 7 },
+  { name: "Forensics", icon: Search, color: "text-teal-300", bg: "bg-teal-500/10", border: "border-teal-500/30", barColor: "bg-teal-500", progress: 30, skills: 6 },
+  { name: "GRC", icon: Scale, color: "text-blue-300", bg: "bg-blue-500/10", border: "border-blue-500/30", barColor: "bg-blue-500", progress: 15, skills: 5 },
+]
+
+/* Sub-skills for the interactive map (5 per domain) */
+const SKILL_MAP_DATA = [
+  { domain: "Offensive", angle: -90, color: "#a78bfa", skills: ["Reconnaissance", "Scanning", "Enumeration", "Web Exploitation", "Privilege Escalation"] },
+  { domain: "Defensive", angle: -38, color: "#22d3ee", skills: ["Threat Detection", "Incident Response", "Log Analysis", "SIEM", "IDS/IPS"] },
+  { domain: "Network", angle: 13, color: "#fbbf24", skills: ["TCP/IP", "Routing", "Firewalls", "VPN", "Network Scanning"] },
+  { domain: "Web", angle: 64, color: "#34d399", skills: ["OWASP Top 10", "SQL Injection", "XSS", "CSRF", "API Security"] },
+  { domain: "Cloud", angle: 116, color: "#fb7185", skills: ["AWS Security", "Azure Security", "IAM", "Containers", "Kubernetes"] },
+  { domain: "Forensics", angle: 167, color: "#2dd4bf", skills: ["Disk Forensics", "Memory Forensics", "Network Forensics", "Steganography", "Timeline Analysis"] },
+  { domain: "GRC", angle: 218, color: "#60a5fa", skills: ["ISO 27001", "NIST", "SOC 2", "Risk Assessment", "Compliance"] },
+]
+
+/* Advanced interactive skill map component */
+function AdvancedSkillMap() {
+  const [hoveredDomain, setHoveredDomain] = React.useState<number | null>(null)
+  const [selectedDomain, setSelectedDomain] = React.useState<number | null>(null)
+
+  const centerX = 50
+  const centerY = 50
+  const domainRadius = 32 // distance from center to domain nodes
+  const skillRadius = 14 // distance from domain node to skill nodes
+
+  return (
+    <div className="relative">
+      {/* Legend bar */}
+      <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+        <div className="flex items-center gap-3 text-[10px] font-mono text-muted-foreground">
+          <span className="flex items-center gap-1"><span className="size-2 rounded-full bg-emerald-400" /> Completed</span>
+          <span className="flex items-center gap-1"><span className="size-2 rounded-full bg-amber-400" /> In Progress</span>
+          <span className="flex items-center gap-1"><span className="size-2 rounded-full bg-violet-400/40" /> Available</span>
+          <span className="flex items-center gap-1"><span className="size-2 rounded-full bg-muted-foreground/30" /> Locked</span>
+        </div>
+        <span className="text-[10px] font-mono text-muted-foreground">35 SKILLS / 7 DOMAINS</span>
+      </div>
+
+      {/* SVG-based interactive map */}
+      <div className="relative aspect-square max-w-[600px] mx-auto">
+        <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full" preserveAspectRatio="xMidYMid meet">
+          {/* Outer ring */}
+          <circle cx={centerX} cy={centerY} r={domainRadius + 8} fill="none" stroke="oklch(1 0 0 / 0.05)" strokeWidth="0.3" strokeDasharray="0.5 1" />
+          <circle cx={centerX} cy={centerY} r={domainRadius} fill="none" stroke="oklch(1 0 0 / 0.08)" strokeWidth="0.2" />
+          <circle cx={centerX} cy={centerY} r={domainRadius - 12} fill="none" stroke="oklch(1 0 0 / 0.05)" strokeWidth="0.2" />
+
+          {/* Connection lines from center to domains */}
+          {SKILL_MAP_DATA.map((d, i) => {
+            const rad = (d.angle * Math.PI) / 180
+            const x = centerX + domainRadius * Math.cos(rad)
+            const y = centerY + domainRadius * Math.sin(rad)
+            const isActive = hoveredDomain === i || selectedDomain === i
+            return (
+              <line
+                key={`line-${i}`}
+                x1={centerX}
+                y1={centerY}
+                x2={x}
+                y2={y}
+                stroke={isActive ? d.color : "oklch(1 0 0 / 0.12)"}
+                strokeWidth={isActive ? "0.6" : "0.3"}
+                strokeDasharray={isActive ? "0" : "0.5 1"}
+                style={{ transition: "all 0.3s" }}
+              />
+            )
+          })}
+
+          {/* Sub-skill connection lines + nodes */}
+          {SKILL_MAP_DATA.map((d, di) => {
+            const drad = (d.angle * Math.PI) / 180
+            const dx = centerX + domainRadius * Math.cos(drad)
+            const dy = centerY + domainRadius * Math.sin(drad)
+            const isActive = hoveredDomain === di || selectedDomain === di
+
+            return d.skills.map((skill, si) => {
+              // Spread skills in an arc around the domain node
+              const spread = 50 // degrees of arc
+              const skillAngle = d.angle - spread / 2 + (spread / (d.skills.length - 1)) * si
+              const srad = (skillAngle * Math.PI) / 180
+              const sx = dx + skillRadius * Math.cos(srad)
+              const sy = dy + skillRadius * Math.sin(srad)
+
+              return (
+                <g key={`skill-${di}-${si}`}>
+                  <line
+                    x1={dx}
+                    y1={dy}
+                    x2={sx}
+                    y2={sy}
+                    stroke={isActive ? d.color : "oklch(1 0 0 / 0.06)"}
+                    strokeWidth={isActive ? "0.3" : "0.15"}
+                    style={{ transition: "all 0.3s" }}
+                  />
+                  <circle
+                    cx={sx}
+                    cy={sy}
+                    r={isActive ? "1.5" : "1"}
+                    fill={isActive ? d.color : "oklch(1 0 0 / 0.2)"}
+                    style={{ transition: "all 0.3s", cursor: "pointer" }}
+                    onClick={() => setSelectedDomain(selectedDomain === di ? null : di)}
+                  />
+                  {isActive && (
+                    <text
+                      x={sx}
+                      y={sy - 2.5}
+                      textAnchor="middle"
+                      fill={d.color}
+                      fontSize="1.5"
+                      fontFamily="monospace"
+                      style={{ pointerEvents: "none" }}
+                    >
+                      {skill.length > 12 ? skill.substring(0, 10) + "..." : skill}
+                    </text>
+                  )}
+                </g>
+              )
+            })
+          })}
+
+          {/* Domain nodes */}
+          {SKILL_MAP_DATA.map((d, i) => {
+            const rad = (d.angle * Math.PI) / 180
+            const x = centerX + domainRadius * Math.cos(rad)
+            const y = centerY + domainRadius * Math.sin(rad)
+            const isActive = hoveredDomain === i || selectedDomain === i
+            const domain = SKILL_DOMAINS[i]
+            const status = domain.progress >= 70 ? "completed" : domain.progress >= 30 ? "in-progress" : domain.progress > 0 ? "available" : "locked"
+
+            return (
+              <g
+                key={`domain-${i}`}
+                style={{ cursor: "pointer" }}
+                onMouseEnter={() => setHoveredDomain(i)}
+                onMouseLeave={() => setHoveredDomain(null)}
+                onClick={() => setSelectedDomain(selectedDomain === i ? null : i)}
+              >
+                {/* Pulsing ring for active domains */}
+                {isActive && (
+                  <circle cx={x} cy={y} r="5" fill="none" stroke={d.color} strokeWidth="0.3" opacity="0.4">
+                    <animate attributeName="r" values="4;6;4" dur="2s" repeatCount="indefinite" />
+                    <animate attributeName="opacity" values="0.4;0.1;0.4" dur="2s" repeatCount="indefinite" />
+                  </circle>
+                )}
+                {/* Domain circle */}
+                <circle
+                  cx={x}
+                  cy={y}
+                  r={isActive ? "4" : "3.5"}
+                  fill={d.color}
+                  fillOpacity={isActive ? "0.3" : status === "locked" ? "0.05" : "0.15"}
+                  stroke={d.color}
+                  strokeWidth={isActive ? "0.6" : "0.4"}
+                  style={{ transition: "all 0.3s" }}
+                />
+                {/* Domain label */}
+                <text
+                  x={x}
+                  y={y + 7}
+                  textAnchor="middle"
+                  fill={isActive ? d.color : "oklch(0.7 0 0)"}
+                  fontSize="2"
+                  fontWeight="bold"
+                  fontFamily="monospace"
+                  style={{ pointerEvents: "none", transition: "all 0.3s" }}
+                >
+                  {d.domain.toUpperCase()}
+                </text>
+                {/* Progress ring */}
+                <circle
+                  cx={x}
+                  cy={y}
+                  r="3.5"
+                  fill="none"
+                  stroke={d.color}
+                  strokeWidth="0.8"
+                  strokeDasharray={`${(domain.progress / 100) * 22} 22`}
+                  strokeDashoffset="0"
+                  transform={`rotate(-90 ${x} ${y})`}
+                  opacity="0.6"
+                  style={{ transition: "all 0.3s" }}
+                />
+              </g>
+            )
+          })}
+
+          {/* Central node */}
+          <circle cx={centerX} cy={centerY} r="8" fill="oklch(0.6 0.2 295 / 0.15)" stroke="oklch(0.6 0.2 295 / 0.6)" strokeWidth="0.5" />
+          <circle cx={centerX} cy={centerY} r="6" fill="none" stroke="oklch(0.6 0.2 295 / 0.3)" strokeWidth="0.3" strokeDasharray="1 1">
+            <animateTransform attributeName="transform" type="rotate" from={`0 ${centerX} ${centerY}`} to={`360 ${centerX} ${centerY}`} dur="20s" repeatCount="indefinite" />
+          </circle>
+          <text x={centerX} y={centerY - 1} textAnchor="middle" fill="oklch(0.8 0.15 295)" fontSize="2.5" fontWeight="bold" fontFamily="monospace">CYBER</text>
+          <text x={centerX} y={centerY + 2} textAnchor="middle" fill="oklch(0.8 0.15 295)" fontSize="2.5" fontWeight="bold" fontFamily="monospace">SECURITY</text>
+        </svg>
+
+        {/* Hover detail panel */}
+        {hoveredDomain !== null && (
+          <motion.div
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="absolute bottom-2 left-2 right-2 lg:left-auto lg:right-2 lg:max-w-xs rounded-lg border border-border/60 bg-card/90 backdrop-blur p-3 z-20"
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <span className="size-2.5 rounded-full" style={{ backgroundColor: SKILL_MAP_DATA[hoveredDomain].color }} />
+              <span className="text-xs font-bold uppercase tracking-wider">{SKILL_DOMAINS[hoveredDomain].name} Security</span>
+              <span className="text-[10px] font-mono text-muted-foreground ml-auto">{SKILL_DOMAINS[hoveredDomain].progress}%</span>
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {SKILL_MAP_DATA[hoveredDomain].skills.map(s => (
+                <span key={s} className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-muted/50 text-muted-foreground">{s}</span>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </div>
+
+      {/* Mobile tap hint */}
+      <p className="text-center text-[10px] text-muted-foreground/60 mt-2 lg:hidden">Tap a domain to explore skills</p>
+    </div>
+  )
+}
 
 const DAILY_OBJECTIVES = [
   { label: "Complete 1 lab module", xp: 50, done: true },

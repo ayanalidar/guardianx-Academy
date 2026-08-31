@@ -187,7 +187,7 @@ export function ImpactView() {
   return (
     <div ref={containerRef} className="relative">
       {/* ===== HERO ===== */}
-      <section className="relative min-h-[52vh] flex items-center overflow-hidden border-b border-border">
+      <section className="relative min-h-[48vh] flex items-center overflow-hidden border-b border-border">
         <div className="absolute inset-0 bg-mesh" />
         <div className="absolute inset-0 bg-grid opacity-30" />
         <motion.div
@@ -199,7 +199,7 @@ export function ImpactView() {
           className="absolute bottom-0 right-1/4 w-[420px] h-[320px] bg-cyan-500/8 blur-[120px] rounded-full pointer-events-none"
         />
 
-        <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 text-center">
+        <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 text-center">
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}

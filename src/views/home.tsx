@@ -131,7 +131,7 @@ export function HomeView() {
       {/* ====================================================
           SECTION 1: HERO — with animated 3D logo centerpiece
           ==================================================== */}
-      <section className="relative min-h-[88vh] flex items-center overflow-hidden">
+      <section className="relative min-h-[80vh] flex items-center overflow-hidden">
         <div className="absolute inset-0 bg-mesh" />
         <div className="absolute inset-0 bg-grid opacity-10" />
         <div className="absolute top-1/4 left-1/3 w-[500px] h-[500px] bg-violet-600/8 blur-[120px] rounded-full pointer-events-none" />
@@ -148,7 +148,7 @@ export function HomeView() {
           </motion.div>
         </div>
 
-        <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full py-12">
+        <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full py-4">
           <div className="max-w-3xl">
             <motion.div
               initial={{ opacity: 0, y: 8 }}
@@ -311,13 +311,11 @@ export function HomeView() {
               <ScrollReveal delay={0.1}>
                 <FeaturedCourse course={courses[0]} />
               </ScrollReveal>
-              <Stagger className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6" staggerChildren={0.08}>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
                 {courses.slice(1, 7).map((course, i) => (
-                  <StaggerItem key={course.id}>
-                    <CourseCard course={course} index={i} />
-                  </StaggerItem>
+                  <CourseCard key={course.id} course={course} index={i} />
                 ))}
-              </Stagger>
+              </div>
             </>
           ) : (
             <div className="text-center py-12 text-muted-foreground">Loading courses...</div>

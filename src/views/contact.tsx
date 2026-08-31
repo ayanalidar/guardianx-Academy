@@ -178,7 +178,7 @@ export function ContactView() {
       {/* ============================================================
           SECTION 1 — HERO
           ============================================================ */}
-      <section className="relative pt-20 pb-8 lg:pt-24 lg:pb-10 overflow-hidden border-b border-border">
+      <section className="relative pt-4 pb-6 lg:pb-8 overflow-hidden border-b border-border">
         <div className="absolute inset-0 bg-mesh pointer-events-none" />
         <div className="absolute inset-0 bg-grid opacity-20 pointer-events-none" />
         <div className="absolute top-1/4 left-1/4 w-[400px] h-[300px] bg-violet-500/10 blur-[100px] rounded-full pointer-events-none" />

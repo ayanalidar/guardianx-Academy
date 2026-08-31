@@ -12,7 +12,7 @@ export function PublicPageShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col bg-background bg-mesh">
       <PublicHeader />
-      <main className="flex-1 pt-16">{children}</main>
+      <main className="flex-1 pt-14">{children}</main>
       <PublicFooter />
     </div>
   )

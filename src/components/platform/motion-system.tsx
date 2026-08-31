@@ -133,6 +133,8 @@ export function TextReveal({
 
 /* ============================================================
    Stagger — stagger children container
+   (Simplified: no scroll-triggered animation to prevent blinking.
+    Children render immediately. Kept for backwards compatibility.)
    ============================================================ */
 export function Stagger({
   children,
@@ -147,22 +149,10 @@ export function Stagger({
   staggerChildren?: number
   once?: boolean
 }) {
-  const ref = React.useRef(null)
-  const isInView = useInView(ref, { once, margin: "-80px" })
-
   return (
-    <motion.div
-      ref={ref}
-      initial="hidden"
-      animate={isInView ? "visible" : "hidden"}
-      variants={{
-        hidden: {},
-        visible: { transition: { staggerChildren, delayChildren: delay } },
-      }}
-      className={className}
-    >
+    <div className={className}>
       {children}
-    </motion.div>
+    </div>
   )
 }
 
@@ -176,15 +166,9 @@ export function StaggerItem({
   y?: number
 }) {
   return (
-    <motion.div
-      variants={{
-        hidden: { opacity: 0, y },
-        visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: EASE } },
-      }}
-      className={className}
-    >
+    <div className={className}>
       {children}
-    </motion.div>
+    </div>
   )
 }
 

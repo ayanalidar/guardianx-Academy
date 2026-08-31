@@ -131,30 +131,30 @@ export function HomeView() {
       {/* ====================================================
           SECTION 1: HERO — with animated 3D logo centerpiece
           ==================================================== */}
-      <section className="relative min-h-[92vh] flex items-center overflow-hidden">
+      <section className="relative min-h-[88vh] flex items-center overflow-hidden">
         <div className="absolute inset-0 bg-mesh" />
         <div className="absolute inset-0 bg-grid opacity-10" />
         <div className="absolute top-1/4 left-1/3 w-[500px] h-[500px] bg-violet-600/8 blur-[120px] rounded-full pointer-events-none" />
         <div className="absolute bottom-1/4 right-1/3 w-[400px] h-[400px] bg-cyan-500/6 blur-[100px] rounded-full pointer-events-none" />
 
-        {/* Floating particle-reconstructed logo centerpiece — DeepSeek-inspired */}
-        <div className="hidden lg:block absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none">
+        {/* Floating particle-reconstructed logo centerpiece — BIGGER, shatters near mouse */}
+        <div className="hidden lg:block absolute right-[-40px] top-1/2 -translate-y-1/2 pointer-events-auto">
           <motion.div
             initial={{ opacity: 0, scale: 0.7 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 1.2, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
           >
-            <ParticleLogo size={560} interactive showGlow />
+            <ParticleLogo size={680} interactive showGlow />
           </motion.div>
         </div>
 
-        <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full py-20">
+        <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full py-12">
           <div className="max-w-3xl">
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              className="flex items-center gap-2 mb-6"
+              className="flex items-center gap-2 mb-4"
             >
               <span className="h-1.5 w-1.5 rounded-full bg-violet-400 pulse-dot" />
               <span className="text-[10px] font-mono text-violet-300/80 tracking-[0.25em]">
@@ -162,7 +162,7 @@ export function HomeView() {
               </span>
             </motion.div>
 
-            <h1 className="text-[clamp(2.5rem,6vw,4.5rem)] font-bold leading-[1] tracking-[-0.03em] mb-6 text-balance">
+            <h1 className="text-[clamp(2.5rem,6vw,4.5rem)] font-bold leading-[1] tracking-[-0.03em] mb-4 text-balance">
               <TextReveal text={heroTitle} />
               <br />
               <span className="text-gradient-premium">
@@ -174,7 +174,7 @@ export function HomeView() {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.8 }}
-              className="text-base lg:text-lg text-muted-foreground max-w-xl mb-8 leading-relaxed"
+              className="text-base lg:text-lg text-muted-foreground max-w-xl mb-6 leading-relaxed"
             >
               {heroDescription}
             </motion.p>
@@ -183,7 +183,7 @@ export function HomeView() {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 1 }}
-              className="flex items-center gap-4 mb-12"
+              className="flex items-center gap-4 mb-8"
             >
               <MagneticButton strength={0.3}>
                 <Button size="lg" onClick={() => navigate({ name: "catalog" })} className="bg-violet-600 hover:bg-violet-500 btn-premium px-8 py-6 text-sm">
@@ -202,7 +202,7 @@ export function HomeView() {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 1.2 }}
-              className="flex items-center gap-8 pt-8 border-t border-border/40"
+              className="flex items-center gap-8 pt-6 border-t border-border/40"
             >
               {heroStats.map((s, i) => (
                 <div key={s.label}>
@@ -217,18 +217,18 @@ export function HomeView() {
         </div>
 
         {/* Mobile / tablet — show particle logo inline above text */}
-        <div className="lg:hidden absolute inset-x-0 top-0 h-[55vh] flex items-center justify-center pointer-events-none">
-          <ParticleLogo size={300} interactive={false} showGlow />
+        <div className="lg:hidden absolute inset-x-0 top-0 h-[48vh] flex items-center justify-center pointer-events-none">
+          <ParticleLogo size={340} interactive={false} showGlow />
         </div>
-        <div className="lg:hidden relative z-10 pt-[50vh]" />
+        <div className="lg:hidden relative z-10 pt-[44vh]" />
       </section>
 
       {/* ====================================================
           SECTION 2: TRUST BAR
           ==================================================== */}
-      <section className="py-8 border-y border-border/40">
+      <section className="py-6 border-y border-border/40">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <p className="text-center text-[9px] text-muted-foreground/60 uppercase tracking-[0.3em] mb-5">
+          <p className="text-center text-[9px] text-muted-foreground/60 uppercase tracking-[0.3em] mb-3">
             {trustLabel}
           </p>
           <div className="flex items-center justify-center gap-x-8 gap-y-3 flex-wrap opacity-25">
@@ -242,11 +242,11 @@ export function HomeView() {
       {/* ====================================================
           SECTION 3: WHO WE SERVE — three audiences
           ==================================================== */}
-      <section className="py-20 lg:py-28 relative">
+      <section className="py-12 lg:py-16 relative">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <ScrollReveal className="text-center mb-12">
-            <p className="text-[10px] font-mono text-violet-400 tracking-[0.25em] mb-4">{audiencesEyebrow}</p>
-            <h2 className="text-[clamp(2rem,4vw,3rem)] font-bold leading-[1.05] tracking-[-0.02em] mb-4 text-balance">
+          <ScrollReveal className="text-center mb-8">
+            <p className="text-[10px] font-mono text-violet-400 tracking-[0.25em] mb-3">{audiencesEyebrow}</p>
+            <h2 className="text-[clamp(2rem,4vw,3rem)] font-bold leading-[1.05] tracking-[-0.02em] mb-3 text-balance">
               {audiencesTitle}
               <br />
               <span className="text-muted-foreground/60">{audiencesTitleAccent}</span>
@@ -276,12 +276,12 @@ export function HomeView() {
       {/* ====================================================
           SECTION 4: COURSES
           ==================================================== */}
-      <section className="py-20 lg:py-28 border-t border-border/40 relative">
+      <section className="py-12 lg:py-16 border-t border-border/40 relative">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <ScrollReveal className="mb-12">
+          <ScrollReveal className="mb-8">
             <div className="flex items-end justify-between flex-wrap gap-4">
               <div>
-                <p className="text-[10px] font-mono text-violet-400 tracking-[0.25em] mb-4">{coursesEyebrow}</p>
+                <p className="text-[10px] font-mono text-violet-400 tracking-[0.25em] mb-3">{coursesEyebrow}</p>
                 <h2 className="text-[clamp(2rem,4vw,3rem)] font-bold leading-[1.05] tracking-[-0.02em] text-balance">
                   {coursesTitle}
                   <br />
@@ -299,7 +299,7 @@ export function HomeView() {
               <ScrollReveal delay={0.1}>
                 <FeaturedCourse course={courses[0]} />
               </ScrollReveal>
-              <Stagger className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8" staggerChildren={0.08}>
+              <Stagger className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6" staggerChildren={0.08}>
                 {courses.slice(1, 7).map((course, i) => (
                   <StaggerItem key={course.id}>
                     <CourseCard course={course} index={i} />
@@ -308,7 +308,7 @@ export function HomeView() {
               </Stagger>
             </>
           ) : (
-            <div className="text-center py-20 text-muted-foreground">Loading courses...</div>
+            <div className="text-center py-12 text-muted-foreground">Loading courses...</div>
           )}
         </div>
       </section>
@@ -321,11 +321,11 @@ export function HomeView() {
       {/* ====================================================
           SECTION 6: CORPORATE TRAINING + WORKSHOPS + WEBINARS
           ==================================================== */}
-      <section className="py-20 lg:py-28 border-t border-border/40 relative">
+      <section className="py-12 lg:py-16 border-t border-border/40 relative">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <ScrollReveal className="text-center mb-12">
-            <p className="text-[10px] font-mono text-cyan-400 tracking-[0.25em] mb-4">{corporateEyebrow}</p>
-            <h2 className="text-[clamp(2rem,4vw,3rem)] font-bold leading-[1.05] tracking-[-0.02em] mb-4 text-balance">
+          <ScrollReveal className="text-center mb-8">
+            <p className="text-[10px] font-mono text-cyan-400 tracking-[0.25em] mb-3">{corporateEyebrow}</p>
+            <h2 className="text-[clamp(2rem,4vw,3rem)] font-bold leading-[1.05] tracking-[-0.02em] mb-3 text-balance">
               {corporateTitle}
               <br />
               <span className="text-gradient-cyan">{corporateTitleAccent}</span>
@@ -368,7 +368,7 @@ export function HomeView() {
       {/* ====================================================
           SECTION 7: CERTIFICATE VERIFICATION
           ==================================================== */}
-      <section className="py-20 lg:py-28 border-t border-border/40">
+      <section className="py-12 lg:py-16 border-t border-border/40">
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
           <ScrollReveal>
             <CertificateVerifyCard />
@@ -379,11 +379,11 @@ export function HomeView() {
       {/* ====================================================
           SECTION 8: PARTNER INSTITUTIONS + BENEFITS
           ==================================================== */}
-      <section className="py-20 lg:py-28 border-t border-border/40 relative">
+      <section className="py-12 lg:py-16 border-t border-border/40 relative">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <ScrollReveal className="text-center mb-12">
-            <p className="text-[10px] font-mono text-violet-400 tracking-[0.25em] mb-4">{partnersEyebrow}</p>
-            <h2 className="text-[clamp(2rem,4vw,3rem)] font-bold leading-[1.05] tracking-[-0.02em] mb-4 text-balance">
+          <ScrollReveal className="text-center mb-8">
+            <p className="text-[10px] font-mono text-violet-400 tracking-[0.25em] mb-3">{partnersEyebrow}</p>
+            <h2 className="text-[clamp(2rem,4vw,3rem)] font-bold leading-[1.05] tracking-[-0.02em] mb-3 text-balance">
               {partnersTitle}
               <br />
               <span className="text-gradient-premium">{partnersTitleAccent}</span>
@@ -394,7 +394,7 @@ export function HomeView() {
           </ScrollReveal>
 
           {/* Three partner types — each with own CTA */}
-          <div className="grid sm:grid-cols-3 gap-6 mb-12">
+          <div className="grid sm:grid-cols-3 gap-6 mb-8">
             {partners.map((p, i) => {
               const Icon = getCmsIcon(p.icon)
               return (
@@ -462,18 +462,18 @@ export function HomeView() {
       {/* ====================================================
           SECTION 9: FINAL CTA
           ==================================================== */}
-      <section className="py-20 lg:py-28 border-t border-border/40 relative overflow-hidden">
+      <section className="py-12 lg:py-16 border-t border-border/40 relative overflow-hidden">
         <div className="absolute inset-0 bg-mesh opacity-50" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-violet-600/8 blur-[100px] rounded-full pointer-events-none" />
 
         <div className="relative z-10 mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
           <ScrollReveal>
-            <h2 className="text-[clamp(2rem,5vw,3.5rem)] font-bold leading-[1.05] tracking-[-0.03em] mb-6 text-balance">
+            <h2 className="text-[clamp(2rem,5vw,3.5rem)] font-bold leading-[1.05] tracking-[-0.03em] mb-4 text-balance">
               {finalCtaTitle}
             </h2>
           </ScrollReveal>
           <ScrollReveal delay={0.1}>
-            <p className="text-base lg:text-lg text-muted-foreground max-w-xl mx-auto mb-8">
+            <p className="text-base lg:text-lg text-muted-foreground max-w-xl mx-auto mb-6">
               {finalCtaSubtitle}
             </p>
           </ScrollReveal>
@@ -534,15 +534,15 @@ function CinematicLabsSection() {
   }, [labs.length])
 
   return (
-    <section className="py-20 lg:py-28 border-t border-border/40 relative overflow-hidden">
+    <section className="py-12 lg:py-16 border-t border-border/40 relative overflow-hidden">
       <div className="absolute inset-0 bg-grid opacity-8" />
       <div className="absolute top-0 right-0 w-[500px] h-[400px] bg-cyan-600/5 blur-[120px] rounded-full" />
       <div className="absolute bottom-0 left-0 w-[400px] h-[300px] bg-violet-600/5 blur-[100px] rounded-full" />
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
-        <ScrollReveal className="mb-12">
-          <p className="text-[10px] font-mono text-cyan-400 tracking-[0.25em] mb-4">{labsEyebrow}</p>
-          <h2 className="text-[clamp(2rem,4vw,3rem)] font-bold leading-[1.05] tracking-[-0.02em] mb-4 text-balance">
+        <ScrollReveal className="mb-8">
+          <p className="text-[10px] font-mono text-cyan-400 tracking-[0.25em] mb-3">{labsEyebrow}</p>
+          <h2 className="text-[clamp(2rem,4vw,3rem)] font-bold leading-[1.05] tracking-[-0.02em] mb-3 text-balance">
             {labsTitle}
             <span className="text-gradient-cyan"> {labsTitleAccent}</span>
           </h2>

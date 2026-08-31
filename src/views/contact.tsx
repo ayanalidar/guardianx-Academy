@@ -238,7 +238,7 @@ export function ContactView() {
       {/* ============================================================
           SECTION 3 — FORM + INFO (2 columns, no overlap)
           ============================================================ */}
-      <section className="py-14 lg:py-20 border-t border-border">
+      <section className="py-14 lg:py-12 border-t border-border">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-8 items-start">
             {/* ---- LEFT: Contact Form (solid card) ---- */}
@@ -474,10 +474,10 @@ export function ContactView() {
       {/* ============================================================
           SECTION 4 — FAQ
           ============================================================ */}
-      <section className="py-14 lg:py-20 border-t border-border bg-card/20 relative overflow-hidden">
+      <section className="py-14 lg:py-12 border-t border-border bg-card/20 relative overflow-hidden">
         <div className="absolute inset-0 bg-grid opacity-15 pointer-events-none" />
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 relative">
-          <ScrollReveal className="text-center mb-12">
+          <ScrollReveal className="text-center mb-8">
             <Badge variant="outline" className="mb-4 border-amber-500/20 text-amber-300 bg-amber-500/5">
               <Heart className="h-3 w-3 mr-1" /> FAQ
             </Badge>

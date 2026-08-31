@@ -322,7 +322,7 @@ export function PartnerInstitutionsView() {
         {/* ====================================================
             SECTION 1: HERO
             ==================================================== */}
-        <section className="py-16 lg:py-24">
+        <section className="py-10 lg:py-14">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="grid lg:grid-cols-2 gap-12 items-center">
               {/* Left — text */}
@@ -419,9 +419,9 @@ export function PartnerInstitutionsView() {
         {/* ====================================================
             SECTION 2: THREE PARTNER TYPES
             ==================================================== */}
-        <section className="py-20 lg:py-28 border-t border-border/40">
+        <section className="py-12 lg:py-16 border-t border-border/40">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <ScrollReveal className="mb-12 text-center">
+            <ScrollReveal className="mb-8 text-center">
               <p className="text-[10px] font-mono text-violet-400 tracking-[0.25em] mb-4">WHO WE PARTNER WITH</p>
               <h2 className="text-[clamp(2rem,4vw,3rem)] font-bold leading-[1.05] tracking-[-0.02em] text-balance">
                 Three institution types.
@@ -504,9 +504,9 @@ export function PartnerInstitutionsView() {
         {/* ====================================================
             SECTION 3: PARTNER BENEFITS
             ==================================================== */}
-        <section className="py-20 lg:py-28 border-t border-border/40">
+        <section className="py-12 lg:py-16 border-t border-border/40">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <ScrollReveal className="mb-12">
+            <ScrollReveal className="mb-8">
               <p className="text-[10px] font-mono text-violet-400 tracking-[0.25em] mb-4">PARTNER BENEFITS</p>
               <h2 className="text-[clamp(2rem,4vw,3rem)] font-bold leading-[1.05] tracking-[-0.02em] text-balance">
                 Everything your institution unlocks.
@@ -543,10 +543,10 @@ export function PartnerInstitutionsView() {
         {/* ====================================================
             SECTION 4: FEATURED PARTNERS
             ==================================================== */}
-        <section className="py-20 lg:py-28 border-t border-border/40 relative overflow-hidden">
+        <section className="py-12 lg:py-16 border-t border-border/40 relative overflow-hidden">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-violet-600/5 blur-[120px] rounded-full pointer-events-none" />
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
-            <ScrollReveal className="mb-12">
+            <ScrollReveal className="mb-8">
               <p className="text-[10px] font-mono text-violet-400 tracking-[0.25em] mb-4">FEATURED PARTNERS</p>
               <h2 className="text-[clamp(2rem,4vw,3rem)] font-bold leading-[1.05] tracking-[-0.02em] text-balance mb-4">
                 Institutions growing with GuardianX.
@@ -657,10 +657,10 @@ export function PartnerInstitutionsView() {
         {/* ====================================================
             SECTION 5: YOUR INSTITUTION. OUR CYBER RANGE.
             ==================================================== */}
-        <section className="py-20 lg:py-28 border-t border-border/40 relative overflow-hidden">
+        <section className="py-12 lg:py-16 border-t border-border/40 relative overflow-hidden">
           <div className="absolute inset-0 bg-grid opacity-10" />
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
-            <ScrollReveal className="text-center mb-12">
+            <ScrollReveal className="text-center mb-8">
               <p className="text-[10px] font-mono text-violet-400 tracking-[0.25em] mb-4">THE PATH</p>
               <h2 className="text-[clamp(2rem,4vw,3rem)] font-bold leading-[1.05] tracking-[-0.02em] mb-4 text-balance">
                 Your institution.
@@ -713,9 +713,9 @@ export function PartnerInstitutionsView() {
         {/* ====================================================
             SECTION 6: PARTNERSHIP MODELS
             ==================================================== */}
-        <section className="py-20 lg:py-28 border-t border-border/40">
+        <section className="py-12 lg:py-16 border-t border-border/40">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <ScrollReveal className="mb-12">
+            <ScrollReveal className="mb-8">
               <p className="text-[10px] font-mono text-violet-400 tracking-[0.25em] mb-4">PARTNERSHIP MODELS</p>
               <h2 className="text-[clamp(2rem,4vw,3rem)] font-bold leading-[1.05] tracking-[-0.02em] text-balance">
                 Choose your partnership.
@@ -762,7 +762,7 @@ export function PartnerInstitutionsView() {
         {/* ====================================================
             SECTION 7: FINAL CTA — Sign an MoU + Build Your Program
             ==================================================== */}
-        <section className="py-20 lg:py-28 border-t border-border/40 relative overflow-hidden">
+        <section className="py-12 lg:py-16 border-t border-border/40 relative overflow-hidden">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-violet-600/8 blur-[100px] rounded-full pointer-events-none" />
           <div className="relative z-10 mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
             <ScrollReveal>

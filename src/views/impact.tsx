@@ -199,7 +199,7 @@ export function ImpactView() {
           className="absolute bottom-0 right-1/4 w-[420px] h-[320px] bg-cyan-500/8 blur-[120px] rounded-full pointer-events-none"
         />
 
-        <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-20 text-center">
+        <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 text-center">
           <ScrollReveal y={28}>
             <Badge
               variant="outline"
@@ -241,9 +241,9 @@ export function ImpactView() {
       </section>
 
       {/* ===== KEY STATS ===== */}
-      <section className="py-16 lg:py-24">
+      <section className="py-10 lg:py-14">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <ScrollReveal className="text-center mb-12">
+          <ScrollReveal className="text-center mb-8">
             <Badge
               variant="outline"
               className="mb-3 border-violet-500/20 text-violet-300 bg-violet-500/5"
@@ -290,7 +290,7 @@ export function ImpactView() {
       </section>
 
       {/* ===== CAREER OUTCOMES ===== */}
-      <section className="py-16 lg:py-24 border-t border-border bg-card/20 relative overflow-hidden">
+      <section className="py-10 lg:py-14 border-t border-border bg-card/20 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-[500px] h-[320px] bg-violet-500/5 blur-[100px] rounded-full pointer-events-none" />
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
           <ScrollReveal className="text-center mb-14">
@@ -344,7 +344,7 @@ export function ImpactView() {
       </section>
 
       {/* ===== SUCCESS STORIES ===== */}
-      <section className="py-16 lg:py-24 border-t border-border relative">
+      <section className="py-10 lg:py-14 border-t border-border relative">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <ScrollReveal className="text-center mb-14">
             <Badge
@@ -413,7 +413,7 @@ export function ImpactView() {
       </section>
 
       {/* ===== PARTNER INSTITUTIONS ===== */}
-      <section className="py-16 lg:py-24 border-t border-border bg-card/20 relative overflow-hidden">
+      <section className="py-10 lg:py-14 border-t border-border bg-card/20 relative overflow-hidden">
         <div className="absolute inset-0 bg-grid opacity-20" />
         <div className="absolute top-1/2 -translate-y-1/2 left-0 w-[400px] h-[300px] bg-cyan-500/5 blur-[100px] rounded-full pointer-events-none" />
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
@@ -479,7 +479,7 @@ export function ImpactView() {
       </section>
 
       {/* ===== REGIONAL REACH ===== */}
-      <section className="py-16 lg:py-24 border-t border-border">
+      <section className="py-10 lg:py-14 border-t border-border">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <ScrollReveal className="text-center mb-14">
             <Badge
@@ -533,7 +533,7 @@ export function ImpactView() {
       </section>
 
       {/* ===== FINAL CTA ===== */}
-      <section className="py-16 lg:py-24 border-t border-border relative overflow-hidden">
+      <section className="py-10 lg:py-14 border-t border-border relative overflow-hidden">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
           <ScrollReveal>
             <div className="relative overflow-hidden rounded-3xl border border-violet-500/20 bg-card shadow-lg p-10 lg:p-16 scanlines">

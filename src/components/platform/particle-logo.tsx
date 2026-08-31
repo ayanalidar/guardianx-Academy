@@ -220,7 +220,7 @@ export function ParticleLogo({
     const assemblyDuration = 2200
 
     const mouse = mouseRef.current
-    const repelRadius = 80 * dpr
+    const repelRadius = 110 * dpr // larger shatter radius
     const repelStrength = 0.6
 
     // Global idle noise time
@@ -260,26 +260,39 @@ export function ParticleLogo({
           p.opacity = p.baseOpacity * (0.82 + Math.sin(t * 1.5 + p.seed) * 0.18)
         }
 
-        // Mouse repulsion + hover brightness boost
+        // Mouse SHATTER + hover brightness boost
+        // Near the cursor, particles violently explode away then spring back
         if (interactive && mouse.active) {
           const dx = p.x - mouse.x
           const dy = p.y - mouse.y
           const dist2 = dx * dx + dy * dy
           if (dist2 < repelRadius * repelRadius && dist2 > 0.01) {
             const dist = Math.sqrt(dist2)
-            const force = (1 - dist / repelRadius) * repelStrength
-            p.vx += (dx / dist) * force * 8
-            p.vy += (dy / dist) * force * 8
+            // Shatter force: much stronger near the cursor, falls off with distance
+            // Inner zone (0-40% of radius): violent shatter
+            // Outer zone (40-100%): gentle push
+            const normalizedDist = dist / repelRadius
+            const shatterForce =
+              normalizedDist < 0.4
+                ? (1 - normalizedDist / 0.4) * 18 // violent inner shatter
+                : (1 - normalizedDist) * repelStrength * 4 // gentle outer push
+            p.vx += (dx / dist) * shatterForce
+            p.vy += (dy / dist) * shatterForce
+
+            // Shattered particles briefly brighten then fade
+            if (normalizedDist < 0.5) {
+              p.opacity = Math.min(1, p.opacity * 1.5)
+            }
           }
-          // Hover brightness: particles within 1.5x repel radius get brighter
+          // Hover brightness: particles within 1.8x repel radius get brighter
           if (dist2 < (repelRadius * 1.8) * (repelRadius * 1.8)) {
-            p.opacity = Math.min(1, p.opacity * 1.35)
+            p.opacity = Math.min(1, p.opacity * 1.25)
           }
         }
 
-        // Damping
-        p.vx *= 0.82
-        p.vy *= 0.82
+        // Damping — slightly less damping so shatter feels energetic
+        p.vx *= 0.84
+        p.vy *= 0.84
       }
 
       p.x += p.vx

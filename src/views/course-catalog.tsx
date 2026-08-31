@@ -95,7 +95,7 @@ export function CourseCatalogView() {
         {/* ====================================================
             HEADER — editorial, premium
             ==================================================== */}
-        <div className="mb-10 lg:mb-12">
+        <div className="mb-10 lg:mb-8">
           <ScrollReveal>
             <div className="flex items-center gap-2 mb-4">
               <span className="h-1.5 w-1.5 rounded-full bg-violet-400 pulse-dot" />
@@ -122,7 +122,7 @@ export function CourseCatalogView() {
             STATS STRIP — premium solid cards
             ==================================================== */}
         <ScrollReveal delay={0.25}>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10 lg:mb-12">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10 lg:mb-8">
             <StatCard
               icon={BookOpen}
               label="Total Courses"
@@ -159,7 +159,7 @@ export function CourseCatalogView() {
             FILTER BAR — search + 3 selects, all on a solid card
             ==================================================== */}
         <ScrollReveal delay={0.3}>
-          <div className="rounded-2xl border border-border/60 bg-card shadow-lg p-4 sm:p-5 mb-10 lg:mb-12">
+          <div className="rounded-2xl border border-border/60 bg-card shadow-lg p-4 sm:p-5 mb-10 lg:mb-8">
             <div className="flex flex-wrap items-center gap-3">
               <div className="relative flex-1 min-w-[220px]">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

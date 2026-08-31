@@ -62,6 +62,16 @@ export type View =
   | { name: "credentials" }
   | { name: "invoice-generator" }
   | { name: "proposal-maker" }
+  | { name: "admin-lead-crm" }
+  | { name: "admin-batch-calendar" }
+  | { name: "admin-student-progress" }
+  | { name: "admin-revenue" }
+  | { name: "admin-cert-bulk" }
+  | { name: "admin-email-campaign" }
+  | { name: "admin-instructor-assignment" }
+  | { name: "admin-audit-log" }
+  | { name: "admin-platform-health" }
+  | { name: "admin-notifications" }
 
 interface AppState {
   view: View

@@ -12,6 +12,7 @@ import {
   Briefcase, FileText, Mic, Target, Network, Server, Bug, Camera,
   Code2, ShieldAlert, BarChart3, PenLine, Heart, FileEdit,
   FileBadge, ShieldCheck,
+  Calendar, TrendingUp, DollarSign, UserCog, Activity, Mail,
 } from "lucide-react"
 import { useAppStore, type View } from "@/store/app-store"
 import { useUser } from "@/hooks/use-user"
@@ -220,6 +221,106 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
           <FileText className="h-4 w-4 shrink-0" />
           <span className="flex-1 text-left">Proposal Maker</span>
           {view.name === "proposal-maker" && <ChevronRight className="h-3.5 w-3.5" />}
+        </button>
+      ) : null}
+      {user?.role === "ADMIN" ? (
+        <button
+          onClick={() => { navigate({ name: "admin-lead-crm" }); onNavigate?.() }}
+          className={cn("w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group relative border", view.name === "admin-lead-crm" ? "bg-amber-500/10 text-amber-400 border-amber-500/20" : "text-muted-foreground hover:text-foreground hover:bg-accent/50 border-transparent")}
+        >
+          {view.name === "admin-lead-crm" && <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-0.5 bg-amber-400 rounded-r" />}
+          <Users className="h-4 w-4 shrink-0" /><span className="flex-1 text-left">Lead / CRM</span>
+          {view.name === "admin-lead-crm" && <ChevronRight className="h-3.5 w-3.5" />}
+        </button>
+      ) : null}
+      {user?.role === "ADMIN" ? (
+        <button
+          onClick={() => { navigate({ name: "admin-batch-calendar" }); onNavigate?.() }}
+          className={cn("w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group relative border", view.name === "admin-batch-calendar" ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/20" : "text-muted-foreground hover:text-foreground hover:bg-accent/50 border-transparent")}
+        >
+          {view.name === "admin-batch-calendar" && <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-0.5 bg-cyan-400 rounded-r" />}
+          <Calendar className="h-4 w-4 shrink-0" /><span className="flex-1 text-left">Batch Calendar</span>
+          {view.name === "admin-batch-calendar" && <ChevronRight className="h-3.5 w-3.5" />}
+        </button>
+      ) : null}
+      {user?.role === "ADMIN" ? (
+        <button
+          onClick={() => { navigate({ name: "admin-student-progress" }); onNavigate?.() }}
+          className={cn("w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group relative border", view.name === "admin-student-progress" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "text-muted-foreground hover:text-foreground hover:bg-accent/50 border-transparent")}
+        >
+          {view.name === "admin-student-progress" && <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-0.5 bg-emerald-400 rounded-r" />}
+          <TrendingUp className="h-4 w-4 shrink-0" /><span className="flex-1 text-left">Student Progress</span>
+          {view.name === "admin-student-progress" && <ChevronRight className="h-3.5 w-3.5" />}
+        </button>
+      ) : null}
+      {user?.role === "ADMIN" ? (
+        <button
+          onClick={() => { navigate({ name: "admin-revenue" }); onNavigate?.() }}
+          className={cn("w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group relative border", view.name === "admin-revenue" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "text-muted-foreground hover:text-foreground hover:bg-accent/50 border-transparent")}
+        >
+          {view.name === "admin-revenue" && <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-0.5 bg-emerald-400 rounded-r" />}
+          <DollarSign className="h-4 w-4 shrink-0" /><span className="flex-1 text-left">Revenue Analytics</span>
+          {view.name === "admin-revenue" && <ChevronRight className="h-3.5 w-3.5" />}
+        </button>
+      ) : null}
+      {user?.role === "ADMIN" ? (
+        <button
+          onClick={() => { navigate({ name: "admin-cert-bulk" }); onNavigate?.() }}
+          className={cn("w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group relative border", view.name === "admin-cert-bulk" ? "bg-violet-500/10 text-violet-400 border-violet-500/20" : "text-muted-foreground hover:text-foreground hover:bg-accent/50 border-transparent")}
+        >
+          {view.name === "admin-cert-bulk" && <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-0.5 bg-violet-400 rounded-r" />}
+          <Award className="h-4 w-4 shrink-0" /><span className="flex-1 text-left">Bulk Certificates</span>
+          {view.name === "admin-cert-bulk" && <ChevronRight className="h-3.5 w-3.5" />}
+        </button>
+      ) : null}
+      {user?.role === "ADMIN" ? (
+        <button
+          onClick={() => { navigate({ name: "admin-email-campaign" }); onNavigate?.() }}
+          className={cn("w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group relative border", view.name === "admin-email-campaign" ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/20" : "text-muted-foreground hover:text-foreground hover:bg-accent/50 border-transparent")}
+        >
+          {view.name === "admin-email-campaign" && <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-0.5 bg-cyan-400 rounded-r" />}
+          <Mail className="h-4 w-4 shrink-0" /><span className="flex-1 text-left">Email Campaigns</span>
+          {view.name === "admin-email-campaign" && <ChevronRight className="h-3.5 w-3.5" />}
+        </button>
+      ) : null}
+      {user?.role === "ADMIN" ? (
+        <button
+          onClick={() => { navigate({ name: "admin-instructor-assignment" }); onNavigate?.() }}
+          className={cn("w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group relative border", view.name === "admin-instructor-assignment" ? "bg-amber-500/10 text-amber-400 border-amber-500/20" : "text-muted-foreground hover:text-foreground hover:bg-accent/50 border-transparent")}
+        >
+          {view.name === "admin-instructor-assignment" && <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-0.5 bg-amber-400 rounded-r" />}
+          <UserCog className="h-4 w-4 shrink-0" /><span className="flex-1 text-left">Instructor Assign</span>
+          {view.name === "admin-instructor-assignment" && <ChevronRight className="h-3.5 w-3.5" />}
+        </button>
+      ) : null}
+      {user?.role === "ADMIN" ? (
+        <button
+          onClick={() => { navigate({ name: "admin-audit-log" }); onNavigate?.() }}
+          className={cn("w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group relative border", view.name === "admin-audit-log" ? "bg-violet-500/10 text-violet-400 border-violet-500/20" : "text-muted-foreground hover:text-foreground hover:bg-accent/50 border-transparent")}
+        >
+          {view.name === "admin-audit-log" && <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-0.5 bg-violet-400 rounded-r" />}
+          <Shield className="h-4 w-4 shrink-0" /><span className="flex-1 text-left">Audit Logs</span>
+          {view.name === "admin-audit-log" && <ChevronRight className="h-3.5 w-3.5" />}
+        </button>
+      ) : null}
+      {user?.role === "ADMIN" ? (
+        <button
+          onClick={() => { navigate({ name: "admin-platform-health" }); onNavigate?.() }}
+          className={cn("w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group relative border", view.name === "admin-platform-health" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "text-muted-foreground hover:text-foreground hover:bg-accent/50 border-transparent")}
+        >
+          {view.name === "admin-platform-health" && <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-0.5 bg-emerald-400 rounded-r" />}
+          <Activity className="h-4 w-4 shrink-0" /><span className="flex-1 text-left">Platform Health</span>
+          {view.name === "admin-platform-health" && <ChevronRight className="h-3.5 w-3.5" />}
+        </button>
+      ) : null}
+      {user?.role === "ADMIN" ? (
+        <button
+          onClick={() => { navigate({ name: "admin-notifications" }); onNavigate?.() }}
+          className={cn("w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group relative border", view.name === "admin-notifications" ? "bg-amber-500/10 text-amber-400 border-amber-500/20" : "text-muted-foreground hover:text-foreground hover:bg-accent/50 border-transparent")}
+        >
+          {view.name === "admin-notifications" && <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-0.5 bg-amber-400 rounded-r" />}
+          <Bell className="h-4 w-4 shrink-0" /><span className="flex-1 text-left">Notifications</span>
+          {view.name === "admin-notifications" && <ChevronRight className="h-3.5 w-3.5" />}
         </button>
       ) : null}
     </nav>

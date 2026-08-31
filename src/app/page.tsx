@@ -19,6 +19,16 @@ import { ExamsView } from "@/views/exams"
 import { CredentialsView } from "@/views/credentials"
 import { InvoiceGeneratorView } from "@/views/invoice-generator"
 import { ProposalMakerView } from "@/views/proposal-maker"
+import { LeadCrmView } from "@/views/admin-lead-crm"
+import { BatchCalendarView } from "@/views/admin-batch-calendar"
+import { StudentProgressView } from "@/views/admin-student-progress"
+import { RevenueAnalyticsView } from "@/views/admin-revenue"
+import { CertBulkIssuanceView } from "@/views/admin-cert-bulk"
+import { EmailCampaignView } from "@/views/admin-email-campaign"
+import { InstructorAssignmentView } from "@/views/admin-instructor-assignment"
+import { AuditLogView } from "@/views/admin-audit-log"
+import { PlatformHealthView } from "@/views/admin-platform-health"
+import { NotificationCenterView } from "@/views/admin-notifications"
 import { CourseDetailView } from "@/views/course-detail"
 import { LessonView } from "@/views/lesson-view"
 import { MyLearningView } from "@/views/my-learning"
@@ -89,6 +99,16 @@ function ViewRouter() {
       {view.name === "credentials" && <CredentialsView />}
       {view.name === "invoice-generator" && <InvoiceGeneratorView />}
       {view.name === "proposal-maker" && <ProposalMakerView />}
+      {view.name === "admin-lead-crm" && <LeadCrmView />}
+      {view.name === "admin-batch-calendar" && <BatchCalendarView />}
+      {view.name === "admin-student-progress" && <StudentProgressView />}
+      {view.name === "admin-revenue" && <RevenueAnalyticsView />}
+      {view.name === "admin-cert-bulk" && <CertBulkIssuanceView />}
+      {view.name === "admin-email-campaign" && <EmailCampaignView />}
+      {view.name === "admin-instructor-assignment" && <InstructorAssignmentView />}
+      {view.name === "admin-audit-log" && <AuditLogView />}
+      {view.name === "admin-platform-health" && <PlatformHealthView />}
+      {view.name === "admin-notifications" && <NotificationCenterView />}
       {view.name === "course" && <CourseDetailView />}
       {view.name === "lesson" && <LessonView />}
       {view.name === "learning" && <MyLearningView />}

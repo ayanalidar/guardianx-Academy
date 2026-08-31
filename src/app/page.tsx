@@ -9,7 +9,6 @@ import { useAppStore } from "@/store/app-store"
 import { HomeView } from "@/views/home"
 import { ImpactView } from "@/views/impact"
 import { ContactView } from "@/views/contact"
-import { PartnerInstitutionsView } from "@/views/partner-institutions"
 import { InstitutionsSchoolsView } from "@/views/institutions-schools"
 import { InstitutionsCollegesView } from "@/views/institutions-colleges"
 import { InstitutionsUniversitiesView } from "@/views/institutions-universities"
@@ -72,8 +71,8 @@ function ViewRouter() {
       {view.name === "home" && <HomeView />}
       {view.name === "impact" && <ImpactView />}
       {view.name === "contact" && <ContactView />}
-      {view.name === "institutions" && <PartnerInstitutionsView />}
-      {view.name === "institutions-schools" && <InstitutionsSchoolsView />}
+      {/* "institutions" redirects to institutions-schools — no combined page anymore */}
+      {(view.name === "institutions" || view.name === "institutions-schools") && <InstitutionsSchoolsView />}
       {view.name === "institutions-colleges" && <InstitutionsCollegesView />}
       {view.name === "institutions-universities" && <InstitutionsUniversitiesView />}
       {view.name === "dashboard" && <DashboardView />}

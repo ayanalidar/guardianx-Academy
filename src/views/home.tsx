@@ -1369,7 +1369,7 @@ export function HomeView() {
                   variant="outline"
                   size="sm"
                   className="w-full"
-                  onClick={() => navigate({ name: "institutions" })}
+                  onClick={() => navigate(inst.view)}
                   aria-label={`${inst.type} portal login`}
                 >
                   <Lock className="size-3.5 mr-1.5" aria-hidden />
@@ -1382,7 +1382,7 @@ export function HomeView() {
           <div className="mt-6 flex justify-center">
             <Button
               variant="ghost"
-              onClick={() => navigate({ name: "institutions" })}
+              onClick={() => navigate({ name: "institutions-schools" })}
               aria-label="Explore institutions"
             >
               EXPLORE INSTITUTIONS
@@ -1962,6 +1962,7 @@ const INSTITUTION_TYPES = [
     desc: "Comprehensive cyber security programs for school students. Complimentary school management system for MoU partners.",
     color: "text-emerald-300",
     tint: "bg-emerald-500/10",
+    view: { name: "institutions-schools" as const },
   },
   {
     type: "Colleges",
@@ -1969,6 +1970,7 @@ const INSTITUTION_TYPES = [
     desc: "Industry-aligned certification courses integrated into college curriculum with hands-on labs and instructor-led training.",
     color: "text-cyan-300",
     tint: "bg-cyan-500/10",
+    view: { name: "institutions-colleges" as const },
   },
   {
     type: "Universities",
@@ -1976,6 +1978,7 @@ const INSTITUTION_TYPES = [
     desc: "Advanced research-grade cyber security labs, degree integration, and PhD-level coursework for universities.",
     color: "text-violet-300",
     tint: "bg-violet-500/10",
+    view: { name: "institutions-universities" as const },
   },
 ] as const
 

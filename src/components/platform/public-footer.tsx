@@ -50,9 +50,9 @@ export function PublicFooter() {
     {
       title: "INSTITUTIONS",
       links: [
-        { label: "Schools", view: { name: "institutions" as const } },
-        { label: "Colleges", view: { name: "institutions" as const } },
-        { label: "Universities", view: { name: "institutions" as const } },
+        { label: "Schools", view: { name: "institutions-schools" as const } },
+        { label: "Colleges", view: { name: "institutions-colleges" as const } },
+        { label: "Universities", view: { name: "institutions-universities" as const } },
         { label: "Institution Portal", view: { name: "login" as const } },
       ],
     },

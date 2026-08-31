@@ -12,7 +12,13 @@ import crypto from "crypto"
  */
 
 const SECRET =
-  process.env.NEXTAUTH_SECRET || "guardianx-dev-secret-key-change-in-prod-9f7b"
+  process.env.NEXTAUTH_SECRET || (() => {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("FATAL: NEXTAUTH_SECRET not set for parent auth.")
+    }
+    console.warn("WARNING: NEXTAUTH_SECRET not set — using insecure dev fallback for parent auth.")
+    return "dev-only-insecure-parent-secret-" + Date.now()
+  })()
 
 const TOKEN_TTL_MS = 1000 * 60 * 60 * 24 * 7 // 7 days
 

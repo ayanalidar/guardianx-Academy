@@ -1,45 +1,63 @@
 import { NextRequest, NextResponse } from "next/server"
+import { z } from "zod"
 import { db } from "@/lib/db"
 import { sendEmail } from "@/lib/email"
+
+// Rate limiting — prevent spam abuse
+const RATE_LIMIT_WINDOW = 60 * 1000 // 1 minute
+const RATE_LIMIT_MAX = 3 // 3 messages per minute per IP
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now()
+  const entry = rateLimitMap.get(ip)
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW })
+    return true
+  }
+  if (entry.count >= RATE_LIMIT_MAX) return false
+  entry.count++
+  return true
+}
+
+const contactSchema = z.object({
+  name: z.string().min(2).max(100),
+  email: z.string().email().max(255),
+  subject: z.string().min(3).max(200),
+  category: z.string().max(50).optional(),
+  message: z.string().min(10).max(5000),
+})
 
 /**
  * Public contact form endpoint.
  * Saves the message as an EmailLog (type: "notification") and
  * sends a confirmation email back to the submitter.
  *
- * No auth required — this is a public form.
+ * No auth required — this is a public form. Rate limited to prevent abuse.
  */
 export async function POST(req: NextRequest) {
   try {
-    const { name, email, subject, category, message } = await req.json()
-
-    // Basic validation
-    if (!name || !email || !subject || !message) {
+    // Rate limit check
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown"
+    if (!checkRateLimit(ip)) {
       return NextResponse.json(
-        { error: "Please fill in all required fields." },
-        { status: 400 }
+        { error: "Too many messages. Please wait a minute before trying again." },
+        { status: 429 }
       )
     }
 
-    // Email format check
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(email)) {
+    const body = await req.json()
+    const parsed = contactSchema.safeParse(body)
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "Please provide a valid email address." },
+        { error: parsed.error.issues[0]?.message ?? "Invalid input." },
         { status: 400 }
       )
     }
-
-    // Length limits
-    if (name.length > 100 || subject.length > 200 || message.length > 5000) {
-      return NextResponse.json(
-        { error: "One or more fields exceed the maximum length." },
-        { status: 400 }
-      )
-    }
+    const { name, email, subject, category, message } = parsed.data
 
     const validCategories = ["general", "partnership", "courses", "technical", "careers"]
-    const safeCategory = validCategories.includes(category) ? category : "general"
+    const safeCategory = validCategories.includes(category ?? "") ? category : "general"
 
     const fullSubject = `[Contact: ${safeCategory}] ${subject}`
     const fullBody = `Name: ${name}\nEmail: ${email}\nCategory: ${safeCategory}\nSubject: ${subject}\n\nMessage:\n${message}`

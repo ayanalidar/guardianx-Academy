@@ -85,7 +85,15 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   session: { strategy: "jwt" },
-  secret: process.env.NEXTAUTH_SECRET || "guardianx-dev-secret-key-change-in-prod-9f7b",
+  secret: process.env.NEXTAUTH_SECRET || (() => {
+    // In production, NEXTAUTH_SECRET MUST be set. Fail loudly if missing.
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("FATAL: NEXTAUTH_SECRET environment variable is not set. Refusing to start with insecure fallback in production.")
+    }
+    // Dev-only fallback — generated per-session so it's at least unique per restart
+    console.warn("WARNING: NEXTAUTH_SECRET not set — using insecure dev fallback. Set NEXTAUTH_SECRET in production!")
+    return "dev-only-insecure-secret-" + Date.now()
+  })(),
   pages: { signIn: "/" },
   callbacks: {
     async jwt({ token, user }) {
@@ -105,9 +113,7 @@ export const authOptions: NextAuthOptions = {
       return session
     },
   },
-  // Cross-origin session cookies — use "lax" which works in both
-  // same-origin and most preview/iframe environments without requiring
-  // HTTPS. ("none" requires secure:true which breaks localhost HTTP.)
+  // Cookie security — use secure:true in production (HTTPS), false in dev (HTTP)
   cookies: {
     sessionToken: {
       name: `next-auth.session-token`,
@@ -115,7 +121,7 @@ export const authOptions: NextAuthOptions = {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        secure: false,
+        secure: process.env.NODE_ENV === "production",
       },
     },
     csrfToken: {
@@ -124,7 +130,7 @@ export const authOptions: NextAuthOptions = {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        secure: false,
+        secure: process.env.NODE_ENV === "production",
       },
     },
     callbackUrl: {
@@ -132,7 +138,7 @@ export const authOptions: NextAuthOptions = {
       options: {
         sameSite: "lax",
         path: "/",
-        secure: false,
+        secure: process.env.NODE_ENV === "production",
       },
     },
   },

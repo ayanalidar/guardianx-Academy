@@ -400,7 +400,7 @@ function generateVerificationHash(
   certificationId: string,
   issueDate: Date
 ): string {
-  const raw = `${credentialId}|${userId}|${certificationId}|${issueDate.getTime()}|guardianx-cert-secret`
+  const raw = `${credentialId}|${userId}|${certificationId}|${issueDate.getTime()}|${process.env.NEXTAUTH_SECRET || "dev-cert-secret"}`
   let h1 = 0xdeadbeef ^ raw.length
   let h2 = 0x41c6ce57 ^ raw.length
   for (let i = 0; i < raw.length; i++) {

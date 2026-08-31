@@ -50,7 +50,8 @@ const globalForPrisma = globalThis as unknown as {
 export const db =
   globalForPrisma.prisma ??
   new PrismaClient({
-    log: ['query'],
+    // Only log queries in development — never in production (perf + info leak)
+    log: process.env.NODE_ENV === "production" ? ["error", "warn"] : ["query", "error", "warn"],
     ...(datasourceUrl ? { datasourceUrl } : {}),
   })
 

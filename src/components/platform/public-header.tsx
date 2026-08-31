@@ -2,32 +2,186 @@
 
 import * as React from "react"
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion"
-import { Shield, Sun, Moon, Home as HomeIcon, TrendingUp, Mail, LogIn, Building2 } from "lucide-react"
+import {
+  FlaskConical, BookOpen, Route, Trophy, Briefcase, Search, Target,
+  FileText, School, Building, Landmark, ShieldCheck, Award,
+  TrendingUp, Mail, Menu, ChevronDown, Sun, Moon, LogIn,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { useTheme } from "next-themes"
 import { cn } from "@/lib/utils"
-import { useAppStore } from "@/store/app-store"
+import { useAppStore, type View } from "@/store/app-store"
 import { AnimatedLogoMark } from "@/components/platform/animated-logo"
 
-/**
- * PublicHeader — minimal floating navigation.
- * Transforms on scroll: transparent → glass surface → compact.
- */
+/* ============================================================
+   PublicHeader — floating mega-menu navigation
+   ------------------------------------------------------------
+   - Transparent → glass surface → compact on scroll
+   - Hides on scroll-down past 300px, shows on scroll-up
+   - Desktop (lg+): top-level group buttons reveal a shared
+     glass-strong mega panel with 2-column item grid
+   - Mobile: Sheet + Accordion with the same items vertically
+   - Logo (left) → Mega menu (center) → Theme/Login/Hamburger (right)
+   ============================================================ */
+
+type IconType = React.ComponentType<{ className?: string }>
+
+interface MegaMenuItem {
+  icon: IconType
+  title: string
+  description: string
+  view: View
+}
+
+interface MegaMenuGroup {
+  id: string
+  label: string
+  items: MegaMenuItem[]
+}
+
+const MEGA_MENU_GROUPS: MegaMenuGroup[] = [
+  {
+    id: "product",
+    label: "Product",
+    items: [
+      {
+        icon: FlaskConical,
+        title: "Cyber Range",
+        description: "Live virtual targets & hands-on hacking labs",
+        view: { name: "labs" },
+      },
+      {
+        icon: BookOpen,
+        title: "Courses",
+        description: "28+ certification courses — CEH to CISSP",
+        view: { name: "catalog" },
+      },
+      {
+        icon: Route,
+        title: "Learning Paths",
+        description: "Curated tracks from beginner to job-ready",
+        view: { name: "catalog" },
+      },
+      {
+        icon: Trophy,
+        title: "CTF Arena",
+        description: "Compete in capture-the-flag challenges",
+        view: { name: "ctf-platform" },
+      },
+    ],
+  },
+  {
+    id: "career",
+    label: "Career",
+    items: [
+      {
+        icon: Briefcase,
+        title: "Career Center",
+        description: "Plan your path from learner to hire",
+        view: { name: "career-planner" },
+      },
+      {
+        icon: Search,
+        title: "Job Board",
+        description: "Curated cybersecurity job openings",
+        view: { name: "job-board" },
+      },
+      {
+        icon: Target,
+        title: "Skill Assessments",
+        description: "Test your skills against real scenarios",
+        view: { name: "skill-assessments" },
+      },
+      {
+        icon: FileText,
+        title: "Resume Builder",
+        description: "Generate a security-tailored resume",
+        view: { name: "resume-builder" },
+      },
+    ],
+  },
+  {
+    id: "institutions",
+    label: "Institutions",
+    items: [
+      {
+        icon: School,
+        title: "Schools",
+        description: "Bring cyber education to K-12 classrooms",
+        view: { name: "institutions" },
+      },
+      {
+        icon: Building,
+        title: "Colleges",
+        description: "Diploma programs & credit-bearing courses",
+        view: { name: "institutions" },
+      },
+      {
+        icon: Landmark,
+        title: "Universities",
+        description: "Degree-level curricula & research labs",
+        view: { name: "institutions" },
+      },
+    ],
+  },
+  {
+    id: "certifications",
+    label: "Certifications",
+    items: [
+      {
+        icon: ShieldCheck,
+        title: "Verify Certificate",
+        description: "Confirm any GuardianX credential by ID",
+        view: { name: "home" },
+      },
+      {
+        icon: Award,
+        title: "Certificate Templates",
+        description: "Browse industry-recognized cert designs",
+        view: { name: "home" },
+      },
+    ],
+  },
+  {
+    id: "about",
+    label: "About",
+    items: [
+      {
+        icon: TrendingUp,
+        title: "Impact",
+        description: "Outcomes, learner stats & milestones",
+        view: { name: "impact" },
+      },
+      {
+        icon: Mail,
+        title: "Contact",
+        description: "Reach the GuardianX team for anything",
+        view: { name: "contact" },
+      },
+    ],
+  },
+]
+
 export function PublicHeader() {
   const { theme, setTheme } = useTheme()
   const { navigate, view } = useAppStore()
   const [mounted, setMounted] = React.useState(false)
   const [scrolled, setScrolled] = React.useState(false)
   const [hidden, setHidden] = React.useState(false)
+  const [openMenuId, setOpenMenuId] = React.useState<string | null>(null)
+  const [mobileOpen, setMobileOpen] = React.useState(false)
   const { scrollY } = useScroll()
   const lastScroll = React.useRef(0)
+  const closeTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  // Scroll behaviour — preserve from original header
   useMotionValueEvent(scrollY, "change", (latest) => {
     setScrolled(latest > 40)
-    // Hide on scroll down, show on scroll up (after threshold)
     if (latest > 300 && latest > lastScroll.current + 10) {
       setHidden(true)
+      setOpenMenuId(null)
     } else if (latest < lastScroll.current - 10 || latest < 100) {
       setHidden(false)
     }
@@ -36,13 +190,55 @@ export function PublicHeader() {
 
   React.useEffect(() => setMounted(true), [])
 
-  const navItems = [
-    { label: "Home", view: { name: "home" as const }, icon: HomeIcon },
-    { label: "Courses", view: { name: "catalog" as const }, icon: Shield },
-    { label: "Partners", view: { name: "institutions" as const }, icon: Building2 },
-    { label: "Impact", view: { name: "impact" as const }, icon: TrendingUp },
-    { label: "Contact", view: { name: "contact" as const }, icon: Mail },
-  ]
+  // Cleanup close timer on unmount
+  React.useEffect(() => () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current)
+  }, [])
+
+  // Escape closes any open menu
+  React.useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setOpenMenuId(null)
+        setMobileOpen(false)
+      }
+    }
+    window.addEventListener("keydown", handler)
+    return () => window.removeEventListener("keydown", handler)
+  }, [])
+
+  const cancelCloseTimer = React.useCallback(() => {
+    if (closeTimer.current) {
+      clearTimeout(closeTimer.current)
+      closeTimer.current = null
+    }
+  }, [])
+
+  const handleOpenMenu = React.useCallback((id: string) => {
+    cancelCloseTimer()
+    setOpenMenuId(id)
+  }, [cancelCloseTimer])
+
+  const scheduleCloseMenu = React.useCallback(() => {
+    cancelCloseTimer()
+    closeTimer.current = setTimeout(() => setOpenMenuId(null), 120)
+  }, [cancelCloseTimer])
+
+  const handleNavigate = React.useCallback(
+    (v: View) => {
+      navigate(v)
+      setOpenMenuId(null)
+      setMobileOpen(false)
+    },
+    [navigate]
+  )
+
+  const isViewActive = React.useCallback((v: View) => view.name === v.name, [view.name])
+
+  const openGroup = React.useMemo(
+    () => MEGA_MENU_GROUPS.find((g) => g.id === openMenuId) ?? null,
+    [openMenuId]
+  )
 
   return (
     <motion.header
@@ -60,18 +256,20 @@ export function PublicHeader() {
         }}
         transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
         className={cn(
-          "mx-auto flex items-center justify-between transition-all duration-500 px-5 sm:px-6",
+          "relative mx-auto flex items-center justify-between transition-all duration-500 px-5 sm:px-6",
           scrolled
             ? "h-14 rounded-2xl border border-border/60 bg-background/70 backdrop-blur-xl shadow-[0_8px_30px_-12px_rgba(0,0,0,0.5)]"
             : "h-16 rounded-2xl border border-transparent bg-transparent"
         )}
+        onMouseLeave={scheduleCloseMenu}
       >
-        {/* Logo */}
+        {/* ===== Logo (left) ===== */}
         <motion.button
-          onClick={() => navigate({ name: "home" })}
+          onClick={() => handleNavigate({ name: "home" })}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          className="flex items-center gap-1.5 group"
+          className="flex items-center gap-1.5 group shrink-0"
+          aria-label="GuardianX — go to home"
         >
           <AnimatedLogoMark size={32} />
           <div className="text-left">
@@ -81,38 +279,66 @@ export function PublicHeader() {
           </div>
         </motion.button>
 
-        {/* Center nav */}
-        <nav className={cn(
-          "flex items-center gap-1 transition-all",
-          scrolled ? "glass-subtle rounded-full p-0.5" : ""
-        )}>
-          {navItems.map((item) => {
-            const active = view.name === item.view.name
+        {/* ===== Desktop mega-menu nav (center) ===== */}
+        <nav
+          className="hidden lg:flex items-center gap-0.5"
+          aria-label="Primary"
+        >
+          {MEGA_MENU_GROUPS.map((group) => {
+            const isOpen = openMenuId === group.id
+            const anyChildActive = group.items.some((i) => isViewActive(i.view))
+            const highlight = isOpen || anyChildActive
             return (
-              <button
-                key={item.label}
-                onClick={() => navigate(item.view)}
-                className={cn(
-                  "relative px-3 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all flex items-center gap-1.5",
-                  active ? "text-violet-300" : "text-muted-foreground hover:text-foreground"
-                )}
+              <div
+                key={group.id}
+                className="relative"
+                onMouseEnter={() => handleOpenMenu(group.id)}
+                onMouseLeave={scheduleCloseMenu}
               >
-                {active && (
-                  <motion.div
-                    layoutId="nav-pill"
-                    className="absolute inset-0 rounded-full bg-violet-500/10 border border-violet-500/20"
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                <button
+                  type="button"
+                  onClick={() => (isOpen ? setOpenMenuId(null) : handleOpenMenu(group.id))}
+                  aria-expanded={isOpen}
+                  aria-haspopup="true"
+                  className={cn(
+                    "relative px-3 py-1.5 rounded-full text-xs font-medium transition-colors",
+                    "flex items-center gap-1 outline-none focus-visible:ring-2 focus-visible:ring-violet-400/50",
+                    highlight ? "text-violet-300" : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <span className="relative z-10 tracking-wide uppercase">{group.label}</span>
+                  <ChevronDown
+                    className={cn(
+                      "h-3 w-3 relative z-10 transition-transform duration-200",
+                      isOpen ? "rotate-180" : ""
+                    )}
+                    aria-hidden
                   />
-                )}
-                <item.icon className="h-3.5 w-3.5 relative z-10" />
-                <span className="relative z-10 hidden sm:inline">{item.label}</span>
-              </button>
+                  {highlight && (
+                    <span
+                      aria-hidden
+                      className={cn(
+                        "absolute inset-0 rounded-full",
+                        isOpen
+                          ? "bg-violet-500/15 border border-violet-500/30"
+                          : "bg-violet-500/10 border border-violet-500/20"
+                      )}
+                    />
+                  )}
+                  {!isOpen && anyChildActive && (
+                    <span
+                      aria-hidden
+                      className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 h-0.5 w-4 rounded-full bg-violet-400"
+                    />
+                  )}
+                </button>
+              </div>
             )
           })}
         </nav>
 
-        {/* Right actions */}
-        <div className="flex items-center gap-2">
+        {/* ===== Right actions ===== */}
+        <div className="flex items-center gap-2 shrink-0">
           {mounted && (
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -123,11 +349,23 @@ export function PublicHeader() {
             >
               <AnimatePresence mode="wait">
                 {theme === "dark" ? (
-                  <motion.div key="sun" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.2 }}>
+                  <motion.div
+                    key="sun"
+                    initial={{ rotate: -90, opacity: 0 }}
+                    animate={{ rotate: 0, opacity: 1 }}
+                    exit={{ rotate: 90, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
                     <Sun className="h-4 w-4" />
                   </motion.div>
                 ) : (
-                  <motion.div key="moon" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={{ duration: 0.2 }}>
+                  <motion.div
+                    key="moon"
+                    initial={{ rotate: 90, opacity: 0 }}
+                    animate={{ rotate: 0, opacity: 1 }}
+                    exit={{ rotate: -90, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
                     <Moon className="h-4 w-4" />
                   </motion.div>
                 )}
@@ -137,13 +375,164 @@ export function PublicHeader() {
 
           <Button
             size="sm"
-            onClick={() => navigate({ name: "login" })}
-            className="bg-violet-600 hover:bg-violet-500 btn-premium h-8 px-4 text-xs"
+            onClick={() => handleNavigate({ name: "login" })}
+            className="bg-violet-600 hover:bg-violet-500 btn-premium h-8 px-4 text-xs hidden sm:inline-flex"
           >
             <LogIn className="h-3 w-3 mr-1" />
             <span>Login</span>
           </Button>
+
+          {/* Mobile hamburger → Sheet */}
+          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+            <SheetTrigger asChild>
+              <button
+                type="button"
+                className="lg:hidden h-9 w-9 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-all"
+                aria-label="Open navigation menu"
+              >
+                <Menu className="h-5 w-5" />
+              </button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[88vw] sm:w-96 p-0 flex flex-col">
+              <SheetHeader className="px-5 pt-5 pb-3 border-b border-border/60">
+                <div className="flex items-center gap-1.5">
+                  <AnimatedLogoMark size={28} />
+                  <div className="font-bold text-sm leading-none tracking-tight">
+                    Guardian<span className="text-violet-400">X</span>
+                  </div>
+                </div>
+                <SheetTitle className="sr-only">GuardianX navigation menu</SheetTitle>
+              </SheetHeader>
+
+              <div className="flex-1 overflow-y-auto px-2 max-h-[70vh]">
+                <Accordion type="multiple" className="w-full">
+                  {MEGA_MENU_GROUPS.map((group) => (
+                    <AccordionItem key={group.id} value={group.id} className="px-3">
+                      <AccordionTrigger className="text-xs font-semibold uppercase tracking-wide text-foreground hover:no-underline">
+                        {group.label}
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <div className="flex flex-col gap-1 pt-1">
+                          {group.items.map((item) => {
+                            const active = isViewActive(item.view)
+                            return (
+                              <button
+                                key={item.title}
+                                type="button"
+                                onClick={() => handleNavigate(item.view)}
+                                className={cn(
+                                  "flex items-start gap-3 p-2 rounded-lg text-left transition-colors",
+                                  "hover:bg-accent/60",
+                                  active && "bg-violet-500/10"
+                                )}
+                              >
+                                <div className="h-8 w-8 shrink-0 rounded-lg flex items-center justify-center bg-violet-500/10 text-violet-300">
+                                  <item.icon className="h-4 w-4" />
+                                </div>
+                                <div className="min-w-0">
+                                  <div className="text-sm font-semibold leading-tight text-foreground">
+                                    {item.title}
+                                  </div>
+                                  <div className="text-xs text-muted-foreground mt-0.5 leading-snug">
+                                    {item.description}
+                                  </div>
+                                </div>
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              </div>
+
+              <div className="border-t border-border/60 p-4 flex flex-col gap-2">
+                <Button
+                  onClick={() => handleNavigate({ name: "login" })}
+                  className="bg-violet-600 hover:bg-violet-500 btn-premium w-full h-10"
+                >
+                  <LogIn className="h-4 w-4 mr-2" />
+                  Login
+                </Button>
+                <p className="text-[10px] text-muted-foreground text-center">
+                  © {new Date().getFullYear()} GuardianX Academy
+                </p>
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
+
+        {/* ===== Shared mega-menu panel (desktop, absolute) ===== */}
+        <AnimatePresence>
+          {openGroup && (
+            <motion.div
+              key={`mega-${openGroup.id}`}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 8 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className={cn(
+                "absolute left-1/2 -translate-x-1/2 top-full mt-2 z-50",
+                "w-[34rem] max-w-[92vw]",
+                "glass-strong rounded-xl border border-border/60 shadow-xl p-4"
+              )}
+              role="menu"
+              aria-label={`${openGroup.label} menu`}
+              onMouseEnter={cancelCloseTimer}
+              onMouseLeave={scheduleCloseMenu}
+            >
+              {/* group header */}
+              <div className="px-2 pb-2 mb-1 border-b border-border/50">
+                <div className="text-[10px] font-bold uppercase tracking-widest text-violet-300/80">
+                  {openGroup.label}
+                </div>
+              </div>
+
+              <div
+                className={cn(
+                  "grid gap-1",
+                  openGroup.items.length > 2 ? "grid-cols-2" : "grid-cols-1"
+                )}
+              >
+                {openGroup.items.map((item) => {
+                  const active = isViewActive(item.view)
+                  return (
+                    <button
+                      key={item.title}
+                      type="button"
+                      role="menuitem"
+                      onClick={() => handleNavigate(item.view)}
+                      className={cn(
+                        "flex items-start gap-3 p-3 rounded-lg text-left transition-all group/item",
+                        "hover:bg-accent/60",
+                        active && "bg-violet-500/10"
+                      )}
+                    >
+                      <div
+                        className={cn(
+                          "h-9 w-9 shrink-0 rounded-lg flex items-center justify-center",
+                          "bg-violet-500/10 text-violet-300 transition-colors",
+                          "group-hover/item:bg-violet-500/20"
+                        )}
+                      >
+                        <item.icon className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-sm font-semibold leading-tight text-foreground">
+                          {item.title}
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-0.5 leading-snug">
+                          {item.description}
+                        </div>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
     </motion.header>
   )

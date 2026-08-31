@@ -21,25 +21,51 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "GuardianX — Cyber Security LMS & Labs",
+  metadataBase: new URL("https://academy.guardianx.cloud"),
+  title: "GuardianX Academy — Cyber Security Training Operating System",
   description:
-    "Master cyber security certifications (CEH, CCNA, CCNP, RHCSA, WAPT, CISSP, CyberArk PAM) with GuardianX LMS. Study materials, live screen-sharing sessions, and hands-on practice labs.",
+    "Master cybersecurity by actually breaking things. Real cyber range, hands-on labs, certification tracks, CTF arena, and career paths. Learn. Break. Defend. Prove.",
   keywords: [
-    "cyber security",
-    "CEH",
-    "CCNA",
-    "CISSP",
-    "RHCSA",
-    "WAPT",
-    "CyberArk",
-    "PAM",
-    "LMS",
-    "penetration testing",
+    "cybersecurity",
     "ethical hacking",
+    "cyber range",
+    "CTF",
+    "CEH",
+    "CISSP",
+    "OSCP",
+    "penetration testing",
+    "SOC analyst",
+    "security training",
+    "hands-on labs",
   ],
   authors: [{ name: "GuardianX" }],
-  manifest: "/manifest.json",
   applicationName: "GuardianX Academy",
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: "GuardianX Academy — Cyber Security Training Operating System",
+    description:
+      "Master cybersecurity by actually breaking things. Real cyber range, hands-on labs, certification tracks, CTF arena, and career paths. Learn. Break. Defend. Prove.",
+    url: "https://academy.guardianx.cloud",
+    siteName: "GuardianX Academy",
+    type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "GuardianX Academy — Cyber Security Training Operating System",
+    description:
+      "Master cybersecurity by actually breaking things. Real cyber range, hands-on labs, certification tracks, CTF arena, and career paths. Learn. Break. Defend. Prove.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+    },
+  },
   appleWebApp: {
     capable: true,
     title: "GuardianX",
@@ -64,11 +90,6 @@ export const metadata: Metadata = {
       { rel: "mask-icon", url: "/guardianx-logo-v2.png", color: "#7c3aed" },
     ],
   },
-  openGraph: {
-    title: "GuardianX — Cyber Security LMS",
-    description: "Certification courses, live sessions, and hands-on cyber security labs.",
-    type: "website",
-  },
 };
 
 export const viewport: Viewport = {
@@ -91,7 +112,6 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <head>
-        <link rel="manifest" href="/manifest.json" />
         <meta name="application-name" content="GuardianX Academy" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -111,6 +131,12 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${jetbrainsMono.variable} antialiased bg-background text-foreground`}
       >
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-violet-600 focus:text-white focus:rounded-lg focus:shadow-lg"
+        >
+          Skip to main content
+        </a>
         <Providers>{children}</Providers>
         <Toaster />
         <SonnerToaster />

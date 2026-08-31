@@ -46,6 +46,8 @@ export type View =
   | { name: "prerequisites-visualizer" }
   | { name: "lab-snapshots" }
   | { name: "cyber-range" }
+  | { name: "learning-paths" }
+  | { name: "skill-tree" }
   | { name: "bug-bounty" }
   | { name: "parent-portal" }
   | { name: "course-studio" }

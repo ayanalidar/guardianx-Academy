@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import dynamic from "next/dynamic"
 import { AuthScreen } from "@/components/platform/auth-screen"
 import { AppShell } from "@/components/platform/app-shell"
 import { PublicPageShell } from "@/components/platform/public-page-shell"
@@ -30,29 +31,34 @@ import { AssignmentsView } from "@/views/assignments"
 import { MessagingView } from "@/views/messaging"
 import { StudyGroupsView } from "@/views/study-groups"
 import { OfficeHoursView } from "@/views/office-hours"
-// New feature views
+// New feature views (heavy) — lazy-loaded with ssr:false for faster initial page render
 import { AIAssistantView } from "@/views/ai-assistant"
 import { ThreatFeedView } from "@/views/threat-feed"
 import { CodeReviewView } from "@/views/code-review"
 import { CareerPlannerView } from "@/views/career-planner"
 import { JobBoardView } from "@/views/job-board"
-import { MockInterviewView } from "@/views/mock-interview"
-import { ResumeBuilderView } from "@/views/resume-builder"
-import { CTFPlatformView } from "@/views/ctf-platform"
-import { WeeklyChallengesView } from "@/views/weekly-challenges"
-import { TeamMissionsView } from "@/views/team-missions"
-import { LearningAnalyticsView } from "@/views/learning-analytics"
-import { SkillAssessmentsView } from "@/views/skill-assessments"
-import { PrerequisitesVisualizerView } from "@/views/prerequisites-visualizer"
-import { LabSnapshotsView } from "@/views/lab-snapshots"
-import { CyberRangeView } from "@/views/cyber-range"
-import { BugBountyView } from "@/views/bug-bounty"
 import { ParentPortalView } from "@/views/parent-portal"
-import { CourseStudioView } from "@/views/course-studio"
 import { CMSDashboardView } from "@/views/cms-dashboard"
+const MockInterviewView = dynamic(() => import("@/views/mock-interview").then(m => ({ default: m.MockInterviewView })), { ssr: false })
+const ResumeBuilderView = dynamic(() => import("@/views/resume-builder").then(m => ({ default: m.ResumeBuilderView })), { ssr: false })
+const CTFPlatformView = dynamic(() => import("@/views/ctf-platform").then(m => ({ default: m.CTFPlatformView })), { ssr: false })
+const WeeklyChallengesView = dynamic(() => import("@/views/weekly-challenges").then(m => ({ default: m.WeeklyChallengesView })), { ssr: false })
+const TeamMissionsView = dynamic(() => import("@/views/team-missions").then(m => ({ default: m.TeamMissionsView })), { ssr: false })
+const LearningAnalyticsView = dynamic(() => import("@/views/learning-analytics").then(m => ({ default: m.LearningAnalyticsView })), { ssr: false })
+const SkillAssessmentsView = dynamic(() => import("@/views/skill-assessments").then(m => ({ default: m.SkillAssessmentsView })), { ssr: false })
+const PrerequisitesVisualizerView = dynamic(() => import("@/views/prerequisites-visualizer").then(m => ({ default: m.PrerequisitesVisualizerView })), { ssr: false })
+const LabSnapshotsView = dynamic(() => import("@/views/lab-snapshots").then(m => ({ default: m.LabSnapshotsView })), { ssr: false })
+const CyberRangeView = dynamic(() => import("@/views/cyber-range").then(m => ({ default: m.CyberRangeView })), { ssr: false })
+const LearningPathsView = dynamic(() => import("@/views/learning-paths").then(m => ({ default: m.LearningPathsView })), { ssr: false })
+const SkillTreeView = dynamic(() => import("@/views/skill-tree").then(m => ({ default: m.SkillTreeView })), { ssr: false })
+const BugBountyView = dynamic(() => import("@/views/bug-bounty").then(m => ({ default: m.BugBountyView })), { ssr: false })
+const CourseStudioView = dynamic(() => import("@/views/course-studio").then(m => ({ default: m.CourseStudioView })), { ssr: false })
 
 // Public views that show the header + footer (accessible without login)
-const PUBLIC_VIEWS = new Set(["home", "impact", "contact", "institutions", "catalog", "course"])
+const PUBLIC_VIEWS = new Set([
+  "home", "impact", "contact", "institutions", "catalog", "course",
+  "cyber-range", "learning-paths", "skill-tree",
+])
 
 function ViewRouter() {
   const { view } = useAppStore()
@@ -100,6 +106,8 @@ function ViewRouter() {
       {view.name === "prerequisites-visualizer" && <PrerequisitesVisualizerView />}
       {view.name === "lab-snapshots" && <LabSnapshotsView />}
       {view.name === "cyber-range" && <CyberRangeView />}
+      {view.name === "learning-paths" && <LearningPathsView />}
+      {view.name === "skill-tree" && <SkillTreeView />}
       {view.name === "bug-bounty" && <BugBountyView />}
       {view.name === "parent-portal" && <ParentPortalView />}
       {view.name === "course-studio" && <CourseStudioView />}

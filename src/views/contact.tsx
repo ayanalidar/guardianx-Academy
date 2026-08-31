@@ -24,8 +24,8 @@ import { usePageContent, getContent } from "@/lib/use-content"
 
 // ===== REAL contact data =====
 const CONTACT = {
-  email: "hello@academy.guardianx.cloud",
-  emailHref: "mailto:hello@academy.guardianx.cloud",
+  email: "academy@guardianx.in",
+  emailHref: "mailto:academy@guardianx.in",
   phone: "+91-70067-1234-7",
   phoneHref: "tel:+917006712347",
   website: "academy.guardianx.cloud",

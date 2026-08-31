@@ -156,7 +156,7 @@ export function PublicFooter() {
         <div className="mt-10 pt-6 border-t border-border/50 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
             <span className="flex items-center gap-1.5">
-              <Mail className="h-3.5 w-3.5 text-violet-300" /> hello@academy.guardianx.cloud
+              <Mail className="h-3.5 w-3.5 text-violet-300" /> academy@guardianx.in
             </span>
             <span className="flex items-center gap-1.5">
               <MapPin className="h-3.5 w-3.5 text-violet-300" /> Bengaluru, India

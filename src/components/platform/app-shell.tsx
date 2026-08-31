@@ -190,6 +190,38 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
           {view.name === "cms" && <ChevronRight className="h-3.5 w-3.5" />}
         </button>
       ) : null}
+      {user?.role === "ADMIN" ? (
+        <button
+          onClick={() => { navigate({ name: "invoice-generator" }); onNavigate?.() }}
+          className={cn(
+            "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group relative border",
+            view.name === "invoice-generator"
+              ? "bg-violet-500/10 text-violet-400 border-violet-500/20"
+              : "text-muted-foreground hover:text-foreground hover:bg-accent/50 border-transparent"
+          )}
+        >
+          {view.name === "invoice-generator" && <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-0.5 bg-violet-400 rounded-r" />}
+          <FileText className="h-4 w-4 shrink-0" />
+          <span className="flex-1 text-left">Invoice Generator</span>
+          {view.name === "invoice-generator" && <ChevronRight className="h-3.5 w-3.5" />}
+        </button>
+      ) : null}
+      {user?.role === "ADMIN" ? (
+        <button
+          onClick={() => { navigate({ name: "proposal-maker" }); onNavigate?.() }}
+          className={cn(
+            "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group relative border",
+            view.name === "proposal-maker"
+              ? "bg-violet-500/10 text-violet-400 border-violet-500/20"
+              : "text-muted-foreground hover:text-foreground hover:bg-accent/50 border-transparent"
+          )}
+        >
+          {view.name === "proposal-maker" && <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-0.5 bg-violet-400 rounded-r" />}
+          <FileText className="h-4 w-4 shrink-0" />
+          <span className="flex-1 text-left">Proposal Maker</span>
+          {view.name === "proposal-maker" && <ChevronRight className="h-3.5 w-3.5" />}
+        </button>
+      ) : null}
     </nav>
   )
 }

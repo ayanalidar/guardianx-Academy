@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
     // Log to EmailLog table (so admins can see all contact submissions)
     await db.emailLog.create({
       data: {
-        toEmail: "hello@academy.guardianx.cloud",
+        toEmail: "academy@guardianx.in",
         subject: fullSubject,
         body: fullBody,
         type: "notification",

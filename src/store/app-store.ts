@@ -60,6 +60,8 @@ export type View =
   | { name: "exams" }
   | { name: "exam-detail"; examId: string }
   | { name: "credentials" }
+  | { name: "invoice-generator" }
+  | { name: "proposal-maker" }
 
 interface AppState {
   view: View

@@ -17,6 +17,8 @@ import { CourseCatalogView } from "@/views/course-catalog"
 import { BatchesView } from "@/views/batches"
 import { ExamsView } from "@/views/exams"
 import { CredentialsView } from "@/views/credentials"
+import { InvoiceGeneratorView } from "@/views/invoice-generator"
+import { ProposalMakerView } from "@/views/proposal-maker"
 import { CourseDetailView } from "@/views/course-detail"
 import { LessonView } from "@/views/lesson-view"
 import { MyLearningView } from "@/views/my-learning"
@@ -85,6 +87,8 @@ function ViewRouter() {
       {view.name === "batches" && <BatchesView />}
       {view.name === "exams" && <ExamsView />}
       {view.name === "credentials" && <CredentialsView />}
+      {view.name === "invoice-generator" && <InvoiceGeneratorView />}
+      {view.name === "proposal-maker" && <ProposalMakerView />}
       {view.name === "course" && <CourseDetailView />}
       {view.name === "lesson" && <LessonView />}
       {view.name === "learning" && <MyLearningView />}

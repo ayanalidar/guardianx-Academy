@@ -1310,3 +1310,65 @@ Stage Summary:
 - All old decorative effects (particles, shards, scan arc) removed
 - Clean, premium, glossy 3D look with dynamic lighting
 - Committed and pushed to https://github.com/ayanalidar/guardianx-Academy
+
+---
+Task ID: 25
+Agent: main (Z.ai Code orchestrator)
+Task: Build particle-reconstructed logo (DeepSeek-inspired square particle system)
+
+Work Log:
+- User provided extremely detailed spec for a particle logo effect inspired by DeepSeek Harness website
+- Key requirements from spec:
+  * Logo reconstructed entirely from 800-2500 tiny SQUARE particles (not circles)
+  * Particles inherit colors from the actual logo pixels
+  * Assembly animation: scattered → target positions over 1.8-2.8s with staggered timing
+  * Continuous subtle motion (1-3px float, opacity flicker)
+  * Mouse repulsion (soft radius, particles return after cursor passes)
+  * Hover brightness boost + soft glow
+  * Responsive particle counts (mobile 500-900, tablet 900-1500, desktop 1500-2500)
+  * Canvas-based (not DOM elements) for performance
+  * No original logo visible underneath — particles ARE the logo
+  * prefers-reduced-motion support
+  * Pause when tab hidden
+- Created `src/components/platform/particle-logo.tsx`:
+  * Loads logo PNG, draws to offscreen canvas (300px sample resolution)
+  * Reads getImageData, collects non-transparent pixels (alpha > 60) with their RGB colors
+  * Subsamples to target count (650/1100/2000 for mobile/tablet/desktop)
+  * Each particle: square with varying size (1.6-3.8px * DPR), base opacity (0.7-1.0), exact logo color, random delay, noise seed
+  * Particles start scattered in a ring around the logo center (0.55-0.9x radius)
+  * Assembly phase (~2.2s): spring physics toward target (stiffness 0.08, damping 0.82), staggered by random delay (0-1) * 60% of duration, ease-out-cubic opacity fade
+  * Idle phase: perlin-like noise (sin/cos with per-particle seed) for 1-3px float + opacity flicker (0.82-1.0 range)
+  * Mouse repulsion: 80px radius, force = (1 - dist/radius) * 0.6 * 8, particles pushed away then spring back
+  * Hover brightness: particles within 1.8x repel radius get 35% opacity boost
+  * Canvas with DPR scaling (capped at 2), requestAnimationFrame loop
+  * visibilitychange: cancels rAF when tab hidden, resumes when visible
+  * resize handler: debounced 300ms rebuild
+  * prefers-reduced-motion: skips assembly (particles start at target), disables interaction
+  * role="img" aria-label="GuardianX Academy logo"
+  * Soft atmospheric glow (violet/cyan radial gradient, blur 32px) behind canvas
+- Integrated into home.tsx hero:
+  * Desktop: 560px ParticleLogo with interactive=true, showGlow=true (right side of hero)
+  * Mobile/tablet: 300px ParticleLogo with interactive=false (above text)
+- Used animateRef pattern to avoid React hooks immutability lint error (recursive rAF callback)
+- ESLint: 0 errors
+- Verified via agent-browser:
+  * Canvas 560x560 found
+  * 2220 drawn pixels in center 100x100 region (particles actively rendering)
+  * aria-label="GuardianX Academy logo" present
+  * Page title correct
+- VLM visual analysis confirmed:
+  * "logo made of small square particles — Yes"
+  * "recognizable — forms a shield with an X inside"
+  * "futuristic, tech-oriented, digital aesthetic"
+  * "blue and cyan colors" (matching original logo)
+  * "particle system simulation with pixelated digital texture"
+- Pushed to GitHub (commit d65eb64)
+
+Stage Summary:
+- Particle-reconstructed logo is LIVE on the hero section
+- Logo is made entirely from ~2000 square particles (desktop) / ~650 (mobile)
+- Assembly animation: particles scatter in from a ring → form the logo over ~2.2s
+- Continuous subtle motion: floating + opacity flicker
+- Mouse interaction: repulsion + brightness boost on hover
+- All accessibility and performance requirements met
+- VLM-verified: recognizable shield+X shape, blue/cyan colors, futuristic aesthetic

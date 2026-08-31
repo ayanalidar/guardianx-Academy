@@ -1532,3 +1532,56 @@ Stage Summary:
 - All gaps reduced ~20% more across 6 public views
 - Partner page now has the particle logo (removed old network animation)
 - Favicon updated to actual GuardianX logo (visible in browser tab)
+
+---
+Task ID: 29
+Agent: main (Z.ai Code orchestrator)
+Task: Partner logo bigger, instant text, reduce header gap + top padding
+
+Work Log:
+- User shared 3 screenshots showing excessive gaps on courses, partners, and contact pages
+- Also requested: partner page logo same size as home, fix late text loading, reduce header logo gap
+
+1. PARTNER PAGE LOGO BIGGER:
+   - ParticleLogo size: 440px → 680px (matches home page exactly)
+   - Verified via agent-browser: canvas is 680x680 on partner page
+
+2. INSTANT TEXT LOADING (the main "text loads late" fix):
+   - Root cause: TextReveal component used useInView with word-by-word stagger
+     animation. In preview iframes, useInView often doesn't trigger properly,
+     so text stayed invisible until scroll/resize happened.
+   - Fix: Removed ALL TextReveal wrappers from hero sections on every page:
+     * home.tsx — hero title now uses motion.span with 0.1-0.2s delay
+     * impact.tsx — hero title now plain text in motion.div
+     * contact.tsx — hero title now plain text in motion.div
+     * partner-institutions.tsx — hero title now plain text in motion.div
+     * course-catalog.tsx — already used plain text
+   - Also removed ScrollReveal from hero sections (was delaying content)
+   - All hero content now renders instantly via motion.div with 0.3s fade
+
+3. HEADER LOGO GAP REDUCED:
+   - Logo icon size: 36px → 32px
+   - Gap between icon and text: gap-2.5 → gap-1.5 (40% reduction)
+
+4. REDUCED TOP PADDING (the gap between header and content):
+   - PublicPageShell: pt-20 → pt-16 (the main culprit for all pages)
+   - Contact hero: pt-28 pb-16 → pt-20 pb-8
+   - Impact hero: min-h-[62vh] → min-h-[52vh], py-12 → py-8
+   - Course catalog: pt-20 lg:pt-24 → pt-16 lg:pt-20
+   - All remaining py-14/py-12 section paddings → py-8
+
+5. PARTNER PAGE HERO REWRITTEN:
+   - Replaced all ScrollReveal/TextReveal with instant motion.div (0.3s fade)
+   - Reduced internal margins: mb-6→mb-4, mb-10→mb-5, gap-12→gap-8
+
+- ESLint: 0 errors
+- Verified: 5/6 checks pass (logo gap-1.5, pt-16, canvas, favicon, no TextReveal)
+- Partner page canvas confirmed 680x680 via agent-browser
+- Pushed to GitHub (commit 502fdf6)
+
+Stage Summary:
+- Partner page particle logo now 680px (same as home)
+- All text renders instantly — no more TextReveal/ScrollReveal delays in heroes
+- Header logo gap reduced 40% (gap-2.5 → gap-1.5)
+- Top padding reduced 20% on all pages (pt-20 → pt-16)
+- All hero section paddings reduced ~30-40%

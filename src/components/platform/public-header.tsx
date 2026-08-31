@@ -6,7 +6,7 @@ import {
   FlaskConical, BookOpen, Route, Trophy, Briefcase, Search, Target,
   FileText, School, Building, Landmark, ShieldCheck, Award,
   TrendingUp, Mail, Menu, ChevronDown, Sun, Moon, LogIn,
-  CalendarCheck, Terminal, Shield,
+  CalendarCheck, Terminal, Shield, FileBadge,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet"
@@ -71,6 +71,12 @@ const MEGA_MENU_GROUPS: MegaMenuGroup[] = [
         description: "Map your cybersecurity skills",
         view: { name: "skill-tree" },
       },
+      {
+        icon: ShieldCheck,
+        title: "Proctored Exams",
+        description: "Identity-verified certification exams",
+        view: { name: "exams" },
+      },
     ],
   },
   {
@@ -130,6 +136,12 @@ const MEGA_MENU_GROUPS: MegaMenuGroup[] = [
         title: "Resume Builder",
         description: "Generate a security-tailored resume",
         view: { name: "resume-builder" },
+      },
+      {
+        icon: FileBadge,
+        title: "GuardianX Certifications",
+        description: "Your verifiable proctored credentials",
+        view: { name: "credentials" },
       },
     ],
   },

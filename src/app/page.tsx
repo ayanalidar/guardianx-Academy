@@ -15,6 +15,8 @@ import { InstitutionsUniversitiesView } from "@/views/institutions-universities"
 import { DashboardView } from "@/views/dashboard"
 import { CourseCatalogView } from "@/views/course-catalog"
 import { BatchesView } from "@/views/batches"
+import { ExamsView } from "@/views/exams"
+import { CredentialsView } from "@/views/credentials"
 import { CourseDetailView } from "@/views/course-detail"
 import { LessonView } from "@/views/lesson-view"
 import { MyLearningView } from "@/views/my-learning"
@@ -56,12 +58,14 @@ const LearningPathsView = dynamic(() => import("@/views/learning-paths").then(m 
 const SkillTreeView = dynamic(() => import("@/views/skill-tree").then(m => ({ default: m.SkillTreeView })), { ssr: false })
 const BugBountyView = dynamic(() => import("@/views/bug-bounty").then(m => ({ default: m.BugBountyView })), { ssr: false })
 const CourseStudioView = dynamic(() => import("@/views/course-studio").then(m => ({ default: m.CourseStudioView })), { ssr: false })
+const ExamDetailView = dynamic(() => import("@/views/exam-detail").then(m => ({ default: m.ExamDetailView })), { ssr: false })
 
 // Public views that show the header + footer (accessible without login)
 const PUBLIC_VIEWS = new Set([
   "home", "impact", "contact", "institutions", "institutions-schools",
   "institutions-colleges", "institutions-universities",
   "catalog", "batches", "course", "cyber-range", "learning-paths", "skill-tree",
+  "exams", "credentials",
 ])
 
 function ViewRouter() {
@@ -79,6 +83,8 @@ function ViewRouter() {
       {view.name === "dashboard" && <DashboardView />}
       {view.name === "catalog" && <CourseCatalogView />}
       {view.name === "batches" && <BatchesView />}
+      {view.name === "exams" && <ExamsView />}
+      {view.name === "credentials" && <CredentialsView />}
       {view.name === "course" && <CourseDetailView />}
       {view.name === "lesson" && <LessonView />}
       {view.name === "learning" && <MyLearningView />}
@@ -120,6 +126,8 @@ function ViewRouter() {
       {view.name === "parent-portal" && <ParentPortalView />}
       {view.name === "course-studio" && <CourseStudioView />}
       {view.name === "cms" && <CMSDashboardView />}
+      {/* Exam platform */}
+      {view.name === "exam-detail" && <ExamDetailView />}
     </div>
   )
 }

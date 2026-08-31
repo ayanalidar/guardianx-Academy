@@ -56,6 +56,10 @@ export type View =
   | { name: "parent-portal" }
   | { name: "course-studio" }
   | { name: "cms" }
+  // Exam platform
+  | { name: "exams" }
+  | { name: "exam-detail"; examId: string }
+  | { name: "credentials" }
 
 interface AppState {
   view: View

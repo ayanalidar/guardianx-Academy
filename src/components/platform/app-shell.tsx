@@ -11,6 +11,7 @@ import {
   ClipboardList, MessageSquare, UsersRound, CalendarClock, Building2,
   Briefcase, FileText, Mic, Target, Network, Server, Bug, Camera,
   Code2, ShieldAlert, BarChart3, PenLine, Heart, FileEdit,
+  FileBadge, ShieldCheck,
 } from "lucide-react"
 import { useAppStore, type View } from "@/store/app-store"
 import { useUser } from "@/hooks/use-user"
@@ -66,6 +67,8 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Achievements", icon: Award, view: { name: "achievements" } },
   { label: "Leaderboards", icon: Crown, view: { name: "leaderboard" } },
   { label: "Certificates", icon: Award, view: { name: "certificates" } },
+  { label: "Proctored Exams", icon: ShieldCheck, view: { name: "exams" } },
+  { label: "GuardianX Credentials", icon: FileBadge, view: { name: "credentials" } },
   { label: "Community", icon: Users, view: { name: "community" } },
   { label: "Parent Portal", icon: Heart, view: { name: "parent-portal" } },
   { label: "Course Studio", icon: PenLine, view: { name: "course-studio" } },

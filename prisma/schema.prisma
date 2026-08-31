@@ -1330,3 +1330,130 @@ model TechnologyPartner {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+// ============================================================
+// EXAM PLATFORM — Proctored examinations and GuardianX certs
+// ============================================================
+
+/// GuardianX certification — distinct from external certifications
+model GuardianCertification {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  description String?
+  level       String   @default("Intermediate") // Beginner | Intermediate | Advanced | Expert
+  domains     String   @default("[]") // JSON array of domain names
+  skills      String   @default("[]") // JSON array of skills assessed
+  examId      String?  // linked exam
+  passingScore Int     @default(70)
+  validityPeriod Int   @default(36) // months
+  icon        String   @default("Award")
+  color       String   @default("text-violet-300")
+  published   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  credentials GuardianCredential[]
+}
+
+/// Exam blueprint — configurable exam template
+model Exam {
+  id            String   @id @default(cuid())
+  slug          String   @unique
+  title         String
+  description   String?
+  certificationId String? // linked GuardianCertification
+  duration      Int      @default(120) // minutes
+  passingScore  Int      @default(70)
+  maxAttempts   Int      @default(3)
+  questionCount Int      @default(50)
+  sections      String   @default("[]") // JSON: [{title, questionCount, domains}]
+  questionType  String   @default("mcq") // mcq | multiple | truefalse | scenario | practical | hybrid
+  proctoringEnabled Boolean @default(true)
+  shuffleQuestions Boolean @default(true)
+  shuffleOptions  Boolean @default(true)
+  status        String   @default("draft") // draft | published | archived
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  attempts      ExamAttempt[]
+  questions     QuestionBank[]
+}
+
+/// Question bank — tagged by domain, skill, difficulty
+model QuestionBank {
+  id            String   @id @default(cuid())
+  examId        String?
+  exam          Exam?    @relation(fields: [examId], references: [id])
+  type          String   @default("mcq") // mcq | multiple | truefalse | scenario | practical
+  domain        String   // e.g. "Web Security", "Network Security", "GRC", "DFIR"
+  skill         String?
+  difficulty    String   @default("medium") // easy | medium | hard
+  question      String
+  options       String   @default("[]") // JSON array of option strings
+  correctAnswer String   // JSON: index for mcq, array for multiple, "true"/"false" for boolean
+  explanation   String?
+  points        Int      @default(1)
+  tags          String   @default("[]") // JSON array
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+/// Exam attempt — a learner's attempt at an exam
+model ExamAttempt {
+  id            String   @id @default(cuid())
+  examId        String
+  exam          Exam     @relation(fields: [examId], references: [id])
+  userId        String
+  status        String   @default("scheduled") // scheduled | in-progress | submitted | graded | passed | failed | voided
+  startedAt     DateTime?
+  submittedAt   DateTime?
+  score         Int?     // percentage
+  totalQuestions Int?
+  correctAnswers Int?
+  answers       String   @default("[]") // JSON: [{questionId, selected, correct}]
+  proctorFlags  String   @default("[]") // JSON: [{type, timestamp, detail}]
+  timeSpent     Int?     // seconds
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+/// GuardianX credential — issued when a learner passes an exam
+model GuardianCredential {
+  id              String   @id @default(cuid())
+  credentialId    String   @unique // GX-CERT-YYYY-XXXX format
+  userId          String
+  certificationId String
+  certification   GuardianCertification @relation(fields: [certificationId], references: [id])
+  examAttemptId   String?
+  candidateName   String
+  score           Int
+  skillsAssessed  String   @default("[]") // JSON array
+  examType        String   @default("proctored")
+  issueDate       DateTime @default(now())
+  expiryDate      DateTime?
+  status          String   @default("valid") // valid | expired | revoked | suspended
+  verificationHash String  @unique
+  verificationUrl String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+/// Proctoring session — records proctoring data for an exam attempt
+model ProctoringSession {
+  id            String   @id @default(cuid())
+  examAttemptId String   @unique
+  userId        String
+  identityVerified Boolean @default(false)
+  environmentChecked Boolean @default(false)
+  cameraEnabled Boolean  @default(false)
+  microphoneEnabled Boolean @default(false)
+  screenShared  Boolean  @default(false)
+  fullscreenMode Boolean @default(false)
+  tabSwitches   Int      @default(0)
+  windowBlurs   Int      @default(0)
+  flags         String   @default("[]") // JSON: [{type, timestamp, severity, detail}]
+  incidentCount Int      @default(0)
+  recordingUrl  String?
+  startedAt     DateTime @default(now())
+  endedAt       DateTime?
+  createdAt     DateTime @default(now())
+}

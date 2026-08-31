@@ -20,6 +20,7 @@ import {
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import { ScrollReveal, Stagger, StaggerItem, TextReveal, MagneticButton, CursorGlow } from "@/components/platform/motion-system"
+import { usePageContent, getContent } from "@/lib/use-content"
 
 // ===== REAL contact data =====
 const CONTACT = {
@@ -131,6 +132,29 @@ export function ContactView() {
   const [message, setMessage] = React.useState("")
   const [submitted, setSubmitted] = React.useState(false)
 
+  // CMS-driven hero + form copy — falls back to defaults.
+  const cms = usePageContent("contact")
+  const cmsData = cms.data
+  const heroBadge = getContent(cmsData, "hero", "badge", "CONTACT US")
+  const heroTitle = getContent(cmsData, "hero", "title", "Let's build a")
+  const heroTitleAccent = getContent(cmsData, "hero", "titleAccent", "safer world together")
+  const heroDesc = getContent(cmsData, "hero", "description", "Have questions about courses, partnerships, or anything else? We'd love to hear from you — our team responds fast.")
+  const formTitle = getContent(cmsData, "formFields", "title", "Send us a message")
+  const formSubtitle = getContent(cmsData, "formFields", "subtitle", "Fill out the form and our team will respond within 24 hours.")
+  const nameLabel = getContent(cmsData, "formFields", "nameLabel", "Full Name")
+  const namePlaceholder = getContent(cmsData, "formFields", "namePlaceholder", "Jane Doe")
+  const emailLabel = getContent(cmsData, "formFields", "emailLabel", "Email")
+  const emailPlaceholder = getContent(cmsData, "formFields", "emailPlaceholder", "jane@example.com")
+  const categoryLabel = getContent(cmsData, "formFields", "categoryLabel", "Category")
+  const subjectLabel = getContent(cmsData, "formFields", "subjectLabel", "Subject")
+  const subjectPlaceholder = getContent(cmsData, "formFields", "subjectPlaceholder", "How can we help?")
+  const messageLabel = getContent(cmsData, "formFields", "messageLabel", "Message")
+  const messagePlaceholder = getContent(cmsData, "formFields", "messagePlaceholder", "Tell us more about what you need...")
+  const submitCta = getContent(cmsData, "formFields", "submitCta", "Send Message")
+  const successTitle = getContent(cmsData, "formFields", "successTitle", "Message sent!")
+  const successDesc = getContent(cmsData, "formFields", "successDesc", "Thanks for reaching out. We'll get back to you at the email you provided.")
+  const successCta = getContent(cmsData, "formFields", "successCta", "Send another message")
+
   const mutation = useMutation({
     mutationFn: () =>
       api("/api/contact", {
@@ -167,17 +191,17 @@ export function ContactView() {
             transition={{ duration: 0.6 }}
           >
             <Badge variant="outline" className="mb-6 border-cyan-500/20 text-cyan-300 bg-cyan-500/5">
-              <MessageSquare className="h-3 w-3 mr-1" /> CONTACT US
+              <MessageSquare className="h-3 w-3 mr-1" /> {heroBadge}
             </Badge>
             <h1 className="text-[clamp(2.25rem,5vw,3.75rem)] font-bold leading-[1.05] tracking-[-0.02em] mb-5 text-balance">
-              <TextReveal text="Let's build a" />
+              <TextReveal text={heroTitle} />
               <br />
               <span className="text-gradient-premium">
-                <TextReveal text="safer world together" delay={0.3} />
+                <TextReveal text={heroTitleAccent} delay={0.3} />
               </span>
             </h1>
             <p className="text-base lg:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              Have questions about courses, partnerships, or anything else? We&apos;d love to hear from you — our team responds fast.
+              {heroDesc}
             </p>
           </motion.div>
         </div>
@@ -220,9 +244,9 @@ export function ContactView() {
             {/* ---- LEFT: Contact Form (solid card) ---- */}
             <ScrollReveal>
               <Card className="bg-card shadow-lg border border-border p-6 sm:p-8 lg:p-10">
-                <h2 className="text-2xl font-bold tracking-tight mb-2">Send us a message</h2>
+                <h2 className="text-2xl font-bold tracking-tight mb-2">{formTitle}</h2>
                 <p className="text-sm text-muted-foreground mb-8">
-                  Fill out the form and our team will respond within 24 hours.
+                  {formSubtitle}
                 </p>
 
                 {submitted ? (
@@ -239,12 +263,12 @@ export function ContactView() {
                     >
                       <CheckCircle2 className="h-10 w-10 text-violet-300" />
                     </motion.div>
-                    <h3 className="text-xl font-bold mb-2">Message sent!</h3>
+                    <h3 className="text-xl font-bold mb-2">{successTitle}</h3>
                     <p className="text-sm text-muted-foreground mb-6 max-w-sm mx-auto">
-                      Thanks for reaching out. We&apos;ll get back to you at the email you provided.
+                      {successDesc}
                     </p>
                     <Button variant="outline" onClick={() => setSubmitted(false)}>
-                      Send another message
+                      {successCta}
                     </Button>
                   </motion.div>
                 ) : (
@@ -257,30 +281,30 @@ export function ContactView() {
                   >
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="c-name">Full Name</Label>
+                        <Label htmlFor="c-name">{nameLabel}</Label>
                         <Input
                           id="c-name"
                           value={name}
                           onChange={(e) => setName(e.target.value)}
-                          placeholder="Jane Doe"
+                          placeholder={namePlaceholder}
                           required
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="c-email">Email</Label>
+                        <Label htmlFor="c-email">{emailLabel}</Label>
                         <Input
                           id="c-email"
                           type="email"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
-                          placeholder="jane@example.com"
+                          placeholder={emailPlaceholder}
                           required
                         />
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <Label>Category</Label>
+                      <Label>{categoryLabel}</Label>
                       <Select value={category} onValueChange={setCategory}>
                         <SelectTrigger>
                           <SelectValue />
@@ -298,23 +322,23 @@ export function ContactView() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="c-subject">Subject</Label>
+                      <Label htmlFor="c-subject">{subjectLabel}</Label>
                       <Input
                         id="c-subject"
                         value={subject}
                         onChange={(e) => setSubject(e.target.value)}
-                        placeholder="How can we help?"
+                        placeholder={subjectPlaceholder}
                         required
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="c-message">Message</Label>
+                      <Label htmlFor="c-message">{messageLabel}</Label>
                       <Textarea
                         id="c-message"
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
-                        placeholder="Tell us more about what you need..."
+                        placeholder={messagePlaceholder}
                         rows={5}
                         required
                         className="resize-none"
@@ -333,7 +357,7 @@ export function ContactView() {
                           </>
                         ) : (
                           <>
-                            <Send className="h-4 w-4 mr-2" /> Send Message
+                            <Send className="h-4 w-4 mr-2" /> {submitCta}
                           </>
                         )}
                       </Button>

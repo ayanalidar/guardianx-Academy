@@ -17,13 +17,20 @@ export function ServiceWorkerRegister() {
   React.useEffect(() => {
     if (typeof window === "undefined") return
     if (!("serviceWorker" in navigator)) return
+    // Disable SW registration in dev mode to prevent caching issues
+    // and reduce memory pressure during development.
+    if (process.env.NODE_ENV === "development") {
+      // Unregister any existing SWs in dev
+      navigator.serviceWorker.getRegistrations().then(regs => {
+        regs.forEach(r => r.unregister().catch(() => undefined))
+      }).catch(() => undefined)
+      return
+    }
 
     let refreshing = false
     const onControllerChange = () => {
       if (refreshing) return
       refreshing = true
-      // A new SW has taken control — reload once so the page picks up
-      // the new precached shell.
       window.location.reload()
     }
     navigator.serviceWorker.addEventListener("controllerchange", onControllerChange)
@@ -31,24 +38,20 @@ export function ServiceWorkerRegister() {
     const register = async () => {
       try {
         const reg = await navigator.serviceWorker.register("/sw.js", { scope: "/" })
-        // Listen for updates
         reg.addEventListener("updatefound", () => {
           const newWorker = reg.installing
           if (!newWorker) return
           newWorker.addEventListener("statechange", () => {
             if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
-              // New version available — let it activate immediately
               newWorker.postMessage?.({ type: "SKIP_WAITING" })
             }
           })
         })
-        // Periodically check for updates (every 60 min)
         const interval = setInterval(() => {
           reg.update().catch(() => undefined)
         }, 60 * 60 * 1000)
         return () => clearInterval(interval)
       } catch (err) {
-        // SW registration failure is non-fatal — app still works online
         console.warn("[GuardianX PWA] Service worker registration failed:", err)
       }
     }

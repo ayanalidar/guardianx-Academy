@@ -1182,3 +1182,20 @@ model AuthoredCourse {
 
 // Update User model with new relations
 // Note: These are added at the end to avoid circular reference issues
+
+// --- 22. CMS (Content Management System) ---
+// SiteContent stores editable copy for every public-facing page so admins
+// can change text/copy/arrays/objects without redeploying. Pages read the
+// public GET /api/cms/[page] endpoint to render.
+model SiteContent {
+  id        String   @id @default(cuid())
+  page      String   // e.g. "home", "impact", "contact", "institutions", "catalog", "course-detail", "auth", "global"
+  section   String   // e.g. "hero", "stats", "audiences", "courses", "labs", "corporate", "partners", "benefits", "finalCta", "header", "footer", "trust"
+  key       String   // e.g. "title", "subtitle", "description", "ctaPrimary", "stats", "items", "body"
+  value     Json     // can be string | string[] | {title, desc, icon}[] | object
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+
+  @@unique([page, section, key])
+  @@index([page, section])
+}

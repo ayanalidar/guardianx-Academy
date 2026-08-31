@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { useTheme } from "next-themes"
 import { cn } from "@/lib/utils"
 import { useAppStore } from "@/store/app-store"
+import { AnimatedLogoMark } from "@/components/platform/animated-logo"
 
 /**
  * PublicHeader — minimal floating navigation.
@@ -72,11 +73,7 @@ export function PublicHeader() {
           whileTap={{ scale: 0.98 }}
           className="flex items-center gap-2.5 group"
         >
-          <div className="relative">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-violet-500/30 bg-violet-500/10 transition-all group-hover:border-violet-500/60 group-hover:shadow-[0_0_20px_-4px] group-hover:shadow-violet-500/40">
-              <Shield className="h-4 w-4 text-violet-300" strokeWidth={1.8} />
-            </div>
-          </div>
+          <AnimatedLogoMark size={36} />
           <div className="text-left">
             <div className="font-bold text-sm leading-none tracking-tight">
               Guardian<span className="text-violet-400">X</span>

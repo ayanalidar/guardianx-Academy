@@ -18,6 +18,7 @@ import {
   ScrollReveal, Stagger, StaggerItem, TextReveal,
   MagneticButton, Counter, CursorGlow,
 } from "@/components/platform/motion-system"
+import { usePageContent, getContent, getContentArray } from "@/lib/use-content"
 
 /* ============================================================
    DATA
@@ -163,6 +164,26 @@ export function ImpactView() {
   })
   const heroY = useTransform(scrollYProgress, [0, 1], [0, -80])
 
+  // CMS-driven hero copy — falls back to defaults if CMS data missing.
+  const cms = usePageContent("impact")
+  const cmsData = cms.data
+  const heroBadge = getContent(cmsData, "hero", "badge", "OUR IMPACT")
+  const heroTitle = getContent(cmsData, "hero", "title", "Transforming careers,")
+  const heroTitleAccent = getContent(cmsData, "hero", "titleAccent", "securing the future.")
+  const heroDesc = getContent(cmsData, "hero", "description", "Every number tells a story — a learner who leveled up their career, an institution that transformed its curriculum, and a community quietly making the digital world safer.")
+  const statsEyebrow = getContent(cmsData, "stats", "eyebrow", "BY THE NUMBERS")
+  const statsTitle = getContent(cmsData, "stats", "title", "Scale that creates real opportunity")
+  const outcomesEyebrow = getContent(cmsData, "outcomes", "eyebrow", "CAREER OUTCOMES")
+  const outcomesTitle = getContent(cmsData, "outcomes", "title", "Real results, real careers")
+  const outcomesDesc = getContent(cmsData, "outcomes", "description", "Measured impact on our learners' professional trajectories, tracked 6–12 months post-certification.")
+  const storiesEyebrow = getContent(cmsData, "stories", "eyebrow", "SUCCESS STORIES")
+  const storiesTitle = getContent(cmsData, "stories", "title", "Learners who became guardians")
+  const storiesDesc = getContent(cmsData, "stories", "description", "Real journeys from our community — verified by their certificates.")
+  const missionEyebrow = getContent(cmsData, "mission", "eyebrow", "PARTNER INSTITUTIONS")
+  const missionTitle = getContent(cmsData, "mission", "title", "Educating the next generation")
+  const missionDesc = getContent(cmsData, "mission", "description", "We partner with schools, colleges, and universities to bring cyber security education to their students — verified curricula, shared labs, and joint certifications.")
+  const missionCta = getContent(cmsData, "mission", "cta", "Become a Partner")
+
   return (
     <div ref={containerRef} className="relative">
       {/* ===== HERO ===== */}
@@ -184,26 +205,24 @@ export function ImpactView() {
               variant="outline"
               className="mb-6 border-violet-500/30 text-violet-300 bg-violet-500/5 backdrop-blur"
             >
-              <Heart className="h-3 w-3 mr-1.5" /> OUR IMPACT
+              <Heart className="h-3 w-3 mr-1.5" /> {heroBadge}
             </Badge>
 
             <h1
               className="font-bold tracking-tight text-balance mb-6"
               style={{ fontSize: "clamp(2.25rem, 6vw, 3.5rem)", lineHeight: 1.05 }}
             >
-              <TextReveal text="Transforming careers," />
+              <TextReveal text={heroTitle} />
               <br />
               <TextReveal
-                text="securing the future."
+                text={heroTitleAccent}
                 delay={0.35}
                 className="text-gradient-premium"
               />
             </h1>
 
             <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              Every number tells a story — a learner who leveled up their career,
-              an institution that transformed its curriculum, and a community
-              quietly making the digital world safer.
+              {heroDesc}
             </p>
 
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3 text-xs text-muted-foreground">
@@ -229,13 +248,13 @@ export function ImpactView() {
               variant="outline"
               className="mb-3 border-violet-500/20 text-violet-300 bg-violet-500/5"
             >
-              <Sparkles className="h-3 w-3 mr-1.5" /> BY THE NUMBERS
+              <Sparkles className="h-3 w-3 mr-1.5" /> {statsEyebrow}
             </Badge>
             <h2
               className="font-semibold tracking-tight text-balance"
               style={{ fontSize: "clamp(1.75rem, 4vw, 2.5rem)" }}
             >
-              Scale that creates real opportunity
+              {statsTitle}
             </h2>
           </ScrollReveal>
 
@@ -279,17 +298,16 @@ export function ImpactView() {
               variant="outline"
               className="mb-3 border-violet-500/20 text-violet-300 bg-violet-500/5"
             >
-              <TrendingUp className="h-3 w-3 mr-1.5" /> CAREER OUTCOMES
+              <TrendingUp className="h-3 w-3 mr-1.5" /> {outcomesEyebrow}
             </Badge>
             <h2
               className="font-semibold tracking-tight text-balance mb-3"
               style={{ fontSize: "clamp(1.75rem, 4vw, 2.5rem)" }}
             >
-              Real results, real careers
+              {outcomesTitle}
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto text-base sm:text-lg">
-              Measured impact on our learners&apos; professional trajectories,
-              tracked 6–12 months post-certification.
+              {outcomesDesc}
             </p>
           </ScrollReveal>
 
@@ -333,16 +351,16 @@ export function ImpactView() {
               variant="outline"
               className="mb-3 border-amber-500/20 text-amber-300 bg-amber-500/5"
             >
-              <Star className="h-3 w-3 mr-1.5" /> SUCCESS STORIES
+              <Star className="h-3 w-3 mr-1.5" /> {storiesEyebrow}
             </Badge>
             <h2
               className="font-semibold tracking-tight text-balance mb-3"
               style={{ fontSize: "clamp(1.75rem, 4vw, 2.5rem)" }}
             >
-              Learners who became guardians
+              {storiesTitle}
             </h2>
             <p className="text-muted-foreground text-base sm:text-lg">
-              Real journeys from our community — verified by their certificates.
+              {storiesDesc}
             </p>
           </ScrollReveal>
 
@@ -404,18 +422,16 @@ export function ImpactView() {
               variant="outline"
               className="mb-3 border-cyan-500/20 text-cyan-300 bg-cyan-500/5"
             >
-              <Building2 className="h-3 w-3 mr-1.5" /> PARTNER INSTITUTIONS
+              <Building2 className="h-3 w-3 mr-1.5" /> {missionEyebrow}
             </Badge>
             <h2
               className="font-semibold tracking-tight text-balance mb-3"
               style={{ fontSize: "clamp(1.75rem, 4vw, 2.5rem)" }}
             >
-              Educating the next generation
+              {missionTitle}
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto text-base sm:text-lg">
-              We partner with schools, colleges, and universities to bring
-              cyber security education to their students — verified curricula,
-              shared labs, and joint certifications.
+              {missionDesc}
             </p>
           </ScrollReveal>
 
@@ -455,7 +471,7 @@ export function ImpactView() {
                 onClick={() => navigate({ name: "contact" })}
                 className="px-6 h-12 bg-card shadow-md hover:bg-card/80"
               >
-                Become a Partner <ArrowRight className="h-4 w-4 ml-2" />
+                {missionCta} <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             </MagneticButton>
           </div>

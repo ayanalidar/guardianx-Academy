@@ -7,6 +7,7 @@ import { useUser } from "@/hooks/use-user"
 import { colorFor, DIFFICULTY_COLORS, LEVEL_COLORS } from "@/lib/colors"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -24,7 +25,7 @@ import {
   TrendingUp, Activity, DollarSign, Crown, Lock, Search, Plus, Pencil,
   Trash2, Save, X, ChevronLeft, ChevronRight, ShieldAlert, Sparkles,
   UserCog, GraduationCap, Building2, Send, CheckCircle2, XCircle, Clock,
-  Server, Eye, Zap, ArrowUpRight, Terminal, BookMarked,
+  Server, Eye, Zap, ArrowUpRight, Terminal, BookMarked, FileEdit, ArrowRight, Globe,
 } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
@@ -44,6 +45,7 @@ const ADMIN_TABS = [
   { id: "labs", label: "Labs", icon: FlaskConical },
   { id: "certificates", label: "Certificates", icon: Award },
   { id: "emails", label: "Emails", icon: Mail },
+  { id: "content", label: "Content", icon: FileEdit },
   { id: "settings", label: "Settings", icon: Settings },
 ] as const
 
@@ -150,7 +152,7 @@ export function AdminDashboardView() {
         <ScrollReveal delay={0.2}>
           <Tabs value={tab} onValueChange={(v) => setTab(v as AdminTab)} className="mt-10">
             <ScrollArea className="w-full">
-              <TabsList className="grid w-max min-w-full grid-cols-7 h-auto bg-card/30 border border-border/60">
+              <TabsList className="grid w-max min-w-full grid-cols-8 h-auto bg-card/30 border border-border/60">
                 {ADMIN_TABS.map((t) => (
                   <TabsTrigger
                     key={t.id}
@@ -171,6 +173,7 @@ export function AdminDashboardView() {
             <TabsContent value="labs" className="mt-6"><LabsTab /></TabsContent>
             <TabsContent value="certificates" className="mt-6"><CertificatesTab /></TabsContent>
             <TabsContent value="emails" className="mt-6"><EmailsTab /></TabsContent>
+            <TabsContent value="content" className="mt-6"><ContentTab /></TabsContent>
             <TabsContent value="settings" className="mt-6"><SettingsTab /></TabsContent>
           </Tabs>
         </ScrollReveal>
@@ -1808,6 +1811,75 @@ function CertificatesTab() {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+/* ============================================================
+   6.5. CONTENT TAB — links to the Content Studio (CMS)
+   ============================================================ */
+function ContentTab() {
+  const { navigate } = useAppStore()
+  const pages = [
+    { id: "home",         label: "Home Page",             desc: "Hero, audiences, courses, labs, partners, final CTA",         icon: BookMarked,    accent: "text-violet-300" },
+    { id: "impact",       label: "Impact Page",           desc: "Stats, career outcomes, success stories, partner counts",    icon: TrendingUp,    accent: "text-amber-300" },
+    { id: "contact",      label: "Contact Page",          desc: "Contact info, form labels, response times, FAQ",             icon: Mail,          accent: "text-cyan-300" },
+    { id: "institutions", label: "Institutions Page",     desc: "Partner types, benefits, flow steps, partnership models",    icon: Building2,     accent: "text-emerald-300" },
+    { id: "catalog",      label: "Catalog Page",          desc: "Hero copy, filter labels, stat cards",                       icon: BookOpen,      accent: "text-violet-300" },
+    { id: "auth",         label: "Auth Screen",           desc: "Login/register tabs, feature highlights, demo accounts",     icon: Shield,        accent: "text-amber-300" },
+    { id: "global",       label: "Global Header/Footer",  desc: "Brand name, nav links, footer links, copyright",             icon: Globe,         accent: "text-cyan-300" },
+  ]
+  return (
+    <div className="space-y-6">
+      <FadeIn>
+        <Card className="bg-card shadow-lg border border-border p-6 relative overflow-hidden">
+          <div className="absolute inset-0 bg-grid opacity-10" />
+          <div className="absolute top-0 right-0 w-[300px] h-[200px] bg-violet-500/8 blur-[100px] rounded-full" />
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="h-1.5 w-1.5 rounded-full bg-violet-400 pulse-dot" />
+                <span className="text-[10px] font-mono text-violet-300/80 tracking-[0.25em]">CONTENT STUDIO</span>
+              </div>
+              <h2 className="text-2xl font-bold tracking-tight">Edit every word your users see.</h2>
+              <p className="text-sm text-muted-foreground mt-2 max-w-xl leading-relaxed">
+                The Content Studio lets you edit hero copy, stats, card arrays, FAQs, and more —
+                all stored in Postgres and live on every page instantly.
+              </p>
+            </div>
+            <Button
+              size="lg"
+              onClick={() => navigate({ name: "cms" })}
+              className="bg-violet-600 hover:bg-violet-500 btn-premium h-12 px-6"
+            >
+              <FileEdit className="h-4 w-4 mr-2" /> Open Content Studio
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
+          </div>
+        </Card>
+      </FadeIn>
+
+      <Stagger className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4" staggerChildren={0.06}>
+        {pages.map((p) => (
+          <StaggerItem key={p.id}>
+            <button
+              onClick={() => navigate({ name: "cms" })}
+              className="group w-full text-left h-full rounded-xl border border-border/60 bg-card shadow-md p-5 transition-all hover:-translate-y-1 hover:border-violet-500/40 hover:shadow-lg"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div className={cn("inline-flex p-2 rounded-lg bg-muted/40", p.accent)}>
+                  <p.icon className="h-4 w-4" />
+                </div>
+                <ArrowUpRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-violet-300 transition-colors" />
+              </div>
+              <h3 className="font-semibold text-sm mb-1.5 group-hover:text-violet-300 transition-colors">
+                {p.label}
+              </h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">{p.desc}</p>
+            </button>
+          </StaggerItem>
+        ))}
+      </Stagger>
     </div>
   )
 }

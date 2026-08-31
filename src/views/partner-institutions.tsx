@@ -19,6 +19,7 @@ import {
   MagneticButton, Counter, CursorGlow,
 } from "@/components/platform/motion-system"
 import { NetworkVisualization } from "@/components/platform/network-visualization"
+import { usePageContent, getContent } from "@/lib/use-content"
 
 // ============================================================
 // Partner types — three institutional segments GuardianX serves
@@ -301,6 +302,16 @@ const PARTNERSHIP_MODELS = [
 export function PartnerInstitutionsView() {
   const { navigate } = useAppStore()
 
+  // CMS-driven hero copy — falls back to defaults if CMS data missing.
+  const cms = usePageContent("institutions")
+  const cmsData = cms.data
+  const heroEyebrow = getContent(cmsData, "hero", "eyebrow", "INSTITUTIONAL PARTNERSHIPS")
+  const heroTitle = getContent(cmsData, "hero", "title", "On-premises training for")
+  const heroTitleAccent = getContent(cmsData, "hero", "titleAccent", "schools, colleges & universities.")
+  const heroDesc = getContent(cmsData, "hero", "description", "GuardianX delivers cybersecurity training directly at your campus — your classrooms, your labs, your schedule. From secondary schools to research universities, we build job-ready defenders through a single, integrated platform.")
+  const heroCtaPrimary = getContent(cmsData, "hero", "ctaPrimary", "Sign an MoU")
+  const heroCtaSecondary = getContent(cmsData, "hero", "ctaSecondary", "Build Your Cybersecurity Program")
+
   return (
     <div className="relative min-h-screen pt-20 lg:pt-24">
       {/* Atmospheric background */}
@@ -319,23 +330,21 @@ export function PartnerInstitutionsView() {
                 <ScrollReveal>
                   <div className="flex items-center gap-2 mb-6">
                     <Building2 className="h-5 w-5 text-violet-300" />
-                    <span className="text-[10px] font-mono text-violet-300/80 tracking-[0.25em]">INSTITUTIONAL PARTNERSHIPS</span>
+                    <span className="text-[10px] font-mono text-violet-300/80 tracking-[0.25em]">{heroEyebrow}</span>
                   </div>
                 </ScrollReveal>
                 <ScrollReveal delay={0.1}>
                   <h1 className="text-[clamp(2.25rem,5vw,4rem)] font-bold leading-[1.05] tracking-[-0.03em] mb-6 text-balance">
-                    <TextReveal text="On-premises training for" />
+                    <TextReveal text={heroTitle} />
                     <br />
                     <span className="text-gradient-premium">
-                      <TextReveal text="schools, colleges & universities." delay={0.3} />
+                      <TextReveal text={heroTitleAccent} delay={0.3} />
                     </span>
                   </h1>
                 </ScrollReveal>
                 <ScrollReveal delay={0.2}>
                   <p className="text-base lg:text-lg text-muted-foreground max-w-xl mb-8 leading-relaxed">
-                    GuardianX delivers cybersecurity training directly at your campus — your classrooms, your
-                    labs, your schedule. From secondary schools to research universities, we build
-                    job-ready defenders through a single, integrated platform.
+                    {heroDesc}
                   </p>
                 </ScrollReveal>
                 <ScrollReveal delay={0.3}>
@@ -346,7 +355,7 @@ export function PartnerInstitutionsView() {
                         onClick={() => navigate({ name: "contact" })}
                         className="bg-violet-600 hover:bg-violet-500 btn-premium px-8 py-6 text-sm"
                       >
-                        Sign an MoU <ArrowRight className="h-4 w-4 ml-2" />
+                        {heroCtaPrimary} <ArrowRight className="h-4 w-4 ml-2" />
                       </Button>
                     </MagneticButton>
                     <MagneticButton strength={0.2}>
@@ -356,7 +365,7 @@ export function PartnerInstitutionsView() {
                         onClick={() => navigate({ name: "contact" })}
                         className="px-6 py-6 text-sm"
                       >
-                        Build Your Cybersecurity Program
+                        {heroCtaSecondary}
                       </Button>
                     </MagneticButton>
                   </div>

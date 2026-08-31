@@ -23,6 +23,9 @@ import {
   MagneticButton, Counter, CursorGlow,
 } from "@/components/platform/motion-system"
 import { NetworkVisualization } from "@/components/platform/network-visualization"
+import { AnimatedLogo } from "@/components/platform/animated-logo"
+import { usePageContent, getContent, getContentArray } from "@/lib/use-content"
+import { getCmsIcon } from "@/lib/cms-icons"
 
 interface Course {
   id: string; title: string; shortName: string; description: string
@@ -35,6 +38,87 @@ interface Course {
 export function HomeView() {
   const { navigate } = useAppStore()
 
+  // CMS-driven content — falls back to hardcoded defaults when CMS
+  // data isn't loaded yet (or the admin hasn't edited a key).
+  const cms = usePageContent("home")
+  const cmsData = cms.data
+
+  const heroTitle = getContent(cmsData, "hero", "title", "Master the art of")
+  const heroTitleAccent = getContent(cmsData, "hero", "titleAccent", "cyber defense.")
+  const heroBadge = getContent(cmsData, "hero", "badge", "WORLD-CLASS CYBER SECURITY EDUCATION")
+  const heroDescription = getContent(cmsData, "hero", "description", "A world-class platform for aspirants, freshers, and working professionals. Certification prep, live workshops, hands-on labs, and corporate training — all in one place.")
+  const heroCtaPrimary = getContent(cmsData, "hero", "ctaPrimary", "Explore Courses")
+  const heroCtaSecondary = getContent(cmsData, "hero", "ctaSecondary", "Start Learning")
+  const heroStats = getContentArray<{ value: number; suffix?: string; label: string; color: string }>(
+    cmsData, "stats", "items",
+    [
+      { value: 12000, suffix: "+", label: "Learners", color: "text-violet-300" },
+      { value: 28, suffix: "+", label: "Courses", color: "text-cyan-300" },
+      { value: 31, suffix: "", label: "Labs", color: "text-amber-300" },
+      { value: 150, suffix: "+", label: "Partners", color: "text-emerald-300" },
+    ]
+  )
+  const trustLabel = getContent(cmsData, "trust", "label", "Trusted by defenders at")
+  const trustCompanies = getContentArray<string>(cmsData, "trust", "companies", ["Google", "Microsoft", "Amazon", "IBM", "Cisco", "Palantir", "CrowdStrike"])
+  const audiencesEyebrow = getContent(cmsData, "audiences", "eyebrow", "WHO WE SERVE")
+  const audiencesTitle = getContent(cmsData, "audiences", "title", "Built for every stage of your")
+  const audiencesTitleAccent = getContent(cmsData, "audiences", "titleAccent", "cyber security journey.")
+  const audiences = getContentArray<{ icon: string; title: string; desc: string; color: string; bg: string; stat: string }>(
+    cmsData, "audiences", "items",
+    [
+      { icon: "GraduationCap", title: "Aspirants", desc: "Starting from zero? Build foundations in networking, Linux, and security basics. Beginner-friendly courses with guided paths.", color: "text-violet-400", bg: "bg-violet-500/10", stat: "Start from scratch" },
+      { icon: "Briefcase", title: "Freshers", desc: "Land your first security role. Master in-demand certifications like CEH, CCNA, and RHCSA with hands-on lab practice.", color: "text-cyan-400", bg: "bg-cyan-500/10", stat: "Get job-ready" },
+      { icon: "ShieldCheck", title: "Working Professionals", desc: "Level up with advanced certs (OSCP, CISSP, CISM). Stay current with threat intelligence and cutting-edge labs.", color: "text-amber-400", bg: "bg-amber-500/10", stat: "Advance your career" },
+    ]
+  )
+  const coursesEyebrow = getContent(cmsData, "courses", "eyebrow", "CERTIFICATION COURSES")
+  const coursesTitle = getContent(cmsData, "courses", "title", "Build skills that survive")
+  const coursesTitleAccent = getContent(cmsData, "courses", "titleAccent", "the real world.")
+  const coursesViewAllCta = getContent(cmsData, "courses", "viewAllCta", "View All Courses")
+  const corporateEyebrow = getContent(cmsData, "corporate", "eyebrow", "BEYOND COURSES")
+  const corporateTitle = getContent(cmsData, "corporate", "title", "Training that goes beyond")
+  const corporateTitleAccent = getContent(cmsData, "corporate", "titleAccent", "the classroom.")
+  const corporateDesc = getContent(cmsData, "corporate", "description", "We offer corporate trainings, on-demand workshops, and live webinars for teams and individuals.")
+  const corporate = getContentArray<{ icon: string; title: string; desc: string; color: string; bg: string; features: string[] }>(
+    cmsData, "corporate", "items",
+    [
+      { icon: "Briefcase", title: "Corporate Training", desc: "Customized cyber security training programs for organizations. Upskill your workforce with enterprise-grade curriculum.", color: "text-violet-400", bg: "bg-violet-500/10", features: ["Custom curriculum", "On-site or remote", "Team analytics", "Dedicated instructor"] },
+      { icon: "Tv", title: "On-Demand Workshops", desc: "Intensive hands-on workshops covering specific topics: pentesting, forensics, cloud security, and more.", color: "text-cyan-400", bg: "bg-cyan-500/10", features: ["1-3 day intensives", "Hands-on labs", "Expert instructors", "Certificate of completion"] },
+      { icon: "Mic", title: "Live Webinars", desc: "Free and paid webinars on the latest cyber security trends, threat intelligence, and career guidance.", color: "text-amber-400", bg: "bg-amber-500/10", features: ["Weekly sessions", "Industry experts", "Q&A included", "Recorded for replay"] },
+    ]
+  )
+  const partnersEyebrow = getContent(cmsData, "partners", "eyebrow", "PARTNER INSTITUTIONS")
+  const partnersTitle = getContent(cmsData, "partners", "title", "On-premises training for")
+  const partnersTitleAccent = getContent(cmsData, "partners", "titleAccent", "schools, colleges & universities.")
+  const partnersDesc = getContent(cmsData, "partners", "description", "We partner with educational institutions to deliver world-class cyber security training on their premises.")
+  const partners = getContentArray<{ type: string; icon: string; desc: string; color: string; bg: string; cta: string }>(
+    cmsData, "partners", "items",
+    [
+      { type: "Schools", icon: "Building2", desc: "Comprehensive cyber security programs for school students. Includes a complimentary School Management System for MoU partners.", color: "text-emerald-400", bg: "bg-emerald-500/10", cta: "School Portal Login" },
+      { type: "Colleges", icon: "BookOpen", desc: "Industry-aligned certification courses integrated into college curriculum. Hands-on labs and instructor-led training.", color: "text-cyan-400", bg: "bg-cyan-500/10", cta: "College Portal Login" },
+      { type: "Universities", icon: "Award", desc: "Advanced research-grade cyber security labs, degree integration, and PhD-level coursework for universities.", color: "text-violet-400", bg: "bg-violet-500/10", cta: "University Portal Login" },
+    ]
+  )
+  const benefitsEyebrow = getContent(cmsData, "partners", "benefitsEyebrow", "PARTNER BENEFITS")
+  const benefitsTitle = getContent(cmsData, "partners", "benefitsTitle", "Why institutions choose GuardianX.")
+  const benefits = getContentArray<{ icon: string; title: string; desc: string; color: string; bg: string }>(
+    cmsData, "benefits", "items",
+    [
+      { icon: "Building2", title: "School Management System", desc: "Complimentary full-featured school management software for MoU partners. Manage students, attendance, grades, and more — separate from our training platform.", color: "text-violet-400", bg: "bg-violet-500/10" },
+      { icon: "FlaskConical", title: "31 Docker-Powered Labs", desc: "Production-grade cyber range with live targets. Students practice on real vulnerabilities, not simulations.", color: "text-cyan-400", bg: "bg-cyan-500/10" },
+      { icon: "Award", title: "Verifiable Certificates", desc: "Tamper-evident, publicly verifiable credentials. Employers can validate any certificate by ID.", color: "text-amber-400", bg: "bg-amber-500/10" },
+      { icon: "Users", title: "On-Premises Training", desc: "We deliver training at your institution. Instructors, labs, and materials brought to your campus.", color: "text-emerald-400", bg: "bg-emerald-500/10" },
+      { icon: "Target", title: "Real-Time Analytics", desc: "Track student progress, attendance, engagement, and career outcomes in real-time.", color: "text-rose-400", bg: "bg-rose-500/10" },
+      { icon: "Globe", title: "Bulk Student Import", desc: "Onboard entire batches via CSV. Auto-generate accounts, enroll in courses, assign instructors.", color: "text-teal-400", bg: "bg-teal-500/10" },
+    ]
+  )
+  const partnersExploreCta = getContent(cmsData, "partners", "exploreCta", "Explore Partners")
+  const partnersMouCta = getContent(cmsData, "partners", "mouCta", "Sign an MoU")
+  const finalCtaTitle = getContent(cmsData, "finalCta", "title", "Become unstoppable.")
+  const finalCtaSubtitle = getContent(cmsData, "finalCta", "subtitle", "Join 12,000+ defenders advancing their careers. Free to start. No credit card.")
+  const finalCtaPrimary = getContent(cmsData, "finalCta", "ctaPrimary", "Start Free Today")
+  const finalCtaSecondary = getContent(cmsData, "finalCta", "ctaSecondary", "Talk to Us")
+
   const { data: coursesData } = useQuery<{ courses: Course[] }>({
     queryKey: ["public-courses"],
     queryFn: () => api("/api/courses"),
@@ -44,15 +128,23 @@ export function HomeView() {
   return (
     <div className="relative">
       {/* ====================================================
-          SECTION 1: HERO
+          SECTION 1: HERO — with animated 3D logo centerpiece
           ==================================================== */}
-      <section className="relative min-h-[90vh] flex items-center overflow-hidden">
+      <section className="relative min-h-[92vh] flex items-center overflow-hidden">
         <div className="absolute inset-0 bg-mesh" />
         <div className="absolute inset-0 bg-grid opacity-10" />
         <div className="absolute top-1/4 left-1/3 w-[500px] h-[500px] bg-violet-600/8 blur-[120px] rounded-full pointer-events-none" />
         <div className="absolute bottom-1/4 right-1/3 w-[400px] h-[400px] bg-cyan-500/6 blur-[100px] rounded-full pointer-events-none" />
-        <div className="absolute inset-0 opacity-40 pointer-events-none">
-          <NetworkVisualization variant="hero" className="w-full h-full" />
+
+        {/* Floating animated logo centerpiece — visible on large screens, behind text */}
+        <div className="hidden lg:block absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.6, rotate: -20 }}
+            animate={{ opacity: 1, scale: 1, rotate: 0 }}
+            transition={{ duration: 1.4, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <AnimatedLogo size={520} showShards showParticles={false} showScanArc parallax />
+          </motion.div>
         </div>
 
         <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full py-20">
@@ -65,15 +157,15 @@ export function HomeView() {
             >
               <span className="h-1.5 w-1.5 rounded-full bg-violet-400 pulse-dot" />
               <span className="text-[10px] font-mono text-violet-300/80 tracking-[0.25em]">
-                WORLD-CLASS CYBER SECURITY EDUCATION
+                {heroBadge}
               </span>
             </motion.div>
 
             <h1 className="text-[clamp(2.5rem,6vw,4.5rem)] font-bold leading-[1] tracking-[-0.03em] mb-6 text-balance">
-              <TextReveal text="Master the art of" />
+              <TextReveal text={heroTitle} />
               <br />
               <span className="text-gradient-premium">
-                <TextReveal text="cyber defense." delay={0.3} />
+                <TextReveal text={heroTitleAccent} delay={0.3} />
               </span>
             </h1>
 
@@ -83,10 +175,7 @@ export function HomeView() {
               transition={{ duration: 0.6, delay: 0.8 }}
               className="text-base lg:text-lg text-muted-foreground max-w-xl mb-8 leading-relaxed"
             >
-              A world-class platform for <span className="text-foreground font-medium">aspirants</span>,
-              {" "}<span className="text-foreground font-medium">freshers</span>, and
-              {" "}<span className="text-foreground font-medium">working professionals</span>.
-              Certification prep, live workshops, hands-on labs, and corporate training — all in one place.
+              {heroDescription}
             </motion.p>
 
             <motion.div
@@ -97,13 +186,13 @@ export function HomeView() {
             >
               <MagneticButton strength={0.3}>
                 <Button size="lg" onClick={() => navigate({ name: "catalog" })} className="bg-violet-600 hover:bg-violet-500 btn-premium px-8 py-6 text-sm">
-                  Explore Courses
+                  {heroCtaPrimary}
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
               </MagneticButton>
               <MagneticButton strength={0.2}>
                 <Button size="lg" variant="ghost" onClick={() => navigate({ name: "login" })} className="px-6 py-6 text-sm text-muted-foreground hover:text-foreground">
-                  <PlayCircle className="h-4 w-4 mr-2" /> Start Learning
+                  <PlayCircle className="h-4 w-4 mr-2" /> {heroCtaSecondary}
                 </Button>
               </MagneticButton>
             </motion.div>
@@ -114,15 +203,10 @@ export function HomeView() {
               transition={{ duration: 0.6, delay: 1.2 }}
               className="flex items-center gap-8 pt-8 border-t border-border/40"
             >
-              {[
-                { value: 12000, suffix: "+", label: "Learners", color: "text-violet-300" },
-                { value: 28, suffix: "+", label: "Courses", color: "text-cyan-300" },
-                { value: 31, suffix: "", label: "Labs", color: "text-amber-300" },
-                { value: 150, suffix: "+", label: "Partners", color: "text-emerald-300" },
-              ].map((s, i) => (
+              {heroStats.map((s, i) => (
                 <div key={s.label}>
                   <div className={cn("text-2xl font-bold tabular-nums", s.color)}>
-                    <Counter value={s.value} suffix={s.suffix} />
+                    <Counter value={s.value} suffix={s.suffix ?? ""} />
                   </div>
                   <div className="text-[10px] text-muted-foreground uppercase tracking-wider">{s.label}</div>
                 </div>
@@ -130,6 +214,12 @@ export function HomeView() {
             </motion.div>
           </div>
         </div>
+
+        {/* Mobile / tablet — show animated logo inline above text */}
+        <div className="lg:hidden absolute inset-x-0 top-0 h-[50vh] flex items-center justify-center pointer-events-none opacity-50">
+          <AnimatedLogo size={260} showShards showParticles={false} showScanArc parallax={false} />
+        </div>
+        <div className="lg:hidden relative z-10 pt-[45vh]" />
       </section>
 
       {/* ====================================================
@@ -138,10 +228,10 @@ export function HomeView() {
       <section className="py-8 border-y border-border/40">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <p className="text-center text-[9px] text-muted-foreground/60 uppercase tracking-[0.3em] mb-5">
-            Trusted by defenders at
+            {trustLabel}
           </p>
           <div className="flex items-center justify-center gap-x-8 gap-y-3 flex-wrap opacity-25">
-            {["Google", "Microsoft", "Amazon", "IBM", "Cisco", "Palantir", "CrowdStrike"].map((name) => (
+            {trustCompanies.map((name) => (
               <span key={name} className="text-sm font-semibold tracking-wide">{name}</span>
             ))}
           </div>
@@ -154,31 +244,30 @@ export function HomeView() {
       <section className="py-20 lg:py-28 relative">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <ScrollReveal className="text-center mb-12">
-            <p className="text-[10px] font-mono text-violet-400 tracking-[0.25em] mb-4">WHO WE SERVE</p>
+            <p className="text-[10px] font-mono text-violet-400 tracking-[0.25em] mb-4">{audiencesEyebrow}</p>
             <h2 className="text-[clamp(2rem,4vw,3rem)] font-bold leading-[1.05] tracking-[-0.02em] mb-4 text-balance">
-              Built for every stage of your
+              {audiencesTitle}
               <br />
-              <span className="text-muted-foreground/60">cyber security journey.</span>
+              <span className="text-muted-foreground/60">{audiencesTitleAccent}</span>
             </h2>
           </ScrollReveal>
 
           <div className="grid sm:grid-cols-3 gap-6">
-            {[
-              { icon: GraduationCap, title: "Aspirants", desc: "Starting from zero? Build foundations in networking, Linux, and security basics. Beginner-friendly courses with guided paths.", color: "text-violet-400", bg: "bg-violet-500/10", stat: "Start from scratch" },
-              { icon: Briefcase, title: "Freshers", desc: "Land your first security role. Master in-demand certifications like CEH, CCNA, and RHCSA with hands-on lab practice.", color: "text-cyan-400", bg: "bg-cyan-500/10", stat: "Get job-ready" },
-              { icon: ShieldCheck, title: "Working Professionals", desc: "Level up with advanced certs (OSCP, CISSP, CISM). Stay current with threat intelligence and cutting-edge labs.", color: "text-amber-400", bg: "bg-amber-500/10", stat: "Advance your career" },
-            ].map((aud, i) => (
-              <ScrollReveal key={i} delay={i * 0.1}>
-                <div className="h-full rounded-xl border border-border/60 bg-card p-6 shadow-lg hover:shadow-xl transition-shadow">
-                  <div className={cn("inline-flex p-3 rounded-xl mb-4", aud.bg)}>
-                    <aud.icon className={cn("h-6 w-6", aud.color)} />
+            {audiences.map((aud, i) => {
+              const Icon = getCmsIcon(aud.icon)
+              return (
+                <ScrollReveal key={i} delay={i * 0.1}>
+                  <div className="h-full rounded-xl border border-border/60 bg-card p-6 shadow-lg hover:shadow-xl transition-shadow">
+                    <div className={cn("inline-flex p-3 rounded-xl mb-4", aud.bg)}>
+                      <Icon className={cn("h-6 w-6", aud.color)} />
+                    </div>
+                    <h3 className="text-lg font-semibold mb-2">{aud.title}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed mb-4">{aud.desc}</p>
+                    <div className={cn("text-xs font-mono", aud.color)}>{aud.stat}</div>
                   </div>
-                  <h3 className="text-lg font-semibold mb-2">{aud.title}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed mb-4">{aud.desc}</p>
-                  <div className={cn("text-xs font-mono", aud.color)}>{aud.stat}</div>
-                </div>
-              </ScrollReveal>
-            ))}
+                </ScrollReveal>
+              )
+            })}
           </div>
         </div>
       </section>
@@ -191,15 +280,15 @@ export function HomeView() {
           <ScrollReveal className="mb-12">
             <div className="flex items-end justify-between flex-wrap gap-4">
               <div>
-                <p className="text-[10px] font-mono text-violet-400 tracking-[0.25em] mb-4">CERTIFICATION COURSES</p>
+                <p className="text-[10px] font-mono text-violet-400 tracking-[0.25em] mb-4">{coursesEyebrow}</p>
                 <h2 className="text-[clamp(2rem,4vw,3rem)] font-bold leading-[1.05] tracking-[-0.02em] text-balance">
-                  Build skills that survive
+                  {coursesTitle}
                   <br />
-                  <span className="text-muted-foreground/60">the real world.</span>
+                  <span className="text-muted-foreground/60">{coursesTitleAccent}</span>
                 </h2>
               </div>
               <Button variant="outline" onClick={() => navigate({ name: "catalog" })} className="glass">
-                View All Courses <ArrowRight className="h-4 w-4 ml-1" />
+                {coursesViewAllCta} <ArrowRight className="h-4 w-4 ml-1" />
               </Button>
             </div>
           </ScrollReveal>
@@ -234,44 +323,43 @@ export function HomeView() {
       <section className="py-20 lg:py-28 border-t border-border/40 relative">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <ScrollReveal className="text-center mb-12">
-            <p className="text-[10px] font-mono text-cyan-400 tracking-[0.25em] mb-4">BEYOND COURSES</p>
+            <p className="text-[10px] font-mono text-cyan-400 tracking-[0.25em] mb-4">{corporateEyebrow}</p>
             <h2 className="text-[clamp(2rem,4vw,3rem)] font-bold leading-[1.05] tracking-[-0.02em] mb-4 text-balance">
-              Training that goes beyond
+              {corporateTitle}
               <br />
-              <span className="text-gradient-cyan">the classroom.</span>
+              <span className="text-gradient-cyan">{corporateTitleAccent}</span>
             </h2>
             <p className="text-base text-muted-foreground max-w-lg mx-auto">
-              We offer corporate trainings, on-demand workshops, and live webinars for teams and individuals.
+              {corporateDesc}
             </p>
           </ScrollReveal>
 
           <div className="grid sm:grid-cols-3 gap-6">
-            {[
-              { icon: Briefcase, title: "Corporate Training", desc: "Customized cyber security training programs for organizations. Upskill your workforce with enterprise-grade curriculum.", color: "text-violet-400", bg: "bg-violet-500/10", features: ["Custom curriculum", "On-site or remote", "Team analytics", "Dedicated instructor"] },
-              { icon: Tv, title: "On-Demand Workshops", desc: "Intensive hands-on workshops covering specific topics: pentesting, forensics, cloud security, and more.", color: "text-cyan-400", bg: "bg-cyan-500/10", features: ["1-3 day intensives", "Hands-on labs", "Expert instructors", "Certificate of completion"] },
-              { icon: Mic, title: "Live Webinars", desc: "Free and paid webinars on the latest cyber security trends, threat intelligence, and career guidance.", color: "text-amber-400", bg: "bg-amber-500/10", features: ["Weekly sessions", "Industry experts", "Q&A included", "Recorded for replay"] },
-            ].map((item, i) => (
-              <ScrollReveal key={i} delay={i * 0.1}>
-                <div className="h-full rounded-xl border border-border/60 bg-card p-6 shadow-lg hover:shadow-xl transition-shadow">
-                  <div className={cn("inline-flex p-3 rounded-xl mb-4", item.bg)}>
-                    <item.icon className={cn("h-6 w-6", item.color)} />
+            {corporate.map((item, i) => {
+              const Icon = getCmsIcon(item.icon)
+              return (
+                <ScrollReveal key={i} delay={i * 0.1}>
+                  <div className="h-full rounded-xl border border-border/60 bg-card p-6 shadow-lg hover:shadow-xl transition-shadow">
+                    <div className={cn("inline-flex p-3 rounded-xl mb-4", item.bg)}>
+                      <Icon className={cn("h-6 w-6", item.color)} />
+                    </div>
+                    <h3 className="text-lg font-semibold mb-2">{item.title}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed mb-4">{item.desc}</p>
+                    <ul className="space-y-2 mb-6">
+                      {item.features.map((f, j) => (
+                        <li key={j} className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                          {f}
+                        </li>
+                      ))}
+                    </ul>
+                    <Button variant="outline" size="sm" className="w-full glass" onClick={() => navigate({ name: "contact" })}>
+                      Learn More <ArrowRight className="h-3 w-3 ml-1" />
+                    </Button>
                   </div>
-                  <h3 className="text-lg font-semibold mb-2">{item.title}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed mb-4">{item.desc}</p>
-                  <ul className="space-y-2 mb-6">
-                    {item.features.map((f, j) => (
-                      <li key={j} className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-                  <Button variant="outline" size="sm" className="w-full glass" onClick={() => navigate({ name: "contact" })}>
-                    Learn More <ArrowRight className="h-3 w-3 ml-1" />
-                  </Button>
-                </div>
-              </ScrollReveal>
-            ))}
+                </ScrollReveal>
+              )
+            })}
           </div>
         </div>
       </section>
@@ -293,82 +381,77 @@ export function HomeView() {
       <section className="py-20 lg:py-28 border-t border-border/40 relative">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <ScrollReveal className="text-center mb-12">
-            <p className="text-[10px] font-mono text-violet-400 tracking-[0.25em] mb-4">PARTNER INSTITUTIONS</p>
+            <p className="text-[10px] font-mono text-violet-400 tracking-[0.25em] mb-4">{partnersEyebrow}</p>
             <h2 className="text-[clamp(2rem,4vw,3rem)] font-bold leading-[1.05] tracking-[-0.02em] mb-4 text-balance">
-              On-premises training for
+              {partnersTitle}
               <br />
-              <span className="text-gradient-premium">schools, colleges & universities.</span>
+              <span className="text-gradient-premium">{partnersTitleAccent}</span>
             </h2>
             <p className="text-base text-muted-foreground max-w-lg mx-auto">
-              We partner with educational institutions to deliver world-class cyber security training on their premises.
+              {partnersDesc}
             </p>
           </ScrollReveal>
 
           {/* Three partner types — each with own CTA */}
           <div className="grid sm:grid-cols-3 gap-6 mb-12">
-            {[
-              { type: "Schools", icon: Building2, desc: "Comprehensive cyber security programs for school students. Includes a complimentary School Management System for MoU partners.", color: "text-emerald-400", bg: "bg-emerald-500/10", cta: "School Portal Login" },
-              { type: "Colleges", icon: BookOpen, desc: "Industry-aligned certification courses integrated into college curriculum. Hands-on labs and instructor-led training.", color: "text-cyan-400", bg: "bg-cyan-500/10", cta: "College Portal Login" },
-              { type: "Universities", icon: Award, desc: "Advanced research-grade cyber security labs, degree integration, and PhD-level coursework for universities.", color: "text-violet-400", bg: "bg-violet-500/10", cta: "University Portal Login" },
-            ].map((p, i) => (
-              <ScrollReveal key={i} delay={i * 0.1}>
-                <div className="h-full rounded-xl border border-border/60 bg-card p-6 shadow-lg hover:shadow-xl transition-shadow flex flex-col">
-                  <div className={cn("inline-flex p-3 rounded-xl mb-4", p.bg)}>
-                    <p.icon className={cn("h-6 w-6", p.color)} />
+            {partners.map((p, i) => {
+              const Icon = getCmsIcon(p.icon)
+              return (
+                <ScrollReveal key={i} delay={i * 0.1}>
+                  <div className="h-full rounded-xl border border-border/60 bg-card p-6 shadow-lg hover:shadow-xl transition-shadow flex flex-col">
+                    <div className={cn("inline-flex p-3 rounded-xl mb-4", p.bg)}>
+                      <Icon className={cn("h-6 w-6", p.color)} />
+                    </div>
+                    <h3 className="text-lg font-semibold mb-2">{p.type}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed mb-6 flex-1">{p.desc}</p>
+                    <div className="space-y-2">
+                      <Button size="sm" className={cn("w-full", p.type === "Schools" ? "bg-emerald-600 hover:bg-emerald-500" : p.type === "Colleges" ? "bg-cyan-600 hover:bg-cyan-500" : "bg-violet-600 hover:bg-violet-500")} onClick={() => navigate({ name: "login" })}>
+                        {p.cta} <ArrowRight className="h-3 w-3 ml-1" />
+                      </Button>
+                      <Button variant="outline" size="sm" className="w-full glass" onClick={() => navigate({ name: "institutions" })}>
+                        Learn More
+                      </Button>
+                    </div>
                   </div>
-                  <h3 className="text-lg font-semibold mb-2">{p.type}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed mb-6 flex-1">{p.desc}</p>
-                  <div className="space-y-2">
-                    <Button size="sm" className={cn("w-full", p.type === "Schools" ? "bg-emerald-600 hover:bg-emerald-500" : p.type === "Colleges" ? "bg-cyan-600 hover:bg-cyan-500" : "bg-violet-600 hover:bg-violet-500")} onClick={() => navigate({ name: "login" })}>
-                      {p.cta} <ArrowRight className="h-3 w-3 ml-1" />
-                    </Button>
-                    <Button variant="outline" size="sm" className="w-full glass" onClick={() => navigate({ name: "institutions" })}>
-                      Learn More
-                    </Button>
-                  </div>
-                </div>
-              </ScrollReveal>
-            ))}
+                </ScrollReveal>
+              )
+            })}
           </div>
 
           {/* Partner benefits */}
           <ScrollReveal delay={0.2}>
             <div className="text-center mb-8">
-              <p className="text-[10px] font-mono text-cyan-400 tracking-[0.25em] mb-3">PARTNER BENEFITS</p>
+              <p className="text-[10px] font-mono text-cyan-400 tracking-[0.25em] mb-3">{benefitsEyebrow}</p>
               <h3 className="text-[clamp(1.5rem,3vw,2.25rem)] font-bold tracking-[-0.02em] text-balance">
-                Why institutions choose GuardianX.
+                {benefitsTitle}
               </h3>
             </div>
           </ScrollReveal>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
-            {[
-              { icon: Building2, title: "School Management System", desc: "Complimentary full-featured school management software for MoU partners. Manage students, attendance, grades, and more — separate from our training platform.", color: "text-violet-400", bg: "bg-violet-500/10" },
-              { icon: FlaskConical, title: "31 Docker-Powered Labs", desc: "Production-grade cyber range with live targets. Students practice on real vulnerabilities, not simulations.", color: "text-cyan-400", bg: "bg-cyan-500/10" },
-              { icon: Award, title: "Verifiable Certificates", desc: "Tamper-evident, publicly verifiable credentials. Employers can validate any certificate by ID.", color: "text-amber-400", bg: "bg-amber-500/10" },
-              { icon: Users, title: "On-Premises Training", desc: "We deliver training at your institution. Instructors, labs, and materials brought to your campus.", color: "text-emerald-400", bg: "bg-emerald-500/10" },
-              { icon: Target, title: "Real-Time Analytics", desc: "Track student progress, attendance, engagement, and career outcomes in real-time.", color: "text-rose-400", bg: "bg-rose-500/10" },
-              { icon: Globe, title: "Bulk Student Import", desc: "Onboard entire batches via CSV. Auto-generate accounts, enroll in courses, assign instructors.", color: "text-teal-400", bg: "bg-teal-500/10" },
-            ].map((b, i) => (
-              <ScrollReveal key={i} delay={0.1 + i * 0.05}>
-                <div className="h-full rounded-xl border border-border/60 bg-card p-5 shadow-md hover:shadow-lg transition-shadow">
-                  <div className={cn("inline-flex p-2.5 rounded-lg mb-3", b.bg)}>
-                    <b.icon className={cn("h-5 w-5", b.color)} />
+            {benefits.map((b, i) => {
+              const Icon = getCmsIcon(b.icon)
+              return (
+                <ScrollReveal key={i} delay={0.1 + i * 0.05}>
+                  <div className="h-full rounded-xl border border-border/60 bg-card p-5 shadow-md hover:shadow-lg transition-shadow">
+                    <div className={cn("inline-flex p-2.5 rounded-lg mb-3", b.bg)}>
+                      <Icon className={cn("h-5 w-5", b.color)} />
+                    </div>
+                    <h4 className="font-semibold text-sm mb-2">{b.title}</h4>
+                    <p className="text-xs text-muted-foreground leading-relaxed">{b.desc}</p>
                   </div>
-                  <h4 className="font-semibold text-sm mb-2">{b.title}</h4>
-                  <p className="text-xs text-muted-foreground leading-relaxed">{b.desc}</p>
-                </div>
-              </ScrollReveal>
-            ))}
+                </ScrollReveal>
+              )
+            })}
           </div>
 
           <ScrollReveal delay={0.3}>
             <div className="text-center">
               <Button onClick={() => navigate({ name: "institutions" })} className="bg-violet-600 hover:bg-violet-500 btn-premium mr-3">
-                <Building2 className="h-4 w-4 mr-2" /> Explore Partners <ArrowRight className="h-4 w-4 ml-1" />
+                <Building2 className="h-4 w-4 mr-2" /> {partnersExploreCta} <ArrowRight className="h-4 w-4 ml-1" />
               </Button>
               <Button variant="outline" onClick={() => navigate({ name: "contact" })} className="glass">
-                Sign an MoU <ArrowRight className="h-4 w-4 ml-1" />
+                {partnersMouCta} <ArrowRight className="h-4 w-4 ml-1" />
               </Button>
             </div>
           </ScrollReveal>
@@ -385,24 +468,24 @@ export function HomeView() {
         <div className="relative z-10 mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
           <ScrollReveal>
             <h2 className="text-[clamp(2rem,5vw,3.5rem)] font-bold leading-[1.05] tracking-[-0.03em] mb-6 text-balance">
-              Become unstoppable.
+              {finalCtaTitle}
             </h2>
           </ScrollReveal>
           <ScrollReveal delay={0.1}>
             <p className="text-base lg:text-lg text-muted-foreground max-w-xl mx-auto mb-8">
-              Join 12,000+ defenders advancing their careers. Free to start. No credit card.
+              {finalCtaSubtitle}
             </p>
           </ScrollReveal>
           <ScrollReveal delay={0.2}>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <MagneticButton strength={0.3}>
                 <Button size="lg" onClick={() => navigate({ name: "login" })} className="bg-violet-600 hover:bg-violet-500 btn-premium px-8 py-6">
-                  Start Free Today <ArrowRight className="h-4 w-4 ml-2" />
+                  {finalCtaPrimary} <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
               </MagneticButton>
               <MagneticButton strength={0.2}>
                 <Button size="lg" variant="ghost" onClick={() => navigate({ name: "contact" })} className="px-8 py-6 text-muted-foreground hover:text-foreground">
-                  Talk to Us
+                  {finalCtaSecondary}
                 </Button>
               </MagneticButton>
             </div>
@@ -418,6 +501,23 @@ export function HomeView() {
    ============================================================ */
 function CinematicLabsSection() {
   const [activeLab, setActiveLab] = React.useState(0)
+  const cms = usePageContent("home")
+  const cmsData = cms.data
+  const labsEyebrow = getContent(cmsData, "labs", "eyebrow", "HANDS-ON LABS")
+  const labsTitle = getContent(cmsData, "labs", "title", "Train against")
+  const labsTitleAccent = getContent(cmsData, "labs", "titleAccent", "real targets.")
+  const labsDesc = getContent(cmsData, "labs", "description", "31 Docker-powered labs with live target environments. Each lab spins up a real vulnerable system for you to attack, exploit, and defend.")
+  const labsFeatures = getContentArray<{ icon: string; title: string; desc: string }>(
+    cmsData, "labs", "features",
+    [
+      { icon: "Server", title: "Live Target Environments", desc: "Each lab spins up a Docker container with a real vulnerable system. Not a simulation — a real attack surface." },
+      { icon: "Terminal", title: "In-Browser Terminal", desc: "Full Kali Linux terminal in your browser. Run nmap, sqlmap, burp, metasploit — no setup required." },
+      { icon: "Target", title: "Dynamic Flags & Auto-Grading", desc: "Each lab generates a unique flag. Submit it for instant grading and XP. No two attempts are the same." },
+      { icon: "Activity", title: "Real-Time Progress Tracking", desc: "Track time spent, hints used, attempts made. Build a portfolio of practical skills." },
+    ]
+  )
+  const labsPoweredBy = getContentArray<string>(cmsData, "labs", "poweredBy", ["Docker", "Kali Linux", "Burp Suite", "Nmap", "Wireshark", "Metasploit", "SIEM"])
+  const labsCta = getContent(cmsData, "labs", "cta", "Enter the Cyber Range")
   const labs = [
     { name: "SQL Injection — Login Bypass", category: "Web Security", difficulty: "Easy", icon: Code2, color: "text-violet-400", bg: "bg-violet-500/10" },
     { name: "Linux Privilege Escalation", category: "Privilege Escalation", difficulty: "Medium", icon: Terminal, color: "text-cyan-400", bg: "bg-cyan-500/10" },
@@ -440,13 +540,13 @@ function CinematicLabsSection() {
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
         <ScrollReveal className="mb-12">
-          <p className="text-[10px] font-mono text-cyan-400 tracking-[0.25em] mb-4">HANDS-ON LABS</p>
+          <p className="text-[10px] font-mono text-cyan-400 tracking-[0.25em] mb-4">{labsEyebrow}</p>
           <h2 className="text-[clamp(2rem,4vw,3rem)] font-bold leading-[1.05] tracking-[-0.02em] mb-4 text-balance">
-            Train against
-            <span className="text-gradient-cyan"> real targets.</span>
+            {labsTitle}
+            <span className="text-gradient-cyan"> {labsTitleAccent}</span>
           </h2>
           <p className="text-base text-muted-foreground max-w-lg">
-            31 Docker-powered labs with live target environments. Each lab spins up a real vulnerable system for you to attack, exploit, and defend.
+            {labsDesc}
           </p>
         </ScrollReveal>
 
@@ -531,22 +631,20 @@ function CinematicLabsSection() {
           <div>
             <ScrollReveal delay={0.1}>
               <div className="space-y-4 mb-8">
-                {[
-                  { icon: Server, title: "Live Target Environments", desc: "Each lab spins up a Docker container with a real vulnerable system. Not a simulation — a real attack surface." },
-                  { icon: Terminal, title: "In-Browser Terminal", desc: "Full Kali Linux terminal in your browser. Run nmap, sqlmap, burp, metasploit — no setup required." },
-                  { icon: Target, title: "Dynamic Flags & Auto-Grading", desc: "Each lab generates a unique flag. Submit it for instant grading and XP. No two attempts are the same." },
-                  { icon: Activity, title: "Real-Time Progress Tracking", desc: "Track time spent, hints used, attempts made. Build a portfolio of practical skills." },
-                ].map((f, i) => (
-                  <div key={i} className="flex items-start gap-4 p-4 rounded-xl border border-border/60 bg-card shadow-md">
-                    <div className="inline-flex p-2 rounded-lg bg-violet-500/10 shrink-0">
-                      <f.icon className="h-5 w-5 text-violet-300" />
+                {labsFeatures.map((f, i) => {
+                  const Icon = getCmsIcon(f.icon)
+                  return (
+                    <div key={i} className="flex items-start gap-4 p-4 rounded-xl border border-border/60 bg-card shadow-md">
+                      <div className="inline-flex p-2 rounded-lg bg-violet-500/10 shrink-0">
+                        <Icon className="h-5 w-5 text-violet-300" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-semibold mb-1">{f.title}</h4>
+                        <p className="text-xs text-muted-foreground leading-relaxed">{f.desc}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="text-sm font-semibold mb-1">{f.title}</h4>
-                      <p className="text-xs text-muted-foreground leading-relaxed">{f.desc}</p>
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </ScrollReveal>
 
@@ -554,7 +652,7 @@ function CinematicLabsSection() {
               <div>
                 <p className="text-[10px] font-mono text-muted-foreground tracking-[0.25em] mb-3">POWERED BY</p>
                 <div className="flex items-center flex-wrap gap-2">
-                  {["Docker", "Kali Linux", "Burp Suite", "Nmap", "Wireshark", "Metasploit", "SIEM"].map((tech) => (
+                  {labsPoweredBy.map((tech) => (
                     <span key={tech} className="px-3 py-1.5 rounded-lg border border-border/60 bg-card text-xs font-mono text-muted-foreground hover:text-violet-300 hover:border-violet-500/30 transition-colors shadow-sm">
                       {tech}
                     </span>
@@ -565,7 +663,7 @@ function CinematicLabsSection() {
 
             <ScrollReveal delay={0.3}>
               <Button className="mt-6 bg-violet-600 hover:bg-violet-500 btn-premium" onClick={() => useAppStore.getState().navigate({ name: "login" })}>
-                <FlaskConical className="h-4 w-4 mr-2" /> Enter the Cyber Range <ArrowRight className="h-4 w-4 ml-2" />
+                <FlaskConical className="h-4 w-4 mr-2" /> {labsCta} <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             </ScrollReveal>
           </div>

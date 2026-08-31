@@ -276,32 +276,12 @@ export function Counter({
   duration?: number
   className?: string
 }) {
-  const ref = React.useRef(null)
-  const isInView = useInView(ref, { once: true, margin: "-40px" })
-  const [display, setDisplay] = React.useState(0)
-
-  React.useEffect(() => {
-    if (!isInView) return
-    let startTime: number | null = null
-    let raf: number
-    const animate = (ts: number) => {
-      if (startTime === null) startTime = ts
-      const progress = Math.min((ts - startTime) / (duration * 1000), 1)
-      const eased = 1 - Math.pow(1 - progress, 3)
-      setDisplay(Math.floor(eased * value))
-      if (progress < 1) raf = requestAnimationFrame(animate)
-      else setDisplay(value)
-    }
-    raf = requestAnimationFrame(animate)
-    return () => cancelAnimationFrame(raf)
-  }, [isInView, value, duration])
-
-  // Handle non-integer values (e.g. 4.9 rating)
   const isInteger = Number.isInteger(value)
+  const valueStr = isInteger ? value.toLocaleString() : String(value)
 
   return (
-    <span ref={ref} className={className}>
-      {prefix}{isInteger ? display.toLocaleString() : value}{suffix}
+    <span className={className} data-target={value}>
+      {prefix}{valueStr}{suffix}
     </span>
   )
 }

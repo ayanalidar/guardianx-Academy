@@ -1,0 +1,248 @@
+   900→   - Import action card (amber warning) + confirm AlertDialog → `POST /api/instructor/bulk-import` with `{courseId, csv}` or `{courseId, students:[...]}`.
+   901→   - Import Results view: Created/Enrolled/Skipped stat cards + security warning card with "Copy All" + results table (email + status + temp password with per-row copy button showing check icon when copied).
+   902→
+   903→6. `certificate-templates-tab.tsx` (≈580 lines) — `InstructorCertificateTemplatesTab()`
+   904→   - Fetches `GET /api/certificate-templates`.
+   905→   - "Create Template" → `TemplateFormDialog` with name, description, primaryColor + accentColor (native `<input type="color">` paired with hex Input), fontFamily/borderStyle/sealStyle/backgroundPattern selects, signatureText, logoUrl, isDefault Switch.
+   906→   - `CertificatePreview` component: live mini certificate rendering with banner gradient (primary→accent), border style applied (classic solid / modern dashed / minimal opacity-50 / holographic glow), seal in bottom-right (color or gradient per sealStyle), signature text bottom-left, pattern overlay (grid/particles/circuit). Used both as a compact banner on each template card and a large live preview inside the form.
+   907→   - Template cards: preview banner + name + Default badge + description + color swatches with hex values + style badges + certificate count + Edit/Delete buttons. Delete with AlertDialog confirm; disabled if certificates reference the template (409 from server).
+   908→
+   909→Cross-cutting:
+   910→- All 6 files: `"use client"` + `export function InstructorXxxTab()`.
+   911→- TanStack Query (`useQuery`/`useMutation`/`useQueryClient`) with proper invalidation after mutations; error toasts via `sonner`.
+   912→- shadcn/ui primitives (Card, Button, Badge, Input, Textarea, Label, Avatar, Dialog, AlertDialog, Tabs, Skeleton, Progress, Switch, Select, Table, ScrollArea) + lucide-react icons + `cn` + `api` helper.
+   913→- Mobile-first responsive (`sm:`/`md:`/`lg:`); semantic HTML.
+   914→- Holographic styling: `card-hover`, `bg-grid`, `holo-border`, gradient banners, emerald/cyan/amber/violet/rose accents, `bg-card/50`, monospace for IDs/hex/count tabular numbers.
+   915→- datetime-local inputs → ISO via `new Date(value).toISOString()`; existing dates prefill via `toLocalDateTimeInputValue` helper.
+   916→- ESLint passes cleanly (0 errors, 0 warnings). Dev server log healthy (no compile/runtime errors).
+   917→- No existing files modified. No new routes created. Parent dashboard will wire these tabs in.
+   918→- Wrote work record to `/home/z/my-project/agent-ctx/7b-full-stack-developer.md`.
+   919→
+   920→Stage Summary:
+   921→- 6 new instructor tab component files created in `src/components/instructor/` totaling ~3,360 lines of typed React/TSX.
+   922→- All 6 components consume the APIs built in tasks 6a/6b/6c without modification — purely additive UI layer.
+   923→- Each component handles loading (skeletons), empty (illustrated empty states with CTAs), and error (toast) states, and follows the existing GuardianX holographic design system.
+   924→- ESLint passes cleanly. Ready for the parent orchestrator to wire these tabs into the instructor dashboard's `INSTRUCTOR_TABS` array + render switch.
+   925→
+   926→---
+   927→Task ID: 7 (parent)
+   928→Agent: main (Z.ai Code)
+   929→Task: Add certificate verification card on homepage + 14 additional LMS features (Assignments, Course Analytics, Study Groups, Attendance, Peer Review, Video Recording, Email Notifications, Office Hours, Bulk Import, Certificate Templates, Auto-Graded Labs, Course Prerequisites, Student Messaging, Grading Rubric)
+   930→
+   931→Work Log:
+   932→- Expanded Prisma schema with 12 new models (Assignment, AssignmentSubmission, GradingRubric, RubricCriterion, PeerReview, OfficeHourSlot, OfficeHourBooking, MessageThread, Message, StudyGroup, StudyGroupMember, AttendanceRecord, CertificateTemplate, EmailLog) + added fields to Course (prerequisiteIds, certificateTemplateId), Lab (autoGrade, xpReward, passingScore), Certificate (templateId, verificationHash), User (new relations). Added StudyGroup.course relation after testing revealed it was missing.
+   933→- Ran db:push successfully (clean schema, no data loss).
+   934→- Built `src/lib/email.ts` — sendEmail() stub that logs to EmailLog table + generateVerificationHash() for tamper-evident cert verification.
+   935→- Built PUBLIC certificate verification API at `src/app/api/certificates/verify/route.ts` — anyone can verify a cert by ID without auth. Returns student name, course, score, issue date, instructor, template info, hash validity.
+   936→- Built `src/components/platform/certificate-verify-card.tsx` — "Verify Your Certificate" card with lookup Dialog. Shows verified/unverified states with full cert details.
+   937→- Added the verify card to `src/components/platform/auth-screen.tsx` below the demo accounts section — visible on the public homepage.
+   938→- Updated certificate issuance in `src/app/api/lessons/[id]/progress/route.ts` to generate verificationHash + apply default template + send certificate-issued email.
+   939→- Enhanced lab submit (`src/app/api/labs/[slug]/submit/route.ts`) with auto-grading using lab.xpReward/passingScore fields + email notification on completion.
+   940→- Added Course Prerequisites enforcement to `src/app/api/courses/[id]/enroll/route.ts` — blocks enrollment if prerequisite courses aren't completed; returns missing prerequisites list. Added GET endpoint to fetch prerequisites for UI.
+   941→- Spawned 3 parallel subagents (6a, 6b, 6c) to build all feature APIs:
+   942→  - 6a: Assignment + Rubric + PeerReview APIs (12 routes)
+   943→  - 6b: Office Hours + Messaging + Study Groups APIs (16 routes)
+   944→  - 6c: Bulk Import + Attendance + Certificate Templates + Prerequisites + Email log APIs (9 routes + csv helper)
+   945→- Spawned 2 parallel subagents (7a, 7b) to build frontend:
+   946→  - 7a: 4 student views (assignments.tsx, messaging.tsx, study-groups.tsx, office-hours.tsx)
+   947→  - 7b: 6 instructor tab components (assignments-tab, office-hours-tab, messaging-tab, attendance-tab, bulk-import-tab, certificate-templates-tab)
+   948→- Wired everything together:
+   949→  - app-store.ts: added 4 new view types (assignments, messaging, study-groups, office-hours)
+   950→  - page.tsx: routed the 4 new views
+   951→  - app-shell.tsx: added 4 new nav items (Assignments, Office Hours, Study Groups, Messages) with appropriate icons
+   952→  - instructor-dashboard.tsx: expanded from 5 tabs to 11 tabs (added Assignments, Office Hours, Attendance, Messages, Bulk Import, Cert Templates) with horizontal scroll for the tab list
+   953→- Added Video Recording to live sessions via MediaRecorder API — Record/Stop button in controls, live timer, REC indicator on stage, auto-downloads .webm file on stop.
+   954→- Added Course Prerequisites UI in course-detail.tsx — shows prerequisite courses in an amber warning box on the enroll card when prerequisites exist.
+   955→- Seeded 4 certificate templates (Guardian Classic as default, Cyber Neon, Gold Excellence, Minimal Pro) via prisma/seed-templates.ts. Backfills verificationHash on existing certs.
+   956→- Created a demo certificate (GX-DEMO2024CERT001) so the verify flow can be tested end-to-end.
+   957→
+   958→Stage Summary:
+   959→- Certificate Verification card LIVE on homepage — verified end-to-end with demo cert showing "Authentic Certificate / VERIFIED / Jamie Rivera / Certified Ethical Hacker / Score 95%".
+   960→- Instructor Dashboard expanded from 5 → 11 tabs, all loading correctly.
+   961→- Student nav expanded with 4 new items (Assignments, Office Hours, Study Groups, Messages), all views loading correctly.
+   962→- Video Recording integrated into live session room.
+   963→- Course Prerequisites enforced server-side + displayed in course detail.
+   964→- Auto-Graded Labs: XP + score calculated on flag submission, email sent.
+   965→- Email Notifications: stub logs all emails to EmailLog table (visible to admin).
+   966→- ESLint: 0 errors, 0 warnings.
+   967→- All features verified via agent-browser: homepage verify card, instructor 11 tabs, student 4 new views all render.
+   968→- Services running: dev(3000), lab-orchestrator(3004), terminal-gateway(3005), whiteboard(3006), live-signaling(3003).
+   969→
+   970→Demo Flow:
+   971→1. Homepage (logged out) → "Verify Your Certificate" card → enter `GX-DEMO2024CERT001` → see verified cert details.
+   972→2. Login as instructor → Instructor dashboard → 11 tabs including Assignments, Office Hours, Attendance, Messages, Bulk Import, Cert Templates.
+   973→3. Login as student → sidebar shows Assignments, Office Hours, Study Groups, Messages → each loads with proper empty states.
+   974→4. Live session room → Record button records screen share as .webm.
+   975→
+   976→Unresolved / Next Steps:
+   977→- Email sending is a stub (logs to DB). To enable real emails, integrate with SES/SendGrid in `src/lib/email.ts`.
+   978→- Video Recording saves to user's downloads — could be extended to upload to S3 and attach to the live session record for replay.
+   979→- Peer Review assignment is lazy (picks random submissions on demand) — could be pre-assigned when submission window closes.
+   980→- Study Group "Open" action currently shows members; could add a group chat or shared notes feature.
+   981→
+   982→---
+   983→Task ID: 21A
+   984→Agent: full-stack-developer (Z.ai Code)
+   985→Task: Build 7 new GuardianX Academy features — AI Learning Assistant, Live Threat Intelligence Feed, AI Code Review, Career Path Planner, Job Board, Mock Interview Engine, Resume Builder
+   986→
+   987→Work Log:
+   988→- Read the existing Prisma schema — confirmed all 7 feature models already exist (AIChatSession, AIChatMessage, ThreatFeed, CodeReview, CareerPath, CareerRole, Job, JobApplication, MockInterview, InterviewQuestion, Resume). Did NOT modify the schema.
+   989→- Verified the design system (`globals.css`): deep near-black background (oklch(0.06 0.006 270)), solid card surface (oklch(0.18 0.012 270 / 0.95)), violet primary (oklch(0.6 0.2 295)). Premium classes available: `card-premium`, `bg-mesh`, `text-gradient-premium`, `pulse-dot`, `glow-soft`, `btn-premium`, `ScrollReveal` etc.
+   990→- Reviewed `dashboard.tsx` for the established premium style pattern: hero with greeting, dominant mission card, ScrollReveal motion, Counter components, violet glow orbs.
+   991→- Used `import ZAI from 'z-ai-web-dev-sdk'` (lazy `await import(...)` inside route handlers) for all 3 AI features (assistant, code review, interview grading). All AI routes have graceful fallbacks if the LLM call fails — never returns 500 due to AI failure.
+   992→
+   993→Files created (all NEW — no existing files modified):
+   994→
+   995→1. **AI Learning Assistant**
+   996→   - `src/app/api/ai-assistant/route.ts` — POST { question, context:{courseId|labId|label}, sessionId? } → returns { sessionId, message }. Builds conversation history from session messages, prepends GuardianX tutor system prompt (legal/educational scope). Resolves course/lab context for tailored answers. Stores user + assistant messages.
+   997→   - `src/app/api/ai-assistant/sessions/route.ts` — GET lists user's chat sessions with last-message preview + message count; `?sessionId=` returns full messages for one session.
+   998→   - `src/views/ai-assistant.tsx` — `AIAssistantView`. Chat panel (left = session history with course/lab/general icons + last-message preview; right = chat area with violet AI bubbles / user bubbles, ScrollArea, context selector (general/course/lab) feeding course/lab dropdowns). Composer: Enter-to-send, Shift+Enter newline. Suggested prompts shown in empty state. Optimistic UI updates; loading spinner. 640px chat panel height.
+   999→
+  1000→2. **Live Threat Intelligence Feed**
+  1001→   - `src/app/api/threat-feed/route.ts` — GET lists threat intel items (auto-seeds 20 realistic items on first call: LockBit, CVE-2025-1042 Tomcat, RockYou2025, Palo Alto PAN-OS zero-day, etc.) with severity/category/q filters. POST creates new threat (admin/instructor only). 60s client polling makes the feed feel "live".
+  1002→   - `src/views/threat-feed.tsx` — `ThreatFeedView`. Animated "LIVE" red pulse-dot in header; 4 severity stat cards (critical/high/medium/low) with rose/amber/yellow/cyan colors; filter row (severity Select + category Select + search Input + LIVE badge). Threat cards: severity-colored border, category icon, CVE badge, IOC indicator, affected systems, time-ago. Stagger animation on cards.
+  1003→
+  1004→3. **AI Code Review**
+  1005→   - `src/app/api/code-review/route.ts` — POST { code, language, courseId?, labId? } → uses LLM with strict JSON-output system prompt (schema: { score, summary, issues[], goodPractices[] }). Robust JSON extractor (strips ```json fences, finds first/last brace). Persists CodeReview row with feedback, score, issues JSON. 20K char limit. Graceful fallback if LLM fails.
+  1006→   - `src/app/api/code-review/history/route.ts` — GET user's last 50 reviews with code preview (200 chars) + parsed issues.
+  1007→   - `src/views/code-review.tsx` — `CodeReviewView`. Code editor (Textarea with monospace font, language selector for 12 languages, sample vulnerable Python preloaded). Results panel: SVG circular score gauge (color-coded), summary, list of issues (severity-colored cards with category, location, FIX block), good-practices list. History grid below (click to reload past review).
+  1008→
+  1009→4. **Career Path Planner**
+  1010→   - `src/app/api/career/roles/route.ts` — GET lists career roles (auto-seeds 10: SOC Analyst T1, SOC Analyst T2/T3, Pentester, Security Engineer, Cloud Security Engineer, AppSec Engineer, DFIR Specialist, IAM/PAM Specialist, Security Architect, CISO). Each has avgSalary, requiredSkills, growthRate, category.
+  1011→   - `src/app/api/career/path/route.ts` — GET returns user's current path (null if none). POST creates/updates path — server-side computes initial progress % by checking which recommended courses/labs the user has already completed.
+  1012→   - `src/views/career-planner.tsx` — `CareerPlannerView`. Header; existing-path dashboard card (target role, current→target, estimated weeks, overall progress bar). Role picker grid (3-col) with category-colored icons (security=violet, cloud=cyan, governance=amber, network=emerald). Selected role detail panel + form (current role, target salary, estimated weeks, save button). Sticky right column: recommended roadmap sections (Courses / Certifications / Hands-on Labs).
+  1013→
+  1014→5. **Job Board**
+  1015→   - `src/app/api/jobs/route.ts` — GET lists jobs (auto-seeds 12 realistic cyber jobs: SOC Analyst, Pentester, Cloud Sec Engineer, AppSec, IAM/CyberArk, DFIR Consultant, SecArch Lead, DevSecOps Intern, Threat Intel Analyst, GRC Analyst, Red Team Operator, SecEng Intern). Filters: q / type / remote. Each job returns myApplication status if user applied. POST creates job (admin/instructor only).
+  1016→   - `src/app/api/jobs/[id]/route.ts` — GET job detail with postedBy + applicationsCount + myApplication. DELETE job (owner or admin only).
+  1017→   - `src/app/api/jobs/[id]/apply/route.ts` — POST { coverLetter } applies for a job. Unique constraint prevents duplicate applications.
+  1018→   - `src/views/job-board.tsx` — `JobBoardView`. Search + type filter + remote-only switch; 3-col job grid with `card-premium` hover effect, type badge (color-coded), salary, applicants count, time-ago, "Applied" status pill. Job detail Dialog with full description, requirements, required skills, preferred certs. Apply Dialog with cover-letter textarea + GuardianX transcript note.
+  1019→
+  1020→6. **Mock Interview Engine**
+  1021→   - `src/app/api/interviews/questions/route.ts` — GET lists questions by role (auto-seeds 30 across 7 roles: SOC Analyst, Pentester, Security Engineer, CISO, Cloud Security Engineer, IR Specialist, IAM Specialist). Mix of technical/behavioral/scenario. Returns `roles` array for the role picker.
+  1022→   - `src/app/api/interviews/route.ts` — POST { role, difficulty, questionIds[] } starts an interview. GET lists user's past interviews (with parsed questions + answers).
+  1023→   - `src/app/api/interviews/[id]/route.ts` — GET single interview with questions + answers. POST { answers[], duration, action:"complete" } submits answers — uses LLM to grade (0-100 + feedback), falls back to keyword-overlap heuristic if LLM unavailable.
+  1024→   - `src/views/mock-interview.tsx` — `MockInterviewView`. Three-phase UI: (1) Setup — role Select, difficulty Select, question preview list, start button. (2) Active — top bar with question N of M progress + live timer; main panel: question card + answer textarea; side panel: question navigator with answered/current dots. (3) Results — large score (text-gradient), AI feedback box, per-question review (your answer vs expected answer side-by-side). Past-interview history grid.
+  1025→
+  1026→7. **Resume Builder**
+  1027→   - `src/app/api/resume/route.ts` — GET returns user's resume (auto-creates empty default if none). POST creates/updates resume. Supports `?autopopulate=true` query — server fetches user's GuardianX certificates, completed courses, completed labs, and auto-fills the certifications array, derives skills from course/lab categories, and writes a default summary if missing.
+  1028→   - `src/views/resume-builder.tsx` — `ResumeBuilderView`. Two-column: (left) full form with sections — Contact (8 fields), Summary textarea, Experience (add/remove dynamic items), Education (dynamic), Skills (chips with click-to-remove + Enter-to-add), Certifications (auto-populated, read-only with verification IDs), Projects (dynamic). (right) Sticky live preview rendered on a white background to mimic real resume paper — header with name + contact icons, summary, experience, education, certifications, skills chips, projects. Top action bar: template selector (4 templates), Auto-populate button (violet), Save button, Download HTML button (generates a styled standalone HTML file via Blob).
+  1029→
+  1030→Cross-cutting:
+  1031→- All 7 view files start with `"use client"` and export the named function (`AIAssistantView`, `ThreatFeedView`, `CodeReviewView`, `CareerPlannerView`, `JobBoardView`, `MockInterviewView`, `ResumeBuilderView`).
+  1032→- All 13 API routes use `getCurrentUser()` for auth + `import { db } from "@/lib/db"`. Each sets `export const runtime = "nodejs"` (required for the dynamic z-ai-web-dev-sdk import in AI routes).
+  1033→- All AI features (3 of them) use lazy `await import("z-ai-web-dev-sdk")` inside try/catch — if the LLM is unavailable, the route returns a graceful fallback instead of 500. JSON parsing is robust (strips ``` fences, brace-finds).
+  1034→- Premium styling: `bg-mesh` atmospheric overlay, violet glow orbs top-right, `card-premium` hover lift on job cards, `pulse-dot` for live indicators, `text-gradient-premium` on hero keywords, `ScrollReveal` from motion-system on every section, `stagger-item` animation on threat cards, `animate-scale-in` on chat bubbles. Consistent violet primary (`bg-violet-600 hover:bg-violet-500 btn-premium` on action buttons).
+  1035→- Mobile-first responsive: all grids use `sm:` / `lg:` breakpoints; chat & resume layouts collapse from 12-col → single col on mobile.
+  1036→- Seed-on-first-GET pattern: each list API checks `count()` and seeds realistic data only if the table is empty. No standalone seed scripts needed.
+  1037→- TanStack Query throughout for client state (`useQuery` for reads, `useMutation` for writes, `useQueryClient().invalidateQueries()` after mutations). `sonner` toasts for user feedback. Optimistic UI for chat messages.
+  1038→- shadcn/ui primitives used: Button, Badge, Input, Textarea, Label, Select, Switch, ScrollArea, Skeleton, Progress, Separator, Dialog.
+  1039→- ESLint: 0 errors, 0 warnings (`bun run lint` clean).
+  1040→- Dev server log healthy — no compile or runtime errors after creation.
+  1041→
+  1042→Stage Summary:
+  1043→- 7 features fully built end-to-end (API + view) totaling 13 new API route files + 7 new view files ≈ 3,950 lines of typed TS/TSX.
+  1044→- All 7 views are self-contained and ready to be wired into the app shell/sidebar by the orchestrator. The `useAppStore` View type can be extended with names like `"ai-assistant"`, `"threat-feed"`, `"code-review"`, `"career-planner"`, `"job-board"`, `"mock-interview"`, `"resume-builder"`.
+  1045→- All 3 AI-powered features have working fallbacks so the UI is always functional even if the LLM SDK is temporarily unavailable.
+  1046→- All 4 list endpoints (threat-feed, jobs, career-roles, interview-questions) auto-seed realistic data on first call — no manual seeding required.
+  1047→- Files were appended (not modified) — no risk of breaking existing features.
+  1048→
+  1049→---
+  1050→Task ID: 21B
+  1051→Agent: full-stack-developer (Z.ai Code)
+  1052→Task: Build 9 new GuardianX Academy features — CTF Platform, Weekly Challenges, Team Missions, Learning Analytics, Skill Assessments, Prerequisites Visualizer, Lab Snapshots, Collaborative Cyber Range, Bug Bounty Integration
+  1053→
+  1054→Work Log:
+  1055→- Read the existing Prisma schema — confirmed all 9 feature model groups already exist (CTFCompetition / CTFChallenge / CTFTeam / CTFTeamMember / CTFSubmission, WeeklyChallenge / WeeklyChallengeSubmission, TeamMission / TeamMissionSession / TeamMissionMember, LearningAnalytics, SkillAssessment / SkillAssessmentQuestion / SkillAssessmentResult, LabSnapshot, CyberRange / CyberRangeSession / CyberRangeMember, BugBountyProgram / BugBountySubmission). Did NOT modify the schema.
+  1056→- Reviewed `src/views/dashboard.tsx` and `src/views/threat-feed.tsx` for the established premium style pattern. Reused: `bg-mesh` atmospheric overlay, violet glow orbs (top-right), `card-premium` hover lift, `pulse-dot` for live indicators, `text-gradient-premium` on hero keywords, `ScrollReveal` from motion-system, `bg-grid` overlays, `btn-premium` on action buttons.
+  1057→- Reviewed `src/lib/db.ts` and `src/lib/session.ts` — confirmed `getCurrentUser()` returns `{ id, email, name, role, avatar, title, bio, schoolId }`. All APIs require auth.
+  1058→- Reviewed `src/app/api/labs/route.ts`, `src/app/api/assignments/[id]/route.ts`, `src/app/api/threat-feed/route.ts` for the established API patterns (seed-on-first-GET, NextRequest, runtime="nodejs", db imports).
+  1059→
+  1060→Files created (all NEW — no existing files modified):
+  1061→
+  1062→1. **CTF Competition Platform**
+  1063→   - `src/app/api/ctf/competitions/route.ts` — GET lists competitions (auto-seeds 3: Spring CTF 2025 / Cyber Friday Sprint #42 / Inter-University Championship, each with 4 jeopardy challenges across web/crypto/forensics/pwn). POST creates competition (admin/instructor). Returns each competition with myTeam.
+  1064→   - `src/app/api/ctf/competitions/[id]/route.ts` — GET competition detail with challenges (groupable by category), teams ranked by score (= leaderboard), and `myTeam` + mySolved challenge IDs. Hides hint until solved.
+  1065→   - `src/app/api/ctf/teams/route.ts` — GET ?competitionId= lists teams with members. POST { competitionId, name } creates team (caller becomes captain). Prevents duplicate teams per competition per user.
+  1066→   - `src/app/api/ctf/submit/route.ts` — POST { challengeId, flag } checks correctness, records submission, awards points only on first correct solve, increments challenge.solveCount, returns { correct, message, score }.
+  1067→   - `src/views/ctf-platform.tsx` — `CTFPlatformView`. Competition list grid → click to drill in. Detail view: jeopardy board grouped by category (color-coded: web=violet, crypto=cyan, forensics=amber, pwn=red, reverse=rose, misc=emerald). Click a challenge card → flag submission Dialog with hint, points, solve count, difficulty. Right column: live leaderboard with rank coloring (gold/silver/bronze). Create Team dialog.
+  1068→
+  1069→2. **Weekly Challenges**
+  1070→   - `src/app/api/challenges/route.ts` — GET default returns active challenge + top-10 leaderboard. GET ?history=true returns past challenges with flags revealed. POST { challengeId, flag, timeTaken } submits — single attempt per user (unique constraint), upsolves first attempt only. Auto-seeds 3 challenges (Week 18 SSRF active, Week 17 JWT, Week 16 ICMP).
+  1071→   - `src/views/weekly-challenges.tsx` — `WeeklyChallengesView`. Tabs: This Week / Past Challenges. Active challenge card: category badge, difficulty, points, participant count, **live countdown timer** (HH:MM:SS) + your elapsed timer. Single-submission warning. Reveal-hint button. Result banner (correct/incorrect). Leaderboard column with top-10 fastest solvers. Past challenges grid showing flag + solver count.
+  1072→
+  1073→3. **Team-Based Lab Missions**
+  1074→   - `src/app/api/team-missions/route.ts` — GET lists 4 missions (auto-seeded: AD Compromise, Web App Breach & Forensics, Cloud Container Escape, IR Triage) with objectives + active sessions. POST { missionId } creates session (caller = leader).
+  1075→   - `src/app/api/team-missions/[id]/route.ts` — GET session detail with mission + members. POST { role } joins as scanner/exploiter/reporter.
+  1076→   - `src/views/team-missions.tsx` — `TeamMissionsView`. Mission cards with objectives list, difficulty, max team size, duration, active session count. Session detail: scenario brief, objectives grid, team lobby showing members with role badges (Leader=Shield/violet, Scanner=Radar/cyan, Exploiter=Sword/rose, Reporter=ScrollText/amber) + empty-slot placeholders. Role picker panel with descriptions.
+  1077→
+  1078→4. **Learning Analytics Dashboard**
+  1079→   - `src/app/api/analytics/route.ts` — GET auto-computes analytics from enrollments, labProgress, quizAttempts, userActivity. Computes totalTimeSpent (xp*2 + lab time), coursesStarted/Completed, labsAttempted/Solved, avgQuizScore, **skillRadar** (web/network/crypto/forensics/reverse/governance — boosted by course categories + lab categories), **weeklyActivity** (last 7 days), **peerComparison** (xp/streak/level percentiles vs all users), courseBreakdown. Upserts LearningAnalytics record. Returns enriched analytics object.
+  1080→   - `src/views/learning-analytics.tsx` — `LearningAnalyticsView`. 4 KPI cards (Time Spent, Courses, Labs Solved, Avg Quiz). **Custom SVG radar chart** (6-axis with concentric rings + axis lines + data polygon + labels) alongside per-skill progress bars. Peer comparison panel with 3 percentile bars (XP/Streak/Level) showing "Top X% of cohort". Weekly activity bar chart (7 bars, gradient violet→cyan). Streak card with current vs longest. Course completion list with Progress bars + DONE badges.
+  1081→
+  1082→5. **Skill Assessment Tests**
+  1083→   - `src/app/api/skill-assessments/route.ts` — GET lists 5 assessments (auto-seeded: Web App Security, Network Defense, Crypto & PKI, DFIR, GRC) with question count + best score + last-taken.
+  1084→   - `src/app/api/skill-assessments/[id]/route.ts` — GET assessment with questions (correctAnswer intentionally omitted from response). POST { answers: [{questionId, selected}] } computes score (70%+ to pass), per-skill breakdown, persists SkillAssessmentResult. Returns result with per-question explanations.
+  1085→   - `src/views/skill-assessments.tsx` — `SkillAssessmentsView`. 3 phases: list → test → results. List: assessment cards with category/difficulty/question count/duration, best score Progress bar, "Start/Retake" button. Test: question-by-question interface with Progress indicator, skill-tag badge, A/B/C/D option buttons (click-to-select), Previous/Next navigation, **question navigator grid** (5-col, color-coded answered/current/unanswered). Results: large score banner (gradient text if passed, amber if not), per-skill percentage cards, **question review** showing each question with correct/incorrect highlighting + explanation.
+  1086→
+  1087→6. **Course Prerequisites Visualizer**
+  1088→   - `src/app/api/prerequisites-graph/route.ts` — GET all published courses with their `prerequisiteIds` field parsed. Returns nodes (course metadata + prerequisiteCount) + edges (prereq→course) + categories list.
+  1089→   - `src/views/prerequisites-visualizer.tsx` — `PrerequisitesVisualizerView`. **Pure SVG graph** (no external library): 3-column layout (Beginner → Intermediate → Advanced), nodes positioned by level column + sorted within column, **curved bezier edges** with arrowheads (default grey, highlighted violet when selected/hovered). Click any node → side panel shows course details (level, duration, students, rating), **PREREQUISITES list** (clickable to navigate), **UNLOCKS list** (dependents, clickable). Legend with category color dots. Stats footer (courses/edges/categories count). Hover dims unrelated nodes/edges for focus.
+  1090→
+  1091→7. **Lab Snapshots & Save States**
+  1092→   - `src/app/api/lab-snapshots/route.ts` — GET ?labId= lists user's snapshots (with lab metadata). POST { labId, name, description, state } creates snapshot.
+  1093→   - `src/app/api/lab-snapshots/[id]/route.ts` — GET loads snapshot (owner only). DELETE removes (owner only).
+  1094→   - `src/views/lab-snapshots.tsx` — `LabSnapshotsView`. Snapshot grid with lab category badge, name, lab title, description, created date. Per-snapshot actions: Load (restore dialog showing pretty-printed JSON state), Download (export to JSON file via Blob), Delete (confirm dialog). Create Snapshot dialog with lab Select, name, description. Empty state + tips card explaining snapshot semantics.
+  1095→
+  1096→8. **Collaborative Cyber Range**
+  1097→   - `src/app/api/cyber-range/route.ts` — GET lists 3 ranges (auto-seeded: Corporate Network Siege, ICS/OT Plant Floor, Cloud Kubernetes Cluster) each with topology JSON + machines JSON. POST { rangeId } creates session (caller = leader).
+  1098→   - `src/app/api/cyber-range/[id]/route.ts` — GET session detail with range + members. POST { role } joins as attacker/defender/observer.
+  1099→   - `src/views/cyber-range.tsx` — `CyberRangeView`. Range cards with **mini topology preview** (SVG with type-iconified nodes + connecting lines), machine list (hostname + IP), max users, duration, active session count with live pulse-dot. Session detail: full topology view (SVG with arrows + IP labels under each node), team roster showing members with role badges (Leader/Attacker/Defender/Observer) + empty slots, role picker with descriptions.
+  1100→
+  1101→9. **Bug Bounty Integration**
+  1102→   - `src/app/api/bug-bounty/route.ts` — GET ?mine=true returns user's submissions; default returns 8 programs (auto-seeded: Acme Bank, CloudDrive, MediHealth, ShopVerse, GreenGrid SCADA, EduConnect, PayFlow, SmartHome Firmware) with platform/scope/rewardRange/difficulty/tags + mySubmission status. POST { programId, title, description, severity } submits a finding.
+  1103→   - `src/views/bug-bounty.tsx` — `BugBountyView`. Tabs: Programs / My Submissions (with count badge). Program cards: platform badge (color-coded: GuardianX=violet, HackerOne=cyan, Bugcrowd=amber), difficulty, reward range (emerald), scope (mono), tags chips, submissions count, "Open" external link + "Submit" button. Submit Finding dialog with title, description textarea, severity Select (low/medium/high/critical), responsible-disclosure warning. My Submissions: severity-colored cards with status badge, bounty (if rewarded), program name, created date.
+  1104→
+  1105→Cross-cutting:
+  1106→- All 9 view files start with `"use client"` and export the named function: `CTFPlatformView`, `WeeklyChallengesView`, `TeamMissionsView`, `LearningAnalyticsView`, `SkillAssessmentsView`, `PrerequisitesVisualizerView`, `LabSnapshotsView`, `CyberRangeView`, `BugBountyView`.
+  1107→- All 17 API route files use `getCurrentUser()` for auth + `import { db } from "@/lib/db"`. Each sets `export const runtime = "nodejs"`.
+  1108→- Premium styling: `bg-mesh` atmospheric overlay, violet glow orbs top-right, `card-premium` hover lift on cards, `pulse-dot` for live indicators (CTF live competition, weekly countdown, range active sessions), `text-gradient-premium` on hero keywords, `ScrollReveal` from motion-system on every section, stagger animations on lists, `bg-grid` overlays on hero cards. Consistent violet primary (`bg-violet-600 hover:bg-violet-500 btn-premium` on action buttons).
+  1109→- Mobile-first responsive: all grids use `sm:` / `md:` / `lg:` breakpoints; multi-column layouts collapse to single column on mobile.
+  1110→- Seed-on-first-GET pattern: each list API checks `count()` and seeds realistic data only if the table is empty. No standalone seed scripts needed.
+  1111→- TanStack Query throughout for client state (`useQuery` for reads, `useMutation` for writes, `useQueryClient().invalidateQueries()` after mutations). `sonner` toasts for user feedback. 10–30s polling on detail/leaderboard queries to feel "live".
+  1112→- shadcn/ui primitives used: Button, Badge, Input, Textarea, Label, Select, Skeleton, Progress, Tabs, Dialog.
+  1113→- Custom SVG visualizations: radar chart (learning analytics), prerequisite graph (3-column curved-edge layout), topology previews (mini + full) for cyber range. No external chart/graph libraries added.
+  1114→- ESLint: 0 errors, 0 warnings (`bun run lint` clean).
+  1115→- Dev server log healthy — no compile or runtime errors after creation (only pre-existing NEXTAUTH_URL warning).
+  1116→
+  1117→Stage Summary:
+  1118→- 9 features fully built end-to-end (API + view) totaling 17 new API route files + 9 new view files ≈ 4,200 lines of typed TS/TSX.
+  1119→- All 9 views are self-contained and ready to be wired into the app shell/sidebar by the orchestrator. The `useAppStore` View type can be extended with names like `"ctf"`, `"weekly-challenges"`, `"team-missions"`, `"learning-analytics"`, `"skill-assessments"`, `"prerequisites-graph"`, `"lab-snapshots"`, `"cyber-range"`, `"bug-bounty"`.
+  1120→- All 8 list endpoints (CTF competitions, weekly challenges, team missions, skill assessments, lab snapshots, cyber ranges, bug bounty programs, prerequisites graph) auto-seed realistic data on first call — no manual seeding required.
+  1121→- Files were appended (not modified) — no risk of breaking existing features.
+  1122→
+  1123→---
+  1124→Task ID: 21C
+  1125→Agent: full-stack-developer (Z.ai Code)
+  1126→Task: Build 3 features for GuardianX Academy — PWA / Mobile App (17), Parent/Guardian Portal (19), Course Authoring Studio (20). No schema changes.
+  1127→
+  1128→Work Log:
+  1129→- Read worklog history (Tasks 21A + 21B established the additive "API + premium client view" pattern with `getCurrentUser()` auth + `import { db } from "@/lib/db"`). Read `src/lib/db.ts`, `src/lib/session.ts`, `src/app/globals.css`, `src/app/layout.tsx`, the Prisma schema (confirmed `ParentAccount` + `AuthoredCourse` models already existed), and `src/lib/auth.ts` (NextAuth config — parents live in their own table so need their own auth).
+  1130→- Built Feature 17 (PWA): `public/manifest.json` (violet `#7c3aed` theme, deep `#0a0a0f` background, standalone display, 4 install shortcuts); `public/sw.js` (vanilla SW — pre-caches app shell, network-first for navigations with branded offline fallback HTML, cache-first for static assets, passes through API/HMR); `src/app/api/pwa/route.ts` (GET returns PWA metadata — auth OPTIONAL so install flow works pre-login); updated `src/app/layout.tsx` (added `Viewport` export with `themeColor`, `manifest`, `appleWebApp`, full `icons` set, explicit `<head>` with apple-touch-icon at 180/192/512 + mask-icon); added `src/components/providers/service-worker-register.tsx` (registers SW, listens for `updatefound`/`controllerchange`, periodic update check) wired into `Providers`.
+  1131→- Built Feature 19 (Parent Portal): `src/lib/parent-auth.ts` (HMAC-signed token with 7-day TTL, timing-safe verify, `readParentToken` helper); `src/app/api/parent/route.ts` (GET — student overview with progress, attendance, certificates, labs, activities; POST — login); `src/app/api/parent/register/route.ts` (POST — links new parent to existing student by student's email); `src/views/parent-portal.tsx` (`ParentPortalView` — login/register tabs → dashboard with hero + KPI cards + 5-tab layout: Courses, Certificates, Labs, Attendance with stacked-bar, Activity timeline).
+  1132→- Built Feature 20 (Course Studio): `src/app/api/course-studio/route.ts` (GET list with parsed config + totals; POST create draft with starter config skeleton); `src/app/api/course-studio/[id]/route.ts` (GET config; PATCH update config/meta; DELETE draft; POST publish — converts draft JSON into real Course + Modules + Lessons in a `$transaction`, idempotent re-publishing via slug-embedded draft id); `src/views/course-studio.tsx` (`CourseStudioView` — list view + 3-pane editor: LEFT scrollable outline with collapsible modules/lessons + up/down/delete + add buttons; CENTER module/lesson editor with title/content/type/duration/preview-switch; RIGHT tabbed Preview/JSON/Settings pane + publish footer).
+  1133→- All 3 view files start with `"use client"` and export the named functions (`ParentPortalView`, `CourseStudioView`). PWA has no view (pure infrastructure).
+  1134→- All 4 API routes use `getCurrentUser()` for auth (except parent login + register which use their own `ParentAccount` table + signed-token scheme). All API routes set `export const runtime = "nodejs"`.
+  1135→- Premium styling: violet primary, `bg-card shadow-lg`, `text-gradient-premium`, `bg-mesh` + `glow-orb` atmosphere on hero sections, `bg-grid` overlays, `scanlines` on hero cards, `card-hover` lift on cards, `stagger-item` on activity timeline.
+  1136→- TanStack Query (`useQuery` with 30s polling on parent portal, `useMutation` for writes, `invalidateQueries` after mutations). `sonner` toasts throughout. Parent token persisted to `localStorage`.
+  1137→- Course Studio publish uses Prisma `$transaction` to atomically create Course + Modules + Lessons; re-publishing updates the existing Course (deletes + recreates modules). Slug is `${slugify(title)}-${draftId.slice(-6)}` for idempotency.
+  1138→- ESLint: 0 errors, 0 warnings (`bun run lint` clean after fixing one unused eslint-disable directive).
+  1139→- Dev server log healthy — only the pre-existing NEXTAUTH_URL warning. `bun build` syntax-check passes for all new TS/TSX files.
+  1140→- Files were additive except for `src/app/layout.tsx` (PWA meta tags) and `src/components/providers/providers.tsx` (added `<ServiceWorkerRegister />`). Prisma schema unchanged.
+  1141→
+  1142→Stage Summary:
+  1143→- 3 features fully built end-to-end: 4 new API routes + 2 new view files + 1 new lib + 1 new provider component + 2 new public assets + 2 modified files (layout + providers).
+  1144→- All views are self-contained and ready to be wired into the app shell by the orchestrator (extend `useAppStore` View type with `"parent-portal"` and `"course-studio"`, add render cases in `src/app/page.tsx`).
+  1145→- PWA is pure infrastructure (no view wiring needed — manifest/SW/meta auto-applied on every page load).
+
+[showing lines 900-1145 of 1147; use offset=1146 with limit to continue reading]

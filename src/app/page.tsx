@@ -49,6 +49,7 @@ import { CyberRangeView } from "@/views/cyber-range"
 import { BugBountyView } from "@/views/bug-bounty"
 import { ParentPortalView } from "@/views/parent-portal"
 import { CourseStudioView } from "@/views/course-studio"
+import { CMSDashboardView } from "@/views/cms-dashboard"
 
 // Public views that show the header + footer (accessible without login)
 const PUBLIC_VIEWS = new Set(["home", "impact", "contact", "institutions", "catalog", "course"])
@@ -102,6 +103,7 @@ function ViewRouter() {
       {view.name === "bug-bounty" && <BugBountyView />}
       {view.name === "parent-portal" && <ParentPortalView />}
       {view.name === "course-studio" && <CourseStudioView />}
+      {view.name === "cms" && <CMSDashboardView />}
     </div>
   )
 }

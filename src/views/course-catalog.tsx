@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils"
 import {
   ScrollReveal, TextReveal, Stagger, StaggerItem, CursorGlow, MagneticButton, Counter,
 } from "@/components/platform/motion-system"
+import { usePageContent, getContent } from "@/lib/use-content"
 
 interface CourseItem {
   id: string; slug: string; title: string; shortName: string; description: string
@@ -53,6 +54,13 @@ export function CourseCatalogView() {
   const [category, setCategory] = React.useState("All")
   const [level, setLevel] = React.useState("All")
   const [status, setStatus] = React.useState("all")
+
+  // CMS-driven hero copy — falls back to defaults.
+  const cms = usePageContent("catalog")
+  const cmsData = cms.data
+  const heroEyebrow = getContent(cmsData, "hero", "eyebrow", "CATALOG")
+  const heroTitle = getContent(cmsData, "hero", "title", "Find your")
+  const heroTitleAccent = getContent(cmsData, "hero", "titleAccent", "path.")
 
   const { data, isLoading } = useQuery<{ courses: CourseItem[] }>({
     queryKey: ["courses", q, category, level, status],
@@ -91,14 +99,14 @@ export function CourseCatalogView() {
           <ScrollReveal>
             <div className="flex items-center gap-2 mb-4">
               <span className="h-1.5 w-1.5 rounded-full bg-violet-400 pulse-dot" />
-              <span className="text-[10px] font-mono text-violet-300/80 tracking-[0.3em]">CATALOG</span>
+              <span className="text-[10px] font-mono text-violet-300/80 tracking-[0.3em]">{heroEyebrow}</span>
             </div>
           </ScrollReveal>
           <ScrollReveal delay={0.1}>
             <h1 className="text-[clamp(2.25rem,6vw,4.5rem)] font-bold leading-[0.95] tracking-[-0.04em] mb-4 text-balance">
-              <TextReveal text="Find your" />{" "}
+              <TextReveal text={heroTitle} />{" "}
               <span className="text-gradient-premium">
-                <TextReveal text="path." delay={0.3} />
+                <TextReveal text={heroTitleAccent} delay={0.3} />
               </span>
             </h1>
           </ScrollReveal>

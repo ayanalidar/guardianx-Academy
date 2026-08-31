@@ -49,6 +49,7 @@ export type View =
   | { name: "bug-bounty" }
   | { name: "parent-portal" }
   | { name: "course-studio" }
+  | { name: "cms" }
 
 interface AppState {
   view: View

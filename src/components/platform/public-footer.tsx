@@ -60,9 +60,13 @@ export function PublicFooter() {
           {/* Brand */}
           <ScrollReveal className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-2.5 mb-4">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-violet-500/30 bg-violet-500/10">
-                <Shield className="h-4 w-4 text-violet-300" strokeWidth={1.8} />
-              </div>
+              <img
+                src="/guardianx-logo-v2.png"
+                alt="GuardianX"
+                className="h-9 w-9 object-contain"
+                style={{ filter: "drop-shadow(0 0 6px rgba(124,58,237,0.6))" }}
+                draggable={false}
+              />
               <div className="font-bold text-sm">
                 Guardian<span className="text-violet-400">X</span>
               </div>

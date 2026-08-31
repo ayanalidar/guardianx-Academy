@@ -22,6 +22,8 @@ import { toast } from "sonner"
 import { CertificateVerifyCard } from "@/components/platform/certificate-verify-card"
 import { PublicHeader } from "@/components/platform/public-header"
 import { cn } from "@/lib/utils"
+import { usePageContent, getContent } from "@/lib/use-content"
+import { AnimatedLogo } from "@/components/platform/animated-logo"
 
 const DEMO_ACCOUNTS = [
   { label: "Student", email: "student@guardianx.io", password: "student123", icon: GraduationCap, color: "text-violet-300", tint: "bg-violet-500/10 border-violet-500/30" },
@@ -50,6 +52,21 @@ export function AuthScreen() {
   const [loading, setLoading] = React.useState(false)
   const [showPass, setShowPass] = React.useState(false)
   const [activeTab, setActiveTab] = React.useState("login")
+
+  // CMS-driven hero copy — falls back to defaults.
+  const cms = usePageContent("auth")
+  const cmsData = cms.data
+  const heroTitle = getContent(cmsData, "hero", "title", "Master Cyber Security.")
+  const heroTitleAccent = getContent(cmsData, "hero", "titleAccent", "Become a Guardian.")
+  const heroDesc = getContent(cmsData, "hero", "description", "Industry-leading certification prep, live screen-sharing workshops, and hands-on offensive security labs — all in one platform built for defenders.")
+  const heroTagline = getContent(cmsData, "hero", "tagline", "cyber security · certification · labs")
+  const trustFooter = getContent(cmsData, "hero", "trustFooter", "Encrypted · SOC2-aligned · Built for defenders")
+  const loginTitle = getContent(cmsData, "tabs", "loginTitle", "Sign in to continue")
+  const loginSubtitle = getContent(cmsData, "tabs", "loginSubtitle", "Access your learning dashboard, labs, and live sessions.")
+  const schoolTitle = getContent(cmsData, "tabs", "schoolTitle", "Institution Portal Login")
+  const schoolSubtitle = getContent(cmsData, "tabs", "schoolSubtitle", "Access your school, college, or university dashboard.")
+  const registerTitle = getContent(cmsData, "tabs", "registerTitle", "Create your account")
+  const registerSubtitle = getContent(cmsData, "tabs", "registerSubtitle", "Start your cyber security journey today.")
 
   // Standard login state
   const [loginEmail, setLoginEmail] = React.useState("student@guardianx.io")
@@ -172,24 +189,22 @@ export function AuthScreen() {
                   <span className="h-1.5 w-1.5 rounded-full bg-violet-400 pulse-dot" />
                   SYSTEM ONLINE
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-violet-500/30 bg-violet-500/10">
-                    <Shield className="h-5 w-5 text-violet-300" strokeWidth={1.8} />
-                  </div>
+                <div className="flex items-center gap-4">
+                  <AnimatedLogo size={84} showShards showParticles showScanArc parallax={false} />
                   <div>
                     <div className="text-xl font-bold tracking-tight leading-none">
                       Guardian<span className="text-violet-400">X</span> Academy
                     </div>
-                    <div className="text-xs text-muted-foreground mt-1 font-mono">cyber security · certification · labs</div>
+                    <div className="text-xs text-muted-foreground mt-1 font-mono">{heroTagline}</div>
                   </div>
                 </div>
                 <h1 className="text-[clamp(2rem,3.5vw,3rem)] font-bold leading-[1.05] tracking-[-0.02em] text-balance">
-                  Master Cyber Security.
+                  {heroTitle}
                   <br />
-                  <span className="text-gradient-premium">Become a Guardian.</span>
+                  <span className="text-gradient-premium">{heroTitleAccent}</span>
                 </h1>
                 <p className="text-base text-muted-foreground max-w-md leading-relaxed">
-                  Industry-leading certification prep, live screen-sharing workshops, and hands-on offensive security labs — all in one platform built for defenders.
+                  {heroDesc}
                 </p>
               </div>
 
@@ -227,7 +242,7 @@ export function AuthScreen() {
               {/* Trust footer */}
               <div className="flex items-center gap-2 text-xs text-muted-foreground font-mono">
                 <Lock className="h-3 w-3 text-cyan-300" />
-                <span>Encrypted · SOC2-aligned · Built for defenders</span>
+                <span>{trustFooter}</span>
               </div>
             </section>
 
@@ -255,17 +270,17 @@ export function AuthScreen() {
                 >
                   <h2 className="text-2xl font-bold tracking-tight">
                     {activeTab === "school"
-                      ? "Institution Portal Login"
+                      ? schoolTitle
                       : activeTab === "register"
-                        ? "Create your account"
-                        : "Sign in to continue"}
+                        ? registerTitle
+                        : loginTitle}
                   </h2>
                   <p className="text-sm text-muted-foreground mt-1.5">
                     {activeTab === "school"
-                      ? "Access your school, college, or university dashboard."
+                      ? schoolSubtitle
                       : activeTab === "register"
-                        ? "Start your cyber security journey today."
-                        : "Access your learning dashboard, labs, and live sessions."}
+                        ? registerSubtitle
+                        : loginSubtitle}
                   </p>
                 </motion.div>
 

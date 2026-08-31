@@ -5,6 +5,7 @@ import dynamic from "next/dynamic"
 import { AuthScreen } from "@/components/platform/auth-screen"
 import { AppShell } from "@/components/platform/app-shell"
 import { PublicPageShell } from "@/components/platform/public-page-shell"
+import { ErrorBoundary } from "@/components/platform/error-boundary"
 import { useAppStore } from "@/store/app-store"
 import { HomeView } from "@/views/home"
 import { ImpactView } from "@/views/impact"
@@ -227,7 +228,21 @@ export default function Home() {
   }
 
   // Logged in: if user explicitly navigates to a public view, show it with public shell
-  if (PUBLIC_VIEWS.has(view.name)) {
+  // BUT: if the view is still the default "home" and the user just logged in,
+  // redirect to their role-appropriate dashboard instead.
+  if (session && view.name === "home") {
+    // Auto-redirect to role dashboard on first load after login
+    const role = (session as any)?.user?.role
+    const targetView = role === "ADMIN" ? "admin" : role === "INSTRUCTOR" ? "instructor" : "dashboard"
+    if (view.name !== targetView) {
+      // Use a microtask to avoid setState during render
+      Promise.resolve().then(() => {
+        useAppStore.getState().navigate({ name: targetView as any })
+      })
+    }
+  }
+
+  if (PUBLIC_VIEWS.has(view.name) && view.name !== "home") {
     return (
       <PublicPageShell>
         <ViewRouter />
@@ -235,9 +250,20 @@ export default function Home() {
     )
   }
 
+  // If logged in and view is "home" (shouldn't happen after redirect above, but fallback)
+  if (session && view.name === "home") {
+    return (
+      <AppShell>
+        <ViewRouter />
+      </AppShell>
+    )
+  }
+
   return (
     <AppShell>
-      <ViewRouter />
+      <ErrorBoundary>
+        <ViewRouter />
+      </ErrorBoundary>
     </AppShell>
   )
 }

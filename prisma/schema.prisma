@@ -78,6 +78,8 @@ model User {
   bugBountySubmissions  BugBountySubmission[]
   parentAccounts       ParentAccount[]
   authoredCourses      AuthoredCourse[]
+  instructorProfile    InstructorProfile?
+  leadNotes            LeadNote[]
 }
 
 // ============================================================
@@ -1456,4 +1458,60 @@ model ProctoringSession {
   startedAt     DateTime @default(now())
   endedAt       DateTime?
   createdAt     DateTime @default(now())
+}
+
+// ============================================================
+// ADMIN-UPGRADE — Instructor Profile + Lead CRM models
+// ============================================================
+
+model InstructorProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  phone           String?
+  expertise       String   @default("[]") // JSON: ["Offensive Security", "Defensive", ...]
+  yearsExperience Int      @default(0)
+  certifications  String   @default("[]") // JSON: ["CEH", "OSCP", ...]
+  linkedinUrl     String?
+  maxBatches      Int      @default(3)
+  currentBatches  Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Lead {
+  id            String   @id @default(cuid())
+  name          String
+  email         String?
+  phone         String?
+  organization  String?
+  type          String   @default("Individual") // Individual | School | College | University | Corporate | Partner | Workshop | CTF | Webinar
+  status        String   @default("New") // New | Contacted | Qualified | Proposal | Negotiation | Converted | Lost
+  source        String   @default("Contact Form") // Google Form | Contact Form | Manual | Referral
+  score         Int      @default(0) // 0-100 lead score
+  notes         LeadNote[]
+  history       LeadStatusHistory[]
+  followUpDate  DateTime?
+  assignedTo    String? // staff member name/ID
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model LeadNote {
+  id        String   @id @default(cuid())
+  leadId    String
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  authorId  String?
+  author    User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  content   String
+  createdAt DateTime @default(now())
+}
+
+model LeadStatusHistory {
+  id        String   @id @default(cuid())
+  leadId    String
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  fromStatus String?
+  toStatus  String
+  changedAt DateTime @default(now())
 }

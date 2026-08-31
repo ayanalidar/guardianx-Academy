@@ -73,6 +73,19 @@ export async function POST(req: NextRequest) {
       },
     })
 
+    // Also create a Lead in the CRM so the sales team can follow up
+    await db.lead.create({
+      data: {
+        name,
+        email,
+        organization: safeCategory,
+        type: "Individual",
+        source: "Contact Form",
+        score: 20,
+        history: { create: [{ fromStatus: null, toStatus: "New" }] },
+      },
+    }).catch(() => null) // non-fatal — lead creation shouldn't break contact form
+
     // Send confirmation email to the submitter
     await sendEmail({
       to: email,

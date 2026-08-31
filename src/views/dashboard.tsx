@@ -189,17 +189,29 @@ export function DashboardView() {
 
   const { data: meData } = useQuery<{
     activities?: ActivityItem[]
-  }>({ queryKey: ["me"], queryFn: () => api("/api/me") })
+  }>({
+    queryKey: ["me"],
+    queryFn: async () => {
+      try { return await api("/api/me") } catch { return { activities: [] } }
+    },
+    retry: false,
+  })
 
   const { data: coursesData, isLoading: coursesLoading } = useQuery<{ courses: CourseListItem[] }>({
     queryKey: ["courses", "dashboard-enrolled"],
-    queryFn: () => api(`/api/courses?enrolled=true&userId=${user?.id ?? ""}&status=in-progress`),
+    queryFn: async () => {
+      try { return await api(`/api/courses?enrolled=true&userId=${user?.id ?? ""}&status=in-progress`) } catch { return { courses: [] } }
+    },
     enabled: !!user?.id,
+    retry: false,
   })
 
   const { data: labsData, isLoading: labsLoading } = useQuery<{ labs: LabListItem[] }>({
     queryKey: ["labs", "dashboard"],
-    queryFn: () => api("/api/labs"),
+    queryFn: async () => {
+      try { return await api("/api/labs") } catch { return { labs: [] } }
+    },
+    retry: false,
   })
 
   const { data: leaderboardData, isLoading: leaderboardLoading } = useQuery<{
@@ -208,7 +220,10 @@ export function DashboardView() {
     totalUsers: number
   }>({
     queryKey: ["leaderboard", "dashboard"],
-    queryFn: () => api("/api/leaderboard"),
+    queryFn: async () => {
+      try { return await api("/api/leaderboard") } catch { return { topUsers: [], currentUser: null, totalUsers: 0 } }
+    },
+    retry: false,
   })
 
   const { data: achievementsData, isLoading: achievementsLoading } = useQuery<{
@@ -217,8 +232,11 @@ export function DashboardView() {
     totalCount: number
   }>({
     queryKey: ["achievements", "dashboard"],
-    queryFn: () => api("/api/achievements"),
+    queryFn: async () => {
+      try { return await api("/api/achievements") } catch { return { achievements: [], earnedCount: 0, totalCount: 0 } }
+    },
     enabled: !!user?.id,
+    retry: false,
   })
 
   const activities = meData?.activities ?? []

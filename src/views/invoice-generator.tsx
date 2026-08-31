@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import { useAppStore } from "@/store/app-store"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,31 +9,77 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import {
-  FileText, Plus, Trash2, Download, Copy, ArrowLeft, Building2,
-  User, Mail, Phone, MapPin, Calendar, Hash, DollarSign,
-  Calculator, Shield, Award, Sparkles, Printer,
+  FileText, Plus, Trash2, ArrowLeft, Building2, User, Mail, Phone,
+  MapPin, Calendar, Hash, Calculator, Shield, Award, Sparkles, Printer,
+  Copy, Save, QrCode, Landmark, Signature, GraduationCap, FlaskConical,
+  Award as CertIcon, Wrench, CheckCircle2, Clock, AlertTriangle, Send,
+  Wallet, TrendingUp, FileCheck, PenLine, Zap,
 } from "lucide-react"
 import { toast } from "sonner"
+
+type ItemIcon = "training" | "lab" | "cert" | "workshop"
+type InvoiceStatus = "Draft" | "Sent" | "Paid" | "Overdue"
 
 interface LineItem {
   id: string
   description: string
   quantity: number
   unitPrice: number
+  icon: ItemIcon
+}
+
+interface SavedInvoice {
+  id: string
+  number: string
+  clientName: string
+  total: number
+  status: InvoiceStatus
+  issueDate: string
+  currency: string
+}
+
+const ITEM_ICON_CONFIG: Record<ItemIcon, { icon: React.ElementType; label: string; color: string; bg: string }> = {
+  training: { icon: GraduationCap, label: "Training", color: "text-violet-300", bg: "bg-violet-500/10" },
+  lab: { icon: FlaskConical, label: "Lab", color: "text-cyan-300", bg: "bg-cyan-500/10" },
+  cert: { icon: CertIcon, label: "Cert", color: "text-amber-300", bg: "bg-amber-500/10" },
+  workshop: { icon: Wrench, label: "Workshop", color: "text-emerald-300", bg: "bg-emerald-500/10" },
+}
+
+const STATUS_CONFIG: Record<InvoiceStatus, { color: string; bg: string; border: string; icon: React.ElementType; label: string }> = {
+  Draft: { color: "text-zinc-300", bg: "bg-zinc-500/10", border: "border-zinc-500/30", icon: FileText, label: "Draft" },
+  Sent: { color: "text-cyan-300", bg: "bg-cyan-500/10", border: "border-cyan-500/30", icon: Send, label: "Sent" },
+  Paid: { color: "text-emerald-300", bg: "bg-emerald-500/10", border: "border-emerald-500/30", icon: CheckCircle2, label: "Paid" },
+  Overdue: { color: "text-rose-300", bg: "bg-rose-500/10", border: "border-rose-500/30", icon: AlertTriangle, label: "Overdue" },
+}
+
+const CURRENCY_LOCALE: Record<string, { locale: string; symbol: string; label: string }> = {
+  INR: { locale: "en-IN", symbol: "₹", label: "Indian Rupee" },
+  USD: { locale: "en-US", symbol: "$", label: "US Dollar" },
+  EUR: { locale: "de-DE", symbol: "€", label: "Euro" },
+  GBP: { locale: "en-GB", symbol: "£", label: "Pound Sterling" },
 }
 
 export function InvoiceGeneratorView() {
   const { navigate } = useAppStore()
-  const [invoiceNumber, setInvoiceNumber] = React.useState(`GX-INV-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9999)).padStart(4, "0")}`)
+  const [invoiceNumber, setInvoiceNumber] = React.useState(
+    `GX-INV-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9999)).padStart(4, "0")}`,
+  )
   const [issueDate, setIssueDate] = React.useState(new Date().toISOString().split("T")[0])
   const [dueDate, setDueDate] = React.useState(() => {
     const d = new Date()
     d.setDate(d.getDate() + 15)
     return d.toISOString().split("T")[0]
   })
+  const [status, setStatus] = React.useState<InvoiceStatus>("Draft")
 
   // Client info
   const [clientName, setClientName] = React.useState("")
@@ -42,43 +88,84 @@ export function InvoiceGeneratorView() {
   const [clientPhone, setClientPhone] = React.useState("")
   const [clientAddress, setClientAddress] = React.useState("")
 
+  // Pre-fill from lead CRM (sessionStorage)
+  React.useEffect(() => {
+    if (typeof window === "undefined") return
+    try {
+      const prefill = window.sessionStorage.getItem("guardianx-invoice-prefill")
+      if (prefill) {
+        const data = JSON.parse(prefill) as {
+          clientName?: string
+          clientOrg?: string
+          clientEmail?: string
+          clientPhone?: string
+        }
+        if (data.clientName) setClientName(data.clientName)
+        if (data.clientOrg) setClientOrg(data.clientOrg)
+        if (data.clientEmail) setClientEmail(data.clientEmail)
+        if (data.clientPhone) setClientPhone(data.clientPhone)
+        window.sessionStorage.removeItem("guardianx-invoice-prefill")
+        toast.success("Lead info pre-filled from CRM")
+      }
+    } catch {
+      // ignore parse errors
+    }
+  }, [])
+
   // Line items
   const [items, setItems] = React.useState<LineItem[]>([
-    { id: "1", description: "CEH Certification Training Batch (Weekend)", quantity: 1, unitPrice: 25000 },
-    { id: "2", description: "Hands-on Cyber Lab Access (31 labs, 3 months)", quantity: 1, unitPrice: 5000 },
+    { id: "1", description: "CEH Certification Training Batch (Weekend)", quantity: 1, unitPrice: 25000, icon: "training" },
+    { id: "2", description: "Hands-on Cyber Lab Access (31 labs, 3 months)", quantity: 1, unitPrice: 5000, icon: "lab" },
   ])
 
-  // Tax & discount
+  // Tax & adjustments
   const [taxRate, setTaxRate] = React.useState(18) // GST 18%
   const [discountRate, setDiscountRate] = React.useState(0)
+  const [roundingAdjustment, setRoundingAdjustment] = React.useState(0)
   const [currency, setCurrency] = React.useState("INR")
+  const [gstSplit, setGstSplit] = React.useState(true) // CGST + SGST split for India
 
-  // Notes
-  const [notes, setNotes] = React.useState("Payment due within 15 days of invoice date. Late payments subject to 2% monthly interest. All prices are inclusive of applicable taxes unless otherwise stated.")
-  const [terms, setTerms] = React.useState("1. Training includes instructor-led sessions, study materials, and lab access.\n2. Certification exam fee is separate unless stated.\n3. Cancellation: 50% refund if cancelled 7+ days before start. No refund within 7 days.\n4. GuardianX Academy is not liable for third-party certification exam outcomes.")
+  // Bank details
+  const [bankName, setBankName] = React.useState("HDFC Bank")
+  const [accountName, setAccountName] = React.useState("GuardianX Academy")
+  const [accountNumber, setAccountNumber] = React.useState("50100123456789")
+  const [ifscCode, setIfscCode] = React.useState("HDFC0001234")
+  const [upiId, setUpiId] = React.useState("guardianx@hdfcbank")
+
+  // Notes & Terms
+  const [notes, setNotes] = React.useState(
+    "Payment due within 15 days of invoice date. Late payments subject to 2% monthly interest. All prices are inclusive of applicable taxes unless otherwise stated.",
+  )
+  const [terms, setTerms] = React.useState(
+    "1. Training includes instructor-led sessions, study materials, and lab access.\n2. Certification exam fee is separate unless stated.\n3. Cancellation: 50% refund if cancelled 7+ days before start. No refund within 7 days.\n4. GuardianX Academy is not liable for third-party certification exam outcomes.",
+  )
+
+  // Saved invoices (in-memory session list for the mini dashboard)
+  const [savedInvoices, setSavedInvoices] = React.useState<SavedInvoice[]>([])
 
   function addItem() {
-    setItems([...items, { id: String(Date.now()), description: "", quantity: 1, unitPrice: 0 }])
+    setItems([...items, { id: String(Date.now()), description: "", quantity: 1, unitPrice: 0, icon: "training" }])
   }
-
   function removeItem(id: string) {
-    setItems(items.filter(i => i.id !== id))
+    setItems(items.filter((i) => i.id !== id))
+  }
+  function updateItem(id: string, field: keyof LineItem, value: string | number | ItemIcon) {
+    setItems(items.map((i) => (i.id === id ? { ...i, [field]: value } : i)))
   }
 
-  function updateItem(id: string, field: keyof LineItem, value: string | number) {
-    setItems(items.map(i => i.id === id ? { ...i, [field]: value } : i))
-  }
-
-  const subtotal = items.reduce((sum, i) => sum + (i.quantity * i.unitPrice), 0)
+  const subtotal = items.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0)
   const discountAmount = (subtotal * discountRate) / 100
   const taxableAmount = subtotal - discountAmount
   const taxAmount = (taxableAmount * taxRate) / 100
-  const total = taxableAmount + taxAmount
+  const totalBeforeRound = taxableAmount + taxAmount
+  const total = totalBeforeRound + (roundingAdjustment || 0)
+  const cgstAmount = gstSplit && currency === "INR" ? taxAmount / 2 : 0
+  const sgstAmount = gstSplit && currency === "INR" ? taxAmount / 2 : 0
 
-  const currencySymbol = currency === "INR" ? "₹" : currency === "USD" ? "$" : currency === "EUR" ? "€" : "£"
+  const cur = CURRENCY_LOCALE[currency] ?? CURRENCY_LOCALE.INR
 
   function formatMoney(amount: number) {
-    return `${currencySymbol}${amount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    return `${cur.symbol}${amount.toLocaleString(cur.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }
 
   function handlePrint() {
@@ -91,8 +178,33 @@ export function InvoiceGeneratorView() {
     toast.success("Invoice number copied!")
   }
 
+  function handleSaveInvoice() {
+    const newSaved: SavedInvoice = {
+      id: String(Date.now()),
+      number: invoiceNumber,
+      clientName: clientName || "Untitled",
+      total,
+      status,
+      issueDate,
+      currency,
+    }
+    setSavedInvoices([newSaved, ...savedInvoices])
+    toast.success(`Invoice saved as ${status}`)
+  }
+
+  // Mini dashboard stats
+  const totalInvoices = savedInvoices.length
+  const pendingAmount = savedInvoices
+    .filter((i) => i.status === "Sent" || i.status === "Overdue")
+    .reduce((sum, i) => sum + i.total, 0)
+  const now = new Date()
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+  const paidThisMonth = savedInvoices
+    .filter((i) => i.status === "Paid" && new Date(i.issueDate) >= monthStart)
+    .reduce((sum, i) => sum + i.total, 0)
+
   return (
-    <div className="relative min-h-screen">
+    <div className="relative min-h-screen bg-mesh">
       {/* Header bar — hidden on print */}
       <div className="print:hidden border-b border-border/40 bg-card/60 backdrop-blur sticky top-0 z-30">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between flex-wrap gap-3">
@@ -108,9 +220,30 @@ export function InvoiceGeneratorView() {
               <p className="text-[10px] text-muted-foreground font-mono">{invoiceNumber}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Select value={status} onValueChange={(v) => setStatus(v as InvoiceStatus)}>
+              <SelectTrigger className="w-[130px] h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {(Object.keys(STATUS_CONFIG) as InvoiceStatus[]).map((s) => {
+                  const cfg = STATUS_CONFIG[s]
+                  return (
+                    <SelectItem key={s} value={s}>
+                      <span className="flex items-center gap-2">
+                        <cfg.icon className={cn("h-3.5 w-3.5", cfg.color)} />
+                        {cfg.label}
+                      </span>
+                    </SelectItem>
+                  )
+                })}
+              </SelectContent>
+            </Select>
             <Button variant="outline" size="sm" onClick={handleCopyInvoiceNumber}>
               <Copy className="h-3.5 w-3.5 mr-1.5" /> Copy ID
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleSaveInvoice}>
+              <Save className="h-3.5 w-3.5 mr-1.5" /> Save
             </Button>
             <Button size="sm" onClick={handlePrint} className="bg-violet-600 hover:bg-violet-500 btn-premium">
               <Printer className="h-3.5 w-3.5 mr-1.5" /> Generate PDF
@@ -119,274 +252,569 @@ export function InvoiceGeneratorView() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-6">
-        {/* === EDITOR PANEL (hidden on print) === */}
-        <div className="print:hidden space-y-6 mb-8">
-          {/* Invoice meta */}
-          <Card className="p-5">
-            <h2 className="text-sm font-semibold mb-4 flex items-center gap-2"><Hash className="h-4 w-4 text-violet-400" /> Invoice Details</h2>
-            <div className="grid sm:grid-cols-3 gap-4">
-              <div>
-                <Label className="text-xs">Invoice Number</Label>
-                <Input value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)} className="font-mono text-sm" />
-              </div>
-              <div>
-                <Label className="text-xs">Issue Date</Label>
-                <Input type="date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} />
-              </div>
-              <div>
-                <Label className="text-xs">Due Date</Label>
-                <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
-              </div>
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
+        {/* === MINI DASHBOARD (hidden on print) === */}
+        <div className="print:hidden grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="card-premium rounded-xl p-4 flex items-center gap-3"
+          >
+            <div className="inline-flex p-2.5 rounded-lg bg-violet-500/10">
+              <FileCheck className="h-5 w-5 text-violet-300" />
             </div>
-            <div className="grid sm:grid-cols-3 gap-4 mt-3">
-              <div>
-                <Label className="text-xs">Currency</Label>
-                <Select value={currency} onValueChange={setCurrency}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="INR">₹ INR (Indian Rupee)</SelectItem>
-                    <SelectItem value="USD">$ USD (US Dollar)</SelectItem>
-                    <SelectItem value="EUR">€ EUR (Euro)</SelectItem>
-                    <SelectItem value="GBP">£ GBP (Pound)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label className="text-xs">Tax Rate (%)</Label>
-                <Input type="number" value={taxRate} onChange={(e) => setTaxRate(Number(e.target.value))} />
-              </div>
-              <div>
-                <Label className="text-xs">Discount (%)</Label>
-                <Input type="number" value={discountRate} onChange={(e) => setDiscountRate(Number(e.target.value))} />
-              </div>
+            <div>
+              <div className="text-2xl font-bold tabular-nums">{totalInvoices}</div>
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Total Invoices (Session)</div>
             </div>
-          </Card>
-
-          {/* Client info */}
-          <Card className="p-5">
-            <h2 className="text-sm font-semibold mb-4 flex items-center gap-2"><User className="h-4 w-4 text-cyan-400" /> Client Information</h2>
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div>
-                <Label className="text-xs">Contact Name</Label>
-                <Input value={clientName} onChange={(e) => setClientName(e.target.value)} placeholder="John Doe" />
-              </div>
-              <div>
-                <Label className="text-xs">Organization</Label>
-                <Input value={clientOrg} onChange={(e) => setClientOrg(e.target.value)} placeholder="Organization Name" />
-              </div>
-              <div>
-                <Label className="text-xs">Email</Label>
-                <Input type="email" value={clientEmail} onChange={(e) => setClientEmail(e.target.value)} placeholder="client@example.com" />
-              </div>
-              <div>
-                <Label className="text-xs">Phone</Label>
-                <Input value={clientPhone} onChange={(e) => setClientPhone(e.target.value)} placeholder="+91 XXXXX XXXXX" />
-              </div>
-              <div className="sm:col-span-2">
-                <Label className="text-xs">Address</Label>
-                <Textarea value={clientAddress} onChange={(e) => setClientAddress(e.target.value)} placeholder="Full billing address" rows={2} />
-              </div>
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.05 }}
+            className="card-premium rounded-xl p-4 flex items-center gap-3"
+          >
+            <div className="inline-flex p-2.5 rounded-lg bg-amber-500/10">
+              <Clock className="h-5 w-5 text-amber-300" />
             </div>
-          </Card>
-
-          {/* Line items */}
-          <Card className="p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-semibold flex items-center gap-2"><Calculator className="h-4 w-4 text-amber-400" /> Line Items</h2>
-              <Button size="sm" variant="outline" onClick={addItem}>
-                <Plus className="h-3.5 w-3.5 mr-1.5" /> Add Item
-              </Button>
+            <div>
+              <div className="text-2xl font-bold tabular-nums">{formatMoney(pendingAmount)}</div>
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Pending Amount</div>
             </div>
-            <div className="space-y-3">
-              {items.map((item) => (
-                <div key={item.id} className="grid grid-cols-12 gap-2 items-start">
-                  <div className="col-span-6">
-                    <Input value={item.description} onChange={(e) => updateItem(item.id, "description", e.target.value)} placeholder="Description" className="text-sm" />
-                  </div>
-                  <div className="col-span-2">
-                    <Input type="number" value={item.quantity} onChange={(e) => updateItem(item.id, "quantity", Number(e.target.value))} placeholder="Qty" className="text-sm" />
-                  </div>
-                  <div className="col-span-3">
-                    <Input type="number" value={item.unitPrice} onChange={(e) => updateItem(item.id, "unitPrice", Number(e.target.value))} placeholder="Unit Price" className="text-sm" />
-                  </div>
-                  <div className="col-span-1">
-                    <Button size="sm" variant="ghost" onClick={() => removeItem(item.id)} className="text-rose-400 hover:text-rose-300 px-2">
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.1 }}
+            className="card-premium rounded-xl p-4 flex items-center gap-3"
+          >
+            <div className="inline-flex p-2.5 rounded-lg bg-emerald-500/10">
+              <Wallet className="h-5 w-5 text-emerald-300" />
             </div>
-          </Card>
-
-          {/* Notes & Terms */}
-          <Card className="p-5">
-            <h2 className="text-sm font-semibold mb-4 flex items-center gap-2"><FileText className="h-4 w-4 text-emerald-400" /> Notes & Terms</h2>
-            <div className="space-y-3">
-              <div>
-                <Label className="text-xs">Payment Notes</Label>
-                <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className="text-xs" />
-              </div>
-              <div>
-                <Label className="text-xs">Terms & Conditions</Label>
-                <Textarea value={terms} onChange={(e) => setTerms(e.target.value)} rows={4} className="text-xs" />
-              </div>
+            <div>
+              <div className="text-2xl font-bold tabular-nums">{formatMoney(paidThisMonth)}</div>
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Paid This Month</div>
             </div>
-          </Card>
+          </motion.div>
         </div>
 
-        {/* === INVOICE PREVIEW (visible on screen + print) === */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          id="invoice-preview"
-          className="bg-white text-gray-900 rounded-xl shadow-2xl overflow-hidden"
-          style={{ minHeight: "297mm" }}
-        >
-          {/* Invoice header with gradient + logo */}
-          <div className="relative bg-gradient-to-br from-violet-700 via-violet-800 to-indigo-900 text-white p-8 lg:p-10">
-            <div className="absolute inset-0 opacity-10" style={{
-              backgroundImage: "linear-gradient(to right, white 1px, transparent 1px), linear-gradient(to bottom, white 1px, transparent 1px)",
-              backgroundSize: "40px 40px",
-            }} />
-            <div className="relative flex items-start justify-between flex-wrap gap-4">
-              <div className="flex items-center gap-4">
-                {/* Logo image */}
-                <img
-                  src="/guardianx-logo-v2.png"
-                  alt="GuardianX Academy"
-                  className="w-16 h-16 object-contain"
-                  style={{ filter: "drop-shadow(0 0 8px rgba(255,255,255,0.3))" }}
-                />
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* === EDITOR PANEL (hidden on print) === */}
+          <div className="print:hidden lg:col-span-5 space-y-4">
+            <Card className="p-5 card-premium">
+              <h2 className="text-sm font-semibold mb-4 flex items-center gap-2">
+                <Hash className="h-4 w-4 text-violet-400" /> Invoice Details
+              </h2>
+              <div className="grid sm:grid-cols-2 gap-3">
                 <div>
-                  <h1 className="text-2xl font-bold tracking-tight">GuardianX Academy</h1>
-                  <p className="text-xs text-violet-200 mt-1">Cybersecurity Training & Certification</p>
-                  <div className="flex items-center gap-3 mt-2 text-[10px] text-violet-200">
-                    <span className="flex items-center gap-1"><Mail className="h-3 w-3" /> academy@guardianx.in</span>
-                    <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> Bengaluru, India</span>
-                  </div>
+                  <Label className="text-xs">Invoice Number</Label>
+                  <Input value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)} className="font-mono text-sm" />
                 </div>
-              </div>
-              <div className="text-right">
-                <div className="text-3xl font-bold tracking-tight">INVOICE</div>
-                <div className="text-xs text-violet-200 font-mono mt-1">{invoiceNumber}</div>
-                <div className="flex items-center gap-2 mt-2 text-[10px]">
-                  <Badge className="bg-white/20 text-white border-0">PROFESSIONAL</Badge>
+                <div>
+                  <Label className="text-xs">Status</Label>
+                  <Select value={status} onValueChange={(v) => setStatus(v as InvoiceStatus)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {(Object.keys(STATUS_CONFIG) as InvoiceStatus[]).map((s) => (
+                        <SelectItem key={s} value={s}>{STATUS_CONFIG[s].label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Bill To + Dates */}
-          <div className="grid sm:grid-cols-2 gap-6 p-8 lg:p-10 border-b border-gray-200">
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-2">Bill To</p>
-              <p className="font-semibold text-gray-900">{clientName || "Client Name"}</p>
-              {clientOrg && <p className="text-sm text-gray-600">{clientOrg}</p>}
-              {clientEmail && <p className="text-xs text-gray-500 mt-1">{clientEmail}</p>}
-              {clientPhone && <p className="text-xs text-gray-500">{clientPhone}</p>}
-              {clientAddress && <p className="text-xs text-gray-500 mt-1 whitespace-pre-line">{clientAddress}</p>}
-            </div>
-            <div className="sm:text-right">
-              <div className="space-y-2">
-                <div className="flex sm:justify-end items-center gap-2">
-                  <Calendar className="h-3.5 w-3.5 text-gray-400" />
-                  <span className="text-xs text-gray-500">Issue Date:</span>
-                  <span className="text-xs font-medium">{new Date(issueDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
+                <div>
+                  <Label className="text-xs">Issue Date</Label>
+                  <Input type="date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} />
                 </div>
-                <div className="flex sm:justify-end items-center gap-2">
-                  <Calendar className="h-3.5 w-3.5 text-gray-400" />
-                  <span className="text-xs text-gray-500">Due Date:</span>
-                  <span className="text-xs font-medium">{new Date(dueDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
+                <div>
+                  <Label className="text-xs">Due Date</Label>
+                  <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
                 </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Line items table */}
-          <div className="p-8 lg:p-10">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b-2 border-gray-200">
-                  <th className="text-left py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">Description</th>
-                  <th className="text-center py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500 w-20">Qty</th>
-                  <th className="text-right py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500 w-32">Unit Price</th>
-                  <th className="text-right py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500 w-32">Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((item) => (
-                  <tr key={item.id} className="border-b border-gray-100">
-                    <td className="py-3 text-sm text-gray-700">{item.description || "—"}</td>
-                    <td className="py-3 text-center text-sm text-gray-600">{item.quantity}</td>
-                    <td className="py-3 text-right text-sm text-gray-600">{formatMoney(item.unitPrice)}</td>
-                    <td className="py-3 text-right text-sm font-medium text-gray-900">{formatMoney(item.quantity * item.unitPrice)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            {/* Totals */}
-            <div className="flex justify-end mt-6">
-              <div className="w-72 space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Subtotal</span>
-                  <span className="font-medium">{formatMoney(subtotal)}</span>
+                <div>
+                  <Label className="text-xs">Currency</Label>
+                  <Select value={currency} onValueChange={setCurrency}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="INR">₹ INR — Indian Rupee</SelectItem>
+                      <SelectItem value="USD">$ USD — US Dollar</SelectItem>
+                      <SelectItem value="EUR">€ EUR — Euro</SelectItem>
+                      <SelectItem value="GBP">£ GBP — Pound</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-                {discountRate > 0 && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Discount ({discountRate}%)</span>
-                    <span className="text-rose-600">−{formatMoney(discountAmount)}</span>
+                <div>
+                  <Label className="text-xs">Tax Rate (%)</Label>
+                  <Input type="number" value={taxRate} onChange={(e) => setTaxRate(Number(e.target.value))} />
+                </div>
+                <div>
+                  <Label className="text-xs">Discount (%)</Label>
+                  <Input type="number" value={discountRate} onChange={(e) => setDiscountRate(Number(e.target.value))} />
+                </div>
+                <div>
+                  <Label className="text-xs">Rounding Adjustment</Label>
+                  <Input type="number" value={roundingAdjustment} onChange={(e) => setRoundingAdjustment(Number(e.target.value))} />
+                </div>
+                {currency === "INR" && (
+                  <div className="sm:col-span-2 flex items-center gap-2 pt-1">
+                    <input
+                      type="checkbox"
+                      id="gst-split"
+                      checked={gstSplit}
+                      onChange={(e) => setGstSplit(e.target.checked)}
+                      className="size-4 rounded border-border accent-violet-500"
+                    />
+                    <Label htmlFor="gst-split" className="text-xs cursor-pointer">
+                      Split GST into CGST + SGST (9% + 9% for 18% GST — India format)
+                    </Label>
                   </div>
                 )}
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">{taxRate > 0 ? `Tax (${taxRate}%)` : "Tax"}</span>
-                  <span className="font-medium">{formatMoney(taxAmount)}</span>
+              </div>
+            </Card>
+
+            <Card className="p-5 card-premium">
+              <h2 className="text-sm font-semibold mb-4 flex items-center gap-2">
+                <User className="h-4 w-4 text-cyan-400" /> Client Information
+              </h2>
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs">Contact Name</Label>
+                  <Input value={clientName} onChange={(e) => setClientName(e.target.value)} placeholder="John Doe" />
                 </div>
-                <div className="border-t-2 border-gray-300 pt-2 flex justify-between">
-                  <span className="font-bold text-gray-900">Total</span>
-                  <span className="font-bold text-lg text-violet-700">{formatMoney(total)}</span>
+                <div>
+                  <Label className="text-xs">Organization</Label>
+                  <Input value={clientOrg} onChange={(e) => setClientOrg(e.target.value)} placeholder="Organization Name" />
+                </div>
+                <div>
+                  <Label className="text-xs">Email</Label>
+                  <Input type="email" value={clientEmail} onChange={(e) => setClientEmail(e.target.value)} placeholder="client@example.com" />
+                </div>
+                <div>
+                  <Label className="text-xs">Phone</Label>
+                  <Input value={clientPhone} onChange={(e) => setClientPhone(e.target.value)} placeholder="+91 XXXXX XXXXX" />
+                </div>
+                <div className="sm:col-span-2">
+                  <Label className="text-xs">Address</Label>
+                  <Textarea value={clientAddress} onChange={(e) => setClientAddress(e.target.value)} placeholder="Full billing address" rows={2} />
                 </div>
               </div>
-            </div>
+            </Card>
+
+            <Card className="p-5 card-premium">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-sm font-semibold flex items-center gap-2">
+                  <Calculator className="h-4 w-4 text-amber-400" /> Line Items
+                </h2>
+                <Button size="sm" variant="outline" onClick={addItem}>
+                  <Plus className="h-3.5 w-3.5 mr-1.5" /> Add Item
+                </Button>
+              </div>
+              <div className="space-y-3">
+                {items.map((item) => {
+                  const iconCfg = ITEM_ICON_CONFIG[item.icon]
+                  return (
+                    <div key={item.id} className="rounded-lg border border-border/60 p-3 space-y-2">
+                      <div className="grid grid-cols-12 gap-2 items-start">
+                        <div className="col-span-12">
+                          <Input
+                            value={item.description}
+                            onChange={(e) => updateItem(item.id, "description", e.target.value)}
+                            placeholder="Description"
+                            className="text-sm"
+                          />
+                        </div>
+                        <div className="col-span-5">
+                          <Label className="text-[10px] text-muted-foreground">Type</Label>
+                          <Select value={item.icon} onValueChange={(v) => updateItem(item.id, "icon", v as ItemIcon)}>
+                            <SelectTrigger className="h-8 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {(Object.keys(ITEM_ICON_CONFIG) as ItemIcon[]).map((k) => {
+                                const cfg = ITEM_ICON_CONFIG[k]
+                                return (
+                                  <SelectItem key={k} value={k}>
+                                    <span className="flex items-center gap-2">
+                                      <cfg.icon className={cn("h-3.5 w-3.5", cfg.color)} />
+                                      {cfg.label}
+                                    </span>
+                                  </SelectItem>
+                                )
+                              })}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="col-span-3">
+                          <Label className="text-[10px] text-muted-foreground">Qty</Label>
+                          <Input type="number" value={item.quantity} onChange={(e) => updateItem(item.id, "quantity", Number(e.target.value))} className="text-sm" />
+                        </div>
+                        <div className="col-span-3">
+                          <Label className="text-[10px] text-muted-foreground">Unit Price</Label>
+                          <Input type="number" value={item.unitPrice} onChange={(e) => updateItem(item.id, "unitPrice", Number(e.target.value))} className="text-sm" />
+                        </div>
+                        <div className="col-span-1 flex items-end justify-center pb-1">
+                          <Button size="sm" variant="ghost" onClick={() => removeItem(item.id)} className="text-rose-400 hover:text-rose-300 px-2 h-8">
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </Card>
+
+            <Card className="p-5 card-premium">
+              <h2 className="text-sm font-semibold mb-4 flex items-center gap-2">
+                <Landmark className="h-4 w-4 text-emerald-400" /> Bank Details
+              </h2>
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs">Bank Name</Label>
+                  <Input value={bankName} onChange={(e) => setBankName(e.target.value)} />
+                </div>
+                <div>
+                  <Label className="text-xs">Account Name</Label>
+                  <Input value={accountName} onChange={(e) => setAccountName(e.target.value)} />
+                </div>
+                <div>
+                  <Label className="text-xs">Account Number</Label>
+                  <Input value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} className="font-mono text-sm" />
+                </div>
+                <div>
+                  <Label className="text-xs">IFSC Code</Label>
+                  <Input value={ifscCode} onChange={(e) => setIfscCode(e.target.value)} className="font-mono text-sm uppercase" />
+                </div>
+                <div className="sm:col-span-2">
+                  <Label className="text-xs">UPI ID</Label>
+                  <Input value={upiId} onChange={(e) => setUpiId(e.target.value)} className="font-mono text-sm" />
+                </div>
+              </div>
+            </Card>
+
+            <Card className="p-5 card-premium">
+              <h2 className="text-sm font-semibold mb-4 flex items-center gap-2">
+                <FileText className="h-4 w-4 text-violet-400" /> Notes & Terms
+              </h2>
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-xs">Payment Notes</Label>
+                  <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className="text-xs" />
+                </div>
+                <div>
+                  <Label className="text-xs">Terms & Conditions</Label>
+                  <Textarea value={terms} onChange={(e) => setTerms(e.target.value)} rows={4} className="text-xs" />
+                </div>
+              </div>
+            </Card>
           </div>
 
-          {/* Notes & Terms */}
-          <div className="px-8 lg:px-10 pb-6 grid sm:grid-cols-2 gap-6">
-            {notes && (
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">Notes</p>
-                <p className="text-xs text-gray-600 whitespace-pre-line leading-relaxed">{notes}</p>
+          {/* === INVOICE PREVIEW (dark futuristic) === */}
+          <div className="lg:col-span-7">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+              id="invoice-preview"
+              className="rounded-2xl overflow-hidden card-premium"
+            >
+              {/* Holographic header with animated gradient border */}
+              <div className="relative">
+                {/* Animated gradient border (top accent) */}
+                <div className="h-1 w-full bg-gradient-to-r from-violet-600 via-fuchsia-500 to-cyan-500 animate-pulse" />
+                {/* Header */}
+                <div className="relative bg-gradient-to-br from-violet-950/80 via-zinc-950 to-zinc-950 p-6 sm:p-8 overflow-hidden">
+                  {/* Grid pattern overlay */}
+                  <div
+                    className="absolute inset-0 opacity-[0.08]"
+                    style={{
+                      backgroundImage:
+                        "linear-gradient(to right, white 1px, transparent 1px), linear-gradient(to bottom, white 1px, transparent 1px)",
+                      backgroundSize: "32px 32px",
+                    }}
+                  />
+                  {/* Glow orbs */}
+                  <div className="absolute -top-20 -right-10 w-60 h-60 rounded-full bg-violet-600/20 blur-3xl pointer-events-none" />
+                  <div className="absolute -bottom-20 -left-10 w-60 h-60 rounded-full bg-fuchsia-600/15 blur-3xl pointer-events-none" />
+                  <div className="relative flex items-start justify-between flex-wrap gap-4">
+                    {/* Company branding — particle logo + tagline */}
+                    <div className="flex items-center gap-4">
+                      <div className="relative">
+                        <div className="absolute inset-0 rounded-xl bg-violet-500/30 blur-lg" />
+                        <img
+                          src="/guardianx-logo-v2.png"
+                          alt="GuardianX Academy"
+                          className="relative w-14 h-14 sm:w-16 sm:h-16 object-contain"
+                          style={{ filter: "drop-shadow(0 0 12px rgba(167,139,250,0.5))" }}
+                        />
+                      </div>
+                      <div>
+                        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-gradient-premium">GuardianX Academy</h1>
+                        <p className="text-[11px] text-violet-200/80 mt-0.5">Cybersecurity Training & Certification</p>
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-[10px] text-violet-200/70">
+                          <span className="flex items-center gap-1"><Mail className="h-3 w-3" /> academy@guardianx.in</span>
+                          <span className="flex items-center gap-1"><Mail className="h-3 w-3" /> academy@guardianx.cloud</span>
+                          <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> Bengaluru, India</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl sm:text-3xl font-bold tracking-tight text-gradient-premium">INVOICE</div>
+                      <div className="text-[11px] text-violet-200/80 font-mono mt-1">{invoiceNumber}</div>
+                      {/* Status badge */}
+                      <div className="mt-2">
+                        {(() => {
+                          const StatusIcon = STATUS_CONFIG[status].icon
+                          return (
+                            <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold border", STATUS_CONFIG[status].bg, STATUS_CONFIG[status].color, STATUS_CONFIG[status].border)}>
+                              <StatusIcon className="h-3 w-3" />
+                              {STATUS_CONFIG[status].label}
+                            </span>
+                          )
+                        })()}
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-            )}
-            {terms && (
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">Terms & Conditions</p>
-                <p className="text-xs text-gray-600 whitespace-pre-line leading-relaxed">{terms}</p>
-              </div>
-            )}
-          </div>
 
-          {/* Footer with trust indicators */}
-          <div className="bg-gradient-to-r from-violet-50 to-indigo-50 border-t border-gray-200 px-8 lg:px-10 py-6">
-            <div className="flex items-center justify-between flex-wrap gap-3">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-1.5 text-[10px] text-gray-500">
-                  <Shield className="h-3.5 w-3.5 text-violet-600" /> Verified Training Provider
+              {/* Bill To + Dates */}
+              <div className="grid sm:grid-cols-2 gap-6 p-6 sm:p-8 border-b border-border/40 bg-card/40">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-3">Bill To</p>
+                  <div className="flex items-start gap-3">
+                    {/* Client avatar circle */}
+                    <div className="size-10 rounded-full bg-gradient-to-br from-cyan-500/30 to-violet-500/30 border border-border/60 flex items-center justify-center text-sm font-bold text-cyan-100 shrink-0">
+                      {(clientName || clientOrg || "?").charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground">{clientName || "Client Name"}</p>
+                      {clientOrg && <p className="text-sm text-muted-foreground">{clientOrg}</p>}
+                      {clientEmail && (
+                        <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                          <Mail className="h-3 w-3" /> {clientEmail}
+                        </p>
+                      )}
+                      {clientPhone && (
+                        <p className="text-xs text-muted-foreground flex items-center gap-1">
+                          <Phone className="h-3 w-3" /> {clientPhone}
+                        </p>
+                      )}
+                      {clientAddress && <p className="text-xs text-muted-foreground mt-1 whitespace-pre-line">{clientAddress}</p>}
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1.5 text-[10px] text-gray-500">
-                  <Award className="h-3.5 w-3.5 text-violet-600" /> ISO-Aligned Curriculum
+                <div className="sm:text-right">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-3">Invoice Details</p>
+                  <div className="space-y-1.5 text-sm">
+                    <div className="flex sm:justify-end items-center gap-2">
+                      <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span className="text-muted-foreground">Issue:</span>
+                      <span className="font-medium">{new Date(issueDate).toLocaleDateString(cur.locale, { day: "numeric", month: "short", year: "numeric" })}</span>
+                    </div>
+                    <div className="flex sm:justify-end items-center gap-2">
+                      <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span className="text-muted-foreground">Due:</span>
+                      <span className="font-medium">{new Date(dueDate).toLocaleDateString(cur.locale, { day: "numeric", month: "short", year: "numeric" })}</span>
+                    </div>
+                    <div className="flex sm:justify-end items-center gap-2">
+                      <Hash className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span className="text-muted-foreground">Currency:</span>
+                      <span className="font-medium">{cur.symbol} {currency}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div className="text-[10px] text-gray-400">
-                academy.guardianx.cloud · academy@guardianx.in · academy@guardianx.cloud
+
+              {/* Line items table */}
+              <div className="p-6 sm:p-8">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-border/60">
+                      <th className="text-left py-2.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Item</th>
+                      <th className="text-center py-2.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground w-16">Qty</th>
+                      <th className="text-right py-2.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground w-28">Unit Price</th>
+                      <th className="text-right py-2.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground w-28">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {items.map((item) => {
+                      const cfg = ITEM_ICON_CONFIG[item.icon]
+                      return (
+                        <tr key={item.id} className="border-b border-border/30">
+                          <td className="py-3">
+                            <div className="flex items-center gap-3">
+                              <div className={cn("inline-flex p-1.5 rounded-md border border-border/40", cfg.bg)}>
+                                <cfg.icon className={cn("h-3.5 w-3.5", cfg.color)} />
+                              </div>
+                              <span className="text-sm text-foreground">{item.description || "—"}</span>
+                            </div>
+                          </td>
+                          <td className="py-3 text-center text-sm text-muted-foreground tabular-nums">{item.quantity}</td>
+                          <td className="py-3 text-right text-sm text-muted-foreground tabular-nums">{formatMoney(item.unitPrice)}</td>
+                          <td className="py-3 text-right text-sm font-medium text-foreground tabular-nums">{formatMoney(item.quantity * item.unitPrice)}</td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+
+                {/* Totals + QR */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
+                  {/* Payment QR placeholder */}
+                  <div className="order-2 sm:order-1">
+                    <div className="rounded-xl border border-border/60 bg-card/40 p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="size-20 sm:size-24 rounded-lg bg-white p-2 flex items-center justify-center shrink-0">
+                          <QrCode className="size-full text-zinc-900" />
+                        </div>
+                        <div className="text-xs space-y-1">
+                          <p className="font-semibold text-foreground flex items-center gap-1.5">
+                            <QrCode className="h-3.5 w-3.5 text-violet-300" /> Scan to Pay (UPI)
+                          </p>
+                          <p className="text-muted-foreground">UPI ID: <span className="font-mono text-foreground">{upiId}</span></p>
+                          <p className="text-muted-foreground">Account: <span className="font-mono text-foreground">{accountNumber}</span></p>
+                          <p className="text-muted-foreground">IFSC: <span className="font-mono text-foreground">{ifscCode}</span></p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Totals */}
+                  <div className="order-1 sm:order-2 sm:ml-auto w-full sm:w-72 space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Subtotal</span>
+                      <span className="font-medium tabular-nums">{formatMoney(subtotal)}</span>
+                    </div>
+                    {discountRate > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Discount ({discountRate}%)</span>
+                        <span className="text-rose-300 tabular-nums">−{formatMoney(discountAmount)}</span>
+                      </div>
+                    )}
+                    {gstSplit && currency === "INR" ? (
+                      <>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">CGST ({taxRate / 2}%)</span>
+                          <span className="font-medium tabular-nums">{formatMoney(cgstAmount)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">SGST ({taxRate / 2}%)</span>
+                          <span className="font-medium tabular-nums">{formatMoney(sgstAmount)}</span>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">{taxRate > 0 ? `Tax (${taxRate}%)` : "Tax"}</span>
+                        <span className="font-medium tabular-nums">{formatMoney(taxAmount)}</span>
+                      </div>
+                    )}
+                    {roundingAdjustment !== 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Rounding</span>
+                        <span className="font-medium tabular-nums">{formatMoney(roundingAdjustment)}</span>
+                      </div>
+                    )}
+                    <div className="border-t border-border/60 pt-2 flex justify-between items-center">
+                      <span className="font-bold text-foreground">Total</span>
+                      <span className="font-bold text-lg text-gradient-premium tabular-nums">{formatMoney(total)}</span>
+                    </div>
+                    <div className="text-right text-[10px] text-muted-foreground">
+                      {currency === "INR" ? "GST included as applicable" : "Taxes as applicable"}
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
+
+              {/* Bank details + Signature */}
+              <div className="grid sm:grid-cols-2 gap-6 px-6 sm:px-8 py-6 border-t border-border/40 bg-card/30">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
+                    <Landmark className="h-3.5 w-3.5 text-emerald-300" /> Bank Details
+                  </p>
+                  <div className="text-xs space-y-1">
+                    <div className="flex gap-2"><span className="text-muted-foreground w-24">Bank:</span><span className="font-medium">{bankName}</span></div>
+                    <div className="flex gap-2"><span className="text-muted-foreground w-24">Account Name:</span><span className="font-medium">{accountName}</span></div>
+                    <div className="flex gap-2"><span className="text-muted-foreground w-24">Account No:</span><span className="font-mono">{accountNumber}</span></div>
+                    <div className="flex gap-2"><span className="text-muted-foreground w-24">IFSC:</span><span className="font-mono">{ifscCode}</span></div>
+                    <div className="flex gap-2"><span className="text-muted-foreground w-24">UPI:</span><span className="font-mono">{upiId}</span></div>
+                  </div>
+                </div>
+                <div className="sm:text-right">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5 sm:justify-end">
+                    <Signature className="h-3.5 w-3.5 text-violet-300" /> Authorized Signatory
+                  </p>
+                  <div className="sm:ml-auto mt-3 mb-2 h-12 w-48 rounded border-b-2 border-dashed border-border/60 flex items-end justify-center pb-1">
+                    <span className="text-[10px] text-muted-foreground italic">For GuardianX Academy</span>
+                  </div>
+                  <p className="text-xs font-medium">Authorized Signatory</p>
+                  <p className="text-[10px] text-muted-foreground">GuardianX Academy · academy@guardianx.in</p>
+                </div>
+              </div>
+
+              {/* Notes & Terms */}
+              <div className="px-6 sm:px-8 pb-6 grid sm:grid-cols-2 gap-6">
+                {notes && (
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Notes</p>
+                    <p className="text-xs text-muted-foreground whitespace-pre-line leading-relaxed">{notes}</p>
+                  </div>
+                )}
+                {terms && (
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Terms & Conditions</p>
+                    <p className="text-xs text-muted-foreground whitespace-pre-line leading-relaxed">{terms}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer with trust indicators */}
+              <div className="border-t border-border/40 px-6 sm:px-8 py-4 bg-gradient-to-r from-violet-950/40 via-zinc-950/40 to-cyan-950/40">
+                <div className="flex items-center justify-between flex-wrap gap-3">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                      <Shield className="h-3.5 w-3.5 text-violet-400" /> Verified Training Provider
+                    </div>
+                    <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                      <Award className="h-3.5 w-3.5 text-violet-400" /> ISO-Aligned Curriculum
+                    </div>
+                  </div>
+                  <div className="text-[10px] text-muted-foreground font-mono">
+                    academy.guardianx.cloud
+                  </div>
+                </div>
+              </div>
+            </motion.div>
           </div>
-        </motion.div>
+        </div>
       </div>
+
+      {/* Print styles — landscape A4 */}
+      <style jsx global>{`
+        @media print {
+          @page {
+            size: A4 landscape;
+            margin: 10mm;
+          }
+          body {
+            background: white !important;
+          }
+          body * {
+            visibility: hidden;
+          }
+          #invoice-preview, #invoice-preview * {
+            visibility: visible;
+          }
+          #invoice-preview {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            box-shadow: none !important;
+            border: none !important;
+            border-radius: 0 !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }

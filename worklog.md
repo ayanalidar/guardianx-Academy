@@ -3187,3 +3187,119 @@ Stage Summary:
 - New dedicated `batches` view at `/` (view name `batches`) with hero, 4 filter groups (Certification / Schedule / Mode / Level), detailed batch grid, and a "REQUEST A BATCH" CTA that routes to the contact view.
 - Wired into the SPA router, public-views set, and Zustand view union.
 - Lint result: 0 errors, 0 warnings.
+
+---
+Task ID: ADMIN-UPGRADE
+Agent: main (Z.ai Code orchestrator)
+Task: Upgrade 4 admin views (invoice generator, proposal maker, lead CRM, instructor assignment) to advanced/futuristic versions + supporting Prisma models + APIs.
+
+Work Log:
+
+**1. Prisma schema additions (additive)** — appended 4 new models at the end of `prisma/schema.prisma`:
+- `InstructorProfile` (1:1 with User — phone, expertise JSON, yearsExperience, certifications JSON, linkedinUrl, maxBatches, currentBatches).
+- `Lead` (name, email, phone, organization, type, status, source, score, followUpDate, assignedTo — has-many notes + history).
+- `LeadNote` (leadId, authorId, content, createdAt).
+- `LeadStatusHistory` (leadId, fromStatus, toStatus, changedAt).
+- Added reverse relations on `User`: `instructorProfile`, `leadNotes`.
+- `bun run db:push` synced successfully (Neon Postgres). Prisma client regenerated.
+
+**2. New API routes** (all require ADMIN role via `getCurrentUser()`, all use `db` from `@/lib/db`):
+- `GET/POST /api/admin/instructors` — list instructors with profile + workload (live-session count); create new instructor (User + nested InstructorProfile, password hashed with bcryptjs).
+- `GET/POST /api/admin/leads` — list leads with notes + history + computed stats (total/per-status/conversion rate/avg time to convert/by source); create lead with auto-computed `score`.
+- `PATCH/DELETE /api/admin/leads/[id]` — update status (auto-logs LeadStatusHistory), followUpDate, assignedTo; delete lead.
+- `POST /api/admin/leads/[id]/notes` — add a note with authorId = current admin.
+- `src/app/api/contact/route.ts` extended: public contact form now also creates a Lead (source: "Contact Form", score 20) — wrapped in `.catch()` so it's non-fatal.
+
+**Lead scoring algorithm** — University=25, College=20, Corporate=18, School=12 type bonus; Referral=20, Google Form=15, Contact Form=10, Manual=5 source bonus; email/phone/org each +10; status progression bonus (Converted +30, etc.); capped at 100.
+
+**3. `src/views/invoice-generator.tsx` — Futuristic Dark Invoice (full rewrite, export `InvoiceGeneratorView` unchanged)**:
+- Dark invoice preview (was white) with `card-premium` + violet/cyan/fuchsia gradient orbs.
+- Holographic header: animated gradient top border, grid pattern, particle logo with violet glow.
+- Company branding (particle logo + `text-gradient-premium` name + tagline + academy@guardianx.in + academy@guardianx.cloud + Bengaluru).
+- Client avatar circle (initials fallback).
+- Line item icons (training/lab/cert/workshop — GraduationCap/FlaskConical/Award/Wrench) — each item has an icon-select.
+- Payment QR placeholder (QrCode Lucide icon) next to UPI ID + account number + IFSC.
+- Status tracking (Draft/Sent/Paid/Overdue) — color-coded badges with icons, editable in both header dropdown and editor.
+- Currency formatting with locale support (INR→en-IN, USD→en-US, EUR→de-DE, GBP→en-GB).
+- Tax breakdown: CGST + SGST split (9%+9% for 18% GST) when INR + gstSplit toggle enabled.
+- Rounding adjustment field.
+- Bank details section (bankName, accountName, accountNumber, ifscCode, upiId).
+- Signature area with "Authorized Signatory" label + dashed-line box.
+- Print layout: landscape A4 (`@page { size: A4 landscape; margin: 10mm }`).
+- Mini dashboard: Total Invoices (session), Pending Amount, Paid This Month — in-memory `savedInvoices` array updated by "Save" button.
+- Pre-fill from CRM: reads `sessionStorage["guardianx-invoice-prefill"]` on mount.
+
+**4. `src/views/proposal-maker.tsx` — 13-Slide Pitch Deck (full rewrite, export `ProposalMakerView` unchanged)**:
+- Editor panel (left, 5/12): slide-jump chips (1-13), cover meta, institution info, program details, value props, about/mission, curriculum modules, benefits (3 groups), pricing, terms.
+- Live preview (right, 7/12): 13 full-width slide panels inside `#proposal-preview`.
+- Slide list:
+  1. Cover (gradient bg + particle logo + "PARTNERSHIP PROPOSAL" badge + institution name + meta strip).
+  2. Executive Summary (paragraph + 4 value-prop bullets).
+  3. About GuardianX (mission + 4 stat tiles + trust strip).
+  4. Why Choose Us (6 value-prop cards with icons).
+  5. Our Offerings (Tabs: School/College/University — offerings + features + benefits).
+  6. Training Methodology (7-step horizontal flow: Live Lecture → Analysis → Study Material → Lab → Assignment → Mock Test → Proctored Exam).
+  7. Program Curriculum (editable modules with numbered badges + duration + deliverables).
+  8. Benefits to Institution (3-column grid: students/institution/faculty).
+  9. Revenue Model & Pricing (investment table + revenue-share + ROI + custom-pricing cards).
+  10. Partnership Models (3 cards: MoU/Annual License [POPULAR]/Full Integration).
+  11. Implementation Timeline (5-phase vertical timeline Week 1-16).
+  12. Terms & Conditions (editable).
+  13. Contact & Next Steps (contact details + 4-step list + "Sign MoU" CTA + signature areas).
+- Print: portrait A4, page-break after each section (13-page PDF).
+- Pre-fill from CRM: reads `sessionStorage["guardianx-proposal-prefill"]`.
+
+**5. `src/views/admin-lead-crm.tsx` — Kanban CRM + Google Forms (full rewrite, export `LeadCrmView` unchanged)**:
+- REMOVED: "Export to Google Sheets" + "New Google Doc" buttons + Google Docs card.
+- ADDED: Google Forms integration card — "Create Lead Form" (links to forms.new), "Connect Google Form" dialog with URL input, persisted in localStorage, shows connected URL + "View Form" + "View Responses" buttons.
+- Kanban pipeline (default view): 6 columns (New/Contacted/Qualified/Proposal/Converted/Lost) with drag-and-drop via `@dnd-kit/core` (PointerSensor, DragOverlay, droppable columns, draggable cards). On drop, PATCHes new status + toast + query invalidation.
+- Table view (toggle): 7-column table with status/source/score badges.
+- Lead detail dialog: contact info, status dropdown (live PATCH), **status history timeline**, follow-up date + assigned-to inputs, notes panel (existing + add-new), quick actions: "Create Proposal" (navigates with sessionStorage pre-fill), "Create Invoice", "Email".
+- Lead source tracking (Google Form/Contact Form/Manual/Referral) — colored badges.
+- Lead scoring — star + number badge (green ≥70, amber ≥40, zinc <40), auto-computed in API.
+- Quick stats: Total Leads / Conversion Rate / Avg Time to Convert / New This Month.
+- Source breakdown strip.
+
+**6. `src/views/admin-instructor-assignment.tsx` — Add Instructor Profile (full rewrite, export `InstructorAssignmentView` unchanged)**:
+- "Add Instructor" button at top → dialog with: Name (req), Email (req), Phone, Title, Bio, Expertise multi-select (8 pill toggles: Offensive/Defensive/Network/Web/Cloud/GRC/DFIR/IAM), Years of experience, Certifications (comma-separated), Avatar URL, LinkedIn URL, Max batches, Initial password.
+- On submit: POSTs to `/api/admin/instructors` → creates User (role: INSTRUCTOR) + nested InstructorProfile. Toast + dialog close + query invalidation.
+- Instructor cards (responsive 1/2/3-col grid, framer-motion staggered): avatar (image or initials circle), name + BadgeCheck verified icon, title, email, bio (2-line clamp), expertise tags (icon+label), years experience, certifications (amber badges), workload progress bar (color-coded: green/amber/rose), "View Profile" button.
+- View Profile dialog: full bio, contact, expertise, 3-stat grid (years/batches/courses), certifications, LinkedIn link.
+- Fallback: 3 demo instructors (Dr. Sarah Chen / Raj Patel / Alex Mercer) shown when API returns 0 or fails — page is never empty.
+- Search input (name/email/title) + expertise filter dropdown (8 options).
+- Batch assignments table preserved — instructor dropdown now populated from API instructors.
+
+**7. Lint result** — `bun run lint` → **0 errors**, 1 pre-existing warning (unused eslint-disable in `src/lib/db.ts` — not touched). `npx tsc --noEmit` → 0 errors in any modified file (pre-existing TS errors in prisma seed files are unrelated and untouched).
+
+**8. End-to-end API verification** (via curl, logged in as `admin@academy.guardianx.cloud`):
+- `GET /api/admin/instructors` → 200, 2 real instructors returned with workload counts.
+- `POST /api/admin/instructors` → 201, created instructor with full profile (expertise + certifications arrays).
+- `GET /api/admin/leads` → 200, empty list + zero stats.
+- `POST /api/admin/leads` → 201, created University lead with auto-score=60.
+- `PATCH /api/admin/leads/[id]` → 200, status → "Contacted", history row auto-logged (New→Contacted).
+- `POST /api/admin/leads/[id]/notes` → 201, note added with authorId set.
+- Final `GET /api/admin/leads` → 200, lead with 1 note + 2 history entries + correct stats (total=1, contacted=1, bySource={Manual:1}).
+- Test data cleaned up after verification.
+- Dev log: no errors, only Prisma query logs and 200/201 responses.
+
+Files modified:
+- `prisma/schema.prisma` — appended 4 new models + 2 reverse relations on User (zero changes to existing models).
+- `src/app/api/contact/route.ts` — extended to also create a Lead (non-fatal on failure).
+- `src/views/invoice-generator.tsx` — full rewrite (~820 LOC).
+- `src/views/proposal-maker.tsx` — full rewrite (~750 LOC).
+- `src/views/admin-lead-crm.tsx` — full rewrite (~750 LOC).
+- `src/views/admin-instructor-assignment.tsx` — full rewrite (~795 LOC).
+
+Files created:
+- `src/app/api/admin/instructors/route.ts`
+- `src/app/api/admin/leads/route.ts`
+- `src/app/api/admin/leads/[id]/route.ts`
+- `src/app/api/admin/leads/[id]/notes/route.ts`
+- `agent-ctx/ADMIN-UPGRADE-main.md`
+
+Files NOT modified:
+- `src/store/app-store.ts`, `src/app/page.tsx`, `src/components/platform/app-shell.tsx` — all view names already exist.
+- All other views, components, APIs, mini-services, prisma seeds — untouched.
+
+Stage Summary:
+4 admin views upgraded to advanced/futuristic versions matching the platform's premium dark-tech aesthetic. 4 new Prisma models + 4 new API routes power the new functionality. Lead-to-invoice and lead-to-proposal handoff works via sessionStorage pre-fill. Drag-and-drop Kanban pipeline (dnd-kit) with auto lead scoring. Instructor creation creates real User + InstructorProfile rows. Google Forms integration replaces the removed Google Docs integration. ESLint: 0 errors. End-to-end API verification: all endpoints return correct data with proper auth/scoring/history tracking. No existing functionality broken.

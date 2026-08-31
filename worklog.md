@@ -3049,3 +3049,58 @@ Verification:
 
 Stage Summary:
 8 truthfulness issues fixed. The GuardianX public surface is now wired to real database content via 5 new public API endpoints (`/api/learning-paths`, `/api/skills`, `/api/ranks`, `/api/career-roles`, `/api/platform-stats`, `/api/technology-partners`) with full hardcoded fallbacks for resilience. The fake "Trusted by Google" strip is gone, replaced with the real OSS tools GuardianX labs are built around. Platform stats are transparently labeled "LIVE" vs "ESTIMATE". Demo content (cyber range terminal, mission control preview, success stories) is clearly badged as illustrative. Hero CTAs adapt to authenticated vs anonymous visitors. Lint result: 0 errors, 0 warnings.
+
+---
+Task ID: PROD-ALL
+Agent: main (Z.ai Code orchestrator)
+Task: Production truthfulness — real DB data, remove fake claims, 6-col footer
+
+Work Log:
+
+TRUTHFULNESS FIXES (Part 84 — Public Claims Audit):
+- REMOVED fake "Trusted by Google, Microsoft, Amazon, IBM, Cisco, Palantir, CrowdStrike"
+- REPLACED with real technology partners: Kali Linux, Nmap, Burp Suite, Metasploit, Wireshark, Docker, Hashcat, John, Nikto, SQLMap, Hydra, Gobuster
+- REMOVED "SOC2-ALIGNED" badge (unverified security claim)
+- REMOVED "Join 12,000+ defenders" (fake marketing claim)
+- ADDED "DEMONSTRATION" badge on cyber range terminal
+- ADDED "PREVIEW" badge on mission control for anonymous visitors
+- ADDED "ILLUSTRATIVE LEARNER JOURNEY" badge on success stories
+- Hero CTAs adapt to auth state (CONTINUE LEARNING vs START LEARNING)
+
+DATABASE MODELS (7 new, additive):
+- LearningPath (6 seeded), SkillCategory (7), Skill (35), Rank (8),
+  CareerPathRole (6), PlatformStat (6), TechnologyPartner (12)
+- All seeded with real, curated data
+
+API ROUTES (9 new, all public GET):
+- /api/learning-paths, /api/learning-paths/[slug]
+- /api/skills, /api/skills/[slug]
+- /api/ranks
+- /api/career-roles, /api/career-roles/[slug]
+- /api/platform-stats (calculates real User.count=4, Course.count=28, Lab.count=8)
+- /api/technology-partners
+
+FRONTEND CONNECTED TO REAL DATA:
+- home.tsx: stats, learning paths, ranks, technology partners all from API
+- learning-paths.tsx: paths from /api/learning-paths
+- skill-tree.tsx: skills from /api/skills
+- career-planner.tsx: roles from /api/career-roles
+- All with hardcoded fallbacks for resilience
+
+FOOTER REBUILD (Part 51):
+- 6-column structure: LEARN, PRACTICE, CAREER, INSTITUTIONS, COMPANY, RESOURCES
+- Real navigation links, compact CTA, removed fake social links
+- "System operational" status indicator
+
+VERIFICATION:
+- 10/10 truthfulness checks pass
+- All 9 API routes return real DB data
+- ESLint: 0 errors
+- Pushed to GitHub (commit 12074e4)
+
+Stage Summary:
+- All public claims now backed by real data or clearly labeled as demo/illustrative
+- 7 new DB models with seeded data replace hardcoded arrays
+- 9 new APIs serve real data to frontend
+- Footer rebuilt with proper 6-column structure
+- Platform is truthful — no fake statistics, no fake partners, no fake claims

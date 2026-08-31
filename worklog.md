@@ -1632,3 +1632,641 @@ Stage Summary:
 - All hero section top gaps reduced significantly (pt-14 shell + py-4 hero)
 - Home hero section is shorter (80vh vs 88vh)
 - All pages feel tighter and more immediate
+
+---
+
+# GuardianX Academy — Architecture Audit Report
+
+**Task ID:** AUDIT-P1
+**Agent:** explore (read-only audit)
+**Date:** Audit of codebase as-of worklog Task 30
+**Scope:** Full read-only architecture audit (no files were modified)
+
+---
+
+## 1. Executive Summary
+
+GuardianX Academy is a large, mature cyber-security LMS built on Next.js 16 + Prisma + NextAuth v4, organized as a single-route SPA with Zustand view-switching. The codebase is **62,653 LOC** across **262 source files** with **75 Prisma models**, **45 view components**, **141 API route handlers**, **48 shadcn/ui primitives**, and **12 lazy-seeded feature modules**. The platform has expanded well past its original LMS scope into a multi-portal product (student / instructor / school / parent / admin / CMS). The audit surfaced a few real concerns (detailed in §7) but overall the architecture is coherent and the feature surface is unusually broad for a single-repo project.
+
+---
+
+## 2. File Structure
+
+### 2.1 File counts per directory
+
+| Directory | Files | Notes |
+|---|---|---|
+| `src/views/` | **45** | Self-contained view components (avg 695 LOC) |
+| `src/components/platform/` | **12** | App shell, public shell, headers/footers, logo systems, whiteboard, calendar, motion |
+| `src/components/ui/` | **48** | Full shadcn/ui (New York) primitive set |
+| `src/components/instructor/` | **6** | Instructor dashboard tab components |
+| `src/components/providers/` | **4** | Theme / Query / Session / Gamification / SW |
+| `src/lib/` | **16** | Auth, db, session, api client, gamification, email, pdf, csv, webrtc, etc. |
+| `src/hooks/` | **5** | use-bookmarks, use-mobile, use-notifications, use-toast, use-user |
+| `src/store/` | **1** | app-store (Zustand) |
+| `src/app/api/` | **141** route.ts files | Across ~50 resource groups |
+| `prisma/` | schema.prisma + **12** seed files | No `migrations/` folder (uses `db push`) |
+| `mini-services/` | **2** | `live-signaling` (port 3003), `whiteboard-service` (port 3006) |
+| `public/` | logo SVG/PNG, manifest, sw.js, 12 course thumbnails | PWA-ready |
+| **Total `src/` LOC** | **62,653** | TypeScript + TSX |
+
+### 2.2 Views (`src/views/`)
+
+Full inventory (45 files, sorted by feature area):
+
+**Public pages (5):** `home.tsx` (795 LOC), `impact.tsx` (594), `contact.tsx` (518), `partner-institutions.tsx` (836), `course-catalog.tsx` (746)
+
+**Student learning core (8):** `dashboard.tsx` (401), `my-learning.tsx` (499), `lesson-view.tsx` (981), `course-detail.tsx` (1505), `my-notes.tsx` (399), `assignments.tsx` (977), `certificates.tsx` (327), `profile.tsx` (333)
+
+**Live + labs (3):** `live-sessions.tsx` (878), `labs.tsx` (567), `lab-detail.tsx` (850)
+
+**Community + collaboration (3):** `community.tsx` (470), `study-groups.tsx` (975), `messaging.tsx` (675), `office-hours.tsx` (696)
+
+**Gamification (3):** `achievements.tsx` (503), `leaderboard.tsx` (605), `learning-analytics.tsx` (441)
+
+**Role dashboards (4):** `instructor-dashboard.tsx` (1742), `school-dashboard.tsx` (48, wrapper), `school-dashboard-inner.tsx` (297), `admin-dashboard.tsx` (2169)
+
+**Career & jobs (4):** `career-planner.tsx` (467), `job-board.tsx` (465), `mock-interview.tsx` (609), `resume-builder.tsx` (991)
+
+**AI / threat / code (3):** `ai-assistant.tsx` (428), `threat-feed.tsx` (344), `code-review.tsx` (439)
+
+**Cyber games (5):** `ctf-platform.tsx` (602), `weekly-challenges.tsx` (473), `team-missions.tsx` (378), `cyber-range.tsx` (494), `bug-bounty.tsx` (396)
+
+**Specialized (4):** `skill-assessments.tsx` (505), `prerequisites-visualizer.tsx` (454), `lab-snapshots.tsx` (397), `parent-portal.tsx` (1073), `course-studio.tsx` (1686), `cms-dashboard.tsx` (1255)
+
+### 2.3 Platform components (`src/components/platform/`)
+
+| Component | Purpose |
+|---|---|
+| `app-shell.tsx` (666 LOC) | Authenticated SPA shell — sidebar, top bar, command palette, notifications |
+| `public-page-shell.tsx` | Public marketing page wrapper (header + footer) |
+| `public-header.tsx` (151) | Floating glass header with scroll-hide |
+| `public-footer.tsx` | Marketing footer |
+| `auth-screen.tsx` (559) | Login/register tabs + demo accounts + feature highlights |
+| `particle-logo.tsx` (442) | Canvas particle-reconstructed logo (assembly → idle → mouse-repel) |
+| `animated-logo.tsx` | Lightweight SVG mark used in headers |
+| `certificate-verify-card.tsx` | Public cert verification widget |
+| `motion-system.tsx` (481) | 15 reusable framer-motion components (ScrollReveal, MagneticButton, CursorGlow, etc.) |
+| `network-visualization.tsx` | Animated node-link background |
+| `whiteboard.tsx` | Collaborative drawing canvas (socket.io client) |
+| `calendar-widget.tsx` | Mini calendar for the instructor dashboard |
+
+### 2.4 shadcn/ui primitives (48)
+
+Full set installed: `accordion, alert, alert-dialog, aspect-ratio, avatar, badge, breadcrumb, button, calendar, card, carousel, chart, checkbox, collapsible, command, context-menu, dialog, drawer, dropdown-menu, form, hover-card, input, input-otp, label, menubar, navigation-menu, pagination, popover, progress, radio-group, resizable, scroll-area, select, separator, sheet, sidebar, skeleton, slider, sonner, switch, table, tabs, textarea, toast, toaster, toggle, toggle-group, tooltip`.
+
+### 2.5 API routes (141 handlers across 50 resource groups)
+
+Top-level groups: `achievements, admin/*, ai-assistant/*, analytics, assignments/*, auth/*, bookmarks, bug-bounty, career/*, certificate-templates/*, certificates/*, challenges, cms/*, code-review/*, contact, course-studio/*, courses/*, ctf/*, cyber-range/*, discussions, instructor/* (24 routes), interviews/*, jobs/*, lab-snapshots/*, labs/*, lessons/*, live-sessions/*, me/*, messages/*, notes/*, notifications/*, office-hours/*, parent/*, prerequisites-graph, pwa, quizzes/*, resume, route.ts (root), school/* (12 routes), search, skill-assessments/*, stats, study-groups/*, submissions/*, team-missions/*, threat-feed`.
+
+### 2.6 Lib (16), Hooks (5), Store (1)
+
+**lib:** `api.ts, auth.ts (NextAuth config), certificate-pdf.ts, cms-icons.tsx, colors.ts, course-images.ts, csv.ts, db.ts (Prisma singleton), email.ts, gamification.ts (XP/streak/achievements engine), notifications.ts, parent-auth.ts (HMAC token system), session.ts, use-content.ts (CMS hook), utils.ts, webrtc.ts`
+
+**hooks:** `use-bookmarks, use-mobile, use-notifications, use-toast, use-user`
+
+**store:** `app-store.ts` — single Zustand store with `view: View`, `sidebarOpen`, `navigate()`, `setSidebarOpen()`
+
+---
+
+## 3. Feature Status
+
+| # | Feature | Status | Evidence |
+|---|---|---|---|
+| 1 | Particle logo | **EXISTS** | `src/components/platform/particle-logo.tsx` (442 LOC); used in `home.tsx` + `partner-institutions.tsx`. Canvas-based, 3 phases (assembly → idle → mouse-repel) |
+| 2 | CMS system | **EXISTS** | `SiteContent` model + `/api/cms/*` (3 routes) + `cms-dashboard.tsx` (1255 LOC) + `use-content.ts` hook + `seed-cms.ts` + `seed-content.ts` + `seed-content-2.ts`. Admin edits → API → live site |
+| 3 | Cyber range / labs | **PARTIAL** | `labs.tsx` + `lab-detail.tsx` + `/api/labs/*` (5 routes) = real. `cyber-range.tsx` (494 LOC) + `/api/cyber-range/*` = real session management + topology visualization, but **VMs are metadata-only** (no actual infrastructure provisioning) |
+| 4 | CTF platform | **EXISTS** | `ctf-platform.tsx` (602 LOC) + `/api/ctf/*` (4 routes: competitions, teams, submit) + 4 models (`CTFCompetition, CTFChallenge, CTFTeam, CTFTeamMember, CTFSubmission`). Jeopardy grid + team creation + flag submission + live leaderboard |
+| 5 | Learning paths | **PARTIAL** | Closest feature is `career-planner.tsx` (467 LOC) which renders a role-based visual roadmap. `prerequisites-visualizer.tsx` shows course dependency graph. No dedicated "learning path" entity/model — paths are inferred from course prerequisites + career roles |
+| 6 | Skill tree | **MISSING** | No `skill-tree` view, no `SkillTree` model, no API route, no mention in worklog. Closest is `skill-assessments.tsx` (different concept — quiz-based skill evaluation) |
+| 7 | Gamification (XP, ranks, badges) | **EXISTS** | `lib/gamification.ts` (193 LOC) — XP rewards per activity, level curve (`level N needs N*200 XP`), 7 rank titles (Novice → Cyber Legend), 20+ achievement definitions with check functions, streak tracking. Backed by `Achievement, UserAchievement, UserActivity` models + `/api/achievements` route + `GamificationToaster` provider |
+| 8 | Career center | **EXISTS** | `career-planner.tsx` + `job-board.tsx` (465 LOC) + `mock-interview.tsx` (609) + `resume-builder.tsx` (991) + `/api/career/*` + `/api/jobs/*` + `/api/interviews/*` + `/api/resume`. Models: `CareerPath, CareerRole, Job, JobApplication, MockInterview, InterviewQuestion, Resume` |
+| 9 | Certificate verification | **EXISTS** | Public `/api/certificates/verify` endpoint (no auth required) + tamper-evident HMAC hash + `certificate-verify-card.tsx` on homepage + demo cert ID `GX-DEMO2024CERT001`. Models: `Certificate, CertificateTemplate` |
+| 10 | Institution dashboard | **EXISTS** | `school-dashboard.tsx` wrapper + `school-dashboard-inner.tsx` + `/api/school/*` (12 routes) + `School, SchoolMember, Batch, BatchMember` models + `seed-school.ts`. Multi-tenant: batches, students, attendance, reports, settings |
+| 11 | Instructor dashboard | **EXISTS** | `instructor-dashboard.tsx` (1742 LOC) + 6 tab components + `/api/instructor/*` (24 routes) + `AuthoredCourse` model. Tabs: Overview, Courses, Assignments, Office Hours, Messaging, Attendance, Bulk Import, Certificate Templates, Quizzes, Live Sessions |
+| 12 | Student dashboard | **EXISTS** | `dashboard.tsx` (401 LOC) — student landing with stats, recent activity, continue-learning cards |
+| 13 | Leaderboard | **EXISTS** | `leaderboard.tsx` (605 LOC) — global + course-specific + labs leaderboards. Models: `User.xp, User.streak, UserActivity`. Backed by `/api/courses/leaderboard` + `/api/labs/leaderboard` |
+| 14 | Mock interview | **EXISTS** | `mock-interview.tsx` (609) + `/api/interviews/*` (3 routes) + `MockInterview, InterviewQuestion` models. **Uses real `z-ai-web-dev-sdk` LLM** to grade answers |
+| 15 | Resume builder | **EXISTS** | `resume-builder.tsx` (991 LOC) + `/api/resume` + `/api/me/resume` + `Resume` model. Multi-section editor (experience, education, skills, certs, projects) + live preview |
+| 16 | Job board | **EXISTS** | `job-board.tsx` (465 LOC) + `/api/jobs/*` (3 routes incl. apply) + `Job, JobApplication` models. Saved/external listings + application tracking |
+| 17 | AI assistant | **EXISTS** | `ai-assistant.tsx` (428 LOC) + `/api/ai-assistant/*` (2 routes) + `AIChatSession, AIChatMessage` models. **Uses real `z-ai-web-dev-sdk`** with course/lab context injection + chat history persistence |
+| 18 | Threat feed | **EXISTS** | `threat-feed.tsx` (344) + `/api/threat-feed` + `ThreatFeed` model. Lazy-seeded CVE-style entries with severity, IoCs, mitigation |
+| 19 | Bug bounty | **EXISTS** | `bug-bounty.tsx` (396) + `/api/bug-bounty` + `BugBountyProgram, BugBountySubmission` models. 6 seeded programs (HackerOne, Bugcrowd, GuardianX platforms) + submission tracking |
+| 20 | Weekly challenges | **EXISTS** | `weekly-challenges.tsx` (473) + `/api/challenges` + `WeeklyChallenge, WeeklyChallengeSubmission` models. Lazy-seeded, flag submission, leaderboard |
+| 21 | Team missions | **PARTIAL** | `team-missions.tsx` (378 LOC) + `/api/team-missions/*` (2 routes) + `TeamMission, TeamMissionSession, TeamMissionMember` models. **"Start Mission (demo)" button is disabled** — multiplayer session UI exists but the actual mission-launch flow is not wired up |
+| 22 | Parent portal | **EXISTS** | `parent-portal.tsx` (1073 LOC) + `/api/parent/*` (2 routes) + `ParentAccount` model + `parent-auth.ts` (HMAC-signed tokens, 7-day TTL, timing-safe comparison). Standalone auth (separate from NextAuth). Shows child's progress, achievements, attendance, certificates |
+| 23 | Course studio | **EXISTS** | `course-studio.tsx` (1686 LOC) + `/api/course-studio/*` (2 routes) + `AuthoredCourse` model. Full authoring: draft → configure modules/lessons → publish to real `Course`. Zod schemas validate input |
+
+**Feature status tally:** EXISTS = 19, PARTIAL = 3 (cyber range, learning paths, team missions), MISSING = 1 (skill tree)
+
+---
+
+## 4. Issues Found
+
+### 4.1 Critical / blocker
+
+1. **DATABASE_URL / schema provider mismatch (already known)**
+   - `prisma/schema.prisma:8` declares `provider = "postgresql"` (Neon)
+   - `.env` (committed) contains `DATABASE_URL=file:/home/z/my-project/db/custom.db` (SQLite URL)
+   - The shell-level env var takes precedence over `.env`, breaking `bun run db:push` with P1012 ("URL must start with postgresql://")
+   - `db/custom.db` (an old SQLite file) still exists at the repo root
+   - **Already documented** in Task 22-CMS Stage Summary (worklog line ~1186). Workaround: `unset DATABASE_URL && bun run db:push`. Permanent fix needed.
+
+2. **Hardcoded dev fallback secret in auth**
+   - `src/lib/auth.ts:88` → `secret: process.env.NEXTAUTH_SECRET || "guardianx-dev-secret-key-change-in-prod-9f7b"`
+   - `src/lib/parent-auth.ts:14-15` → same fallback string used for HMAC token signing
+   - `.env` does NOT set `NEXTAUTH_SECRET` → the dev fallback is currently active in development
+   - If deployed as-is to production without setting the env var, JWT sessions + parent tokens would be forgeable. The string is also committed to the repo.
+
+### 4.2 Code quality
+
+3. **ESLint disabled almost entirely**
+   - `eslint.config.mjs` turns OFF: `no-explicit-any`, `no-unused-vars`, `no-non-null-assertion`, `ban-ts-comment`, `react-hooks/exhaustive-deps`, `react-hooks/purity`, `prefer-const`, `no-console`, `no-debugger`, `no-unreachable`, `no-fallthrough`, `no-case-declarations`, `no-mixed-spaces-and-tabs`, `no-redeclare`, `no-undef`, `no-unreachable`, `no-useless-escape`, etc.
+   - **317 occurrences of `any` across 85 files** (largest contributors: `instructor-dashboard.tsx` 32, `parent-portal.tsx` 20, `cms-dashboard.tsx` 18, `course-studio.tsx` 16, `school-dashboard-inner.tsx` 15, `admin-dashboard.tsx` 15, `leaderboard.tsx` 13)
+   - **54 `console.*` calls across 38 files** (mostly error logging, but a few stray `console.log`s)
+   - No `@ts-ignore` / `@ts-expect-error` directives (good)
+   - Lint reports "0 errors" but only because every meaningful rule is disabled
+
+4. **Dead view in View union**
+   - `src/store/app-store.ts:32` declares `{ name: "auth" }` — never referenced in `page.tsx`, no NAV_ITEM points to it, no view component handles it. Dead code. The login screen is rendered via `{ name: "login" }` instead.
+
+5. **Partner institutions page uses placeholder sample data**
+   - `src/views/partner-institutions.tsx:83-86` explicitly comments: "Featured partner profiles — example placeholders only. Not real institutions."
+   - 5 hardcoded `FeaturedPartner` entries with `example.edu` URLs (Delhi Cyber Sciences Academy, Mumbai Institute of Technology, etc.)
+   - These should be sourced from the `School` model (which exists and is seeded) instead of being hardcoded.
+
+### 4.3 Partial / stub features
+
+6. **`lab-snapshots.tsx` restore flow is a demo**
+   - Line 355: "Loading a snapshot will overwrite the current lab session state. **This is a demo of the restore flow — in production this would rehydrate the live lab terminal.**"
+   - Restore button just shows a success toast without actually rehydrating state.
+
+7. **`team-missions.tsx` "Start Mission" button is disabled + labeled "(demo)"**
+   - Line 365: `<Button variant="outline" size="sm" className="w-full" disabled>Start Mission (demo)</Button>`
+   - The team-join + role-selection + waiting-room UI exists; the actual mission-launch does not.
+
+8. **Cyber range machines are metadata-only**
+   - `/api/cyber-range/route.ts` seeds topology + machine inventory (hostname, OS, IP) as JSON, but no real VMs/containers are provisioned. Sessions are tracked in DB but players can't actually SSH/interact with the machines.
+
+### 4.4 Minor
+
+9. **`home.tsx:42` admits hardcoded defaults**: "CMS-driven content — falls back to hardcoded defaults when CMS [is empty]." — This is by design (CMS-first with sensible fallbacks), but worth noting that every public page has a parallel set of hardcoded defaults.
+
+10. **`code-review.tsx:83` ships a `SAMPLE_CODE` constant** containing an intentionally vulnerable SQL-injection snippet (for users to paste into the AI code reviewer). The `query = "SELECT * FROM users WHERE username='" + username + "'...` line is fine in context but might trigger SAST scanners.
+
+11. **No unit tests**: `src/` contains zero `*.test.*` or `*.spec.*` files. `tests/` folder holds only 3 bash shell scripts (python-runtime-build, database-runtime-build, python-runtime-container) — infrastructure smoke tests, not application tests.
+
+12. **No `prisma/migrations/` folder**: Schema drift is managed via `prisma db push --accept-data-loss` (per `package.json` script). Acceptable for solo dev, risky for production schema evolution.
+
+13. **AuthScreen advertises "12K+ Learners / 27+ Courses / 31 Labs"** as static `STATS` constants in `auth-screen.tsx:43-47` — marketing copy, not derived from real DB counts.
+
+---
+
+## 5. Database Schema Summary
+
+`prisma/schema.prisma` — 1,201 lines, **75 models**, **0 enums** (string literals used throughout).
+
+### All 75 model names (alphabetical)
+
+```
+AIChatMessage, AIChatSession, Achievement, Assignment, AssignmentSubmission,
+AttendanceRecord, AuthoredCourse, Batch, BatchMember, Bookmark,
+BugBountyProgram, BugBountySubmission, CareerPath, CareerRole,
+Certificate, CertificateTemplate, CodeReview, Course, CourseReview, CTFChallenge,
+CTFCompetition, CTFSubmission, CTFTeam, CTFTeamMember, CyberRange,
+CyberRangeMember, CyberRangeSession, Discussion, DiscussionReply, EmailLog,
+Enrollment, GradingRubric, Job, JobApplication, Lab, LabProgress,
+LabSnapshot, LearningAnalytics, Lesson, LessonProgress, LiveSession,
+LiveSessionMember, Message, MessageThread, MockInterview, Module,
+Note, Notification, OfficeHourBooking, OfficeHourSlot, ParentAccount,
+PeerReview, Question, Quiz, QuizAttempt, Resume, RubricCriterion,
+School, SchoolMember, SiteContent, SkillAssessment, SkillAssessmentQuestion,
+SkillAssessmentResult, StudyGroup, StudyGroupMember, TeamMission,
+TeamMissionMember, TeamMissionSession, ThreatFeed, User, UserAchievement,
+UserActivity, WeeklyChallenge, WeeklyChallengeSubmission
+```
+
+### Model groupings (functional)
+
+- **Identity / auth:** User, ParentAccount
+- **Tenancy:** School, SchoolMember, Batch, BatchMember
+- **LMS core:** Course, Module, Lesson, Enrollment, LessonProgress, Note, Bookmark, CourseReview
+- **Assessments:** Quiz, Question, QuizAttempt, Assignment, AssignmentSubmission, GradingRubric, RubricCriterion, PeerReview
+- **Labs:** Lab, LabProgress, LabSnapshot
+- **Live / collab:** LiveSession, LiveSessionMember, MessageThread, Message, StudyGroup, StudyGroupMember, OfficeHourSlot, OfficeHourBooking, AttendanceRecord
+- **Credentials:** Certificate, CertificateTemplate
+- **Gamification:** Achievement, UserAchievement, UserActivity
+- **Comms:** Notification, EmailLog, Discussion, DiscussionReply
+- **AI features:** AIChatSession, AIChatMessage, CodeReview
+- **Career:** CareerPath, CareerRole, Job, JobApplication, MockInterview, InterviewQuestion, Resume
+- **Cyber games:** CTFCompetition, CTFChallenge, CTFTeam, CTFTeamMember, CTFSubmission, WeeklyChallenge, WeeklyChallengeSubmission, TeamMission, TeamMissionSession, TeamMissionMember, CyberRange, CyberRangeSession, CyberRangeMember, BugBountyProgram, BugBountySubmission, ThreatFeed
+- **Analytics:** LearningAnalytics, SkillAssessment, SkillAssessmentQuestion, SkillAssessmentResult
+- **Content / authoring:** AuthoredCourse, SiteContent
+
+---
+
+## 6. Design System Audit (`src/app/globals.css`)
+
+**806 lines total** — Tailwind 4 (`@import "tailwindcss"`) + `tw-animate-css` + custom design system.
+
+### 6.1 Design tokens (CSS custom properties)
+
+- **84 unique custom properties** total
+- **47** defined in `:root` (dark-first defaults) — uses OKLCH color space throughout
+- **38** defined in `.light` (light-theme overrides)
+- **37** mapped in `@theme inline` block (Tailwind 4 native theme bridge)
+
+Key token groups:
+- **Surfaces:** `--background, --foreground, --card, --card-solid, --popover, --muted, --accent, --secondary`
+- **Brand:** `--primary` (violet `oklch(0.6 0.2 295)`), `--ring`
+- **Chart palette:** `--chart-1` through `--chart-5` (violet, cyan, emerald, amber, rose)
+- **Sidebar:** 7 sidebar-specific tokens (sidebar, sidebar-foreground, sidebar-primary, etc.)
+- **Glass system:** `--glass-bg, --glass-border, --glass-blur`
+- **Atmospheric glows:** `--glow-primary, --glow-cyan, --glow-amber`
+- **Semantic accents:** `--accent-violet, --accent-purple, --accent-cyan, --accent-emerald, --accent-amber, --accent-rose, --accent-teal`
+- **Background mesh:** `--gradient-mesh` (3-stop radial gradient)
+- **Radii:** `--radius` (0.75rem base) + 4 derived sizes (sm/md/lg/xl)
+
+### 6.2 Custom utility classes (47)
+
+Organized by purpose:
+
+| Group | Classes |
+|---|---|
+| **Backgrounds** (5) | `bg-grid, bg-grid-fine, bg-grid-light, bg-mesh, bg-dots, bg-noise` |
+| **Glass surfaces** (3) | `glass, glass-strong, glass-subtle` |
+| **Borders** (1) | `border-gradient` |
+| **Glows** (5) | `glow-primary, glow-cyan, glow-soft, glow-text, glow-orb` |
+| **Typography** (8) | `text-gradient-emerald, text-gradient-cyan, text-gradient-premium, text-gradient-shimmer, text-outline, text-outline-violet, text-display, text-headline, text-balance` |
+| **Cards** (3) | `card-premium, card-glow, card-hover` |
+| **Buttons** (1) | `btn-premium` |
+| **Animations** (8) | `pulse-dot, blink-cursor, scanlines, shimmer, progress-active, animate-slide-in-right, animate-scale-in, animate-bounce-subtle, animate-glow-pulse, stagger-item, skeleton-shimmer, page-transition, hover-lift` |
+| **Scroll reveal** (3) | `reveal, reveal-scale, reveal-blur` |
+| **Markdown** (1) | `prose-guardianx` (full styled prose: h1-h3, p, ul/ol, code, pre, table, blockquote, a) |
+| **Utility** (2) | `no-scrollbar, .light` (theme class) |
+
+### 6.3 Animation keyframes (13)
+
+```
+pulse-ring, blink, shimmer, slide-in-right, scale-in, bounce-subtle,
+progress-stripes, glow-pulse, stagger-fade-in, skeleton-sweep,
+page-enter, gradient-shimmer, scroll
+```
+
+### 6.4 Other CSS notes
+
+- `@media (prefers-reduced-motion: reduce)` block — accessibility-respecting, kills all animations
+- Premium `::selection` color (emerald)
+- Custom thin scrollbar (`8px` thumb, content-box clipped)
+- `*:focus-visible` ring polish
+- OKLCH color space used throughout (modern, perceptually uniform)
+
+---
+
+## 7. Navigation Audit
+
+### 7.1 View union (`src/store/app-store.ts`)
+
+**46 unique view names** in the discriminated `View` union (one is dead code):
+
+```
+home, impact, contact, login, institutions, dashboard, catalog, course,
+lesson, learning, notes, live, labs, lab, certificates, achievements,
+leaderboard, instructor, school, admin, community, profile, assignments,
+messaging, study-groups, office-hours, auth (DEAD), ai-assistant,
+threat-feed, code-review, career-planner, job-board, mock-interview,
+resume-builder, ctf-platform, weekly-challenges, team-missions,
+learning-analytics, skill-assessments, prerequisites-visualizer,
+lab-snapshots, cyber-range, bug-bounty, parent-portal, course-studio, cms
+```
+
+`navigate(view)` also dispatches a `guardianx-navigate` CustomEvent on `window` for components that subscribe outside React's tree.
+
+### 7.2 AppShell nav items (`src/components/platform/app-shell.tsx`)
+
+**32 always-visible NAV_ITEMS** (sidebar):
+
+| Group | Items |
+|---|---|
+| **Learning** | Dashboard, Course Catalog, My Learning, Assignments, Notes |
+| **Live + labs** | Live Sessions, Cyber Labs |
+| **AI / intel** | AI Assistant, Threat Feed, Code Review |
+| **Career** | Career Planner, Job Board, Mock Interview, Resume Builder |
+| **Cyber games** | CTF Platform, Weekly Challenge, Team Missions, Cyber Range, Bug Bounty |
+| **Analytics** | Analytics, Skill Tests, Prereq Graph, Lab Snapshots |
+| **Collab** | Office Hours, Study Groups, Messages |
+| **Progress** | Achievements, Leaderboards, Certificates, Community |
+| **Special** | Parent Portal, Course Studio |
+
+**4 role-gated buttons** (rendered conditionally below NAV_ITEMS):
+
+| Role | Item | View |
+|---|---|---|
+| `INSTRUCTOR` or `ADMIN` | Instructor | `{ name: "instructor" }` |
+| `SCHOOL_ADMIN` | School Portal | `{ name: "school" }` |
+| `ADMIN` | Admin Console | `{ name: "admin" }` |
+| `ADMIN` | Content Studio (CMS) | `{ name: "cms" }` |
+
+There is also a **secondary mobile nav list** (10 items) inside the Sheet at lines 433-442 — a curated subset of the main NAV_ITEMS.
+
+**Command palette** (`⌘K` / `Ctrl+K`) opens a `Dialog` with a fuzzy `Command` search over the same nav items.
+
+### 7.3 PublicHeader nav items (`src/components/platform/public-header.tsx`)
+
+**5 nav items** (floating glass header, scroll-responsive):
+
+| Label | View | Icon |
+|---|---|---|
+| Home | `{ name: "home" }` | HomeIcon |
+| Courses | `{ name: "catalog" }` | Shield |
+| Partners | `{ name: "institutions" }` | Building2 |
+| Impact | `{ name: "impact" }` | TrendingUp |
+| Contact | `{ name: "contact" }` | Mail |
+
+Right-side actions: theme toggle (Sun/Moon), Login button (violet `btn-premium`). Header transforms on scroll: transparent → glass surface → compact (maxWidth 80rem → 64rem). Hides on scroll-down past 300px, shows on scroll-up.
+
+---
+
+## 8. Summary Metrics
+
+| Metric | Value |
+|---|---|
+| Total source LOC (TS/TSX) | **62,653** |
+| View components | **45** |
+| Platform components | **12** |
+| shadcn/ui primitives | **48** |
+| Instructor tab components | **6** |
+| Provider components | **4** |
+| Lib modules | **16** |
+| Hooks | **5** |
+| Zustand stores | **1** |
+| API route handlers | **141** |
+| API resource groups | ~50 |
+| Prisma models | **75** |
+| Prisma enums | **0** |
+| Prisma seed files | **12** |
+| Mini-services | **2** (live-signaling port 3003, whiteboard port 3006) |
+| View union members | **46** (45 live + 1 dead) |
+| AppShell nav items | **32 always-on + 4 role-gated** |
+| Public header nav items | **5** |
+| CSS design tokens | **84 unique** (47 dark + 38 light + 37 in `@theme`) |
+| Custom utility classes | **47** |
+| Animation keyframes | **13** |
+| `any`-typed expressions | **317 across 85 files** |
+| `console.*` calls | **54 across 38 files** |
+| Test files in `src/` | **0** |
+| Features audited | **23** (EXISTS 19, PARTIAL 3, MISSING 1) |
+
+---
+
+## 9. Recommended Next Actions (priority order)
+
+1. **Fix the env / DB provider mismatch** — either rename `.env` to `.env.local` with the real Neon URL and remove `db/custom.db`, OR change `prisma/schema.prisma` provider back to `sqlite` if Neon isn't actually being used. (Documented in worklog Task 22-CMS but never resolved.)
+2. **Remove hardcoded dev secret fallback** in `src/lib/auth.ts:88` and `src/lib/parent-auth.ts:14` — fail fast if `NEXTAUTH_SECRET` is missing instead of silently using a committed string.
+3. **Wire up the "Start Mission" button** in `team-missions.tsx:365` or remove the dead UI if multiplayer mission launch isn't on the roadmap.
+4. **Replace hardcoded `FEATURED_PARTNERS`** in `partner-institutions.tsx` with a query against the `School` model (the data already exists).
+5. **Delete the dead `{ name: "auth" }` branch** from the `View` union in `app-store.ts:32`.
+6. **Re-enable key ESLint rules incrementally** — at minimum `@typescript-eslint/no-explicit-any`, `@typescript-eslint/no-unused-vars`, `react-hooks/exhaustive-deps`. Each fixup pass will surface real bugs.
+7. **Replace `lab-snapshots.tsx` restore demo** with real state rehydration (or remove the "Restore Now" button until it works).
+8. **Add unit tests** for the highest-leverage modules: `lib/gamification.ts` (XP math + achievement checks), `lib/parent-auth.ts` (token sign/verify), `lib/certificate-pdf.ts`, `lib/csv.ts`.
+9. **Document the cyber-range scope**: either provision real infra (Docker/Podman backends) or relabel the feature as "Cyber Range Planner / Topology Visualizer" to set correct user expectations.
+10. **Build the missing "Skill Tree"** if it's on the product roadmap — there's no code, no model, and no worklog mention. Closest existing feature is `skill-assessments.tsx` (quiz-based) which doesn't satisfy a progressive skill-tree UX.
+
+---
+
+**Audit complete. No files were modified.**
+
+---
+
+**Task ID:** P2-CYBER
+**Agent:** cyber-component-builder
+**Task:** Build a reusable "cyber" component library in `src/components/cyber/`
+
+## Summary
+
+Created 11 files in `src/components/cyber/` — a GuardianX-specific cybersecurity UI primitive set used across homepage, dashboards, and lab experiences. All components are TypeScript-typed, accessibility-first, mobile-first responsive, use the existing OKLCH design tokens (violet primary / cyan accent / near-black background), leverage framer-motion for subtle animations, and respect `prefers-reduced-motion`.
+
+## Files Created
+
+| File | Component | LOC | Purpose |
+|---|---|---|---|
+| `status-dot.tsx` | `StatusDot` | 93 | Small status indicator dot (online/offline/warning/idle) with optional pulse + label |
+| `terminal.tsx` | `CyberTerminal` | 212 | Realistic terminal that types lines char-by-char; mac-style title bar, blinking cursor, scanlines |
+| `xp-bar.tsx` | `XPBar` | 103 | Animated XP progress bar with violet→cyan gradient fill, optional level badge, progress-active stripes |
+| `rank-badge.tsx` | `RankBadge` | 175 | Color-coded rank badge with 8-tier hierarchy (RECRUIT→ELITE GUARDIAN); elite uses shimmer gradient |
+| `flag-input.tsx` | `FlagInput` | 219 | Specialized flag-capture input with `GX{...}` prefix/suffix chips, Enter-to-submit, loading/correct/incorrect states |
+| `lab-card.tsx` | `LabCard` | 179 | Lab mission card with difficulty banner, status dot, target IP, services chips, XP reward, hover lift |
+| `mission-card.tsx` | `MissionCard` | 149 | Cinematic "current mission" card with objective, time elapsed, XP reward, embedded flag input, launch CTA |
+| `skill-node.tsx` | `SkillNode` | 240 | Skill-tree node with locked/available/in-progress/completed states; SVG connection lines, pulsing border, animated ring |
+| `stat-tile.tsx` | `StatTile` | 107 | Compact dashboard stat tile with icon, big number, label, optional trend indicator (up/down arrow) |
+| `threat-map.tsx` | `ThreatMap` | 517 | Canvas-based animated network viz: pulsing nodes (core/labs/targets/students), packet flow along edges, transient status-event overlays |
+| `index.ts` | barrel | 42 | Re-exports all components + types for clean imports |
+
+**Total:** 11 files, 2036 LOC
+
+## Design Decisions
+
+1. **OKLCH tokens** — All colors reference the project's CSS variables (`--accent-violet`, `--accent-cyan`, `--accent-emerald`, `--accent-rose`, `--accent-amber`) via Tailwind color classes (`text-violet-300`, `text-cyan-200`, etc.) and direct OKLCH literals in shadows (`oklch(0.6 0.2 295 / 0.6)`).
+2. **Premium card system** — `LabCard`, `MissionCard`, `StatTile` all use the existing `card-premium` class with hover lift + gradient border. `MissionCard` adds `glow-soft` + `scanlines` for cinematic feel.
+3. **Monospace typography** — All terminal/flag/rank/XP text uses `font-mono` + inline `font-family: var(--font-geist-mono), monospace` for guaranteed monospace rendering.
+4. **Accessibility** — `role="log"`/`role="progressbar"`/`role="status"`/`role="img"` where appropriate, `aria-valuenow/min/max` on XPBar, `aria-invalid`/`aria-describedby` on FlagInput, `aria-label` on icon buttons, keyboard handlers (Enter/Space) on interactive divs, `aria-live="polite"` on terminal output.
+5. **Reduced motion** — Every animated component checks `prefers-reduced-motion` and either skips the typewriter effect, instantiates to final state, or shows a single static frame (ThreatMap).
+6. **Framer-motion** — Used for hover lifts, enter animations, blinking cursors, animated SVG paths (skill-node connections), and `AnimatePresence` for FlagInput button states (idle/loading/correct/incorrect).
+7. **ThreatMap implementation** — Custom canvas with requestAnimationFrame loop, DPR-aware, packet objects that travel along edge progress values, transient event overlays with pill backgrounds, hexagon ring around core node, crosshair markers for target nodes. Cleans up rAF + resize listener on unmount. For reduced-motion users, draws a single static frame.
+8. **RankBadge fuzzy matcher** — Normalizes any input rank string to one of 8 canonical ranks via uppercase + substring matching, so existing data with custom rank strings still renders correctly.
+9. **FlagInput value handling** — Strips any literal `GX{` prefix / `}` suffix the user might type so we don't end up with `GX{GX{...}}`. Reconstructs canonical form `GX{payload}` on submit.
+10. **No existing files modified** — strictly additive; all new files live in `src/components/cyber/`.
+
+## Lint Result
+
+```
+$ bun run lint
+$ eslint .
+EXIT_CODE=0
+```
+
+✅ **0 errors, 0 warnings.** Also verified via `tsc --noEmit` — 0 type errors in `cyber/` files.
+
+## Usage Examples
+
+```tsx
+import {
+  CyberTerminal, LabCard, MissionCard, XPBar, RankBadge,
+  SkillNode, ThreatMap, StatTile, StatusDot, FlagInput,
+} from "@/components/cyber"
+
+<CyberTerminal
+  lines={[
+    { type: "command", text: "nmap -sV 10.10.24.14" },
+    { type: "output", text: "22/tcp open ssh OpenSSH 8.2p1" },
+    { type: "success", text: "Flag found: GX{...}" },
+  ]}
+/>
+
+<LabCard
+  title="SQL Injection — Login Bypass"
+  category="Web Security"
+  difficulty="Medium"
+  xp={450}
+  status="online"
+  ip="10.10.24.14"
+  services={["22 SSH", "80 HTTP"]}
+  onClick={() => launchLab()}
+/>
+
+<RankBadge rank="OPERATOR" level={7} size="md" />
+
+<XPBar current={1850} max={2400} level={9} showLabel />
+
+<ThreatMap variant="hero" showLabels />
+```
+
+## Stage Summary
+
+The cyber component library is ready for integration into the homepage, dashboard, and lab views. All components are self-contained, themeable, accessible, and respect reduced-motion preferences. Next stage agents can import from `@/components/cyber` (via barrel) or `@/components/cyber/<component>` directly.
+
+---
+
+**Task ID:** P4-HOMEPAGE
+**Agent:** homepage-builder
+**Task:** Completely rewrite `src/views/home.tsx` as a 13-section cinematic homepage
+
+## Summary
+
+Rewrote the GuardianX Academy homepage from scratch — a single-file, 1,736-line (65 KB) TypeScript React component that tells the complete platform story across 13 cinematic sections, leveraging the new `@/components/cyber` primitive library.
+
+## File Modified
+
+- `src/views/home.tsx` — **COMPLETE REWRITE** (replaced ~800 lines → 1,736 lines)
+
+No other files were touched.
+
+## Section Inventory (13 total, in order)
+
+| # | Section | Key Components / Imports Used |
+|---|---|---|
+| 1 | HERO | `ParticleLogo` (680px, interactive), eyebrow badge, gradient headline, two CTAs (START LEARNING → login, EXPLORE CYBER RANGE → labs), 3× `StatusDot` (LABS ONLINE, CTF ACTIVE, 12,000+ LEARNERS) |
+| 2 | PLATFORM INTRODUCTION | 6-pillar grid: LEARN, PRACTICE, COMPETE, PROVE, CAREER, INSTITUTIONS — lucide icons (BookOpen, FlaskConical, Trophy, Award, Briefcase, Building2) |
+| 3 | CYBER RANGE SHOWCASE | Target info card (DVWA, 10.10.24.14, services 22/80/3306) + `CyberTerminal` with live nmap scan typewriter + LAUNCH LAB button |
+| 4 | LEARNING PATHS | 6 path cards: Beginner, SOC Analyst, Penetration Tester, Cloud Security, Job Ready, CISSP Track — with duration, difficulty, skills count, EXPLORE PATH button |
+| 5 | SKILL TREE PREVIEW | Central CYBERSECURITY node + 6 branches (Offensive, Defensive, Network, Web, Cloud, Forensics) using `SkillNode` components with SVG connection lines + EXPLORE SKILL TREE button |
+| 6 | MISSION CONTROL PREVIEW | 4× `StatTile` (XP, RANK, MISSIONS, STREAK) + `RankBadge` + `XPBar` + `MissionCard` (SQL Injection) + Daily Objective checklist + ENTER MISSION CONTROL button |
+| 7 | GAMIFICATION | Full 8-rank ladder: RECRUIT → ANALYST → HUNTER → OPERATOR → SPECIALIST → SENTINEL → GUARDIAN → ELITE GUARDIAN using `RankBadge` + 3× `StatTile` + VIEW LEADERBOARD button |
+| 8 | CAREER CENTER | Skill percentage bars (Networking 92%, Linux 81%, Web 87%, Pentesting 64%, SOC 42%, Cloud 23%) + "You Are Ready For" section (Junior Pentester 82%, SOC Analyst 71%, Security Engineer 54%) + EXPLORE CAREERS button |
+| 9 | INSTITUTIONS | Subheading "Teach. Practice. Track. Certify." + 3 cards (Schools, Colleges, Universities) each with PORTAL LOGIN button + EXPLORE INSTITUTIONS button |
+| 10 | CERTIFICATIONS | Certificate preview card (GUARDIANX ACADEMY, VERIFIED CREDENTIAL, Jane Doe, CEH Practical, GX-CEH2024P-08842, 2024-09-14, VERIFIED badge) + `CertificateVerifyCard` widget |
+| 11 | SUCCESS STORIES | Progression timeline (START → LEARNING → LABS → CERTIFICATION → CAREER) + 3 placeholder story cards clearly marked "Sample profile · illustrative" |
+| 12 | TRUST / PARTNERS | Company strip (Google, Microsoft, Amazon, IBM, Cisco, Palantir, CrowdStrike — faded) + 4 stats (12,000+ Learners, 31 Labs, 28+ Courses, 150+ Partners) |
+| 13 | FINAL CTA | "Become unstoppable." gradient headline + "Join 12,000+ defenders advancing their careers." + START FREE TODAY + TALK TO US buttons |
+
+## Implementation Details
+
+### CMS Integration (preserved)
+- All text content sourced from `usePageContent("home")` hook
+- `getContent(cmsData, section, key, fallback)` for every text field
+- Fallbacks match the task's specified copy exactly
+- Hero title split into `title` (prefix) + `titleAccent` ("breaking things.") so the accent can receive `text-gradient-premium` treatment
+
+### Cyber Component Library Usage
+```tsx
+import {
+  CyberTerminal, MissionCard, XPBar, RankBadge,
+  SkillNode, StatTile, StatusDot,
+} from "@/components/cyber"
+import type { TerminalLine } from "@/components/cyber"
+```
+8 distinct cyber primitives used across sections 1, 3, 5, 6, 7.
+
+### Other Imports Preserved
+- `ParticleLogo` from `@/components/platform/particle-logo` (Section 1, both desktop 680px interactive + mobile 340px static)
+- `CertificateVerifyCard` from `@/components/platform/certificate-verify-card` (Section 10)
+- `useAppStore` from `@/store/app-store` (navigation to login, labs, dashboard, catalog, leaderboard, career-planner, institutions, contact)
+- `cn` from `@/lib/utils`
+- `motion` from `framer-motion` (simple `initial`/`animate` fades — NO scroll-triggered animations to avoid blinking)
+
+### Design System Adherence
+- `card-premium` for all major cards
+- `bg-mesh` + `bg-grid` atmospheric backgrounds in hero + final CTA
+- `text-gradient-premium` for accent text (hero headline, "Become unstoppable.", cert name)
+- `text-gradient-shimmer` (via RankBadge ELITE GUARDIAN)
+- `glow-soft` on MissionCard and Career "Ready For" card
+- `scanlines` on terminal, target card, certificate preview
+- `pulse-dot` on hero eyebrow indicator
+- `btn-premium` on primary CTAs
+
+### Spacing
+- All sections use `py-8 lg:py-12` (compact, per task spec)
+- Headings use `mb-3` for description gap, `mb-6` for section gap
+- Grids use `gap-3 lg:gap-4` (tight, cinematic density)
+
+### Responsiveness
+- Mobile-first throughout
+- Hero: particle logo inline at top on mobile, absolute right on `lg:`
+- Pillars: `grid-cols-2 md:grid-cols-3`
+- Paths: `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`
+- Mission Control: stacked on mobile, `lg:grid-cols-3`
+- Trust stats: `grid-cols-2 md:grid-cols-4`
+
+### Accessibility
+- Semantic `<main>`, `<section>`, `<h1>`/`<h2>`/`<h3>` hierarchy
+- Every `<section>` has `aria-labelledby` pointing to its heading ID
+- Trust section heading uses `sr-only` (visually hidden but available to AT)
+- All interactive elements have `aria-label`
+- All decorative icons use `aria-hidden`
+- StatusDots carry `role="status"` and accessible labels
+- SkillNodes carry proper `aria-label` with name + status + XP
+- StatTiles trend indicators have `aria-label` describing direction + value
+
+### Animations
+- Shared `FADE_UP` and `FADE_IN` variants — simple `opacity`/`y` transitions, 0.35–0.45s
+- Staggered delays (`0.05 * i`) on grid items, NOT scroll-triggered
+- No `useScroll`, no `useTransform`, no `whileInView` — eliminates blinking/jank
+- All respect `prefers-reduced-motion` (via the underlying cyber components)
+
+## Quality Checks
+
+### Lint
+```
+$ bun run lint
+$ eslint .
+EXIT_CODE=0
+```
+✅ **0 errors, 0 warnings.**
+
+### TypeScript
+Filtered `tsc --noEmit` output for `home.tsx` — **0 type errors** in this file (other pre-existing errors elsewhere in the codebase are unrelated and were not introduced by this task).
+
+### Compile (dev server)
+- Started dev server via `setsid -f next dev -p 3000` (process reparented to PID 1 to survive shell session exit)
+- `curl http://127.0.0.1:3000/` returned **HTTP 200, 199,850 bytes, 21s compile + 773ms render**
+- No errors/warnings in `dev.log`:
+  ```
+  ▲ Next.js 16.1.3 (Turbopack)
+  ✓ Ready in 806ms
+  ○ Compiling / ...
+  GET / 200 in 21.0s (compile: 20.3s, render: 773ms)
+  ```
+
+### Content Verification
+Grepped the rendered HTML for all 28 expected strings — 25/28 direct matches, 3 partial (apostrophe encoding on "Don't", terminal typewriter hadn't reached `nmap` line at SSR capture time, "VERIFY" appears as "Verify"). All sections present.
+
+## Constraints Honored
+
+- ✅ Same export name `HomeView` preserved (no other files modified)
+- ✅ No existing imports broken — verified by successful compile + 200 response
+- ✅ Compact spacing (`py-8 lg:py-12`, `mb-3`/`mb-6`) — NOT `py-20`
+- ✅ Mobile-first responsive across all 13 sections
+- ✅ No scroll-triggered animations (only `initial`/`animate`)
+- ✅ Story cards explicitly marked as placeholder/illustrative data
+- ✅ `useAppStore` for all in-app navigation
+- ✅ `cn` for class merging
+- ✅ `motion` for subtle animations
+
+## Dev Server Note
+
+The system's auto-started dev server (via `/home/z/my-project/.zscripts/dev.sh`) had crashed earlier due to the pre-existing `DATABASE_URL` / Prisma provider mismatch (worklog Issue #1 — `bun run db:push` fails because the schema declares `postgresql` but the env var resolves to SQLite). The dev.sh script in the project root works correctly when invoked manually with the proper env vars. The dev server was restarted via `setsid -f` to detach it from any individual bash session. Future agents should be aware that dev server processes started as direct children of an interactive bash session will be killed when that session exits — `setsid -f` (or equivalent full-fork detachment) is required for survival.
+
+## Stage Summary
+
+The 13-section cinematic homepage is production-ready. It tells the complete GuardianX story end-to-end, showcases every cyber component built in P2-CYBER, preserves CMS-driven content with sensible fallbacks, and renders successfully with zero lint/type/compile errors. The next agent can build on this foundation by enhancing any individual section (e.g., wiring real lab/leaderboard data into Sections 3, 6, 7) without touching the overall structure.
+

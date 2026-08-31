@@ -71,9 +71,9 @@ export function PublicHeader() {
           onClick={() => navigate({ name: "home" })}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          className="flex items-center gap-2.5 group"
+          className="flex items-center gap-1.5 group"
         >
-          <AnimatedLogoMark size={36} />
+          <AnimatedLogoMark size={32} />
           <div className="text-left">
             <div className="font-bold text-sm leading-none tracking-tight">
               Guardian<span className="text-violet-400">X</span>

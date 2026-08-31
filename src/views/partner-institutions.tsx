@@ -323,80 +323,96 @@ export function PartnerInstitutionsView() {
         {/* ====================================================
             SECTION 1: HERO
             ==================================================== */}
-        <section className="py-8 lg:py-10">
+        <section className="py-6 lg:py-8">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div className="grid lg:grid-cols-2 gap-8 items-center">
               {/* Left — text */}
               <div>
-                <ScrollReveal>
-                  <div className="flex items-center gap-2 mb-6">
-                    <Building2 className="h-5 w-5 text-violet-300" />
-                    <span className="text-[10px] font-mono text-violet-300/80 tracking-[0.25em]">{heroEyebrow}</span>
-                  </div>
-                </ScrollReveal>
-                <ScrollReveal delay={0.1}>
-                  <h1 className="text-[clamp(2.25rem,5vw,4rem)] font-bold leading-[1.05] tracking-[-0.03em] mb-6 text-balance">
-                    <TextReveal text={heroTitle} />
-                    <br />
-                    <span className="text-gradient-premium">
-                      <TextReveal text={heroTitleAccent} delay={0.3} />
-                    </span>
-                  </h1>
-                </ScrollReveal>
-                <ScrollReveal delay={0.2}>
-                  <p className="text-base lg:text-lg text-muted-foreground max-w-xl mb-6 leading-relaxed">
-                    {heroDesc}
-                  </p>
-                </ScrollReveal>
-                <ScrollReveal delay={0.3}>
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <MagneticButton strength={0.3}>
-                      <Button
-                        size="lg"
-                        onClick={() => navigate({ name: "contact" })}
-                        className="bg-violet-600 hover:bg-violet-500 btn-premium px-8 py-6 text-sm"
-                      >
-                        {heroCtaPrimary} <ArrowRight className="h-4 w-4 ml-2" />
-                      </Button>
-                    </MagneticButton>
-                    <MagneticButton strength={0.2}>
-                      <Button
-                        size="lg"
-                        variant="outline"
-                        onClick={() => navigate({ name: "contact" })}
-                        className="px-6 py-6 text-sm"
-                      >
-                        {heroCtaSecondary}
-                      </Button>
-                    </MagneticButton>
-                  </div>
-                </ScrollReveal>
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="flex items-center gap-2 mb-4"
+                >
+                  <Building2 className="h-5 w-5 text-violet-300" />
+                  <span className="text-[10px] font-mono text-violet-300/80 tracking-[0.25em]">{heroEyebrow}</span>
+                </motion.div>
+                <motion.h1
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.1 }}
+                  className="text-[clamp(2.25rem,5vw,4rem)] font-bold leading-[1.05] tracking-[-0.03em] mb-4 text-balance"
+                >
+                  {heroTitle}
+                  <br />
+                  <span className="text-gradient-premium">{heroTitleAccent}</span>
+                </motion.h1>
+                <motion.p
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.2 }}
+                  className="text-base lg:text-lg text-muted-foreground max-w-xl mb-5 leading-relaxed"
+                >
+                  {heroDesc}
+                </motion.p>
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.3 }}
+                  className="flex items-center gap-3 flex-wrap mb-5"
+                >
+                  <MagneticButton strength={0.3}>
+                    <Button
+                      size="lg"
+                      onClick={() => navigate({ name: "contact" })}
+                      className="bg-violet-600 hover:bg-violet-500 btn-premium px-8 py-6 text-sm"
+                    >
+                      {heroCtaPrimary} <ArrowRight className="h-4 w-4 ml-2" />
+                    </Button>
+                  </MagneticButton>
+                  <MagneticButton strength={0.2}>
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      onClick={() => navigate({ name: "contact" })}
+                      className="px-6 py-6 text-sm"
+                    >
+                      {heroCtaSecondary}
+                    </Button>
+                  </MagneticButton>
+                </motion.div>
 
                 {/* Hero stats */}
-                <ScrollReveal delay={0.4}>
-                  <div className="grid grid-cols-3 gap-4 mt-10 pt-5 border-t border-border/40">
-                    {[
-                      { value: 150, suffix: "+", label: "Institutions", color: "text-violet-300" },
-                      { value: 12000, suffix: "+", label: "Students", color: "text-cyan-300" },
-                      { value: 8500, suffix: "+", label: "Certs Issued", color: "text-amber-300" },
-                    ].map((s) => (
-                      <div key={s.label}>
-                        <div className={cn("text-2xl lg:text-3xl font-bold tabular-nums", s.color)}>
-                          <Counter value={s.value} suffix={s.suffix} />
-                        </div>
-                        <div className="text-[10px] text-muted-foreground uppercase tracking-wider mt-1">{s.label}</div>
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.4 }}
+                  className="grid grid-cols-3 gap-4 pt-5 border-t border-border/40"
+                >
+                  {[
+                    { value: 150, suffix: "+", label: "Institutions", color: "text-violet-300" },
+                    { value: 12000, suffix: "+", label: "Students", color: "text-cyan-300" },
+                    { value: 8500, suffix: "+", label: "Certs Issued", color: "text-amber-300" },
+                  ].map((s) => (
+                    <div key={s.label}>
+                      <div className={cn("text-2xl lg:text-3xl font-bold tabular-nums", s.color)}>
+                        <Counter value={s.value} suffix={s.suffix} />
                       </div>
-                    ))}
-                  </div>
-                </ScrollReveal>
+                      <div className="text-[10px] text-muted-foreground uppercase tracking-wider mt-1">{s.label}</div>
+                    </div>
+                  ))}
+                </motion.div>
               </div>
 
-              {/* Right — particle logo centerpiece */}
-              <ScrollReveal delay={0.2}>
-                <div className="relative flex items-center justify-center">
-                  <ParticleLogo size={440} interactive showGlow />
-                </div>
-              </ScrollReveal>
+              {/* Right — particle logo centerpiece (same size as home page) */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+                className="relative flex items-center justify-center"
+              >
+                <ParticleLogo size={680} interactive showGlow />
+              </motion.div>
             </div>
           </div>
         </section>

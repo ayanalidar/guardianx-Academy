@@ -163,11 +163,23 @@ export function HomeView() {
             </motion.div>
 
             <h1 className="text-[clamp(2.5rem,6vw,4.5rem)] font-bold leading-[1] tracking-[-0.03em] mb-4 text-balance">
-              <TextReveal text={heroTitle} />
+              <motion.span
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.1 }}
+                className="inline-block"
+              >
+                {heroTitle}
+              </motion.span>
               <br />
-              <span className="text-gradient-premium">
-                <TextReveal text={heroTitleAccent} delay={0.3} />
-              </span>
+              <motion.span
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.2 }}
+                className="text-gradient-premium inline-block"
+              >
+                {heroTitleAccent}
+              </motion.span>
             </h1>
 
             <motion.p

@@ -178,7 +178,7 @@ export function ContactView() {
       {/* ============================================================
           SECTION 1 — HERO
           ============================================================ */}
-      <section className="relative pt-28 pb-16 lg:pt-36 lg:pb-20 overflow-hidden border-b border-border">
+      <section className="relative pt-20 pb-8 lg:pt-24 lg:pb-10 overflow-hidden border-b border-border">
         <div className="absolute inset-0 bg-mesh pointer-events-none" />
         <div className="absolute inset-0 bg-grid opacity-20 pointer-events-none" />
         <div className="absolute top-1/4 left-1/4 w-[400px] h-[300px] bg-violet-500/10 blur-[100px] rounded-full pointer-events-none" />
@@ -186,19 +186,17 @@ export function ContactView() {
 
         <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.3 }}
           >
-            <Badge variant="outline" className="mb-6 border-cyan-500/20 text-cyan-300 bg-cyan-500/5">
+            <Badge variant="outline" className="mb-4 border-cyan-500/20 text-cyan-300 bg-cyan-500/5">
               <MessageSquare className="h-3 w-3 mr-1" /> {heroBadge}
             </Badge>
-            <h1 className="text-[clamp(2.25rem,5vw,3.75rem)] font-bold leading-[1.05] tracking-[-0.02em] mb-5 text-balance">
-              <TextReveal text={heroTitle} />
+            <h1 className="text-[clamp(2.25rem,5vw,3.75rem)] font-bold leading-[1.05] tracking-[-0.02em] mb-4 text-balance">
+              {heroTitle}
               <br />
-              <span className="text-gradient-premium">
-                <TextReveal text={heroTitleAccent} delay={0.3} />
-              </span>
+              <span className="text-gradient-premium">{heroTitleAccent}</span>
             </h1>
             <p className="text-base lg:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
               {heroDesc}
@@ -210,7 +208,7 @@ export function ContactView() {
       {/* ============================================================
           SECTION 2 — CONTACT METHODS (4 solid cards)
           ============================================================ */}
-      <section className="py-14 lg:py-16">
+      <section className="py-8 lg:py-10">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <Stagger className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4" staggerChildren={0.1}>
             {CONTACT_METHODS.map((m) => (
@@ -238,7 +236,7 @@ export function ContactView() {
       {/* ============================================================
           SECTION 3 — FORM + INFO (2 columns, no overlap)
           ============================================================ */}
-      <section className="py-14 lg:py-12 border-t border-border">
+      <section className="py-8 lg:py-10 border-t border-border">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-6 items-start">
             {/* ---- LEFT: Contact Form (solid card) ---- */}
@@ -474,7 +472,7 @@ export function ContactView() {
       {/* ============================================================
           SECTION 4 — FAQ
           ============================================================ */}
-      <section className="py-14 lg:py-12 border-t border-border bg-card/20 relative overflow-hidden">
+      <section className="py-8 lg:py-10 border-t border-border bg-card/20 relative overflow-hidden">
         <div className="absolute inset-0 bg-grid opacity-15 pointer-events-none" />
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 relative">
           <ScrollReveal className="text-center mb-6">

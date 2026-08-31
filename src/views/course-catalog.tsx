@@ -137,7 +137,7 @@ export function CourseCatalogView() {
   const totalLabs = 31 // GuardianX cyber range lab count (platform-wide)
 
   return (
-    <div className="relative min-h-screen pt-20 lg:pt-24">
+    <div className="relative min-h-screen pt-16 lg:pt-20">
       {/* Atmospheric background */}
       <div className="absolute inset-0 bg-mesh opacity-50 pointer-events-none" />
       <div className="absolute top-0 right-0 w-[600px] h-[400px] bg-violet-600/5 blur-[120px] rounded-full pointer-events-none" />

@@ -187,7 +187,7 @@ export function ImpactView() {
   return (
     <div ref={containerRef} className="relative">
       {/* ===== HERO ===== */}
-      <section className="relative min-h-[62vh] flex items-center overflow-hidden border-b border-border">
+      <section className="relative min-h-[52vh] flex items-center overflow-hidden border-b border-border">
         <div className="absolute inset-0 bg-mesh" />
         <div className="absolute inset-0 bg-grid opacity-30" />
         <motion.div
@@ -199,33 +199,33 @@ export function ImpactView() {
           className="absolute bottom-0 right-1/4 w-[420px] h-[320px] bg-cyan-500/8 blur-[120px] rounded-full pointer-events-none"
         />
 
-        <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 text-center">
-          <ScrollReveal y={28}>
+        <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
             <Badge
               variant="outline"
-              className="mb-6 border-violet-500/30 text-violet-300 bg-violet-500/5 backdrop-blur"
+              className="mb-4 border-violet-500/30 text-violet-300 bg-violet-500/5 backdrop-blur"
             >
               <Heart className="h-3 w-3 mr-1.5" /> {heroBadge}
             </Badge>
 
             <h1
-              className="font-bold tracking-tight text-balance mb-6"
+              className="font-bold tracking-tight text-balance mb-4"
               style={{ fontSize: "clamp(2.25rem, 6vw, 3.5rem)", lineHeight: 1.05 }}
             >
-              <TextReveal text={heroTitle} />
+              {heroTitle}
               <br />
-              <TextReveal
-                text={heroTitleAccent}
-                delay={0.35}
-                className="text-gradient-premium"
-              />
+              <span className="text-gradient-premium">{heroTitleAccent}</span>
             </h1>
 
             <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
               {heroDesc}
             </p>
 
-            <div className="mt-5 flex flex-wrap items-center justify-center gap-3 text-xs text-muted-foreground">
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-3 text-xs text-muted-foreground">
               <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-card border border-border shadow-sm">
                 <ShieldCheck className="h-3.5 w-3.5 text-violet-300" /> Verified outcomes
               </span>
@@ -236,7 +236,7 @@ export function ImpactView() {
                 <Cpu className="h-3.5 w-3.5 text-amber-300" /> Industry-aligned
               </span>
             </div>
-          </ScrollReveal>
+          </motion.div>
         </div>
       </section>
 

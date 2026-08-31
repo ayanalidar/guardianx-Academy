@@ -587,7 +587,7 @@ export function PartnerInstitutionsView() {
                   </div>
                   <div className="flex-1 mx-3">
                     <div className="rounded-md bg-background/60 border border-border/40 px-3 py-1 text-[10px] font-mono text-muted-foreground tracking-wider">
-                      guardianx.io/institution/dashboard
+                      academy.guardianx.cloud/institution/dashboard
                     </div>
                   </div>
                   <Badge variant="outline" className="text-[10px] font-mono tracking-wider border-emerald-500/30 bg-emerald-500/5 text-emerald-300">
@@ -788,7 +788,11 @@ export function PartnerInstitutionsView() {
                             pt.type === "College" && "bg-cyan-600 hover:bg-cyan-500",
                             pt.type === "University" && "bg-violet-600 hover:bg-violet-500",
                           )}
-                          onClick={() => navigate({ name: "login" })}
+                          onClick={() => {
+                            if (pt.type === "School") navigate({ name: "institutions-schools" })
+                            else if (pt.type === "College") navigate({ name: "institutions-colleges" })
+                            else navigate({ name: "institutions-universities" })
+                          }}
                         >
                           <LogIn className="h-4 w-4 mr-1.5" />
                           {pt.ctaLabel}

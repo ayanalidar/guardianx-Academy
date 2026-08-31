@@ -18,7 +18,7 @@ async function seedWeeklyChallenge() {
     data: {
       title: "Week 18 — SSRF via PDF Renderer",
       description:
-        "A document-conversion service exposes an internal endpoint that fetches URLs server-side. Pivot through it to access the metadata service and recover the secret flag.\n\nTarget: https://labs.guardianx.io/weekly-18\nCategory: Server-Side Request Forgery\nDifficulty: Medium",
+        "A document-conversion service exposes an internal endpoint that fetches URLs server-side. Pivot through it to access the metadata service and recover the secret flag.\n\nTarget: https://labs.academy.guardianx.cloud/weekly-18\nCategory: Server-Side Request Forgery\nDifficulty: Medium",
       category: "web",
       difficulty: "medium",
       flag: "FLAG{weekly_ssrf_169_254_169_254}",

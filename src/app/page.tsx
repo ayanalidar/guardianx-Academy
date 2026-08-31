@@ -10,6 +10,9 @@ import { HomeView } from "@/views/home"
 import { ImpactView } from "@/views/impact"
 import { ContactView } from "@/views/contact"
 import { PartnerInstitutionsView } from "@/views/partner-institutions"
+import { InstitutionsSchoolsView } from "@/views/institutions-schools"
+import { InstitutionsCollegesView } from "@/views/institutions-colleges"
+import { InstitutionsUniversitiesView } from "@/views/institutions-universities"
 import { DashboardView } from "@/views/dashboard"
 import { CourseCatalogView } from "@/views/course-catalog"
 import { CourseDetailView } from "@/views/course-detail"
@@ -56,8 +59,9 @@ const CourseStudioView = dynamic(() => import("@/views/course-studio").then(m =>
 
 // Public views that show the header + footer (accessible without login)
 const PUBLIC_VIEWS = new Set([
-  "home", "impact", "contact", "institutions", "catalog", "course",
-  "cyber-range", "learning-paths", "skill-tree",
+  "home", "impact", "contact", "institutions", "institutions-schools",
+  "institutions-colleges", "institutions-universities",
+  "catalog", "course", "cyber-range", "learning-paths", "skill-tree",
 ])
 
 function ViewRouter() {
@@ -69,6 +73,9 @@ function ViewRouter() {
       {view.name === "impact" && <ImpactView />}
       {view.name === "contact" && <ContactView />}
       {view.name === "institutions" && <PartnerInstitutionsView />}
+      {view.name === "institutions-schools" && <InstitutionsSchoolsView />}
+      {view.name === "institutions-colleges" && <InstitutionsCollegesView />}
+      {view.name === "institutions-universities" && <InstitutionsUniversitiesView />}
       {view.name === "dashboard" && <DashboardView />}
       {view.name === "catalog" && <CourseCatalogView />}
       {view.name === "course" && <CourseDetailView />}

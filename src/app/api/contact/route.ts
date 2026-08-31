@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
     // Log to EmailLog table (so admins can see all contact submissions)
     await db.emailLog.create({
       data: {
-        toEmail: "hello@guardianx.io",
+        toEmail: "hello@academy.guardianx.cloud",
         subject: fullSubject,
         body: fullBody,
         type: "notification",
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
     await sendEmail({
       to: email,
       subject: `✓ We received your message — GuardianX Academy`,
-      body: `Hi ${name},\n\nThank you for reaching out to GuardianX Academy! We've received your message:\n\n"${subject}"\n\nOur team will review your inquiry and respond within 24 hours.\n\nCategory: ${safeCategory}\n\nBest regards,\nThe GuardianX Team\n\nguardianx.io`,
+      body: `Hi ${name},\n\nThank you for reaching out to GuardianX Academy! We've received your message:\n\n"${subject}"\n\nOur team will review your inquiry and respond within 24 hours.\n\nCategory: ${safeCategory}\n\nBest regards,\nThe GuardianX Team\n\nacademy.guardianx.cloud`,
       type: "notification",
     })
 

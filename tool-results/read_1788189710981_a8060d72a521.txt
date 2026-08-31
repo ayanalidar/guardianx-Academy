@@ -1,0 +1,1145 @@
+     1→"use client"
+     2→
+     3→import * as React from "react"
+     4→import { motion } from "framer-motion"
+     5→import { useAppStore } from "@/store/app-store"
+     6→import { Button } from "@/components/ui/button"
+     7→import { Badge } from "@/components/ui/badge"
+     8→import {
+     9→  Building2, BookOpen, Award, Users, FlaskConical,
+    10→  ArrowRight, ChevronRight, Target,
+    11→  CheckCircle2, Activity, Server, Database,
+    12→  GraduationCap, Briefcase, Globe, Trophy, MapPin, Calendar,
+    13→  LogIn, School, Building, Landmark,
+    14→  FileCheck, Send,
+    15→  Presentation, UserCog, Upload, CalendarCheck,
+    16→  BookMarked, BarChart3, Award as AwardIcon, Layers,
+    17→  Sparkles,
+    18→} from "lucide-react"
+    19→import { StatTile } from "@/components/cyber/stat-tile"
+    20→import { cn } from "@/lib/utils"
+    21→import {
+    22→  ScrollReveal, TextReveal, Stagger, StaggerItem,
+    23→  MagneticButton, Counter, CursorGlow,
+    24→} from "@/components/platform/motion-system"
+    25→import { NetworkVisualization } from "@/components/platform/network-visualization"
+    26→import { ParticleLogo } from "@/components/platform/particle-logo"
+    27→import { usePageContent, getContent } from "@/lib/use-content"
+    28→
+    29→// ============================================================
+    30→// Partner types — three institutional segments GuardianX serves
+    31→// with on-premises training. Each has its own login portal.
+    32→// ============================================================
+    33→type PartnerType = "School" | "College" | "University"
+    34→
+    35→interface PartnerTypeConfig {
+    36→  type: PartnerType
+    37→  title: string
+    38→  description: string
+    39→  icon: typeof Building2
+    40→  accent: string // text color
+    41→  bg: string // icon background tint
+    42→  border: string // hover border color
+    43→  ctaLabel: string // portal login label
+    44→  highlight?: string // optional callout
+    45→  highlightIcon?: typeof Building2
+    46→}
+    47→
+    48→const PARTNER_TYPES: PartnerTypeConfig[] = [
+    49→  {
+    50→    type: "School",
+    51→    title: "Schools",
+    52→    description:
+    53→      "On-premises cyber security training for secondary schools (grades 9-12). Build early foundations in safe hacking, digital citizenship, and STEM-aligned security electives with year-round GuardianX cohorts.",
+    54→    icon: School,
+    55→    accent: "text-emerald-300",
+    56→    bg: "bg-emerald-500/10",
+    57→    border: "hover:border-emerald-500/40",
+    58→    ctaLabel: "School Portal Login",
+    59→    highlight: "Complimentary School Management System for MoU partners",
+    60→    highlightIcon: Database,
+    61→  },
+    62→  {
+    63→    type: "College",
+    64→    title: "Colleges",
+    65→    description:
+    66→      "On-premises training for engineering, technical, and degree colleges. Run dedicated cyber security electives, weekend bootcamps, and an on-campus cyber range powered by GuardianX labs.",
+    67→    icon: Building,
+    68→    accent: "text-cyan-300",
+    69→    bg: "bg-cyan-500/10",
+    70→    border: "hover:border-cyan-500/40",
+    71→    ctaLabel: "College Portal Login",
+    72→  },
+    73→  {
+    74→    type: "University",
+    75→    title: "Universities",
+    76→    description:
+    77→      "On-premises training for research-focused universities. Full B.Tech / M.Tech track integration, PhD-grade lab access, and GuardianX as the official practice platform for your department.",
+    78→    icon: Landmark,
+    79→    accent: "text-violet-300",
+    80→    bg: "bg-violet-500/10",
+    81→    border: "hover:border-violet-500/40",
+    82→    ctaLabel: "University Portal Login",
+    83→  },
+    84→]
+    85→
+    86→// ============================================================
+    87→// Featured partner profiles — example placeholders only.
+    88→// Not real institutions. Designed to demonstrate the partner
+    89→// profile card pattern.
+    90→// ============================================================
+    91→interface FeaturedPartner {
+    92→  name: string
+    93→  type: PartnerType
+    94→  location: string
+    95→  established: number
+    96→  website: string
+    97→  studentsTrained: number
+    98→  certsEarned: number
+    99→  partnerSince: number
+   100→  description: string
+   101→  logoIcon: typeof Building2
+   102→}
+   103→
+   104→const TYPE_STYLES: Record<PartnerType, { logoBg: string; logoColor: string; typeBadgeClass: string }> = {
+   105→  School: {
+   106→    logoBg: "bg-emerald-500/10",
+   107→    logoColor: "text-emerald-400",
+   108→    typeBadgeClass: "border-emerald-500/40 text-emerald-300 bg-emerald-500/10",
+   109→  },
+   110→  College: {
+   111→    logoBg: "bg-cyan-500/10",
+   112→    logoColor: "text-cyan-400",
+   113→    typeBadgeClass: "border-cyan-500/40 text-cyan-300 bg-cyan-500/10",
+   114→  },
+   115→  University: {
+   116→    logoBg: "bg-violet-500/10",
+   117→    logoColor: "text-violet-400",
+   118→    typeBadgeClass: "border-violet-500/40 text-violet-300 bg-violet-500/10",
+   119→  },
+   120→}
+   121→
+   122→const FEATURED_PARTNERS: FeaturedPartner[] = [
+   123→  {
+   124→    name: "Delhi Cyber Sciences Academy",
+   125→    type: "School",
+   126→    location: "New Delhi, India",
+   127→    established: 2015,
+   128→    website: "https://example.edu/delhi-cyber",
+   129→    studentsTrained: 450,
+   130→    certsEarned: 320,
+   131→    partnerSince: 2022,
+   132→    description:
+   133→      "A secondary school integrating cybersecurity fundamentals into STEM curriculum for grades 9-12 with year-round GuardianX cohorts.",
+   134→    logoIcon: School,
+   135→  },
+   136→  {
+   137→    name: "Mumbai Institute of Technology",
+   138→    type: "College",
+   139→    location: "Mumbai, India",
+   140→    established: 1998,
+   141→    website: "https://example.edu/mumbai-it",
+   142→    studentsTrained: 2100,
+   143→    certsEarned: 1450,
+   144→    partnerSince: 2021,
+   145→    description:
+   146→      "Premier engineering college running dedicated cyber security electives and a campus cyber range powered by GuardianX labs.",
+   147→    logoIcon: Building,
+   148→  },
+   149→  {
+   150→    name: "Bangalore Cyber Security University",
+   151→    type: "University",
+   152→    location: "Bengaluru, India",
+   153→    established: 2005,
+   154→    website: "https://example.edu/blr-cyber-univ",
+   155→    studentsTrained: 3800,
+   156→    certsEarned: 2900,
+   157→    partnerSince: 2020,
+   158→    description:
+   159→      "A research-focused university offering full B.Tech and M.Tech tracks in cyber security with GuardianX as the official practice platform.",
+   160→    logoIcon: Landmark,
+   161→  },
+   162→  {
+   163→    name: "Chennai Tech College",
+   164→    type: "College",
+   165→    location: "Chennai, India",
+   166→    established: 2010,
+   167→    website: "https://example.edu/chennai-tech",
+   168→    studentsTrained: 1200,
+   169→    certsEarned: 890,
+   170→    partnerSince: 2023,
+   171→    description:
+   172→      "A modern technical college running weekend GuardianX bootcamps and industry-aligned certification tracks for working professionals.",
+   173→    logoIcon: Building,
+   174→  },
+   175→  {
+   176→    name: "Pune Defense Academy",
+   177→    type: "School",
+   178→    location: "Pune, India",
+   179→    established: 2018,
+   180→    website: "https://example.edu/pune-defense",
+   181→    studentsTrained: 680,
+   182→    certsEarned: 510,
+   183→    partnerSince: 2022,
+   184→    description:
+   185→      "A defense-focused academy preparing cadets for cyber operations roles with hands-on offensive and defensive security training.",
+   186→    logoIcon: Trophy,
+   187→  },
+   188→  {
+   189→    name: "Hyderabad Cyber Institute",
+   190→    type: "College",
+   191→    location: "Hyderabad, India",
+   192→    established: 2012,
+   193→    website: "https://example.edu/hyderabad-cyber",
+   194→    studentsTrained: 1550,
+   195→    certsEarned: 1100,
+   196→    partnerSince: 2021,
+   197→    description:
+   198→      "An industry-facing institute training IT professionals in advanced specializations including IAM, PAM, and cloud security.",
+   199→    logoIcon: Building,
+   200→  },
+   201→]
+   202→
+   203→// ============================================================
+   204→// Four institutional pillars — Teach. Practice. Track. Certify.
+   205→// ============================================================
+   206→const INSTITUTIONAL_PILLARS = [
+   207→  {
+   208→    icon: Presentation,
+   209→    title: "Teach",
+   210→    desc: "Instructor-led classes on your campus with GuardianX curriculum, slides, labs, and live coding walkthroughs — delivered by certified cyber security instructors.",
+   211→    color: "text-violet-300",
+   212→    bg: "bg-violet-500/10",
+   213→    border: "hover:border-violet-500/40",
+   214→    tag: "On-premises",
+   215→  },
+   216→  {
+   217→    icon: FlaskConical,
+   218→    title: "Practice",
+   219→    desc: "31 Docker-powered cyber labs. Students run real tools against live targets in an isolated cyber range — no setup, no infrastructure, just practice.",
+   220→    color: "text-cyan-300",
+   221→    bg: "bg-cyan-500/10",
+   222→    border: "hover:border-cyan-500/40",
+   223→    tag: "Cyber range",
+   224→  },
+   225→  {
+   226→    icon: Activity,
+   227→    title: "Track",
+   228→    desc: "Real-time dashboards for student progress, attendance, engagement, and certification readiness. Faculty and program directors see everything live.",
+   229→    color: "text-amber-300",
+   230→    bg: "bg-amber-500/10",
+   231→    border: "hover:border-amber-500/40",
+   232→    tag: "Live insights",
+   233→  },
+   234→  {
+   235→    icon: Award,
+   236→    title: "Certify",
+   237→    desc: "Industry-recognized certificates with public verification URLs. Employers and academic bodies can verify any credential instantly by ID.",
+   238→    color: "text-emerald-300",
+   239→    bg: "bg-emerald-500/10",
+   240→    border: "hover:border-emerald-500/40",
+   241→    tag: "Verifiable",
+   242→  },
+   243→]
+   244→
+   245→// ============================================================
+   246→// Institution Dashboard Preview — mock stats shown to prospects
+   247→// ============================================================
+   248→const DASHBOARD_PREVIEW_STATS = [
+   249→  { icon: Users, label: "Total Students", value: 1248, suffix: "", color: "text-violet-300", tint: "bg-violet-500/10", trend: { value: 8, direction: "up" as const } },
+   250→  { icon: Activity, label: "Active This Week", value: 932, suffix: "", color: "text-cyan-300", tint: "bg-cyan-500/10", trend: { value: 12, direction: "up" as const } },
+   251→  { icon: BookOpen, label: "Course Completion", value: 87, suffix: "%", color: "text-emerald-300", tint: "bg-emerald-500/10", trend: { value: 4, direction: "up" as const } },
+   252→  { icon: FlaskConical, label: "Lab Completion", value: 64, suffix: "%", color: "text-amber-300", tint: "bg-amber-500/10", trend: { value: 9, direction: "up" as const } },
+   253→  { icon: Target, label: "Average Score", value: 78, suffix: "%", color: "text-rose-300", tint: "bg-rose-500/10", trend: { value: 3, direction: "up" as const } },
+   254→  { icon: CalendarCheck, label: "Attendance", value: 92, suffix: "%", color: "text-teal-300", tint: "bg-teal-500/10", trend: { value: 2, direction: "up" as const } },
+   255→]
+   256→
+   257→// ============================================================
+   258→// Partner benefits — the original 6 institutional benefits
+   259→// ============================================================
+   260→const BENEFITS = [
+   261→  {
+   262→    icon: Database,
+   263→    title: "School Management System",
+   264→    desc: "A SEPARATE product for MoU partners (not our training platform). Manage students, attendance, batches, fees, and grades from one dashboard.",
+   265→    color: "text-emerald-400",
+   266→    bg: "bg-emerald-500/10",
+   267→    tag: "MoU partners only",
+   268→  },
+   269→  {
+   270→    icon: FlaskConical,
+   271→    title: "31 Docker Labs",
+   272→    desc: "Docker-powered hands-on labs with live targets. No setup required — students start practicing on day one, on-premises.",
+   273→    color: "text-violet-400",
+   274→    bg: "bg-violet-500/10",
+   275→    tag: "Cyber range",
+   276→  },
+   277→  {
+   278→    icon: Award,
+   279→    title: "Verifiable Certificates",
+   280→    desc: "Tamper-evident certificates with public verification. Employers and academic institutions can verify any credential by ID.",
+   281→    color: "text-amber-400",
+   282→    bg: "bg-amber-500/10",
+   283→    tag: "Industry recognized",
+   284→  },
+   285→  {
+   286→    icon: Server,
+   287→    title: "On-Premises Training",
+   288→    desc: "We deliver training at your campus — your classrooms, your labs, your schedule. Our instructors travel to your institution.",
+   289→    color: "text-cyan-400",
+   290→    bg: "bg-cyan-500/10",
+   291→    tag: "In-person",
+   292→  },
+   293→  {
+   294→    icon: Activity,
+   295→    title: "Real-Time Analytics",
+   296→    desc: "Track student progress, attendance, engagement, and certification outcomes. Data-driven decisions for program directors.",
+   297→    color: "text-rose-400",
+   298→    bg: "bg-rose-500/10",
+   299→    tag: "Live insights",
+   300→  },
+   301→  {
+   302→    icon: Users,
+   303→    title: "Bulk Student Import",
+   304→    desc: "CSV upload, batch management, unique school codes, and attendance tracking. Onboard 1,000 students in under an hour.",
+   305→    color: "text-teal-400",
+   306→    bg: "bg-teal-500/10",
+   307→    tag: "At scale",
+   308→  },
+   309→]
+   310→
+   311→// ============================================================
+   312→// Features grid — 8 institutional platform features
+   313→// ============================================================
+   314→const INSTITUTIONAL_FEATURES = [
+   315→  { icon: UserCog, title: "Student Management", desc: "Student profiles, batches, cohorts, and enrollment tracking.", color: "text-violet-300", bg: "bg-violet-500/10" },
+   316→  { icon: Presentation, title: "Instructor Tools", desc: "Slides, live coding, screen sharing, and presenter handoff.", color: "text-cyan-300", bg: "bg-cyan-500/10" },
+   317→  { icon: Upload, title: "Bulk Import", desc: "CSV upload students, faculty, and batches in minutes.", color: "text-emerald-300", bg: "bg-emerald-500/10" },
+   318→  { icon: CalendarCheck, title: "Attendance Tracking", desc: "Auto-tracked per session with weekly/monthly reports.", color: "text-amber-300", bg: "bg-amber-500/10" },
+   319→  { icon: BookMarked, title: "Grade Books", desc: "Per-course grade books, weightings, and final mark export.", color: "text-rose-300", bg: "bg-rose-500/10" },
+   320→  { icon: BarChart3, title: "Analytics", desc: "Cohort, course, and instructor-level performance dashboards.", color: "text-teal-300", bg: "bg-teal-500/10" },
+   321→  { icon: AwardIcon, title: "Certificates", desc: "Auto-issued on completion with public verification URLs.", color: "text-indigo-300", bg: "bg-indigo-500/10" },
+   322→  { icon: Layers, title: "Custom Curriculum", desc: "Map GuardianX courses to your academic syllabus and credits.", color: "text-fuchsia-300", bg: "bg-fuchsia-500/10" },
+   323→]
+   324→
+   325→// ============================================================
+   326→// Cyber range flow — Students → Courses → Labs → Assessments → Certificates → Career Ready
+   327→// ============================================================
+   328→const CYBER_RANGE_FLOW = [
+   329→  { step: "Students", icon: Users, color: "text-violet-300", bg: "bg-violet-500/10", border: "border-violet-500/30" },
+   330→  { step: "Courses", icon: BookOpen, color: "text-cyan-300", bg: "bg-cyan-500/10", border: "border-cyan-500/30" },
+   331→  { step: "Labs", icon: FlaskConical, color: "text-amber-300", bg: "bg-amber-500/10", border: "border-amber-500/30" },
+   332→  { step: "Assessments", icon: Target, color: "text-emerald-300", bg: "bg-emerald-500/10", border: "border-emerald-500/30" },
+   333→  { step: "Certificates", icon: Award, color: "text-rose-300", bg: "bg-rose-500/10", border: "border-rose-500/30" },
+   334→  { step: "Career Ready", icon: Briefcase, color: "text-teal-300", bg: "bg-teal-500/10", border: "border-teal-500/30" },
+   335→]
+   336→
+   337→// ============================================================
+   338→// Partnership models
+   339→// ============================================================
+   340→const PARTNERSHIP_MODELS = [
+   341→  {
+   342→    title: "Academic",
+   343→    icon: GraduationCap,
+   344→    desc: "For schools, colleges, and universities. Full curriculum integration with on-premises training delivery and academic-grade reporting.",
+   345→    color: "text-violet-400",
+   346→    bg: "bg-violet-500/10",
+   347→    features: ["Curriculum mapping", "On-premises delivery", "Academic reporting", "Faculty training"],
+   348→  },
+   349→  {
+   350→    title: "Enterprise",
+   351→    icon: Building2,
+   352→    desc: "For corporations. Upskill your workforce with enterprise-grade security training and custom-tailored threat scenarios.",
+   353→    color: "text-cyan-400",
+   354→    bg: "bg-cyan-500/10",
+   355→    features: ["Custom curriculum", "On-site or remote", "Team analytics", "Dedicated instructor"],
+   356→  },
+   357→  {
+   358→    title: "Training Partner",
+   359→    icon: Briefcase,
+   360→    desc: "For training institutes. Offer GuardianX courses under your brand with revenue share and white-label portal access.",
+   361→    color: "text-amber-400",
+   362→    bg: "bg-amber-500/10",
+   363→    features: ["White-label portal", "Revenue sharing", "Co-branded certs", "Partner support"],
+   364→  },
+   365→  {
+   366→    title: "Campus Program",
+   367→    icon: Users,
+   368→    desc: "For student communities and cyber clubs. Affordable cohort access with mentorship and competition-ready practice labs.",
+   369→    color: "text-emerald-400",
+   370→    bg: "bg-emerald-500/10",
+   371→    features: ["Cohort pricing", "Mentor support", "CTF practice", "Career guidance"],
+   372→  },
+   373→]
+   374→
+   375→export function PartnerInstitutionsView() {
+   376→  const { navigate } = useAppStore()
+   377→
+   378→  // CMS-driven hero copy — falls back to defaults if CMS data missing.
+   379→  const cms = usePageContent("institutions")
+   380→  const cmsData = cms.data
+   381→  const heroEyebrow = getContent(cmsData, "hero", "eyebrow", "INSTITUTIONAL PARTNERSHIPS")
+   382→  const heroTitle = getContent(cmsData, "hero", "title", "On-premises training for")
+   383→  const heroTitleAccent = getContent(cmsData, "hero", "titleAccent", "schools, colleges & universities.")
+   384→  const heroDesc = getContent(cmsData, "hero", "description", "GuardianX delivers cybersecurity training directly at your campus — your classrooms, your labs, your schedule. From secondary schools to research universities, we build job-ready defenders through a single, integrated platform.")
+   385→  const heroCtaPrimary = getContent(cmsData, "hero", "ctaPrimary", "Sign an MoU")
+   386→  const heroCtaSecondary = getContent(cmsData, "hero", "ctaSecondary", "Build Your Cybersecurity Program")
+   387→
+   388→  return (
+   389→    <div className="relative min-h-screen pt-2 lg:pt-4">
+   390→      {/* Atmospheric background */}
+   391→      <div className="absolute inset-0 bg-mesh opacity-40 pointer-events-none" />
+   392→      <div className="absolute top-0 right-0 w-[600px] h-[400px] bg-violet-600/5 blur-[120px] rounded-full pointer-events-none" />
+   393→
+   394→      <div className="relative z-10">
+   395→        {/* ====================================================
+   396→            SECTION 1: HERO
+   397→            ==================================================== */}
+   398→        <section className="py-6 lg:py-8">
+   399→          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+   400→            <div className="grid lg:grid-cols-2 gap-8 items-center">
+   401→              {/* Left — text */}
+   402→              <div>
+   403→                <motion.div
+   404→                  initial={{ opacity: 0, y: 8 }}
+   405→                  animate={{ opacity: 1, y: 0 }}
+   406→                  transition={{ duration: 0.3 }}
+   407→                  className="flex items-center gap-2 mb-4"
+   408→                >
+   409→                  <Building2 className="h-5 w-5 text-violet-300" />
+   410→                  <span className="text-[10px] font-mono text-violet-300/80 tracking-[0.25em]">{heroEyebrow}</span>
+   411→                </motion.div>
+   412→                <motion.h1
+   413→                  initial={{ opacity: 0, y: 8 }}
+   414→                  animate={{ opacity: 1, y: 0 }}
+   415→                  transition={{ duration: 0.3, delay: 0.1 }}
+   416→                  className="text-[clamp(2.25rem,5vw,4rem)] font-bold leading-[1.05] tracking-[-0.03em] mb-4 text-balance"
+   417→                >
+   418→                  {heroTitle}
+   419→                  <br />
+   420→                  <span className="text-gradient-premium">{heroTitleAccent}</span>
+   421→                </motion.h1>
+   422→                <motion.p
+   423→                  initial={{ opacity: 0, y: 8 }}
+   424→                  animate={{ opacity: 1, y: 0 }}
+   425→                  transition={{ duration: 0.3, delay: 0.2 }}
+   426→                  className="text-base lg:text-lg text-muted-foreground max-w-xl mb-5 leading-relaxed"
+   427→                >
+   428→                  {heroDesc}
+   429→                </motion.p>
+   430→                <motion.div
+   431→                  initial={{ opacity: 0, y: 8 }}
+   432→                  animate={{ opacity: 1, y: 0 }}
+   433→                  transition={{ duration: 0.3, delay: 0.3 }}
+   434→                  className="flex items-center gap-3 flex-wrap mb-5"
+   435→                >
+   436→                  <MagneticButton strength={0.3}>
+   437→                    <Button
+   438→                      size="lg"
+   439→                      onClick={() => navigate({ name: "contact" })}
+   440→                      className="bg-violet-600 hover:bg-violet-500 btn-premium px-8 py-6 text-sm"
+   441→                    >
+   442→                      {heroCtaPrimary} <ArrowRight className="h-4 w-4 ml-2" />
+   443→                    </Button>
+   444→                  </MagneticButton>
+   445→                  <MagneticButton strength={0.2}>
+   446→                    <Button
+   447→                      size="lg"
+   448→                      variant="outline"
+   449→                      onClick={() => navigate({ name: "contact" })}
+   450→                      className="px-6 py-6 text-sm"
+   451→                    >
+   452→                      {heroCtaSecondary}
+   453→                    </Button>
+   454→                  </MagneticButton>
+   455→                </motion.div>
+   456→
+   457→                {/* Hero stats */}
+   458→                <motion.div
+   459→                  initial={{ opacity: 0, y: 8 }}
+   460→                  animate={{ opacity: 1, y: 0 }}
+   461→                  transition={{ duration: 0.3, delay: 0.4 }}
+   462→                  className="grid grid-cols-3 gap-4 pt-5 border-t border-border/40"
+   463→                >
+   464→                  {[
+   465→                    { value: 150, suffix: "+", label: "Institutions", color: "text-violet-300" },
+   466→                    { value: 12000, suffix: "+", label: "Students", color: "text-cyan-300" },
+   467→                    { value: 8500, suffix: "+", label: "Certs Issued", color: "text-amber-300" },
+   468→                  ].map((s) => (
+   469→                    <div key={s.label}>
+   470→                      <div className={cn("text-2xl lg:text-3xl font-bold tabular-nums", s.color)}>
+   471→                        <Counter value={s.value} suffix={s.suffix} />
+   472→                      </div>
+   473→                      <div className="text-[10px] text-muted-foreground uppercase tracking-wider mt-1">{s.label}</div>
+   474→                    </div>
+   475→                  ))}
+   476→                </motion.div>
+   477→              </div>
+   478→
+   479→              {/* Right — particle logo centerpiece (same size as home page) */}
+   480→              <motion.div
+   481→                initial={{ opacity: 0, scale: 0.8 }}
+   482→                animate={{ opacity: 1, scale: 1 }}
+   483→                transition={{ duration: 0.6, delay: 0.2 }}
+   484→                className="relative flex items-center justify-center"
+   485→              >
+   486→                <ParticleLogo size={680} interactive showGlow />
+   487→              </motion.div>
+   488→            </div>
+   489→          </div>
+   490→        </section>
+   491→
+   492→        {/* ====================================================
+   493→            SECTION 2: TEACH. PRACTICE. TRACK. CERTIFY.
+   494→            Four institutional pillars — the value proposition.
+   495→            ==================================================== */}
+   496→        <section className="py-6 lg:py-10 border-t border-border/40">
+   497→          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+   498→            <ScrollReveal className="mb-6 text-center">
+   499→              <p className="text-[10px] font-mono text-violet-400 tracking-[0.25em] mb-4">THE GUARDIANX METHOD</p>
+   500→              <h2 className="text-[clamp(2rem,4vw,3rem)] font-bold leading-[1.05] tracking-[-0.02em] text-balance">
+   501→                Teach. Practice. Track. Certify.
+   502→              </h2>
+   503→              <p className="text-base text-muted-foreground max-w-2xl mx-auto mt-4">
+   504→                Four pillars define every GuardianX institutional partnership. Together they form a
+   505→                closed loop — from classroom instruction to verifiable, industry-recognized credentials.
+   506→              </p>
+   507→            </ScrollReveal>
+   508→
+   509→            <Stagger className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5" staggerChildren={0.1}>
+   510→              {INSTITUTIONAL_PILLARS.map((p) => (
+   511→                <StaggerItem key={p.title}>
+   512→                  <CursorGlow className="group h-full" color="oklch(0.6 0.2 295 / 0.04)">
+   513→                    <div className={cn(
+   514→                      "relative h-full flex flex-col rounded-2xl border border-border/60 bg-card shadow-lg p-5 transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_20px_60px_-20px_oklch(0.6_0.2_295_/_0.25)]",
+   515→                      p.border
+   516→                    )}>
+   517→                      {/* Header — icon + tag */}
+   518→                      <div className="flex items-start justify-between mb-4">
+   519→                        <motion.div
+   520→                          initial={false}
+   521→                          whileHover={{ scale: 1.08 }}
+   522→                          transition={{ type: "spring", stiffness: 400, damping: 17 }}
+   523→                          className={cn("inline-flex items-center justify-center size-12 rounded-xl", p.bg)}
+   524→                        >
+   525→                          <p.icon className={cn("h-6 w-6", p.color)} />
+   526→                        </motion.div>
+   527→                        <Badge variant="outline" className="text-[9px] font-mono tracking-wider border-border/60 text-muted-foreground">
+   528→                          {p.tag}
+   529→                        </Badge>
+   530→                      </div>
+   531→
+   532→                      {/* Title + description */}
+   533→                      <h3 className="text-lg font-semibold mb-2">{p.title}</h3>
+   534→                      <p className="text-xs text-muted-foreground leading-relaxed">{p.desc}</p>
+   535→                    </div>
+   536→                  </CursorGlow>
+   537→                </StaggerItem>
+   538→              ))}
+   539→            </Stagger>
+   540→          </div>
+   541→        </section>
+   542→
+   543→        {/* ====================================================
+   544→            SECTION 3: INSTITUTION DASHBOARD PREVIEW
+   545→            Mock stats + REQUEST DEMO button — shows prospects
+   546→            what their GuardianX admin dashboard looks like.
+   547→            ==================================================== */}
+   548→        <section className="py-6 lg:py-10 border-t border-border/40 relative overflow-hidden">
+   549→          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-violet-600/5 blur-[120px] rounded-full pointer-events-none" />
+   550→          <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+   551→            <ScrollReveal className="mb-6">
+   552→              <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+   553→                <div>
+   554→                  <p className="text-[10px] font-mono text-violet-400 tracking-[0.25em] mb-3">INSTITUTION DASHBOARD</p>
+   555→                  <h2 className="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold leading-[1.05] tracking-[-0.02em] text-balance">
+   556→                    See your institution,
+   557→                    <br />
+   558→                    <span className="text-gradient-premium">at a glance.</span>
+   559→                  </h2>
+   560→                  <p className="text-base text-muted-foreground max-w-xl mt-3">
+   561→                    A live, real-time view of every student, every cohort, every lab — and every
+   562→                    certificate earned. This is the command center for your faculty and program directors.
+   563→                  </p>
+   564→                </div>
+   565→                <MagneticButton strength={0.3}>
+   566→                  <Button
+   567→                    size="lg"
+   568→                    onClick={() => navigate({ name: "contact" })}
+   569→                    className="bg-violet-600 hover:bg-violet-500 btn-premium px-6 py-5"
+   570→                  >
+   571→                    <Sparkles className="h-4 w-4 mr-2" />
+   572→                    Request Demo
+   573→                  </Button>
+   574→                </MagneticButton>
+   575→              </div>
+   576→            </ScrollReveal>
+   577→
+   578→            {/* Dashboard mock */}
+   579→            <ScrollReveal delay={0.1}>
+   580→              <div className="rounded-2xl border border-border/60 bg-card shadow-lg overflow-hidden">
+   581→                {/* Browser chrome */}
+   582→                <div className="flex items-center gap-2 px-4 py-3 border-b border-border/60 bg-background/40">
+   583→                  <div className="flex gap-1.5">
+   584→                    <span className="size-3 rounded-full bg-rose-500/60" />
+   585→                    <span className="size-3 rounded-full bg-amber-500/60" />
+   586→                    <span className="size-3 rounded-full bg-emerald-500/60" />
+   587→                  </div>
+   588→                  <div className="flex-1 mx-3">
+   589→                    <div className="rounded-md bg-background/60 border border-border/40 px-3 py-1 text-[10px] font-mono text-muted-foreground tracking-wider">
+   590→                      guardianx.io/institution/dashboard
+   591→                    </div>
+   592→                  </div>
+   593→                  <Badge variant="outline" className="text-[10px] font-mono tracking-wider border-emerald-500/30 bg-emerald-500/5 text-emerald-300">
+   594→                    LIVE
+   595→                  </Badge>
+   596→                </div>
+   597→
+   598→                {/* Dashboard body */}
+   599→                <div className="p-5 lg:p-7">
+   600→                  {/* Header row */}
+   601→                  <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+   602→                    <div>
+   603→                      <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider mb-1">
+   604→                        Mumbai Institute of Technology
+   605→                      </p>
+   606→                      <h3 className="text-base font-semibold">Q3 2024 — Cyber Security Cohort Overview</h3>
+   607→                    </div>
+   608→                    <div className="flex items-center gap-2">
+   609→                      <Badge variant="outline" className="text-[10px] font-mono tracking-wider border-border/60">
+   610→                        <span className="size-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse" /> Synced 2 min ago
+   611→                      </Badge>
+   612→                    </div>
+   613→                  </div>
+   614→
+   615→                  {/* Stat grid */}
+   616→                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+   617→                    {DASHBOARD_PREVIEW_STATS.map((s) => (
+   618→                      <StatTile
+   619→                        key={s.label}
+   620→                        icon={s.icon}
+   621→                        label={s.label}
+   622→                        value={s.value}
+   623→                        suffix={s.suffix}
+   624→                        color={s.color}
+   625→                        tint={s.tint}
+   626→                        trend={s.trend}
+   627→                      />
+   628→                    ))}
+   629→                  </div>
+   630→
+   631→                  {/* Mock chart row */}
+   632→                  <div className="grid lg:grid-cols-3 gap-4 mt-5">
+   633→                    {/* Cohort progress bars */}
+   634→                    <div className="lg:col-span-2 rounded-xl border border-border/60 bg-background/40 p-4">
+   635→                      <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider mb-3">
+   636→                        Cohort Progress
+   637→                      </p>
+   638→                      <div className="space-y-2.5">
+   639→                        {[
+   640→                          { name: "B.Tech CSE — Semester 5", pct: 87, color: "from-violet-500 to-violet-400" },
+   641→                          { name: "M.Tech Cyber Sec — Year 1", pct: 64, color: "from-cyan-500 to-cyan-400" },
+   642→                          { name: "Weekend Bootcamp — Batch 12", pct: 92, color: "from-emerald-500 to-emerald-400" },
+   643→                        ].map((row) => (
+   644→                          <div key={row.name}>
+   645→                            <div className="flex items-center justify-between text-[10px] font-mono mb-1">
+   646→                              <span className="text-muted-foreground truncate pr-2">{row.name}</span>
+   647→                              <span className="text-foreground font-bold tabular-nums">{row.pct}%</span>
+   648→                            </div>
+   649→                            <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-muted">
+   650→                              <motion.div
+   651→                                className={cn("h-full rounded-full bg-gradient-to-r", row.color)}
+   652→                                initial={{ width: 0 }}
+   653→                                animate={{ width: `${row.pct}%` }}
+   654→                                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+   655→                              />
+   656→                            </div>
+   657→                          </div>
+   658→                        ))}
+   659→                      </div>
+   660→                    </div>
+   661→
+   662→                    {/* Recent certs */}
+   663→                    <div className="rounded-xl border border-border/60 bg-background/40 p-4">
+   664→                      <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider mb-3">
+   665→                        Recent Certificates
+   666→                      </p>
+   667→                      <div className="space-y-2">
+   668→                        {[
+   669→                          { name: "Aarav P.", course: "CEH", color: "bg-amber-500/10 text-amber-300" },
+   670→                          { name: "Diya S.", course: "CCNA", color: "bg-cyan-500/10 text-cyan-300" },
+   671→                          { name: "Kabir M.", course: "WAPT", color: "bg-violet-500/10 text-violet-300" },
+   672→                        ].map((r) => (
+   673→                          <div key={r.name} className="flex items-center gap-2">
+   674→                            <div className={cn("size-7 rounded-full flex items-center justify-center text-[10px] font-mono font-bold", r.color)}>
+   675→                              {r.name.split(" ").map((n) => n[0]).join("")}
+   676→                            </div>
+   677→                            <div className="min-w-0 flex-1">
+   678→                              <p className="text-xs font-medium truncate">{r.name}</p>
+   679→                              <p className="text-[10px] text-muted-foreground font-mono">{r.course}</p>
+   680→                            </div>
+   681→                            <CheckCircle2 className="size-3.5 text-emerald-400" />
+   682→                          </div>
+   683→                        ))}
+   684→                      </div>
+   685→                    </div>
+   686→                  </div>
+   687→                </div>
+   688→              </div>
+   689→            </ScrollReveal>
+   690→          </div>
+   691→        </section>
+   692→
+   693→        {/* ====================================================
+   694→            SECTION 4: FEATURES GRID — 8 institutional features
+   695→            ==================================================== */}
+   696→        <section className="py-6 lg:py-10 border-t border-border/40">
+   697→          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+   698→            <ScrollReveal className="mb-6">
+   699→              <p className="text-[10px] font-mono text-violet-400 tracking-[0.25em] mb-3">PLATFORM FEATURES</p>
+   700→              <h2 className="text-[clamp(2rem,4vw,3rem)] font-bold leading-[1.05] tracking-[-0.02em] text-balance">
+   701→                Eight tools your faculty gets.
+   702→              </h2>
+   703→              <p className="text-base text-muted-foreground max-w-2xl mt-3">
+   704→                Every GuardianX institutional partner unlocks the full platform — student management,
+   705→                instructor tooling, attendance, grade books, analytics, and custom curriculum mapping.
+   706→              </p>
+   707→            </ScrollReveal>
+   708→
+   709→            <Stagger className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5" staggerChildren={0.08}>
+   710→              {INSTITUTIONAL_FEATURES.map((f) => (
+   711→                <StaggerItem key={f.title}>
+   712→                  <CursorGlow className="group h-full" color="oklch(0.6 0.2 295 / 0.04)">
+   713→                    <div className="h-full rounded-xl border border-border/60 bg-card shadow-lg p-5 transition-all duration-500 hover:-translate-y-1 hover:border-violet-500/40 hover:shadow-[0_20px_60px_-20px_oklch(0.6_0.2_295_/_0.25)]">
+   714→                      <div className={cn("inline-flex p-3 rounded-lg mb-3 transition-transform group-hover:scale-110", f.bg)}>
+   715→                        <f.icon className={cn("h-5 w-5", f.color)} />
+   716→                      </div>
+   717→                      <h3 className="font-semibold text-sm mb-1.5">{f.title}</h3>
+   718→                      <p className="text-xs text-muted-foreground leading-relaxed">{f.desc}</p>
+   719→                    </div>
+   720→                  </CursorGlow>
+   721→                </StaggerItem>
+   722→              ))}
+   723→            </Stagger>
+   724→          </div>
+   725→        </section>
+   726→
+   727→        {/* ====================================================
+   728→            SECTION 5: THREE PARTNER TYPES
+   729→            ==================================================== */}
+   730→        <section className="py-6 lg:py-10 border-t border-border/40">
+   731→          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+   732→            <ScrollReveal className="mb-6 text-center">
+   733→              <p className="text-[10px] font-mono text-violet-400 tracking-[0.25em] mb-4">WHO WE PARTNER WITH</p>
+   734→              <h2 className="text-[clamp(2rem,4vw,3rem)] font-bold leading-[1.05] tracking-[-0.02em] text-balance">
+   735→                Three institution types.
+   736→                <br />
+   737→                <span className="text-muted-foreground/60">One training platform.</span>
+   738→              </h2>
+   739→              <p className="text-base text-muted-foreground max-w-2xl mx-auto mt-4">
+   740→                Each partner type gets its own dedicated login portal, training schedule, and curriculum alignment.
+   741→                Choose your institution to learn more.
+   742→              </p>
+   743→            </ScrollReveal>
+   744→
+   745→            <Stagger className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6" staggerChildren={0.1}>
+   746→              {PARTNER_TYPES.map((pt) => (
+   747→                <StaggerItem key={pt.type}>
+   748→                  <CursorGlow className="group h-full" color="oklch(0.6 0.2 295 / 0.04)">
+   749→                    <div className={cn(
+   750→                      "relative h-full flex flex-col rounded-2xl border border-border/60 bg-card shadow-lg p-6 transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_20px_60px_-20px_oklch(0.6_0.2_295_/_0.25)]",
+   751→                      pt.border
+   752→                    )}>
+   753→                      {/* Header — icon + type badge */}
+   754→                      <div className="flex items-start justify-between mb-5">
+   755→                        <div className={cn("inline-flex items-center justify-center h-12 w-12 rounded-xl transition-transform duration-500 group-hover:scale-110", pt.bg)}>
+   756→                          <pt.icon className={cn("h-6 w-6", pt.accent)} />
+   757→                        </div>
+   758→                        <Badge variant="outline" className="text-[10px] font-mono tracking-wider border-border/60 text-muted-foreground">
+   759→                          {pt.type.toUpperCase()}
+   760→                        </Badge>
+   761→                      </div>
+   762→
+   763→                      {/* Title + description */}
+   764→                      <h3 className="text-xl font-semibold mb-2">{pt.title}</h3>
+   765→                      <p className="text-sm text-muted-foreground leading-relaxed mb-5">
+   766→                        {pt.description}
+   767→                      </p>
+   768→
+   769→                      {/* Highlight callout (Schools: School Management System) */}
+   770→                      {pt.highlight && pt.highlightIcon && (
+   771→                        <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3 mb-5">
+   772→                          <div className="flex items-start gap-2">
+   773→                            <pt.highlightIcon className="h-4 w-4 text-emerald-300 mt-0.5 shrink-0" />
+   774→                            <div>
+   775→                              <div className="text-[10px] font-mono text-emerald-300/80 tracking-wider mb-1">SEPARATE PRODUCT</div>
+   776→                              <p className="text-xs text-muted-foreground leading-relaxed">{pt.highlight}</p>
+   777→                            </div>
+   778→                          </div>
+   779→                        </div>
+   780→                      )}
+   781→
+   782→                      {/* CTA buttons */}
+   783→                      <div className="mt-auto space-y-2.5">
+   784→                        <Button
+   785→                          className={cn(
+   786→                            "w-full btn-premium",
+   787→                            pt.type === "School" && "bg-emerald-600 hover:bg-emerald-500",
+   788→                            pt.type === "College" && "bg-cyan-600 hover:bg-cyan-500",
+   789→                            pt.type === "University" && "bg-violet-600 hover:bg-violet-500",
+   790→                          )}
+   791→                          onClick={() => navigate({ name: "login" })}
+   792→                        >
+   793→                          <LogIn className="h-4 w-4 mr-1.5" />
+   794→                          {pt.ctaLabel}
+   795→                        </Button>
+   796→                        <Button
+   797→                          variant="outline"
+   798→                          className="w-full"
+   799→                          onClick={() => navigate({ name: "contact" })}
+   800→                        >
+   801→                          Learn More <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
+   802→                        </Button>
+   803→                      </div>
+   804→                    </div>
+   805→                  </CursorGlow>
+   806→                </StaggerItem>
+   807→              ))}
+   808→            </Stagger>
+   809→          </div>
+   810→        </section>
+   811→
+   812→        {/* ====================================================
+   813→            SECTION 3: PARTNER BENEFITS
+   814→            ==================================================== */}
+   815→        <section className="py-6 lg:py-10 border-t border-border/40">
+   816→          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+   817→            <ScrollReveal className="mb-6">
+   818→              <p className="text-[10px] font-mono text-violet-400 tracking-[0.25em] mb-4">PARTNER BENEFITS</p>
+   819→              <h2 className="text-[clamp(2rem,4vw,3rem)] font-bold leading-[1.05] tracking-[-0.02em] text-balance">
+   820→                Everything your institution unlocks.
+   821→              </h2>
+   822→              <p className="text-base text-muted-foreground max-w-2xl mt-4">
+   823→                On-premises training delivery, a dedicated cyber range, a separate School Management System
+   824→                for MoU partners, and full program analytics — all in one partnership.
+   825→              </p>
+   826→            </ScrollReveal>
+   827→
+   828→            <Stagger className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6" staggerChildren={0.08}>
+   829→              {BENEFITS.map((b) => (
+   830→                <StaggerItem key={b.title}>
+   831→                  <CursorGlow className="group h-full" color="oklch(0.6 0.2 295 / 0.04)">
+   832→                    <div className="h-full rounded-xl border border-border/60 bg-card shadow-lg p-6 transition-all duration-500 hover:-translate-y-1 hover:border-violet-500/40 hover:shadow-[0_20px_60px_-20px_oklch(0.6_0.2_295_/_0.25)]">
+   833→                      <div className="flex items-start justify-between mb-4">
+   834→                        <div className={cn("inline-flex p-3 rounded-lg transition-transform group-hover:scale-110", b.bg)}>
+   835→                          <b.icon className={cn("h-5 w-5", b.color)} />
+   836→                        </div>
+   837→                        <span className="text-[9px] font-mono text-muted-foreground tracking-[0.15em] uppercase px-2 py-1 rounded border border-border/60 bg-background/40">
+   838→                          {b.tag}
+   839→                        </span>
+   840→                      </div>
+   841→                      <h3 className="font-semibold mb-2">{b.title}</h3>
+   842→                      <p className="text-sm text-muted-foreground leading-relaxed">{b.desc}</p>
+   843→                    </div>
+   844→                  </CursorGlow>
+   845→                </StaggerItem>
+   846→              ))}
+   847→            </Stagger>
+   848→          </div>
+   849→        </section>
+   850→
+   851→        {/* ====================================================
+   852→            SECTION 4: FEATURED PARTNERS
+   853→            ==================================================== */}
+   854→        <section className="py-6 lg:py-10 border-t border-border/40 relative overflow-hidden">
+   855→          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-violet-600/5 blur-[120px] rounded-full pointer-events-none" />
+   856→          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
+   857→            <ScrollReveal className="mb-6">
+   858→              <p className="text-[10px] font-mono text-violet-400 tracking-[0.25em] mb-4">FEATURED PARTNERS</p>
+   859→              <h2 className="text-[clamp(2rem,4vw,3rem)] font-bold leading-[1.05] tracking-[-0.02em] text-balance mb-4">
+   860→                Institutions growing with GuardianX.
+   861→              </h2>
+   862→              <p className="text-base text-muted-foreground max-w-2xl">
+   863→                A glimpse of the schools, colleges, and universities building tomorrow&apos;s defenders on
+   864→                our platform. Example profiles shown for illustration.
+   865→              </p>
+   866→            </ScrollReveal>
+   867→
+   868→            <Stagger className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6" staggerChildren={0.08}>
+   869→              {FEATURED_PARTNERS.map((p) => {
+   870→                const ts = TYPE_STYLES[p.type]
+   871→                return (
+   872→                  <StaggerItem key={p.name}>
+   873→                    <CursorGlow className="group h-full" color="oklch(0.6 0.2 295 / 0.04)">
+   874→                      <div className="relative h-full flex flex-col rounded-xl border border-border/60 bg-card shadow-lg p-6 transition-all duration-500 hover:-translate-y-1 hover:border-violet-500/40 hover:shadow-[0_20px_60px_-20px_oklch(0.6_0.2_295_/_0.25)]">
+   875→                        {/* Header — logo + type badge */}
+   876→                        <div className="flex items-start justify-between mb-5">
+   877→                          <div className={cn(
+   878→                            "inline-flex items-center justify-center h-12 w-12 rounded-full transition-transform duration-500 group-hover:scale-110",
+   879→                            ts.logoBg
+   880→                          )}>
+   881→                            <p.logoIcon className={cn("h-6 w-6", ts.logoColor)} />
+   882→                          </div>
+   883→                          <Badge variant="outline" className={cn("text-[10px] font-mono tracking-wider", ts.typeBadgeClass)}>
+   884→                            {p.type.toUpperCase()}
+   885→                          </Badge>
+   886→                        </div>
+   887→
+   888→                        {/* Name + description */}
+   889→                        <h3 className="font-semibold text-base mb-2 group-hover:text-violet-200 transition-colors">
+   890→                          {p.name}
+   891→                        </h3>
+   892→                        <p className="text-xs text-muted-foreground leading-relaxed mb-5">
+   893→                          {p.description}
+   894→                        </p>
+   895→
+   896→                        {/* Details grid */}
+   897→                        <div className="grid grid-cols-2 gap-2.5 mb-5 mt-auto">
+   898→                          <div className="rounded-lg bg-background/40 border border-border/40 p-3">
+   899→                            <div className="flex items-center gap-1.5 mb-1.5">
+   900→                              <MapPin className="h-3 w-3 text-muted-foreground" />
+   901→                              <span className="text-[9px] font-mono text-muted-foreground tracking-[0.2em]">LOCATION</span>
+   902→                            </div>
+   903→                            <div className="text-xs font-medium leading-snug">{p.location}</div>
+   904→                          </div>
+   905→                          <div className="rounded-lg bg-background/40 border border-border/40 p-3">
+   906→                            <div className="flex items-center gap-1.5 mb-1.5">
+   907→                              <Calendar className="h-3 w-3 text-muted-foreground" />
+   908→                              <span className="text-[9px] font-mono text-muted-foreground tracking-[0.2em]">ESTABLISHED</span>
+   909→                            </div>
+   910→                            <div className="text-xs font-medium tabular-nums">{p.established}</div>
+   911→                          </div>
+   912→                          <div className="rounded-lg bg-background/40 border border-border/40 p-3">
+   913→                            <div className="flex items-center gap-1.5 mb-1.5">
+   914→                              <Users className="h-3 w-3 text-muted-foreground" />
+   915→                              <span className="text-[9px] font-mono text-muted-foreground tracking-[0.2em]">STUDENTS</span>
+   916→                            </div>
+   917→                            <div className="text-xs font-medium tabular-nums">
+   918→                              {p.studentsTrained.toLocaleString()} trained
+   919→                            </div>
+   920→                          </div>
+   921→                          <div className="rounded-lg bg-background/40 border border-border/40 p-3">
+   922→                            <div className="flex items-center gap-1.5 mb-1.5">
+   923→                              <Award className="h-3 w-3 text-muted-foreground" />
+   924→                              <span className="text-[9px] font-mono text-muted-foreground tracking-[0.2em]">CERTS</span>
+   925→                            </div>
+   926→                            <div className="text-xs font-medium tabular-nums">
+   927→                              {p.certsEarned.toLocaleString()} earned
+   928→                            </div>
+   929→                          </div>
+   930→                        </div>
+   931→
+   932→                        {/* Partner since footer */}
+   933→                        <div className="flex items-center justify-between pt-4 border-t border-border/40 mb-4">
+   934→                          <div className="flex items-center gap-1.5">
+   935→                            <Trophy className="h-3.5 w-3.5 text-amber-300" />
+   936→                            <span className="text-[10px] font-mono text-muted-foreground tracking-[0.2em]">
+   937→                              PARTNER SINCE
+   938→                            </span>
+   939→                          </div>
+   940→                          <span className="text-sm font-semibold tabular-nums text-amber-200">
+   941→                            {p.partnerSince}
+   942→                          </span>
+   943→                        </div>
+   944→
+   945→                        {/* Website link button */}
+   946→                        <a
+   947→                          href={p.website}
+   948→                          target="_blank"
+   949→                          rel="noopener noreferrer"
+   950→                          className="inline-flex items-center justify-center gap-2 rounded-lg border border-border/60 bg-background/40 hover:bg-violet-600/10 hover:border-violet-500/40 px-4 py-2.5 text-xs font-medium transition-all duration-300 group/btn"
+   951→                        >
+   952→                          <Globe className="h-3.5 w-3.5 text-violet-300" />
+   953→                          Visit Website
+   954→                          <ArrowRight className="h-3 w-3 ml-0.5 transition-transform group-hover/btn:translate-x-0.5" />
+   955→                        </a>
+   956→                      </div>
+   957→                    </CursorGlow>
+   958→                  </StaggerItem>
+   959→                )
+   960→              })}
+   961→            </Stagger>
+   962→          </div>
+   963→        </section>
+   964→
+   965→        {/* ====================================================
+   966→            SECTION 5: YOUR INSTITUTION. OUR CYBER RANGE.
+   967→            ==================================================== */}
+   968→        <section className="py-6 lg:py-10 border-t border-border/40 relative overflow-hidden">
+   969→          <div className="absolute inset-0 bg-grid opacity-10" />
+   970→          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
+   971→            <ScrollReveal className="text-center mb-6">
+   972→              <p className="text-[10px] font-mono text-violet-400 tracking-[0.25em] mb-4">THE PATH</p>
+   973→              <h2 className="text-[clamp(2rem,4vw,3rem)] font-bold leading-[1.05] tracking-[-0.02em] mb-4 text-balance">
+   974→                Your institution.
+   975→                <br />
+   976→                <span className="text-gradient-premium">Our cyber range.</span>
+   977→              </h2>
+   978→              <p className="text-base text-muted-foreground max-w-2xl mx-auto">
+   979→                From onboarding students to issuing industry-recognized certificates — every step runs
+   980→                inside the GuardianX platform, on your premises.
+   981→              </p>
+   982→            </ScrollReveal>
+   983→
+   984→            {/* Flow diagram */}
+   985→            <ScrollReveal delay={0.2}>
+   986→              <div className="rounded-2xl border border-border/60 bg-card shadow-lg p-6 lg:p-8">
+   987→                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+   988→                  {CYBER_RANGE_FLOW.map((s, i) => (
+   989→                    <React.Fragment key={s.step}>
+   990→                      <motion.div
+   991→                        initial={{ opacity: 0, y: 16 }}
+   992→                        whileInView={{ opacity: 1, y: 0 }}
+   993→                        viewport={{ once: true }}
+   994→                        transition={{ duration: 0.5, delay: i * 0.1 }}
+   995→                        className="flex flex-col items-center text-center"
+   996→                      >
+   997→                        <div className={cn(
+   998→                          "relative inline-flex items-center justify-center h-16 w-16 rounded-2xl border mb-3 transition-transform hover:scale-110",
+   999→                          s.bg, s.border
+  1000→                        )}>
+  1001→                          <s.icon className={cn("h-6 w-6", s.color)} />
+  1002→                          <span className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-card border border-border/60 text-[9px] font-mono text-muted-foreground flex items-center justify-center tabular-nums">
+  1003→                            {i + 1}
+  1004→                          </span>
+  1005→                        </div>
+  1006→                        <span className="text-xs font-medium">{s.step}</span>
+  1007→                      </motion.div>
+  1008→                      {i < CYBER_RANGE_FLOW.length - 1 && (
+  1009→                        <div className="hidden lg:flex items-center justify-center">
+  1010→                          <ChevronRight className="h-5 w-5 text-muted-foreground/40" />
+  1011→                        </div>
+  1012→                      )}
+  1013→                    </React.Fragment>
+  1014→                  ))}
+  1015→                </div>
+  1016→              </div>
+  1017→            </ScrollReveal>
+  1018→          </div>
+  1019→        </section>
+  1020→
+  1021→        {/* ====================================================
+  1022→            SECTION 6: PARTNERSHIP MODELS
+  1023→            ==================================================== */}
+  1024→        <section className="py-6 lg:py-10 border-t border-border/40">
+  1025→          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+  1026→            <ScrollReveal className="mb-6">
+  1027→              <p className="text-[10px] font-mono text-violet-400 tracking-[0.25em] mb-4">PARTNERSHIP MODELS</p>
+  1028→              <h2 className="text-[clamp(2rem,4vw,3rem)] font-bold leading-[1.05] tracking-[-0.02em] text-balance">
+  1029→                Choose your partnership.
+  1030→              </h2>
+  1031→              <p className="text-base text-muted-foreground max-w-2xl mt-4">
+  1032→                Four engagement models. Pick the one that matches your institution&apos;s stage and scale.
+  1033→              </p>
+  1034→            </ScrollReveal>
+  1035→
+  1036→            <Stagger className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6" staggerChildren={0.1}>
+  1037→              {PARTNERSHIP_MODELS.map((m) => (
+  1038→                <StaggerItem key={m.title}>
+  1039→                  <CursorGlow className="group h-full" color="oklch(0.6 0.2 295 / 0.04)">
+  1040→                    <div className="h-full flex flex-col rounded-xl border border-border/60 bg-card shadow-lg p-6 transition-all duration-500 hover:-translate-y-1 hover:border-violet-500/40 hover:shadow-[0_20px_60px_-20px_oklch(0.6_0.2_295_/_0.25)]">
+  1041→                      <div className={cn("inline-flex p-3 rounded-xl mb-4 self-start transition-transform group-hover:scale-110", m.bg)}>
+  1042→                        <m.icon className={cn("h-6 w-6", m.color)} />
+  1043→                      </div>
+  1044→                      <h3 className="font-semibold mb-2">{m.title}</h3>
+  1045→                      <p className="text-xs text-muted-foreground leading-relaxed mb-4">{m.desc}</p>
+  1046→                      <ul className="space-y-1.5 mb-5 mt-auto">
+  1047→                        {m.features.map((f) => (
+  1048→                          <li key={f} className="flex items-center gap-2 text-xs text-muted-foreground">
+  1049→                            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+  1050→                            {f}
+  1051→                          </li>
+  1052→                        ))}
+  1053→                      </ul>
+  1054→                      <Button
+  1055→                        variant="outline"
+  1056→                        size="sm"
+  1057→                        className="w-full"
+  1058→                        onClick={() => navigate({ name: "contact" })}
+  1059→                      >
+  1060→                        Enquire <ArrowRight className="h-3 w-3 ml-1.5" />
+  1061→                      </Button>
+  1062→                    </div>
+  1063→                  </CursorGlow>
+  1064→                </StaggerItem>
+  1065→              ))}
+  1066→            </Stagger>
+  1067→          </div>
+  1068→        </section>
+  1069→
+  1070→        {/* ====================================================
+  1071→            SECTION 7: FINAL CTA — Ready to transform your institution?
+  1072→            ==================================================== */}
+  1073→        <section className="py-6 lg:py-10 border-t border-border/40 relative overflow-hidden">
+  1074→          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-violet-600/8 blur-[100px] rounded-full pointer-events-none" />
+  1075→          <div className="relative z-10 mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
+  1076→            <ScrollReveal>
+  1077→              <div className="inline-flex items-center gap-2 mb-6 px-3 py-1.5 rounded-full border border-violet-500/30 bg-violet-500/5">
+  1078→                <Sparkles className="h-3.5 w-3.5 text-violet-300" />
+  1079→                <span className="text-[10px] font-mono text-violet-300 tracking-[0.25em]">GUARDIANX FOR INSTITUTIONS</span>
+  1080→              </div>
+  1081→            </ScrollReveal>
+  1082→            <ScrollReveal delay={0.1}>
+  1083→              <h2 className="text-[clamp(2rem,5vw,3.5rem)] font-bold leading-[1.05] tracking-[-0.03em] mb-6 text-balance">
+  1084→                Ready to transform
+  1085→                <br />
+  1086→                <span className="text-gradient-premium">your institution?</span>
+  1087→              </h2>
+  1088→            </ScrollReveal>
+  1089→            <ScrollReveal delay={0.2}>
+  1090→              <p className="text-base lg:text-lg text-muted-foreground max-w-xl mx-auto mb-8">
+  1091→                On-premises training delivery. A dedicated cyber range. A separate School Management
+  1092→                System for MoU partners. Verifiable, industry-recognized certificates. Let&apos;s build
+  1093→                your cyber security program together.
+  1094→              </p>
+  1095→            </ScrollReveal>
+  1096→            <ScrollReveal delay={0.3}>
+  1097→              <div className="flex items-center justify-center gap-3 flex-wrap">
+  1098→                <MagneticButton strength={0.3}>
+  1099→                  <Button
+  1100→                    size="lg"
+  1101→                    onClick={() => navigate({ name: "contact" })}
+  1102→                    className="bg-violet-600 hover:bg-violet-500 btn-premium px-8 py-6"
+  1103→                  >
+  1104→                    <FileCheck className="h-4 w-4 mr-2" />
+  1105→                    Sign an MoU
+  1106→                  </Button>
+  1107→                </MagneticButton>
+  1108→                <MagneticButton strength={0.2}>
+  1109→                  <Button
+  1110→                    size="lg"
+  1111→                    variant="outline"
+  1112→                    onClick={() => navigate({ name: "contact" })}
+  1113→                    className="px-6 py-6"
+  1114→                  >
+  1115→                    <Send className="h-4 w-4 mr-2" />
+  1116→                    Talk to Us
+  1117→                  </Button>
+  1118→                </MagneticButton>
+  1119→              </div>
+  1120→            </ScrollReveal>
+  1121→
+  1122→            {/* Trust footer */}
+  1123→            <ScrollReveal delay={0.4}>
+  1124→              <div className="mt-8 pt-5 border-t border-border/40 grid grid-cols-2 sm:grid-cols-4 gap-6">
+  1125→                {[
+  1126→                  { label: "MoU Setup", value: "2-4 weeks", icon: FileCheck, color: "text-violet-300" },
+  1127→                  { label: "On-Prem Visit", value: "Scheduled", icon: Server, color: "text-cyan-300" },
+  1128→                  { label: "Instructor-led", value: "Year-round", icon: GraduationCap, color: "text-amber-300" },
+  1129→                  { label: "Renewal", value: "Annual", icon: Calendar, color: "text-emerald-300" },
+  1130→                ].map((t) => (
+  1131→                  <div key={t.label} className="text-center">
+  1132→                    <t.icon className={cn("h-5 w-5 mx-auto mb-2", t.color)} />
+  1133→                    <div className="text-sm font-semibold">{t.value}</div>
+  1134→                    <div className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">{t.label}</div>
+  1135→                  </div>
+  1136→                ))}
+  1137→              </div>
+  1138→            </ScrollReveal>
+  1139→          </div>
+  1140→        </section>
+  1141→      </div>
+  1142→    </div>
+  1143→  )
+  1144→}
+  1145→

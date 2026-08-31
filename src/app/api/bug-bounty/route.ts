@@ -15,7 +15,7 @@ async function seedPrograms() {
     {
       name: "Acme Bank Responsible Disclosure",
       platform: "GuardianX",
-      url: "https://labs.guardianx.io/bb/acme-bank",
+      url: "https://labs.academy.guardianx.cloud/bb/acme-bank",
       description:
         "Acme Bank invites ethical hackers to test their online banking platform, mobile app, and partner APIs. Reports must follow CVSS scoring.",
       scope: "*.acme-bank.com, mobile API, partner integrations",
@@ -48,7 +48,7 @@ async function seedPrograms() {
     {
       name: "ShopVerse E-Commerce",
       platform: "GuardianX",
-      url: "https://labs.guardianx.io/bb/shopverse",
+      url: "https://labs.academy.guardianx.cloud/bb/shopverse",
       description:
         "Multi-vendor marketplace. Focused on payment tampering, account takeover, and inventory manipulation.",
       scope: "*.shopverse.com, seller API",
@@ -59,7 +59,7 @@ async function seedPrograms() {
     {
       name: "GreenGrid Energy SCADA",
       platform: "GuardianX",
-      url: "https://labs.guardianx.io/bb/greengrid",
+      url: "https://labs.academy.guardianx.cloud/bb/greengrid",
       description:
         "Energy-sector ICS/OT bug bounty program. Looking for OT protocol abuse, HMI bypasses, and unsafe telemetry handling.",
       scope: "hmi.greengrid.energy, telemetry API (read-only)",
@@ -92,7 +92,7 @@ async function seedPrograms() {
     {
       name: "SmartHome Hub Firmware",
       platform: "GuardianX",
-      url: "https://labs.guardianx.io/bb/smarthome",
+      url: "https://labs.academy.guardianx.cloud/bb/smarthome",
       description:
         "IoT firmware bounty — looking for memory corruption, hardcoded creds, and insecure OTA update mechanisms.",
       scope: "firmware binary, OTA endpoints",

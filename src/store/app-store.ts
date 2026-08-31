@@ -8,6 +8,9 @@ export type View =
   | { name: "contact" }
   | { name: "login" }
   | { name: "institutions" }
+  | { name: "institutions-schools" }
+  | { name: "institutions-colleges" }
+  | { name: "institutions-universities" }
   | { name: "dashboard" }
   | { name: "catalog" }
   | { name: "course"; courseId: string }

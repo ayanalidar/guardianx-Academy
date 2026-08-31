@@ -24,12 +24,12 @@ import { usePageContent, getContent } from "@/lib/use-content"
 
 // ===== REAL contact data =====
 const CONTACT = {
-  email: "hello@guardianx.in",
-  emailHref: "mailto:hello@guardianx.in",
+  email: "hello@academy.guardianx.cloud",
+  emailHref: "mailto:hello@academy.guardianx.cloud",
   phone: "+91-70067-1234-7",
   phoneHref: "tel:+917006712347",
-  website: "guardianx.in",
-  websiteHref: "https://guardianx.in",
+  website: "academy.guardianx.cloud",
+  websiteHref: "https://academy.guardianx.cloud",
   addressLines: [
     "110 - Nooripora",
     "Tehsil Pattan, District Baramulla",

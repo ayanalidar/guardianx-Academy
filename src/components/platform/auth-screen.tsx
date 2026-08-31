@@ -26,9 +26,9 @@ import { usePageContent, getContent } from "@/lib/use-content"
 import { AnimatedLogo } from "@/components/platform/animated-logo"
 
 const DEMO_ACCOUNTS = [
-  { label: "Student", email: "student@guardianx.io", password: "student123", icon: GraduationCap, color: "text-violet-300", tint: "bg-violet-500/10 border-violet-500/30" },
-  { label: "Instructor", email: "instructor@guardianx.io", password: "instructor123", icon: User, color: "text-cyan-300", tint: "bg-cyan-500/10 border-cyan-500/30" },
-  { label: "Admin", email: "admin@guardianx.io", password: "admin123", icon: Shield, color: "text-amber-300", tint: "bg-amber-500/10 border-amber-500/30" },
+  { label: "Student", email: "student@academy.guardianx.cloud", password: "student123", icon: GraduationCap, color: "text-violet-300", tint: "bg-violet-500/10 border-violet-500/30" },
+  { label: "Instructor", email: "instructor@academy.guardianx.cloud", password: "instructor123", icon: User, color: "text-cyan-300", tint: "bg-cyan-500/10 border-cyan-500/30" },
+  { label: "Admin", email: "admin@academy.guardianx.cloud", password: "admin123", icon: Shield, color: "text-amber-300", tint: "bg-amber-500/10 border-amber-500/30" },
 ]
 
 const FEATURES = [
@@ -69,7 +69,7 @@ export function AuthScreen() {
   const registerSubtitle = getContent(cmsData, "tabs", "registerSubtitle", "Start your cyber security journey today.")
 
   // Standard login state
-  const [loginEmail, setLoginEmail] = React.useState("student@guardianx.io")
+  const [loginEmail, setLoginEmail] = React.useState("student@academy.guardianx.cloud")
   const [loginPass, setLoginPass] = React.useState("student123")
 
   // School portal login state

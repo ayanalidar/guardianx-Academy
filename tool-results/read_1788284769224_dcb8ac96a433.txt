@@ -1,0 +1,758 @@
+  2199→ * ---------------------------------------------------------------- */
+  2200→
+  2201→const PILLARS = [
+  2202→  {
+  2203→    icon: BookOpen,
+  2204→    title: "LEARN",
+  2205→    desc: "Structured certification courses with video lessons, notes, and quizzes.",
+  2206→    color: "text-violet-300",
+  2207→    tint: "bg-violet-500/10",
+  2208→  },
+  2209→  {
+  2210→    icon: FlaskConical,
+  2211→    title: "PRACTICE",
+  2212→    desc: "Hands-on labs with real targets, isolated environments, and live terminals.",
+  2213→    color: "text-cyan-300",
+  2214→    tint: "bg-cyan-500/10",
+  2215→  },
+  2216→  {
+  2217→    icon: Trophy,
+  2218→    title: "COMPETE",
+  2219→    desc: "CTF competitions, weekly challenges, and team missions against peers.",
+  2220→    color: "text-amber-300",
+  2221→    tint: "bg-amber-500/10",
+  2222→  },
+  2223→  {
+  2224→    icon: Award,
+  2225→    title: "PROVE",
+  2226→    desc: "Tamper-evident, publicly verifiable credentials with cryptographic signatures.",
+  2227→    color: "text-emerald-300",
+  2228→    tint: "bg-emerald-500/10",
+  2229→  },
+  2230→  {
+  2231→    icon: Briefcase,
+  2232→    title: "CAREER",
+  2233→    desc: "Resume builder, mock interviews, job board, and role-matched skill analysis.",
+  2234→    color: "text-rose-300",
+  2235→    tint: "bg-rose-500/10",
+  2236→  },
+  2237→  {
+  2238→    icon: Building2,
+  2239→    title: "INSTITUTIONS",
+  2240→    desc: "Multi-tenant dashboards for schools, colleges, and universities.",
+  2241→    color: "text-teal-300",
+  2242→    tint: "bg-teal-500/10",
+  2243→  },
+  2244→] as const
+  2245→
+  2246→const RANGE_SERVICES = [
+  2247→  { port: "22", name: "SSH", icon: Terminal, color: "text-cyan-300" },
+  2248→  { port: "80", name: "HTTP", icon: Globe, color: "text-emerald-300" },
+  2249→  { port: "3306", name: "MYSQL", icon: Database, color: "text-amber-300" },
+  2250→] as const
+  2251→
+  2252→const LEARNING_PATHS = [
+  2253→  {
+  2254→    icon: BookOpen,
+  2255→    title: "Beginner",
+  2256→    desc: "Networking, Linux, and security fundamentals from absolute zero.",
+  2257→    duration: "3 months",
+  2258→    skills: "12 skills",
+  2259→    difficulty: "BEGINNER",
+  2260→    color: "text-emerald-300",
+  2261→    tint: "bg-emerald-500/10",
+  2262→  },
+  2263→  {
+  2264→    icon: Eye,
+  2265→    title: "SOC Analyst",
+  2266→    desc: "Log analysis, threat hunting, SIEM, and incident response.",
+  2267→    duration: "4 months",
+  2268→    skills: "18 skills",
+  2269→    difficulty: "INTERMEDIATE",
+  2270→    color: "text-cyan-300",
+  2271→    tint: "bg-cyan-500/10",
+  2272→  },
+  2273→  {
+  2274→    icon: Crosshair,
+  2275→    title: "Penetration Tester",
+  2276→    desc: "Recon, exploitation, privilege escalation, and reporting.",
+  2277→    duration: "6 months",
+  2278→    skills: "24 skills",
+  2279→    difficulty: "ADVANCED",
+  2280→    color: "text-violet-300",
+  2281→    tint: "bg-violet-500/10",
+  2282→  },
+  2283→  {
+  2284→    icon: Cloud,
+  2285→    title: "Cloud Security",
+  2286→    desc: "AWS, Azure, GCP security - containers, Kubernetes, IAM hardening.",
+  2287→    duration: "5 months",
+  2288→    skills: "20 skills",
+  2289→    difficulty: "ADVANCED",
+  2290→    color: "text-amber-300",
+  2291→    tint: "bg-amber-500/10",
+  2292→  },
+  2293→  {
+  2294→    icon: Briefcase,
+  2295→    title: "Job Ready",
+  2296→    desc: "Mock interviews, resume builder, and real-world projects portfolio.",
+  2297→    duration: "2 months",
+  2298→    skills: "10 skills",
+  2299→    difficulty: "PRACTICAL",
+  2300→    color: "text-rose-300",
+  2301→    tint: "bg-rose-500/10",
+  2302→  },
+  2303→  {
+  2304→    icon: GraduationCap,
+  2305→    title: "CISSP Track",
+  2306→    desc: "Certified Information Systems Security Professional prep - full domain coverage.",
+  2307→    duration: "5 months",
+  2308→    skills: "8 domains",
+  2309→    difficulty: "EXPERT",
+  2310→    color: "text-teal-300",
+  2311→    tint: "bg-teal-500/10",
+  2312→  },
+  2313→] as const
+  2314→
+  2315→// Skill tree branch angles (in degrees, 0 = right, going clockwise)
+  2316→const BRANCH_ANGLES = [-90, -30, 30, 90, 150, 210] as const
+  2317→
+  2318→const BRANCHES = [
+  2319→  { label: "OFFENSIVE", status: "completed" as const, xp: 850 },
+  2320→  { label: "DEFENSIVE", status: "in-progress" as const, xp: 420 },
+  2321→  { label: "NETWORK", status: "completed" as const, xp: 620 },
+  2322→  { label: "WEB", status: "available" as const, xp: 0 },
+  2323→  { label: "CLOUD", status: "locked" as const, xp: 0 },
+  2324→  { label: "FORENSICS", status: "locked" as const, xp: 0 },
+  2325→] as const
+  2326→
+  2327→/* Advanced Skill Map data - 7 domains with sub-skills */
+  2328→const SKILL_DOMAINS = [
+  2329→  { name: "Offensive", icon: Swords, color: "text-violet-300", bg: "bg-violet-500/10", border: "border-violet-500/30", barColor: "bg-violet-500", progress: 85, skills: 15 },
+  2330→  { name: "Defensive", icon: ShieldCheck, color: "text-cyan-300", bg: "bg-cyan-500/10", border: "border-cyan-500/30", barColor: "bg-cyan-500", progress: 60, skills: 12 },
+  2331→  { name: "Network", icon: Network, color: "text-amber-300", bg: "bg-amber-500/10", border: "border-amber-500/30", barColor: "bg-amber-500", progress: 72, skills: 10 },
+  2332→  { name: "Web", icon: Globe, color: "text-emerald-300", bg: "bg-emerald-500/10", border: "border-emerald-500/30", barColor: "bg-emerald-500", progress: 45, skills: 8 },
+  2333→  { name: "Cloud", icon: Cloud, color: "text-rose-300", bg: "bg-rose-500/10", border: "border-rose-500/30", barColor: "bg-rose-500", progress: 20, skills: 7 },
+  2334→  { name: "Forensics", icon: Search, color: "text-teal-300", bg: "bg-teal-500/10", border: "border-teal-500/30", barColor: "bg-teal-500", progress: 30, skills: 6 },
+  2335→  { name: "GRC", icon: Scale, color: "text-blue-300", bg: "bg-blue-500/10", border: "border-blue-500/30", barColor: "bg-blue-500", progress: 15, skills: 5 },
+  2336→]
+  2337→
+  2338→/* Sub-skills for the interactive map (5 per domain) */
+  2339→const SKILL_MAP_DATA = [
+  2340→  { domain: "Offensive", angle: -90, color: "#a78bfa", skills: ["Reconnaissance", "Scanning", "Enumeration", "Web Exploitation", "Privilege Escalation"] },
+  2341→  { domain: "Defensive", angle: -38, color: "#22d3ee", skills: ["Threat Detection", "Incident Response", "Log Analysis", "SIEM", "IDS/IPS"] },
+  2342→  { domain: "Network", angle: 13, color: "#fbbf24", skills: ["TCP/IP", "Routing", "Firewalls", "VPN", "Network Scanning"] },
+  2343→  { domain: "Web", angle: 64, color: "#34d399", skills: ["OWASP Top 10", "SQL Injection", "XSS", "CSRF", "API Security"] },
+  2344→  { domain: "Cloud", angle: 116, color: "#fb7185", skills: ["AWS Security", "Azure Security", "IAM", "Containers", "Kubernetes"] },
+  2345→  { domain: "Forensics", angle: 167, color: "#2dd4bf", skills: ["Disk Forensics", "Memory Forensics", "Network Forensics", "Steganography", "Timeline Analysis"] },
+  2346→  { domain: "GRC", angle: 218, color: "#60a5fa", skills: ["ISO 27001", "NIST", "SOC 2", "Risk Assessment", "Compliance"] },
+  2347→]
+  2348→
+  2349→/* Advanced interactive skill map component */
+  2350→function AdvancedSkillMap() {
+  2351→  const [hoveredDomain, setHoveredDomain] = React.useState<number | null>(null)
+  2352→  const [selectedDomain, setSelectedDomain] = React.useState<number | null>(null)
+  2353→
+  2354→  const centerX = 50
+  2355→  const centerY = 50
+  2356→  const domainRadius = 32 // distance from center to domain nodes
+  2357→  const skillRadius = 14 // distance from domain node to skill nodes
+  2358→
+  2359→  return (
+  2360→    <div className="relative">
+  2361→      {/* Legend bar */}
+  2362→      <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+  2363→        <div className="flex items-center gap-3 text-[10px] font-mono text-muted-foreground">
+  2364→          <span className="flex items-center gap-1"><span className="size-2 rounded-full bg-emerald-400" /> Completed</span>
+  2365→          <span className="flex items-center gap-1"><span className="size-2 rounded-full bg-amber-400" /> In Progress</span>
+  2366→          <span className="flex items-center gap-1"><span className="size-2 rounded-full bg-violet-400/40" /> Available</span>
+  2367→          <span className="flex items-center gap-1"><span className="size-2 rounded-full bg-muted-foreground/30" /> Locked</span>
+  2368→        </div>
+  2369→        <span className="text-[10px] font-mono text-muted-foreground">35 SKILLS / 7 DOMAINS</span>
+  2370→      </div>
+  2371→
+  2372→      {/* SVG-based interactive map */}
+  2373→      <div className="relative aspect-square max-w-[600px] mx-auto">
+  2374→        <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full" preserveAspectRatio="xMidYMid meet">
+  2375→          {/* Outer ring */}
+  2376→          <circle cx={centerX} cy={centerY} r={domainRadius + 8} fill="none" stroke="oklch(1 0 0 / 0.05)" strokeWidth="0.3" strokeDasharray="0.5 1" />
+  2377→          <circle cx={centerX} cy={centerY} r={domainRadius} fill="none" stroke="oklch(1 0 0 / 0.08)" strokeWidth="0.2" />
+  2378→          <circle cx={centerX} cy={centerY} r={domainRadius - 12} fill="none" stroke="oklch(1 0 0 / 0.05)" strokeWidth="0.2" />
+  2379→
+  2380→          {/* Connection lines from center to domains */}
+  2381→          {SKILL_MAP_DATA.map((d, i) => {
+  2382→            const rad = (d.angle * Math.PI) / 180
+  2383→            const x = centerX + domainRadius * Math.cos(rad)
+  2384→            const y = centerY + domainRadius * Math.sin(rad)
+  2385→            const isActive = hoveredDomain === i || selectedDomain === i
+  2386→            return (
+  2387→              <line
+  2388→                key={`line-${i}`}
+  2389→                x1={centerX}
+  2390→                y1={centerY}
+  2391→                x2={x}
+  2392→                y2={y}
+  2393→                stroke={isActive ? d.color : "oklch(1 0 0 / 0.12)"}
+  2394→                strokeWidth={isActive ? "0.6" : "0.3"}
+  2395→                strokeDasharray={isActive ? "0" : "0.5 1"}
+  2396→                style={{ transition: "all 0.3s" }}
+  2397→              />
+  2398→            )
+  2399→          })}
+  2400→
+  2401→          {/* Sub-skill connection lines + nodes */}
+  2402→          {SKILL_MAP_DATA.map((d, di) => {
+  2403→            const drad = (d.angle * Math.PI) / 180
+  2404→            const dx = centerX + domainRadius * Math.cos(drad)
+  2405→            const dy = centerY + domainRadius * Math.sin(drad)
+  2406→            const isActive = hoveredDomain === di || selectedDomain === di
+  2407→
+  2408→            return d.skills.map((skill, si) => {
+  2409→              // Spread skills in an arc around the domain node
+  2410→              const spread = 50 // degrees of arc
+  2411→              const skillAngle = d.angle - spread / 2 + (spread / (d.skills.length - 1)) * si
+  2412→              const srad = (skillAngle * Math.PI) / 180
+  2413→              const sx = dx + skillRadius * Math.cos(srad)
+  2414→              const sy = dy + skillRadius * Math.sin(srad)
+  2415→
+  2416→              return (
+  2417→                <g key={`skill-${di}-${si}`}>
+  2418→                  <line
+  2419→                    x1={dx}
+  2420→                    y1={dy}
+  2421→                    x2={sx}
+  2422→                    y2={sy}
+  2423→                    stroke={isActive ? d.color : "oklch(1 0 0 / 0.06)"}
+  2424→                    strokeWidth={isActive ? "0.3" : "0.15"}
+  2425→                    style={{ transition: "all 0.3s" }}
+  2426→                  />
+  2427→                  <circle
+  2428→                    cx={sx}
+  2429→                    cy={sy}
+  2430→                    r={isActive ? "1.5" : "1"}
+  2431→                    fill={isActive ? d.color : "oklch(1 0 0 / 0.2)"}
+  2432→                    style={{ transition: "all 0.3s", cursor: "pointer" }}
+  2433→                    onClick={() => setSelectedDomain(selectedDomain === di ? null : di)}
+  2434→                  />
+  2435→                  {isActive && (
+  2436→                    <text
+  2437→                      x={sx}
+  2438→                      y={sy - 2.5}
+  2439→                      textAnchor="middle"
+  2440→                      fill={d.color}
+  2441→                      fontSize="1.5"
+  2442→                      fontFamily="monospace"
+  2443→                      style={{ pointerEvents: "none" }}
+  2444→                    >
+  2445→                      {skill.length > 12 ? skill.substring(0, 10) + "..." : skill}
+  2446→                    </text>
+  2447→                  )}
+  2448→                </g>
+  2449→              )
+  2450→            })
+  2451→          })}
+  2452→
+  2453→          {/* Domain nodes */}
+  2454→          {SKILL_MAP_DATA.map((d, i) => {
+  2455→            const rad = (d.angle * Math.PI) / 180
+  2456→            const x = centerX + domainRadius * Math.cos(rad)
+  2457→            const y = centerY + domainRadius * Math.sin(rad)
+  2458→            const isActive = hoveredDomain === i || selectedDomain === i
+  2459→            const domain = SKILL_DOMAINS[i]
+  2460→            const status = domain.progress >= 70 ? "completed" : domain.progress >= 30 ? "in-progress" : domain.progress > 0 ? "available" : "locked"
+  2461→
+  2462→            return (
+  2463→              <g
+  2464→                key={`domain-${i}`}
+  2465→                style={{ cursor: "pointer" }}
+  2466→                onMouseEnter={() => setHoveredDomain(i)}
+  2467→                onMouseLeave={() => setHoveredDomain(null)}
+  2468→                onClick={() => setSelectedDomain(selectedDomain === i ? null : i)}
+  2469→              >
+  2470→                {/* Pulsing ring for active domains */}
+  2471→                {isActive && (
+  2472→                  <circle cx={x} cy={y} r="5" fill="none" stroke={d.color} strokeWidth="0.3" opacity="0.4">
+  2473→                    <animate attributeName="r" values="4;6;4" dur="2s" repeatCount="indefinite" />
+  2474→                    <animate attributeName="opacity" values="0.4;0.1;0.4" dur="2s" repeatCount="indefinite" />
+  2475→                  </circle>
+  2476→                )}
+  2477→                {/* Domain circle */}
+  2478→                <circle
+  2479→                  cx={x}
+  2480→                  cy={y}
+  2481→                  r={isActive ? "4" : "3.5"}
+  2482→                  fill={d.color}
+  2483→                  fillOpacity={isActive ? "0.3" : status === "locked" ? "0.05" : "0.15"}
+  2484→                  stroke={d.color}
+  2485→                  strokeWidth={isActive ? "0.6" : "0.4"}
+  2486→                  style={{ transition: "all 0.3s" }}
+  2487→                />
+  2488→                {/* Domain label */}
+  2489→                <text
+  2490→                  x={x}
+  2491→                  y={y + 7}
+  2492→                  textAnchor="middle"
+  2493→                  fill={isActive ? d.color : "oklch(0.7 0 0)"}
+  2494→                  fontSize="2"
+  2495→                  fontWeight="bold"
+  2496→                  fontFamily="monospace"
+  2497→                  style={{ pointerEvents: "none", transition: "all 0.3s" }}
+  2498→                >
+  2499→                  {d.domain.toUpperCase()}
+  2500→                </text>
+  2501→                {/* Progress ring */}
+  2502→                <circle
+  2503→                  cx={x}
+  2504→                  cy={y}
+  2505→                  r="3.5"
+  2506→                  fill="none"
+  2507→                  stroke={d.color}
+  2508→                  strokeWidth="0.8"
+  2509→                  strokeDasharray={`${(domain.progress / 100) * 22} 22`}
+  2510→                  strokeDashoffset="0"
+  2511→                  transform={`rotate(-90 ${x} ${y})`}
+  2512→                  opacity="0.6"
+  2513→                  style={{ transition: "all 0.3s" }}
+  2514→                />
+  2515→              </g>
+  2516→            )
+  2517→          })}
+  2518→
+  2519→          {/* Central node */}
+  2520→          <circle cx={centerX} cy={centerY} r="8" fill="oklch(0.6 0.2 295 / 0.15)" stroke="oklch(0.6 0.2 295 / 0.6)" strokeWidth="0.5" />
+  2521→          <circle cx={centerX} cy={centerY} r="6" fill="none" stroke="oklch(0.6 0.2 295 / 0.3)" strokeWidth="0.3" strokeDasharray="1 1">
+  2522→            <animateTransform attributeName="transform" type="rotate" from={`0 ${centerX} ${centerY}`} to={`360 ${centerX} ${centerY}`} dur="20s" repeatCount="indefinite" />
+  2523→          </circle>
+  2524→          <text x={centerX} y={centerY - 1} textAnchor="middle" fill="oklch(0.8 0.15 295)" fontSize="2.5" fontWeight="bold" fontFamily="monospace">CYBER</text>
+  2525→          <text x={centerX} y={centerY + 2} textAnchor="middle" fill="oklch(0.8 0.15 295)" fontSize="2.5" fontWeight="bold" fontFamily="monospace">SECURITY</text>
+  2526→        </svg>
+  2527→
+  2528→        {/* Hover detail panel */}
+  2529→        {hoveredDomain !== null && (
+  2530→          <motion.div
+  2531→            initial={{ opacity: 0, y: 4 }}
+  2532→            animate={{ opacity: 1, y: 0 }}
+  2533→            className="absolute bottom-2 left-2 right-2 lg:left-auto lg:right-2 lg:max-w-xs rounded-lg border border-border/60 bg-card/90 backdrop-blur p-3 z-20"
+  2534→          >
+  2535→            <div className="flex items-center gap-2 mb-2">
+  2536→              <span className="size-2.5 rounded-full" style={{ backgroundColor: SKILL_MAP_DATA[hoveredDomain].color }} />
+  2537→              <span className="text-xs font-bold uppercase tracking-wider">{SKILL_DOMAINS[hoveredDomain].name} Security</span>
+  2538→              <span className="text-[10px] font-mono text-muted-foreground ml-auto">{SKILL_DOMAINS[hoveredDomain].progress}%</span>
+  2539→            </div>
+  2540→            <div className="flex flex-wrap gap-1">
+  2541→              {SKILL_MAP_DATA[hoveredDomain].skills.map(s => (
+  2542→                <span key={s} className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-muted/50 text-muted-foreground">{s}</span>
+  2543→              ))}
+  2544→            </div>
+  2545→          </motion.div>
+  2546→        )}
+  2547→      </div>
+  2548→
+  2549→      {/* Mobile tap hint */}
+  2550→      <p className="text-center text-[10px] text-muted-foreground/60 mt-2 lg:hidden">Tap a domain to explore skills</p>
+  2551→    </div>
+  2552→  )
+  2553→}
+  2554→
+  2555→const DAILY_OBJECTIVES = [
+  2556→  { label: "Complete 1 lab module", xp: 50, done: true },
+  2557→  { label: "Submit 1 CTF flag", xp: 100, done: true },
+  2558→  { label: "Pass a quiz with 80%+", xp: 75, done: false },
+  2559→  { label: "Spend 30 min in the cyber range", xp: 30, done: false },
+  2560→] as const
+  2561→
+  2562→const RANK_LADDER = [
+  2563→  { name: "RECRUIT", level: 1 },
+  2564→  { name: "ANALYST", level: 2 },
+  2565→  { name: "HUNTER", level: 3 },
+  2566→  { name: "OPERATOR", level: 4 },
+  2567→  { name: "SPECIALIST", level: 5 },
+  2568→  { name: "SENTINEL", level: 6 },
+  2569→  { name: "GUARDIAN", level: 7 },
+  2570→  { name: "ELITE GUARDIAN", level: 8 },
+  2571→] as const
+  2572→
+  2573→const CAREER_SKILLS = [
+  2574→  { label: "Networking", value: 92, barClass: "bg-gradient-to-r from-cyan-500 to-cyan-400" },
+  2575→  { label: "Linux", value: 81, barClass: "bg-gradient-to-r from-violet-500 to-violet-400" },
+  2576→  { label: "Web Security", value: 87, barClass: "bg-gradient-to-r from-emerald-500 to-emerald-400" },
+  2577→  { label: "Pentesting", value: 64, barClass: "bg-gradient-to-r from-amber-500 to-amber-400" },
+  2578→  { label: "SOC", value: 42, barClass: "bg-gradient-to-r from-rose-500 to-rose-400" },
+  2579→  { label: "Cloud", value: 23, barClass: "bg-gradient-to-r from-teal-500 to-teal-400" },
+  2580→] as const
+  2581→
+  2582→const CAREER_ROLES = [
+  2583→  { role: "Junior Pentester", match: 82 },
+  2584→  { role: "SOC Analyst", match: 71 },
+  2585→  { role: "Security Engineer", match: 54 },
+  2586→] as const
+  2587→
+  2588→const INSTITUTION_TYPES = [
+  2589→  {
+  2590→    type: "Schools",
+  2591→    icon: Building2,
+  2592→    desc: "Comprehensive cyber security programs for school students. Complimentary school management system for MoU partners.",
+  2593→    color: "text-emerald-300",
+  2594→    tint: "bg-emerald-500/10",
+  2595→    view: { name: "institutions-schools" as const },
+  2596→  },
+  2597→  {
+  2598→    type: "Colleges",
+  2599→    icon: BookOpen,
+  2600→    desc: "Industry-aligned certification courses integrated into college curriculum with hands-on labs and instructor-led training.",
+  2601→    color: "text-cyan-300",
+  2602→    tint: "bg-cyan-500/10",
+  2603→    view: { name: "institutions-colleges" as const },
+  2604→  },
+  2605→  {
+  2606→    type: "Universities",
+  2607→    icon: Award,
+  2608→    desc: "Advanced research-grade cyber security labs, degree integration, and PhD-level coursework for universities.",
+  2609→    color: "text-violet-300",
+  2610→    tint: "bg-violet-500/10",
+  2611→    view: { name: "institutions-universities" as const },
+  2612→  },
+  2613→] as const
+  2614→
+  2615→const STORY_STAGES = [
+  2616→  {
+  2617→    label: "START",
+  2618→    icon: Rocket,
+  2619→    color: "text-violet-300",
+  2620→    tint: "bg-violet-500/10",
+  2621→    border: "border-violet-500/40",
+  2622→  },
+  2623→  {
+  2624→    label: "LEARNING",
+  2625→    icon: BookOpen,
+  2626→    color: "text-cyan-300",
+  2627→    tint: "bg-cyan-500/10",
+  2628→    border: "border-cyan-500/40",
+  2629→  },
+  2630→  {
+  2631→    label: "LABS",
+  2632→    icon: FlaskConical,
+  2633→    color: "text-amber-300",
+  2634→    tint: "bg-amber-500/10",
+  2635→    border: "border-amber-500/40",
+  2636→  },
+  2637→  {
+  2638→    label: "CERTIFICATION",
+  2639→    icon: FileCheck,
+  2640→    color: "text-emerald-300",
+  2641→    tint: "bg-emerald-500/10",
+  2642→    border: "border-emerald-500/40",
+  2643→  },
+  2644→  {
+  2645→    label: "CAREER",
+  2646→    icon: Briefcase,
+  2647→    color: "text-rose-300",
+  2648→    tint: "bg-rose-500/10",
+  2649→    border: "border-rose-500/40",
+  2650→  },
+  2651→] as const
+  2652→
+  2653→const STORIES = [
+  2654→  {
+  2655→    name: "Aarav S.",
+  2656→    role: "Aspirant → SOC Analyst",
+  2657→    path: "Beginner Path → SOC Analyst → CEH Practical",
+  2658→    position: "SOC Analyst L1 · FinTech startup",
+  2659→  },
+  2660→  {
+  2661→    name: "Maya R.",
+  2662→    role: "Fresher → Junior Pentester",
+  2663→    path: "Beginner → Penetration Tester → OSCP",
+  2664→    position: "Junior Pentester · Security consultancy",
+  2665→  },
+  2666→  {
+  2667→    name: "Karthik V.",
+  2668→    role: "Working Pro → Cloud Security Engineer",
+  2669→    path: "Cloud Security Path → CISSP",
+  2670→    position: "Cloud Security Engineer · SaaS company",
+  2671→  },
+  2672→] as const
+  2673→
+  2674→const TRUST_STATS = [
+  2675→  { icon: Users, value: "12,000+", label: "Learners", color: "text-violet-300", tint: "bg-violet-500/10" },
+  2676→  { icon: FlaskConical, value: "31", label: "Labs", color: "text-cyan-300", tint: "bg-cyan-500/10" },
+  2677→  { icon: BookOpen, value: "28+", label: "Courses", color: "text-amber-300", tint: "bg-amber-500/10" },
+  2678→  { icon: Building2, value: "150+", label: "Partners", color: "text-emerald-300", tint: "bg-emerald-500/10" },
+  2679→] as const
+  2680→
+  2681→/**
+  2682→ * Fallback list of real OSS technology partners - used only if the
+  2683→ * `/api/technology-partners` route fails. Replaces the previous fake
+  2684→ * "Trusted by Google / Microsoft / Amazon" strip with the real tools
+  2685→ * GuardianX labs are built around.
+  2686→ */
+  2687→const FALLBACK_PARTNERS: TechnologyPartner[] = [
+  2688→  { id: "fb-kali", name: "Kali Linux", category: "tool", description: "Penetration testing OS used across GuardianX offensive labs.", url: "https://www.kali.org/", icon: "Terminal", order: 1, published: true },
+  2689→  { id: "fb-nmap", name: "Nmap", category: "tool", description: "Network mapper for discovery and security auditing.", url: "https://nmap.org/", icon: "Radar", order: 2, published: true },
+  2690→  { id: "fb-burp", name: "Burp Suite", category: "tool", description: "Web vulnerability scanner and interception proxy.", url: "https://portswigger.net/burp", icon: "Bug", order: 3, published: true },
+  2691→  { id: "fb-metasploit", name: "Metasploit", category: "tool", description: "Exploitation framework for penetration testing.", url: "https://www.metasploit.com/", icon: "Swords", order: 4, published: true },
+  2692→  { id: "fb-wireshark", name: "Wireshark", category: "tool", description: "Network protocol analyzer for traffic inspection.", url: "https://www.wireshark.org/", icon: "Activity", order: 5, published: true },
+  2693→  { id: "fb-docker", name: "Docker", category: "platform", description: "Container runtime powering our cyber range.", url: "https://www.docker.com/", icon: "Container", order: 6, published: true },
+  2694→  { id: "fb-hashcat", name: "Hashcat", category: "tool", description: "Advanced password recovery utility.", url: "https://hashcat.net/hashcat/", icon: "Key", order: 7, published: true },
+  2695→  { id: "fb-john", name: "John the Ripper", category: "tool", description: "Password cracker for offline hash analysis.", url: "https://www.openwall.com/john/", icon: "KeyRound", order: 8, published: true },
+  2696→  { id: "fb-nikto", name: "Nikto", category: "tool", description: "Web server scanner for known vulnerabilities.", url: "https://cirt.net/Nikto2", icon: "ScanLine", order: 9, published: true },
+  2697→  { id: "fb-sqlmap", name: "SQLMap", category: "tool", description: "Automatic SQL injection and database takeover tool.", url: "https://sqlmap.org/", icon: "Database", order: 10, published: true },
+  2698→  { id: "fb-hydra", name: "Hydra", category: "tool", description: "Fast network logon cracker supporting many protocols.", url: "https://github.com/vanhauser-thc/thc-hydra", icon: "Fingerprint", order: 11, published: true },
+  2699→  { id: "fb-gobuster", name: "Gobuster", category: "tool", description: "Directory/file/DNS brute-forcer used in recon labs.", url: "https://github.com/OJ/gobuster", icon: "FolderSearch", order: 12, published: true },
+  2700→]
+  2701→
+  2702→/* ---------------------------------------------------------------- *
+  2703→ *  New training-restructure sections - static demo data.           *
+  2704→ *  These arrays back the WHO WE TRAIN, UPCOMING BATCHES,           *
+  2705→ *  FLEXIBLE SCHEDULES, TRAINING METHODOLOGY, and EXPERT            *
+  2706→ *  INSTRUCTORS sections. Will be DB-driven in a later task.        *
+  2707→ * ---------------------------------------------------------------- */
+  2708→
+  2709→const AUDIENCES = [
+  2710→  {
+  2711→    icon: GraduationCap,
+  2712→    title: "Aspirants",
+  2713→    desc: "Preparing for certifications or entering cybersecurity.",
+  2714→    color: "text-violet-300",
+  2715→    tint: "bg-violet-500/10",
+  2716→  },
+  2717→  {
+  2718→    icon: Rocket,
+  2719→    title: "Freshers",
+  2720→    desc: "Beginning their cybersecurity careers.",
+  2721→    color: "text-cyan-300",
+  2722→    tint: "bg-cyan-500/10",
+  2723→  },
+  2724→  {
+  2725→    icon: Briefcase,
+  2726→    title: "Working Professionals",
+  2727→    desc: "Upskilling around work schedules.",
+  2728→    color: "text-amber-300",
+  2729→    tint: "bg-amber-500/10",
+  2730→  },
+  2731→  {
+  2732→    icon: Building2,
+  2733→    title: "Institutions",
+  2734→    desc: "Schools, colleges, universities, organizations.",
+  2735→    color: "text-emerald-300",
+  2736→    tint: "bg-emerald-500/10",
+  2737→  },
+  2738→] as const
+  2739→
+  2740→/**
+  2741→ * Upcoming live instructor-led certification batches.
+  2742→ *
+  2743→ * Level → color coding:
+  2744→ *   Beginner     → emerald (easy, green)
+  2745→ *   Intermediate → amber   (medium)
+  2746→ *   Advanced     → rose    (hard)
+  2747→ */
+  2748→const UPCOMING_BATCHES = [
+  2749→  {
+  2750→    certification: "CompTIA Security+",
+  2751→    name: "Security+ Weekend Batch",
+  2752→    schedule: "Sat + Sun, 7:00 PM – 9:00 PM IST",
+  2753→    startDate: "October 12",
+  2754→    mode: "Live Online",
+  2755→    instructor: "Senior Cybersecurity Instructor",
+  2756→    seats: 12,
+  2757→    almostFull: false,
+  2758→    level: "Beginner",
+  2759→    certColor: "text-emerald-300",
+  2760→    certTint: "bg-emerald-500/15",
+  2761→    certBorder: "border-emerald-500/30",
+  2762→    levelColor: "text-emerald-300",
+  2763→    levelTint: "bg-emerald-500/10",
+  2764→    levelBorder: "border-emerald-500/30",
+  2765→    borderColor: "border-border/60 hover:border-emerald-500/40 hover:shadow-[0_20px_60px_-20px_oklch(0.65_0.15_155_/_0.25)]",
+  2766→    btnClass: "bg-emerald-600 hover:bg-emerald-500",
+  2767→  },
+  2768→  {
+  2769→    certification: "CEH (Certified Ethical Hacker)",
+  2770→    name: "CEH Weekday Evening",
+  2771→    schedule: "Mon-Wed-Fri, 8:00 PM – 10:00 PM IST",
+  2772→    startDate: "October 20",
+  2773→    mode: "Live Online",
+  2774→    instructor: "Dr. Sarah Chen",
+  2775→    seats: 8,
+  2776→    almostFull: false,
+  2777→    level: "Intermediate",
+  2778→    certColor: "text-amber-300",
+  2779→    certTint: "bg-amber-500/15",
+  2780→    certBorder: "border-amber-500/30",
+  2781→    levelColor: "text-amber-300",
+  2782→    levelTint: "bg-amber-500/10",
+  2783→    levelBorder: "border-amber-500/30",
+  2784→    borderColor: "border-border/60 hover:border-amber-500/40 hover:shadow-[0_20px_60px_-20px_oklch(0.7_0.15_70_/_0.25)]",
+  2785→    btnClass: "bg-amber-600 hover:bg-amber-500",
+  2786→  },
+  2787→  {
+  2788→    certification: "CCNA",
+  2789→    name: "CCNA Morning Batch",
+  2790→    schedule: "Tue-Thu, 7:00 AM – 9:00 AM IST",
+  2791→    startDate: "November 03",
+  2792→    mode: "Live Online",
+  2793→    instructor: "Raj Patel",
+  2794→    seats: 15,
+  2795→    almostFull: false,
+  2796→    level: "Beginner",
+  2797→    certColor: "text-cyan-300",
+  2798→    certTint: "bg-cyan-500/15",
+  2799→    certBorder: "border-cyan-500/30",
+  2800→    levelColor: "text-emerald-300",
+  2801→    levelTint: "bg-emerald-500/10",
+  2802→    levelBorder: "border-emerald-500/30",
+  2803→    borderColor: "border-border/60 hover:border-cyan-500/40 hover:shadow-[0_20px_60px_-20px_oklch(0.7_0.15_220_/_0.25)]",
+  2804→    btnClass: "bg-cyan-600 hover:bg-cyan-500",
+  2805→  },
+  2806→  {
+  2807→    certification: "CISSP",
+  2808→    name: "CISSP Weekend Intensive",
+  2809→    schedule: "Sat-Sun, 10:00 AM – 1:00 PM IST",
+  2810→    startDate: "November 09",
+  2811→    mode: "Live Online",
+  2812→    instructor: "Alex Mercer",
+  2813→    seats: 5,
+  2814→    almostFull: true,
+  2815→    level: "Advanced",
+  2816→    certColor: "text-rose-300",
+  2817→    certTint: "bg-rose-500/15",
+  2818→    certBorder: "border-rose-500/30",
+  2819→    levelColor: "text-rose-300",
+  2820→    levelTint: "bg-rose-500/10",
+  2821→    levelBorder: "border-rose-500/30",
+  2822→    borderColor: "border-border/60 hover:border-rose-500/40 hover:shadow-[0_20px_60px_-20px_oklch(0.65_0.2_15_/_0.25)]",
+  2823→    btnClass: "bg-rose-600 hover:bg-rose-500",
+  2824→  },
+  2825→] as const
+  2826→
+  2827→const SCHEDULES = [
+  2828→  {
+  2829→    icon: CalendarDays,
+  2830→    type: "WEEKDAY",
+  2831→    example: "Mon-Wed-Fri · 8:00 PM – 10:00 PM",
+  2832→    color: "text-violet-300",
+  2833→    tint: "bg-violet-500/10",
+  2834→  },
+  2835→  {
+  2836→    icon: CalendarCheck,
+  2837→    type: "WEEKEND",
+  2838→    example: "Sat + Sun · 10:00 AM – 1:00 PM",
+  2839→    color: "text-cyan-300",
+  2840→    tint: "bg-cyan-500/10",
+  2841→  },
+  2842→  {
+  2843→    icon: Sun,
+  2844→    type: "MORNING",
+  2845→    example: "Tue-Thu · 7:00 AM – 9:00 AM",
+  2846→    color: "text-amber-300",
+  2847→    tint: "bg-amber-500/10",
+  2848→  },
+  2849→  {
+  2850→    icon: SunMedium,
+  2851→    type: "AFTERNOON",
+  2852→    example: "Mon-Wed · 2:00 PM – 4:00 PM",
+  2853→    color: "text-emerald-300",
+  2854→    tint: "bg-emerald-500/10",
+  2855→  },
+  2856→  {
+  2857→    icon: Sunset,
+  2858→    type: "EVENING",
+  2859→    example: "Mon-Fri · 7:00 PM – 9:00 PM",
+  2860→    color: "text-rose-300",
+  2861→    tint: "bg-rose-500/10",
+  2862→  },
+  2863→  {
+  2864→    icon: Moon,
+  2865→    type: "LATE NIGHT",
+  2866→    example: "Mon-Thu · 10:00 PM – 12:00 AM",
+  2867→    color: "text-teal-300",
+  2868→    tint: "bg-teal-500/10",
+  2869→  },
+  2870→] as const
+  2871→
+  2872→/**
+  2873→ * 7-step training methodology - the GuardianX framework that every
+  2874→ * certification batch follows end-to-end. This sequence is one of the
+  2875→ * platform's defining visual elements.
+  2876→ */
+  2877→const METHODOLOGY_STEPS = [
+  2878→  {
+  2879→    num: "01",
+  2880→    icon: Video,
+  2881→    title: "LIVE LECTURE",
+  2882→    desc: "Instructor-led live sessions covering theory, real-world cases, and exam blueprints.",
+  2883→  },
+  2884→  {
+  2885→    num: "02",
+  2886→    icon: Microscope,
+  2887→    title: "IN-DEPTH ANALYSIS",
+  2888→    desc: "Break down each topic with worked examples, threat models, and lab walkthroughs.",
+  2889→  },
+  2890→  {
+  2891→    num: "03",
+  2892→    icon: FileText,
+  2893→    title: "STUDY MATERIAL",
+  2894→    desc: "Downloadable PDFs, on-the-go notes, and structured reference material for every lesson.",
+  2895→  },
+  2896→  {
+  2897→    num: "04",
+  2898→    icon: FlaskConical,
+  2899→    title: "HANDS-ON LAB",
+  2900→    desc: "Spin up isolated targets and apply every concept in a real cyber range environment.",
+  2901→  },
+  2902→  {
+  2903→    num: "05",
+  2904→    icon: ClipboardList,
+  2905→    title: "ASSIGNMENT",
+  2906→    desc: "Practical assignments graded by instructors with personalized written feedback.",
+  2907→  },
+  2908→  {
+  2909→    num: "06",
+  2910→    icon: FileQuestion,
+  2911→    title: "MOCK TEST",
+  2912→    desc: "Full-length mock exams that mirror the real certification format and timing.",
+  2913→  },
+  2914→  {
+  2915→    num: "07",
+  2916→    icon: Award,
+  2917→    title: "EXAM PREPARATION",
+  2918→    desc: "Final revision, exam strategy, and confidence drills to walk into test day ready.",
+  2919→  },
+  2920→] as const
+  2921→
+  2922→/**
+  2923→ * Verified instructor profiles - these are real instructor records from
+  2924→ * the GuardianX DB. Shown here as a static showcase; will be wired to
+  2925→ * /api/instructors in a later task.
+  2926→ */
+  2927→const INSTRUCTORS = [
+  2928→  {
+  2929→    name: "Dr. Sarah Chen",
+  2930→    initials: "SC",
+  2931→    expertise: "Penetration Testing, Web Security",
+  2932→    experience: "12+ years",
+  2933→    certs: "CEH, OSCP, CISSP",
+  2934→    avatarBg: "bg-violet-500/15",
+  2935→    avatarColor: "text-violet-300",
+  2936→  },
+  2937→  {
+  2938→    name: "Raj Patel",
+  2939→    initials: "RP",
+  2940→    expertise: "Network Security, SOC",
+  2941→    experience: "8+ years",
+  2942→    certs: "CCNA, CCNP, GCIA",
+  2943→    avatarBg: "bg-cyan-500/15",
+  2944→    avatarColor: "text-cyan-300",
+  2945→  },
+  2946→  {
+  2947→    name: "Alex Mercer",
+  2948→    initials: "AM",
+  2949→    expertise: "Cloud Security, GRC",
+  2950→    experience: "15+ years",
+  2951→    certs: "CISSP, CCSP, CISM",
+  2952→    avatarBg: "bg-amber-500/15",
+  2953→    avatarColor: "text-amber-300",
+  2954→  },
+  2955→] as const
+  2956→

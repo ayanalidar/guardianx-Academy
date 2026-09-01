@@ -7,53 +7,29 @@ import { useAppStore, type View } from "@/store/app-store"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
-  Shield,
   ArrowRight,
-  BookOpen,
-  FlaskConical,
-  Trophy,
   Award,
-  Briefcase,
-  Building2,
-  Lock,
-  Server,
-  Database,
-  Terminal,
-  Crosshair,
-  Target,
-  Zap,
-  TrendingUp,
-  Rocket,
-  GraduationCap,
-  CheckCircle2,
   BadgeCheck,
-  Users,
-  Layers,
-  Globe,
-  Cloud,
-  Eye,
-  Crown,
-  FileCheck,
-  Sparkles,
-  ChevronRight,
+  Building2,
   Calendar,
+  CheckCircle2,
+  ChevronRight,
   Clock,
-  Video,
-  Sun,
-  SunMedium,
-  Sunset,
-  Moon,
-  CalendarDays,
-  CalendarCheck,
-  FileText,
-  ClipboardList,
-  FileQuestion,
-  Microscope,
-  Swords,
-  ShieldCheck,
-  Scale,
-  Search,
+  Crosshair,
+  Crown,
+  Eye,
+  Layers,
+  Lock,
   Network,
+  Rocket,
+  Server,
+  Sparkles,
+  Target,
+  TrendingUp,
+  Trophy,
+  Users,
+  Video,
+  Zap,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { getCmsIcon } from "@/lib/cms-icons"
@@ -70,12 +46,42 @@ import {
   StatusDot,
 } from "@/components/cyber"
 import type { TerminalLine } from "@/components/cyber"
+import { AdvancedSkillMap } from "@/components/home/advanced-skill-map"
+import {
+  PILLARS,
+  RANGE_SERVICES,
+  LEARNING_PATHS,
+  BRANCH_ANGLES,
+  BRANCHES,
+  SKILL_DOMAINS,
+  SKILL_MAP_DATA,
+  DAILY_OBJECTIVES,
+  RANK_LADDER,
+  CAREER_SKILLS,
+  CAREER_ROLES,
+  INSTITUTION_TYPES,
+  STORY_STAGES,
+  STORIES,
+  TRUST_STATS,
+  FALLBACK_PARTNERS,
+  AUDIENCES,
+  UPCOMING_BATCHES,
+  SCHEDULES,
+  METHODOLOGY_STEPS,
+  INSTRUCTORS,
+  type TechnologyPartner,
+  type PlatformStat,
+  type LearningPathRow,
+  type RankRow,
+} from "@/views/home-data"
 
 /* ---------------------------------------------------------------- *
  *  HomeView - GuardianX Academy cinematic 13-section homepage      *
  *  Tells the full story: hero → products → range → paths →         *
  *  skills → missions → gamification → careers → institutions →     *
  *  certifications → stories → trust → final CTA.                   *
+ *  Static data + types live in `@/views/home-data`.               *
+ *  AdvancedSkillMap lives in `@/components/home/advanced-skill-map`.*
  * ---------------------------------------------------------------- */
 
 // Shared animation variants - no scroll triggers, just simple fades.
@@ -89,67 +95,6 @@ const FADE_IN = {
   initial: { opacity: 0 },
   animate: { opacity: 1 },
   transition: { duration: 0.35, ease: "easeOut" },
-}
-
-/* ---------------------------------------------------------------- *
- *  Types for DB-driven content fetched from the public APIs.       *
- * ---------------------------------------------------------------- */
-interface TechnologyPartner {
-  id: string
-  name: string
-  category: string
-  description?: string | null
-  url?: string | null
-  icon: string
-  order: number
-  published: boolean
-}
-
-interface PlatformStat {
-  id: string
-  key: string
-  label: string
-  value: string
-  source: string // "manual" | "calculated"
-  displayStatus: string
-  suffix?: string | null
-  icon: string
-  color: string
-  updatedAt: string
-}
-
-interface LearningPathRow {
-  id: string
-  slug: string
-  title: string
-  subtitle?: string | null
-  description: string
-  icon: string
-  color: string
-  tint: string
-  difficulty: string
-  duration: string
-  skillsCount: number
-  labsCount: number
-  xpReward: number
-  careerOutcome?: string | null
-  skills: string[]
-  courses: string[]
-  order: number
-  published: boolean
-  featured: boolean
-}
-
-interface RankRow {
-  id: string
-  name: string
-  displayName: string
-  level: number
-  xpThreshold: number
-  color: string
-  description?: string | null
-  icon: string
-  order: number
 }
 
 export function HomeView() {
@@ -386,6 +331,58 @@ export function HomeView() {
     staleTime: 60_000,
   })
   const rankRows = ranksData?.ranks ?? []
+
+  /* ---------------------- UPCOMING BATCHES (DB-backed) --------------------- *
+   *  Public list of live instructor-led certification batches.             *
+   *  Falls back to the static `UPCOMING_BATCHES` array when the API fails *
+   *  so the homepage never goes blank.                                    *
+   * ---------------------------------------------------------------------- */
+  type TrainingBatchRow = {
+    id?: string
+    certification: string
+    name: string
+    schedule: string
+    startDate: string
+    mode: string
+    instructor: string
+    seats: number
+    enrolled?: number
+    status?: string
+    level: string
+    certColor: string
+    certTint: string
+    certBorder: string
+    levelColor: string
+    levelTint: string
+    levelBorder: string
+    borderColor: string
+    btnClass: string
+    almostFull?: boolean
+  }
+  const { data: batchesData } = useQuery<{ batches: TrainingBatchRow[]; count: number } | null>({
+    queryKey: ["home-training-batches"],
+    queryFn: async () => {
+      try {
+        const res = await fetch("/api/training-batches")
+        if (!res.ok) return null
+        return res.json()
+      } catch {
+        return null
+      }
+    },
+    staleTime: 60_000,
+  })
+  const displayBatches: TrainingBatchRow[] = React.useMemo(() => {
+    const api = batchesData?.batches
+    if (api && api.length > 0) {
+      return api.map((b) => ({
+        ...b,
+        almostFull: (b.seats - (b.enrolled ?? 0)) <= 2 || b.status === "Almost Full",
+      }))
+    }
+    // Static fallback — already has `almostFull`.
+    return UPCOMING_BATCHES as unknown as TrainingBatchRow[]
+  }, [batchesData])
 
   // Normalize platform stats into the same shape as the fallback TRUST_STATS
   // so the JSX below doesn't need runtime `"x" in s` checks.
@@ -638,7 +635,7 @@ export function HomeView() {
           </motion.div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-5">
-            {UPCOMING_BATCHES.map((b, i) => (
+            {displayBatches.slice(0, 4).map((b, i) => (
               <motion.div
                 key={b.name}
                 initial={{ opacity: 0, y: 12 }}
@@ -697,17 +694,34 @@ export function HomeView() {
                     <Users className="size-3.5 text-muted-foreground shrink-0" aria-hidden />
                     <span className="text-muted-foreground">{b.instructor}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Target className="size-3.5 text-muted-foreground shrink-0" aria-hidden />
-                    <span
-                      className={cn(
-                        b.almostFull
-                          ? "text-amber-300 font-medium"
-                          : "text-emerald-300 font-medium"
-                      )}
-                    >
-                      {b.seats} seats available{b.almostFull ? " · Almost Full" : ""}
-                    </span>
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <Target className="size-3.5 text-muted-foreground shrink-0" aria-hidden />
+                      <span
+                        className={cn(
+                          "text-xs font-medium tabular-nums",
+                          b.almostFull ? "text-amber-300" : "text-emerald-300"
+                        )}
+                      >
+                        {b.seats - (b.enrolled ?? 0)} seats left
+                        {b.almostFull ? " · Almost Full" : ""}
+                      </span>
+                      <span className="ml-auto text-[10px] font-mono text-muted-foreground tabular-nums">
+                        {b.enrolled ?? 0}/{b.seats}
+                      </span>
+                    </div>
+                    {/* Capacity progress bar */}
+                    <div className="h-1.5 rounded-full bg-muted/60 overflow-hidden" aria-hidden>
+                      <div
+                        className={cn(
+                          "h-full rounded-full transition-all duration-500",
+                          b.almostFull
+                            ? "bg-gradient-to-r from-amber-500 to-amber-400"
+                            : "bg-gradient-to-r from-emerald-500 to-emerald-400"
+                        )}
+                        style={{ width: `${Math.min(100, ((b.enrolled ?? 0) / b.seats) * 100)}%` }}
+                      />
+                    </div>
                   </div>
                 </dl>
 
@@ -2194,762 +2208,3 @@ export function HomeView() {
   )
 }
 
-/* ---------------------------------------------------------------- *
- *  Static demo data - clearly marked placeholders                  *
- * ---------------------------------------------------------------- */
-
-const PILLARS = [
-  {
-    icon: BookOpen,
-    title: "LEARN",
-    desc: "Structured certification courses with video lessons, notes, and quizzes.",
-    color: "text-violet-300",
-    tint: "bg-violet-500/10",
-  },
-  {
-    icon: FlaskConical,
-    title: "PRACTICE",
-    desc: "Hands-on labs with real targets, isolated environments, and live terminals.",
-    color: "text-cyan-300",
-    tint: "bg-cyan-500/10",
-  },
-  {
-    icon: Trophy,
-    title: "COMPETE",
-    desc: "CTF competitions, weekly challenges, and team missions against peers.",
-    color: "text-amber-300",
-    tint: "bg-amber-500/10",
-  },
-  {
-    icon: Award,
-    title: "PROVE",
-    desc: "Tamper-evident, publicly verifiable credentials with cryptographic signatures.",
-    color: "text-emerald-300",
-    tint: "bg-emerald-500/10",
-  },
-  {
-    icon: Briefcase,
-    title: "CAREER",
-    desc: "Resume builder, mock interviews, job board, and role-matched skill analysis.",
-    color: "text-rose-300",
-    tint: "bg-rose-500/10",
-  },
-  {
-    icon: Building2,
-    title: "INSTITUTIONS",
-    desc: "Multi-tenant dashboards for schools, colleges, and universities.",
-    color: "text-teal-300",
-    tint: "bg-teal-500/10",
-  },
-] as const
-
-const RANGE_SERVICES = [
-  { port: "22", name: "SSH", icon: Terminal, color: "text-cyan-300" },
-  { port: "80", name: "HTTP", icon: Globe, color: "text-emerald-300" },
-  { port: "3306", name: "MYSQL", icon: Database, color: "text-amber-300" },
-] as const
-
-const LEARNING_PATHS = [
-  {
-    icon: BookOpen,
-    title: "Beginner",
-    desc: "Networking, Linux, and security fundamentals from absolute zero.",
-    duration: "3 months",
-    skills: "12 skills",
-    difficulty: "BEGINNER",
-    color: "text-emerald-300",
-    tint: "bg-emerald-500/10",
-  },
-  {
-    icon: Eye,
-    title: "SOC Analyst",
-    desc: "Log analysis, threat hunting, SIEM, and incident response.",
-    duration: "4 months",
-    skills: "18 skills",
-    difficulty: "INTERMEDIATE",
-    color: "text-cyan-300",
-    tint: "bg-cyan-500/10",
-  },
-  {
-    icon: Crosshair,
-    title: "Penetration Tester",
-    desc: "Recon, exploitation, privilege escalation, and reporting.",
-    duration: "6 months",
-    skills: "24 skills",
-    difficulty: "ADVANCED",
-    color: "text-violet-300",
-    tint: "bg-violet-500/10",
-  },
-  {
-    icon: Cloud,
-    title: "Cloud Security",
-    desc: "AWS, Azure, GCP security - containers, Kubernetes, IAM hardening.",
-    duration: "5 months",
-    skills: "20 skills",
-    difficulty: "ADVANCED",
-    color: "text-amber-300",
-    tint: "bg-amber-500/10",
-  },
-  {
-    icon: Briefcase,
-    title: "Job Ready",
-    desc: "Mock interviews, resume builder, and real-world projects portfolio.",
-    duration: "2 months",
-    skills: "10 skills",
-    difficulty: "PRACTICAL",
-    color: "text-rose-300",
-    tint: "bg-rose-500/10",
-  },
-  {
-    icon: GraduationCap,
-    title: "CISSP Track",
-    desc: "Certified Information Systems Security Professional prep - full domain coverage.",
-    duration: "5 months",
-    skills: "8 domains",
-    difficulty: "EXPERT",
-    color: "text-teal-300",
-    tint: "bg-teal-500/10",
-  },
-] as const
-
-// Skill tree branch angles (in degrees, 0 = right, going clockwise)
-const BRANCH_ANGLES = [-90, -30, 30, 90, 150, 210] as const
-
-const BRANCHES = [
-  { label: "OFFENSIVE", status: "completed" as const, xp: 850 },
-  { label: "DEFENSIVE", status: "in-progress" as const, xp: 420 },
-  { label: "NETWORK", status: "completed" as const, xp: 620 },
-  { label: "WEB", status: "available" as const, xp: 0 },
-  { label: "CLOUD", status: "locked" as const, xp: 0 },
-  { label: "FORENSICS", status: "locked" as const, xp: 0 },
-] as const
-
-/* Advanced Skill Map data - 7 domains with sub-skills */
-const SKILL_DOMAINS = [
-  { name: "Offensive", icon: Swords, color: "text-violet-300", bg: "bg-violet-500/10", border: "border-violet-500/30", barColor: "bg-violet-500", progress: 85, skills: 15 },
-  { name: "Defensive", icon: ShieldCheck, color: "text-cyan-300", bg: "bg-cyan-500/10", border: "border-cyan-500/30", barColor: "bg-cyan-500", progress: 60, skills: 12 },
-  { name: "Network", icon: Network, color: "text-amber-300", bg: "bg-amber-500/10", border: "border-amber-500/30", barColor: "bg-amber-500", progress: 72, skills: 10 },
-  { name: "Web", icon: Globe, color: "text-emerald-300", bg: "bg-emerald-500/10", border: "border-emerald-500/30", barColor: "bg-emerald-500", progress: 45, skills: 8 },
-  { name: "Cloud", icon: Cloud, color: "text-rose-300", bg: "bg-rose-500/10", border: "border-rose-500/30", barColor: "bg-rose-500", progress: 20, skills: 7 },
-  { name: "Forensics", icon: Search, color: "text-teal-300", bg: "bg-teal-500/10", border: "border-teal-500/30", barColor: "bg-teal-500", progress: 30, skills: 6 },
-  { name: "GRC", icon: Scale, color: "text-blue-300", bg: "bg-blue-500/10", border: "border-blue-500/30", barColor: "bg-blue-500", progress: 15, skills: 5 },
-]
-
-/* Sub-skills for the interactive map (5 per domain) */
-const SKILL_MAP_DATA = [
-  { domain: "Offensive", angle: -90, color: "#a78bfa", skills: ["Reconnaissance", "Scanning", "Enumeration", "Web Exploitation", "Privilege Escalation"] },
-  { domain: "Defensive", angle: -38, color: "#22d3ee", skills: ["Threat Detection", "Incident Response", "Log Analysis", "SIEM", "IDS/IPS"] },
-  { domain: "Network", angle: 13, color: "#fbbf24", skills: ["TCP/IP", "Routing", "Firewalls", "VPN", "Network Scanning"] },
-  { domain: "Web", angle: 64, color: "#34d399", skills: ["OWASP Top 10", "SQL Injection", "XSS", "CSRF", "API Security"] },
-  { domain: "Cloud", angle: 116, color: "#fb7185", skills: ["AWS Security", "Azure Security", "IAM", "Containers", "Kubernetes"] },
-  { domain: "Forensics", angle: 167, color: "#2dd4bf", skills: ["Disk Forensics", "Memory Forensics", "Network Forensics", "Steganography", "Timeline Analysis"] },
-  { domain: "GRC", angle: 218, color: "#60a5fa", skills: ["ISO 27001", "NIST", "SOC 2", "Risk Assessment", "Compliance"] },
-]
-
-/* Advanced interactive skill map component */
-function AdvancedSkillMap() {
-  const [hoveredDomain, setHoveredDomain] = React.useState<number | null>(null)
-  const [selectedDomain, setSelectedDomain] = React.useState<number | null>(null)
-
-  const centerX = 50
-  const centerY = 50
-  const domainRadius = 32 // distance from center to domain nodes
-  const skillRadius = 14 // distance from domain node to skill nodes
-
-  return (
-    <div className="relative">
-      {/* Legend bar */}
-      <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-        <div className="flex items-center gap-3 text-[10px] font-mono text-muted-foreground">
-          <span className="flex items-center gap-1"><span className="size-2 rounded-full bg-emerald-400" /> Completed</span>
-          <span className="flex items-center gap-1"><span className="size-2 rounded-full bg-amber-400" /> In Progress</span>
-          <span className="flex items-center gap-1"><span className="size-2 rounded-full bg-violet-400/40" /> Available</span>
-          <span className="flex items-center gap-1"><span className="size-2 rounded-full bg-muted-foreground/30" /> Locked</span>
-        </div>
-        <span className="text-[10px] font-mono text-muted-foreground">35 SKILLS / 7 DOMAINS</span>
-      </div>
-
-      {/* SVG-based interactive map */}
-      <div className="relative aspect-square max-w-[600px] mx-auto">
-        <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full" preserveAspectRatio="xMidYMid meet">
-          {/* Outer ring */}
-          <circle cx={centerX} cy={centerY} r={domainRadius + 8} fill="none" stroke="oklch(1 0 0 / 0.05)" strokeWidth="0.3" strokeDasharray="0.5 1" />
-          <circle cx={centerX} cy={centerY} r={domainRadius} fill="none" stroke="oklch(1 0 0 / 0.08)" strokeWidth="0.2" />
-          <circle cx={centerX} cy={centerY} r={domainRadius - 12} fill="none" stroke="oklch(1 0 0 / 0.05)" strokeWidth="0.2" />
-
-          {/* Connection lines from center to domains */}
-          {SKILL_MAP_DATA.map((d, i) => {
-            const rad = (d.angle * Math.PI) / 180
-            const x = centerX + domainRadius * Math.cos(rad)
-            const y = centerY + domainRadius * Math.sin(rad)
-            const isActive = hoveredDomain === i || selectedDomain === i
-            return (
-              <line
-                key={`line-${i}`}
-                x1={centerX}
-                y1={centerY}
-                x2={x}
-                y2={y}
-                stroke={isActive ? d.color : "oklch(1 0 0 / 0.12)"}
-                strokeWidth={isActive ? "0.6" : "0.3"}
-                strokeDasharray={isActive ? "0" : "0.5 1"}
-                style={{ transition: "all 0.3s" }}
-              />
-            )
-          })}
-
-          {/* Sub-skill connection lines + nodes */}
-          {SKILL_MAP_DATA.map((d, di) => {
-            const drad = (d.angle * Math.PI) / 180
-            const dx = centerX + domainRadius * Math.cos(drad)
-            const dy = centerY + domainRadius * Math.sin(drad)
-            const isActive = hoveredDomain === di || selectedDomain === di
-
-            return d.skills.map((skill, si) => {
-              // Spread skills in an arc around the domain node
-              const spread = 50 // degrees of arc
-              const skillAngle = d.angle - spread / 2 + (spread / (d.skills.length - 1)) * si
-              const srad = (skillAngle * Math.PI) / 180
-              const sx = dx + skillRadius * Math.cos(srad)
-              const sy = dy + skillRadius * Math.sin(srad)
-
-              return (
-                <g key={`skill-${di}-${si}`}>
-                  <line
-                    x1={dx}
-                    y1={dy}
-                    x2={sx}
-                    y2={sy}
-                    stroke={isActive ? d.color : "oklch(1 0 0 / 0.06)"}
-                    strokeWidth={isActive ? "0.3" : "0.15"}
-                    style={{ transition: "all 0.3s" }}
-                  />
-                  <circle
-                    cx={sx}
-                    cy={sy}
-                    r={isActive ? "1.5" : "1"}
-                    fill={isActive ? d.color : "oklch(1 0 0 / 0.2)"}
-                    style={{ transition: "all 0.3s", cursor: "pointer" }}
-                    onClick={() => setSelectedDomain(selectedDomain === di ? null : di)}
-                  />
-                  {isActive && (
-                    <text
-                      x={sx}
-                      y={sy - 2.5}
-                      textAnchor="middle"
-                      fill={d.color}
-                      fontSize="1.5"
-                      fontFamily="monospace"
-                      style={{ pointerEvents: "none" }}
-                    >
-                      {skill.length > 12 ? skill.substring(0, 10) + "..." : skill}
-                    </text>
-                  )}
-                </g>
-              )
-            })
-          })}
-
-          {/* Domain nodes */}
-          {SKILL_MAP_DATA.map((d, i) => {
-            const rad = (d.angle * Math.PI) / 180
-            const x = centerX + domainRadius * Math.cos(rad)
-            const y = centerY + domainRadius * Math.sin(rad)
-            const isActive = hoveredDomain === i || selectedDomain === i
-            const domain = SKILL_DOMAINS[i]
-            const status = domain.progress >= 70 ? "completed" : domain.progress >= 30 ? "in-progress" : domain.progress > 0 ? "available" : "locked"
-
-            return (
-              <g
-                key={`domain-${i}`}
-                style={{ cursor: "pointer" }}
-                onMouseEnter={() => setHoveredDomain(i)}
-                onMouseLeave={() => setHoveredDomain(null)}
-                onClick={() => setSelectedDomain(selectedDomain === i ? null : i)}
-              >
-                {/* Pulsing ring for active domains */}
-                {isActive && (
-                  <circle cx={x} cy={y} r="5" fill="none" stroke={d.color} strokeWidth="0.3" opacity="0.4">
-                    <animate attributeName="r" values="4;6;4" dur="2s" repeatCount="indefinite" />
-                    <animate attributeName="opacity" values="0.4;0.1;0.4" dur="2s" repeatCount="indefinite" />
-                  </circle>
-                )}
-                {/* Domain circle */}
-                <circle
-                  cx={x}
-                  cy={y}
-                  r={isActive ? "4" : "3.5"}
-                  fill={d.color}
-                  fillOpacity={isActive ? "0.3" : status === "locked" ? "0.05" : "0.15"}
-                  stroke={d.color}
-                  strokeWidth={isActive ? "0.6" : "0.4"}
-                  style={{ transition: "all 0.3s" }}
-                />
-                {/* Domain label */}
-                <text
-                  x={x}
-                  y={y + 7}
-                  textAnchor="middle"
-                  fill={isActive ? d.color : "oklch(0.7 0 0)"}
-                  fontSize="2"
-                  fontWeight="bold"
-                  fontFamily="monospace"
-                  style={{ pointerEvents: "none", transition: "all 0.3s" }}
-                >
-                  {d.domain.toUpperCase()}
-                </text>
-                {/* Progress ring */}
-                <circle
-                  cx={x}
-                  cy={y}
-                  r="3.5"
-                  fill="none"
-                  stroke={d.color}
-                  strokeWidth="0.8"
-                  strokeDasharray={`${(domain.progress / 100) * 22} 22`}
-                  strokeDashoffset="0"
-                  transform={`rotate(-90 ${x} ${y})`}
-                  opacity="0.6"
-                  style={{ transition: "all 0.3s" }}
-                />
-              </g>
-            )
-          })}
-
-          {/* Central node */}
-          <circle cx={centerX} cy={centerY} r="8" fill="oklch(0.6 0.2 295 / 0.15)" stroke="oklch(0.6 0.2 295 / 0.6)" strokeWidth="0.5" />
-          <circle cx={centerX} cy={centerY} r="6" fill="none" stroke="oklch(0.6 0.2 295 / 0.3)" strokeWidth="0.3" strokeDasharray="1 1">
-            <animateTransform attributeName="transform" type="rotate" from={`0 ${centerX} ${centerY}`} to={`360 ${centerX} ${centerY}`} dur="20s" repeatCount="indefinite" />
-          </circle>
-          <text x={centerX} y={centerY - 1} textAnchor="middle" fill="oklch(0.8 0.15 295)" fontSize="2.5" fontWeight="bold" fontFamily="monospace">CYBER</text>
-          <text x={centerX} y={centerY + 2} textAnchor="middle" fill="oklch(0.8 0.15 295)" fontSize="2.5" fontWeight="bold" fontFamily="monospace">SECURITY</text>
-        </svg>
-
-        {/* Hover detail panel */}
-        {hoveredDomain !== null && (
-          <motion.div
-            initial={{ opacity: 0, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="absolute bottom-2 left-2 right-2 lg:left-auto lg:right-2 lg:max-w-xs rounded-lg border border-border/60 bg-card/90 backdrop-blur p-3 z-20"
-          >
-            <div className="flex items-center gap-2 mb-2">
-              <span className="size-2.5 rounded-full" style={{ backgroundColor: SKILL_MAP_DATA[hoveredDomain].color }} />
-              <span className="text-xs font-bold uppercase tracking-wider">{SKILL_DOMAINS[hoveredDomain].name} Security</span>
-              <span className="text-[10px] font-mono text-muted-foreground ml-auto">{SKILL_DOMAINS[hoveredDomain].progress}%</span>
-            </div>
-            <div className="flex flex-wrap gap-1">
-              {SKILL_MAP_DATA[hoveredDomain].skills.map(s => (
-                <span key={s} className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-muted/50 text-muted-foreground">{s}</span>
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </div>
-
-      {/* Mobile tap hint */}
-      <p className="text-center text-[10px] text-muted-foreground/60 mt-2 lg:hidden">Tap a domain to explore skills</p>
-    </div>
-  )
-}
-
-const DAILY_OBJECTIVES = [
-  { label: "Complete 1 lab module", xp: 50, done: true },
-  { label: "Submit 1 CTF flag", xp: 100, done: true },
-  { label: "Pass a quiz with 80%+", xp: 75, done: false },
-  { label: "Spend 30 min in the cyber range", xp: 30, done: false },
-] as const
-
-const RANK_LADDER = [
-  { name: "RECRUIT", level: 1 },
-  { name: "ANALYST", level: 2 },
-  { name: "HUNTER", level: 3 },
-  { name: "OPERATOR", level: 4 },
-  { name: "SPECIALIST", level: 5 },
-  { name: "SENTINEL", level: 6 },
-  { name: "GUARDIAN", level: 7 },
-  { name: "ELITE GUARDIAN", level: 8 },
-] as const
-
-const CAREER_SKILLS = [
-  { label: "Networking", value: 92, barClass: "bg-gradient-to-r from-cyan-500 to-cyan-400" },
-  { label: "Linux", value: 81, barClass: "bg-gradient-to-r from-violet-500 to-violet-400" },
-  { label: "Web Security", value: 87, barClass: "bg-gradient-to-r from-emerald-500 to-emerald-400" },
-  { label: "Pentesting", value: 64, barClass: "bg-gradient-to-r from-amber-500 to-amber-400" },
-  { label: "SOC", value: 42, barClass: "bg-gradient-to-r from-rose-500 to-rose-400" },
-  { label: "Cloud", value: 23, barClass: "bg-gradient-to-r from-teal-500 to-teal-400" },
-] as const
-
-const CAREER_ROLES = [
-  { role: "Junior Pentester", match: 82 },
-  { role: "SOC Analyst", match: 71 },
-  { role: "Security Engineer", match: 54 },
-] as const
-
-const INSTITUTION_TYPES = [
-  {
-    type: "Schools",
-    icon: Building2,
-    desc: "Comprehensive cyber security programs for school students. Complimentary school management system for MoU partners.",
-    color: "text-emerald-300",
-    tint: "bg-emerald-500/10",
-    view: { name: "institutions-schools" as const },
-  },
-  {
-    type: "Colleges",
-    icon: BookOpen,
-    desc: "Industry-aligned certification courses integrated into college curriculum with hands-on labs and instructor-led training.",
-    color: "text-cyan-300",
-    tint: "bg-cyan-500/10",
-    view: { name: "institutions-colleges" as const },
-  },
-  {
-    type: "Universities",
-    icon: Award,
-    desc: "Advanced research-grade cyber security labs, degree integration, and PhD-level coursework for universities.",
-    color: "text-violet-300",
-    tint: "bg-violet-500/10",
-    view: { name: "institutions-universities" as const },
-  },
-] as const
-
-const STORY_STAGES = [
-  {
-    label: "START",
-    icon: Rocket,
-    color: "text-violet-300",
-    tint: "bg-violet-500/10",
-    border: "border-violet-500/40",
-  },
-  {
-    label: "LEARNING",
-    icon: BookOpen,
-    color: "text-cyan-300",
-    tint: "bg-cyan-500/10",
-    border: "border-cyan-500/40",
-  },
-  {
-    label: "LABS",
-    icon: FlaskConical,
-    color: "text-amber-300",
-    tint: "bg-amber-500/10",
-    border: "border-amber-500/40",
-  },
-  {
-    label: "CERTIFICATION",
-    icon: FileCheck,
-    color: "text-emerald-300",
-    tint: "bg-emerald-500/10",
-    border: "border-emerald-500/40",
-  },
-  {
-    label: "CAREER",
-    icon: Briefcase,
-    color: "text-rose-300",
-    tint: "bg-rose-500/10",
-    border: "border-rose-500/40",
-  },
-] as const
-
-const STORIES = [
-  {
-    name: "Aarav S.",
-    role: "Aspirant → SOC Analyst",
-    path: "Beginner Path → SOC Analyst → CEH Practical",
-    position: "SOC Analyst L1 · FinTech startup",
-  },
-  {
-    name: "Maya R.",
-    role: "Fresher → Junior Pentester",
-    path: "Beginner → Penetration Tester → OSCP",
-    position: "Junior Pentester · Security consultancy",
-  },
-  {
-    name: "Karthik V.",
-    role: "Working Pro → Cloud Security Engineer",
-    path: "Cloud Security Path → CISSP",
-    position: "Cloud Security Engineer · SaaS company",
-  },
-] as const
-
-const TRUST_STATS = [
-  { icon: Users, value: "12,000+", label: "Learners", color: "text-violet-300", tint: "bg-violet-500/10" },
-  { icon: FlaskConical, value: "31", label: "Labs", color: "text-cyan-300", tint: "bg-cyan-500/10" },
-  { icon: BookOpen, value: "28+", label: "Courses", color: "text-amber-300", tint: "bg-amber-500/10" },
-  { icon: Building2, value: "150+", label: "Partners", color: "text-emerald-300", tint: "bg-emerald-500/10" },
-] as const
-
-/**
- * Fallback list of real OSS technology partners - used only if the
- * `/api/technology-partners` route fails. Replaces the previous fake
- * "Trusted by Google / Microsoft / Amazon" strip with the real tools
- * GuardianX labs are built around.
- */
-const FALLBACK_PARTNERS: TechnologyPartner[] = [
-  { id: "fb-kali", name: "Kali Linux", category: "tool", description: "Penetration testing OS used across GuardianX offensive labs.", url: "https://www.kali.org/", icon: "Terminal", order: 1, published: true },
-  { id: "fb-nmap", name: "Nmap", category: "tool", description: "Network mapper for discovery and security auditing.", url: "https://nmap.org/", icon: "Radar", order: 2, published: true },
-  { id: "fb-burp", name: "Burp Suite", category: "tool", description: "Web vulnerability scanner and interception proxy.", url: "https://portswigger.net/burp", icon: "Bug", order: 3, published: true },
-  { id: "fb-metasploit", name: "Metasploit", category: "tool", description: "Exploitation framework for penetration testing.", url: "https://www.metasploit.com/", icon: "Swords", order: 4, published: true },
-  { id: "fb-wireshark", name: "Wireshark", category: "tool", description: "Network protocol analyzer for traffic inspection.", url: "https://www.wireshark.org/", icon: "Activity", order: 5, published: true },
-  { id: "fb-docker", name: "Docker", category: "platform", description: "Container runtime powering our cyber range.", url: "https://www.docker.com/", icon: "Container", order: 6, published: true },
-  { id: "fb-hashcat", name: "Hashcat", category: "tool", description: "Advanced password recovery utility.", url: "https://hashcat.net/hashcat/", icon: "Key", order: 7, published: true },
-  { id: "fb-john", name: "John the Ripper", category: "tool", description: "Password cracker for offline hash analysis.", url: "https://www.openwall.com/john/", icon: "KeyRound", order: 8, published: true },
-  { id: "fb-nikto", name: "Nikto", category: "tool", description: "Web server scanner for known vulnerabilities.", url: "https://cirt.net/Nikto2", icon: "ScanLine", order: 9, published: true },
-  { id: "fb-sqlmap", name: "SQLMap", category: "tool", description: "Automatic SQL injection and database takeover tool.", url: "https://sqlmap.org/", icon: "Database", order: 10, published: true },
-  { id: "fb-hydra", name: "Hydra", category: "tool", description: "Fast network logon cracker supporting many protocols.", url: "https://github.com/vanhauser-thc/thc-hydra", icon: "Fingerprint", order: 11, published: true },
-  { id: "fb-gobuster", name: "Gobuster", category: "tool", description: "Directory/file/DNS brute-forcer used in recon labs.", url: "https://github.com/OJ/gobuster", icon: "FolderSearch", order: 12, published: true },
-]
-
-/* ---------------------------------------------------------------- *
- *  New training-restructure sections - static demo data.           *
- *  These arrays back the WHO WE TRAIN, UPCOMING BATCHES,           *
- *  FLEXIBLE SCHEDULES, TRAINING METHODOLOGY, and EXPERT            *
- *  INSTRUCTORS sections. Will be DB-driven in a later task.        *
- * ---------------------------------------------------------------- */
-
-const AUDIENCES = [
-  {
-    icon: GraduationCap,
-    title: "Aspirants",
-    desc: "Preparing for certifications or entering cybersecurity.",
-    color: "text-violet-300",
-    tint: "bg-violet-500/10",
-  },
-  {
-    icon: Rocket,
-    title: "Freshers",
-    desc: "Beginning their cybersecurity careers.",
-    color: "text-cyan-300",
-    tint: "bg-cyan-500/10",
-  },
-  {
-    icon: Briefcase,
-    title: "Working Professionals",
-    desc: "Upskilling around work schedules.",
-    color: "text-amber-300",
-    tint: "bg-amber-500/10",
-  },
-  {
-    icon: Building2,
-    title: "Institutions",
-    desc: "Schools, colleges, universities, organizations.",
-    color: "text-emerald-300",
-    tint: "bg-emerald-500/10",
-  },
-] as const
-
-/**
- * Upcoming live instructor-led certification batches.
- *
- * Level → color coding:
- *   Beginner     → emerald (easy, green)
- *   Intermediate → amber   (medium)
- *   Advanced     → rose    (hard)
- */
-const UPCOMING_BATCHES = [
-  {
-    certification: "CompTIA Security+",
-    name: "Security+ Weekend Batch",
-    schedule: "Sat + Sun, 7:00 PM – 9:00 PM IST",
-    startDate: "October 12",
-    mode: "Live Online",
-    instructor: "Senior Cybersecurity Instructor",
-    seats: 12,
-    almostFull: false,
-    level: "Beginner",
-    certColor: "text-emerald-300",
-    certTint: "bg-emerald-500/15",
-    certBorder: "border-emerald-500/30",
-    levelColor: "text-emerald-300",
-    levelTint: "bg-emerald-500/10",
-    levelBorder: "border-emerald-500/30",
-    borderColor: "border-border/60 hover:border-emerald-500/40 hover:shadow-[0_20px_60px_-20px_oklch(0.65_0.15_155_/_0.25)]",
-    btnClass: "bg-emerald-600 hover:bg-emerald-500",
-  },
-  {
-    certification: "CEH (Certified Ethical Hacker)",
-    name: "CEH Weekday Evening",
-    schedule: "Mon-Wed-Fri, 8:00 PM – 10:00 PM IST",
-    startDate: "October 20",
-    mode: "Live Online",
-    instructor: "Dr. Sarah Chen",
-    seats: 8,
-    almostFull: false,
-    level: "Intermediate",
-    certColor: "text-amber-300",
-    certTint: "bg-amber-500/15",
-    certBorder: "border-amber-500/30",
-    levelColor: "text-amber-300",
-    levelTint: "bg-amber-500/10",
-    levelBorder: "border-amber-500/30",
-    borderColor: "border-border/60 hover:border-amber-500/40 hover:shadow-[0_20px_60px_-20px_oklch(0.7_0.15_70_/_0.25)]",
-    btnClass: "bg-amber-600 hover:bg-amber-500",
-  },
-  {
-    certification: "CCNA",
-    name: "CCNA Morning Batch",
-    schedule: "Tue-Thu, 7:00 AM – 9:00 AM IST",
-    startDate: "November 03",
-    mode: "Live Online",
-    instructor: "Raj Patel",
-    seats: 15,
-    almostFull: false,
-    level: "Beginner",
-    certColor: "text-cyan-300",
-    certTint: "bg-cyan-500/15",
-    certBorder: "border-cyan-500/30",
-    levelColor: "text-emerald-300",
-    levelTint: "bg-emerald-500/10",
-    levelBorder: "border-emerald-500/30",
-    borderColor: "border-border/60 hover:border-cyan-500/40 hover:shadow-[0_20px_60px_-20px_oklch(0.7_0.15_220_/_0.25)]",
-    btnClass: "bg-cyan-600 hover:bg-cyan-500",
-  },
-  {
-    certification: "CISSP",
-    name: "CISSP Weekend Intensive",
-    schedule: "Sat-Sun, 10:00 AM – 1:00 PM IST",
-    startDate: "November 09",
-    mode: "Live Online",
-    instructor: "Alex Mercer",
-    seats: 5,
-    almostFull: true,
-    level: "Advanced",
-    certColor: "text-rose-300",
-    certTint: "bg-rose-500/15",
-    certBorder: "border-rose-500/30",
-    levelColor: "text-rose-300",
-    levelTint: "bg-rose-500/10",
-    levelBorder: "border-rose-500/30",
-    borderColor: "border-border/60 hover:border-rose-500/40 hover:shadow-[0_20px_60px_-20px_oklch(0.65_0.2_15_/_0.25)]",
-    btnClass: "bg-rose-600 hover:bg-rose-500",
-  },
-] as const
-
-const SCHEDULES = [
-  {
-    icon: CalendarDays,
-    type: "WEEKDAY",
-    example: "Mon-Wed-Fri · 8:00 PM – 10:00 PM",
-    color: "text-violet-300",
-    tint: "bg-violet-500/10",
-  },
-  {
-    icon: CalendarCheck,
-    type: "WEEKEND",
-    example: "Sat + Sun · 10:00 AM – 1:00 PM",
-    color: "text-cyan-300",
-    tint: "bg-cyan-500/10",
-  },
-  {
-    icon: Sun,
-    type: "MORNING",
-    example: "Tue-Thu · 7:00 AM – 9:00 AM",
-    color: "text-amber-300",
-    tint: "bg-amber-500/10",
-  },
-  {
-    icon: SunMedium,
-    type: "AFTERNOON",
-    example: "Mon-Wed · 2:00 PM – 4:00 PM",
-    color: "text-emerald-300",
-    tint: "bg-emerald-500/10",
-  },
-  {
-    icon: Sunset,
-    type: "EVENING",
-    example: "Mon-Fri · 7:00 PM – 9:00 PM",
-    color: "text-rose-300",
-    tint: "bg-rose-500/10",
-  },
-  {
-    icon: Moon,
-    type: "LATE NIGHT",
-    example: "Mon-Thu · 10:00 PM – 12:00 AM",
-    color: "text-teal-300",
-    tint: "bg-teal-500/10",
-  },
-] as const
-
-/**
- * 7-step training methodology - the GuardianX framework that every
- * certification batch follows end-to-end. This sequence is one of the
- * platform's defining visual elements.
- */
-const METHODOLOGY_STEPS = [
-  {
-    num: "01",
-    icon: Video,
-    title: "LIVE LECTURE",
-    desc: "Instructor-led live sessions covering theory, real-world cases, and exam blueprints.",
-  },
-  {
-    num: "02",
-    icon: Microscope,
-    title: "IN-DEPTH ANALYSIS",
-    desc: "Break down each topic with worked examples, threat models, and lab walkthroughs.",
-  },
-  {
-    num: "03",
-    icon: FileText,
-    title: "STUDY MATERIAL",
-    desc: "Downloadable PDFs, on-the-go notes, and structured reference material for every lesson.",
-  },
-  {
-    num: "04",
-    icon: FlaskConical,
-    title: "HANDS-ON LAB",
-    desc: "Spin up isolated targets and apply every concept in a real cyber range environment.",
-  },
-  {
-    num: "05",
-    icon: ClipboardList,
-    title: "ASSIGNMENT",
-    desc: "Practical assignments graded by instructors with personalized written feedback.",
-  },
-  {
-    num: "06",
-    icon: FileQuestion,
-    title: "MOCK TEST",
-    desc: "Full-length mock exams that mirror the real certification format and timing.",
-  },
-  {
-    num: "07",
-    icon: Award,
-    title: "EXAM PREPARATION",
-    desc: "Final revision, exam strategy, and confidence drills to walk into test day ready.",
-  },
-] as const
-
-/**
- * Verified instructor profiles - these are real instructor records from
- * the GuardianX DB. Shown here as a static showcase; will be wired to
- * /api/instructors in a later task.
- */
-const INSTRUCTORS = [
-  {
-    name: "Dr. Sarah Chen",
-    initials: "SC",
-    expertise: "Penetration Testing, Web Security",
-    experience: "12+ years",
-    certs: "CEH, OSCP, CISSP",
-    avatarBg: "bg-violet-500/15",
-    avatarColor: "text-violet-300",
-  },
-  {
-    name: "Raj Patel",
-    initials: "RP",
-    expertise: "Network Security, SOC",
-    experience: "8+ years",
-    certs: "CCNA, CCNP, GCIA",
-    avatarBg: "bg-cyan-500/15",
-    avatarColor: "text-cyan-300",
-  },
-  {
-    name: "Alex Mercer",
-    initials: "AM",
-    expertise: "Cloud Security, GRC",
-    experience: "15+ years",
-    certs: "CISSP, CCSP, CISM",
-    avatarBg: "bg-amber-500/15",
-    avatarColor: "text-amber-300",
-  },
-] as const

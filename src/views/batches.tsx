@@ -1,11 +1,13 @@
 "use client"
 
 import * as React from "react"
+import { useQuery } from "@tanstack/react-query"
 import { motion } from "framer-motion"
 import { useAppStore } from "@/store/app-store"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import { UPCOMING_BATCHES } from "@/views/home-data"
 import {
   ArrowLeft,
   ArrowRight,
@@ -36,21 +38,23 @@ import {
    3. Batch Grid - detailed batch cards
    4. CTA - "Don't see your batch?" request flow
 
-   Data is hardcoded for now - will be DB-driven in a later task.
+   Data is DB-driven via /api/training-batches with a static
+   `UPCOMING_BATCHES` fallback (imported from @/views/home-data).
    ============================================================ */
 
 interface Batch {
   id: string
   certification: string
-  certGroup: "Security+" | "CEH" | "CCNA" | "CISSP"
+  certGroup: string
   name: string
   schedule: string
   startDate: string
-  mode: "Live Online" | "On-Campus"
+  mode: string
   instructor: string
   seats: number
+  enrolled: number
   almostFull: boolean
-  level: "Beginner" | "Intermediate" | "Advanced"
+  level: string
   // visual styling per batch (driven by level)
   certColor: string
   certTint: string
@@ -64,96 +68,82 @@ interface Batch {
   scheduleType: "weekday" | "weekend" | "morning" | "evening" | "late-night"
 }
 
-const BATCHES: Batch[] = [
-  {
-    id: "batch-sec-plus-weekend",
-    certification: "CompTIA Security+",
-    certGroup: "Security+",
-    name: "Security+ Weekend Batch",
-    schedule: "Sat + Sun, 7:00 PM – 9:00 PM IST",
-    startDate: "October 12",
-    mode: "Live Online",
-    instructor: "Senior Cybersecurity Instructor",
-    seats: 12,
-    almostFull: false,
-    level: "Beginner",
-    certColor: "text-emerald-300",
-    certTint: "bg-emerald-500/15",
-    certBorder: "border-emerald-500/30",
-    levelColor: "text-emerald-300",
-    levelTint: "bg-emerald-500/10",
-    levelBorder: "border-emerald-500/30",
-    borderColor: "border-border/60 hover:border-emerald-500/40 hover:shadow-[0_20px_60px_-20px_oklch(0.65_0.15_155_/_0.25)]",
-    btnClass: "bg-emerald-600 hover:bg-emerald-500",
-    scheduleType: "weekend",
-  },
-  {
-    id: "batch-ceh-weekday-evening",
-    certification: "CEH (Certified Ethical Hacker)",
-    certGroup: "CEH",
-    name: "CEH Weekday Evening",
-    schedule: "Mon-Wed-Fri, 8:00 PM – 10:00 PM IST",
-    startDate: "October 20",
-    mode: "Live Online",
-    instructor: "Dr. Sarah Chen",
-    seats: 8,
-    almostFull: false,
-    level: "Intermediate",
-    certColor: "text-amber-300",
-    certTint: "bg-amber-500/15",
-    certBorder: "border-amber-500/30",
-    levelColor: "text-amber-300",
-    levelTint: "bg-amber-500/10",
-    levelBorder: "border-amber-500/30",
-    borderColor: "border-border/60 hover:border-amber-500/40 hover:shadow-[0_20px_60px_-20px_oklch(0.7_0.15_70_/_0.25)]",
-    btnClass: "bg-amber-600 hover:bg-amber-500",
-    scheduleType: "weekday",
-  },
-  {
-    id: "batch-ccna-morning",
-    certification: "CCNA",
-    certGroup: "CCNA",
-    name: "CCNA Morning Batch",
-    schedule: "Tue-Thu, 7:00 AM – 9:00 AM IST",
-    startDate: "November 03",
-    mode: "Live Online",
-    instructor: "Raj Patel",
-    seats: 15,
-    almostFull: false,
-    level: "Beginner",
-    certColor: "text-cyan-300",
-    certTint: "bg-cyan-500/15",
-    certBorder: "border-cyan-500/30",
-    levelColor: "text-emerald-300",
-    levelTint: "bg-emerald-500/10",
-    levelBorder: "border-emerald-500/30",
-    borderColor: "border-border/60 hover:border-cyan-500/40 hover:shadow-[0_20px_60px_-20px_oklch(0.7_0.15_220_/_0.25)]",
-    btnClass: "bg-cyan-600 hover:bg-cyan-500",
-    scheduleType: "morning",
-  },
-  {
-    id: "batch-cissp-weekend-intensive",
-    certification: "CISSP",
-    certGroup: "CISSP",
-    name: "CISSP Weekend Intensive",
-    schedule: "Sat-Sun, 10:00 AM – 1:00 PM IST",
-    startDate: "November 09",
-    mode: "Live Online",
-    instructor: "Alex Mercer",
-    seats: 5,
-    almostFull: true,
-    level: "Advanced",
-    certColor: "text-rose-300",
-    certTint: "bg-rose-500/15",
-    certBorder: "border-rose-500/30",
-    levelColor: "text-rose-300",
-    levelTint: "bg-rose-500/10",
-    levelBorder: "border-rose-500/30",
-    borderColor: "border-border/60 hover:border-rose-500/40 hover:shadow-[0_20px_60px_-20px_oklch(0.65_0.2_15_/_0.25)]",
-    btnClass: "bg-rose-600 hover:bg-rose-500",
-    scheduleType: "weekend",
-  },
-]
+/* Derive the filter `certGroup` from a certification name. Matches the
+ * existing static BATCHES values: "Security+", "CEH", "CCNA", "CISSP".
+ * Falls back to the first word of the certification string for unknown
+ * certs (so new DB-driven batches still get a useful filter group). */
+function deriveCertGroup(cert: string): string {
+  const s = cert.toLowerCase()
+  if (s.includes("security")) return "Security+"
+  if (s.includes("ceh") || s.includes("ethical hacker")) return "CEH"
+  if (s.includes("ccna")) return "CCNA"
+  if (s.includes("cissp")) return "CISSP"
+  return cert.split(/\s+/)[0] || cert
+}
+
+/* Derive the `scheduleType` filter value from a human-readable schedule
+ * string. Heuristic: weekend > late-night > morning > evening > weekday. */
+function deriveScheduleType(schedule: string): Batch["scheduleType"] {
+  const s = schedule.toLowerCase()
+  if (s.includes("sat") || s.includes("sun")) return "weekend"
+  // Look for "10 pm" / "11 pm" / "12 am" → late-night
+  const pmMatch = s.match(/(\d{1,2})\s*pm/)
+  if (pmMatch && Number(pmMatch[1]) >= 10) return "late-night"
+  if (s.includes(" am")) return "morning"
+  if (pmMatch) return "evening"
+  return "weekday"
+}
+
+/* Normalize a raw DB row (from the API) or a static `UPCOMING_BATCHES`
+ * item into the local `Batch` shape used by the JSX + filters. */
+function normalizeBatch(raw: {
+  id?: string
+  certification: string
+  name: string
+  schedule: string
+  startDate: string
+  mode: string
+  instructor: string
+  seats: number
+  enrolled?: number
+  status?: string
+  almostFull?: boolean
+  level: string
+  certColor: string
+  certTint: string
+  certBorder: string
+  levelColor: string
+  levelTint: string
+  levelBorder: string
+  borderColor: string
+  btnClass: string
+}): Batch {
+  const almostFull =
+    raw.almostFull ?? ((raw.seats - (raw.enrolled ?? 0)) <= 2 || raw.status === "Almost Full")
+  return {
+    id: raw.id ?? `batch-${raw.name}`,
+    certification: raw.certification,
+    certGroup: deriveCertGroup(raw.certification),
+    name: raw.name,
+    schedule: raw.schedule,
+    startDate: raw.startDate,
+    mode: raw.mode,
+    instructor: raw.instructor,
+    seats: raw.seats,
+    enrolled: raw.enrolled ?? 0,
+    almostFull,
+    level: raw.level,
+    certColor: raw.certColor,
+    certTint: raw.certTint,
+    certBorder: raw.certBorder,
+    levelColor: raw.levelColor,
+    levelTint: raw.levelTint,
+    levelBorder: raw.levelBorder,
+    borderColor: raw.borderColor,
+    btnClass: raw.btnClass,
+    scheduleType: deriveScheduleType(raw.schedule),
+  }
+}
 
 /* Filter options ------------------------------------------------ */
 
@@ -202,16 +192,66 @@ export function BatchesView() {
   const [modeFilter, setModeFilter] = React.useState<string>("all")
   const [levelFilter, setLevelFilter] = React.useState<string>("all")
 
+  /* -------------------------- DB-backed batches ---------------------------- *
+   *  Fetch the live certification batches from the public API. When the     *
+   *  API fails (or returns no rows) we fall back to the static              *
+   *  `UPCOMING_BATCHES` array imported from `@/views/home-data` so the      *
+   *  page is never empty.                                                   *
+   * ---------------------------------------------------------------------- */
+  type ApiBatch = {
+    id?: string
+    certification: string
+    name: string
+    schedule: string
+    startDate: string
+    mode: string
+    instructor: string
+    seats: number
+    enrolled?: number
+    status?: string
+    level: string
+    certColor: string
+    certTint: string
+    certBorder: string
+    levelColor: string
+    levelTint: string
+    levelBorder: string
+    borderColor: string
+    btnClass: string
+    almostFull?: boolean
+  }
+  const { data: batchesData } = useQuery<{ batches: ApiBatch[]; count: number } | null>({
+    queryKey: ["batches-view-training-batches"],
+    queryFn: async () => {
+      try {
+        const res = await fetch("/api/training-batches")
+        if (!res.ok) return null
+        return res.json()
+      } catch {
+        return null
+      }
+    },
+    staleTime: 60_000,
+  })
+
+  const allBatches: Batch[] = React.useMemo(() => {
+    const api = batchesData?.batches
+    if (api && api.length > 0) {
+      return api.map((b) => normalizeBatch({ ...b, id: b.id ?? `batch-${b.name}` }))
+    }
+    return (UPCOMING_BATCHES as readonly unknown[]).map((raw) => normalizeBatch(raw as ApiBatch))
+  }, [batchesData])
+
   /* --------------------------- filtered batches ---------------------------- */
   const filteredBatches = React.useMemo(() => {
-    return BATCHES.filter((b) => {
+    return allBatches.filter((b) => {
       if (certFilter !== "all" && b.certGroup !== certFilter) return false
       if (scheduleFilter !== "all" && b.scheduleType !== scheduleFilter) return false
       if (modeFilter !== "all" && b.mode !== modeFilter) return false
       if (levelFilter !== "all" && b.level !== levelFilter) return false
       return true
     })
-  }, [certFilter, scheduleFilter, modeFilter, levelFilter])
+  }, [allBatches, certFilter, scheduleFilter, modeFilter, levelFilter])
 
   const activeFilterCount =
     (certFilter !== "all" ? 1 : 0) +
@@ -449,7 +489,7 @@ export function BatchesView() {
                 <p className="text-xs text-muted-foreground mt-1">
                   Showing{" "}
                   <span className="text-foreground font-medium">{filteredBatches.length}</span>{" "}
-                  of {BATCHES.length} upcoming batches
+                  of {allBatches.length} upcoming batches
                 </p>
               </div>
             </motion.div>
@@ -534,17 +574,35 @@ export function BatchesView() {
                         <Users className="size-3.5 text-muted-foreground shrink-0" aria-hidden />
                         <span className="text-muted-foreground">{b.instructor}</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Target className="size-3.5 text-muted-foreground shrink-0" aria-hidden />
-                        <span
-                          className={cn(
-                            b.almostFull
-                              ? "text-amber-300 font-medium"
-                              : "text-emerald-300 font-medium"
-                          )}
-                        >
-                          {b.seats} seats available{b.almostFull ? " · Almost Full" : ""}
-                        </span>
+                      {/* Seats remaining with visual progress bar */}
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-2">
+                          <Target className="size-3.5 text-muted-foreground shrink-0" aria-hidden />
+                          <span
+                            className={cn(
+                              "text-xs font-medium tabular-nums",
+                              b.almostFull ? "text-amber-300" : "text-emerald-300"
+                            )}
+                          >
+                              {b.seats - b.enrolled} seats left
+                              {b.almostFull ? " · Almost Full" : ""}
+                          </span>
+                          <span className="ml-auto text-[10px] font-mono text-muted-foreground tabular-nums">
+                            {b.enrolled}/{b.seats}
+                          </span>
+                        </div>
+                        {/* Capacity progress bar */}
+                        <div className="h-1.5 rounded-full bg-muted/60 overflow-hidden" aria-hidden>
+                          <div
+                            className={cn(
+                              "h-full rounded-full transition-all duration-500",
+                              b.almostFull
+                                ? "bg-gradient-to-r from-amber-500 to-amber-400"
+                                : "bg-gradient-to-r from-emerald-500 to-emerald-400"
+                            )}
+                            style={{ width: `${Math.min(100, (b.enrolled / b.seats) * 100)}%` }}
+                          />
+                        </div>
                       </div>
                     </dl>
 

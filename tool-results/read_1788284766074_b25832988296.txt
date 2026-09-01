@@ -1,0 +1,602 @@
+   610→          4 hardcoded live-instructor-led certification batch cards.
+   611→          Premium card design with difficulty color coding.
+   612→          ===================================================== */}
+   613→      <section
+   614→        aria-labelledby="upcoming-batches-heading"
+   615→        className="relative py-8 lg:py-12 overflow-hidden"
+   616→      >
+   617→        <div className="absolute inset-0 bg-grid opacity-[0.04] pointer-events-none" aria-hidden />
+   618→        <div
+   619→          className="absolute left-1/2 top-0 -translate-x-1/2 size-[500px] rounded-full bg-violet-600/5 blur-[120px] pointer-events-none"
+   620→          aria-hidden
+   621→        />
+   622→        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+   623→          <motion.div {...FADE_UP} className="max-w-2xl mb-6">
+   624→            <p className="text-[10px] font-mono text-violet-300/80 tracking-[0.25em] mb-2">
+   625→              LIVE INSTRUCTOR-LED BATCHES
+   626→            </p>
+   627→            <h2
+   628→              id="upcoming-batches-heading"
+   629→              className="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-[-0.02em] mb-3 text-balance"
+   630→            >
+   631→              Upcoming Live Batches
+   632→            </h2>
+   633→            <p className="text-sm text-muted-foreground leading-relaxed">
+   634→              Structured certification batches with fixed schedules, dedicated
+   635→              instructors, and live online sessions. Enroll early to secure your
+   636→              seat - batches fill up fast.
+   637→            </p>
+   638→          </motion.div>
+   639→
+   640→          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-5">
+   641→            {UPCOMING_BATCHES.map((b, i) => (
+   642→              <motion.div
+   643→                key={b.name}
+   644→                initial={{ opacity: 0, y: 12 }}
+   645→                animate={{ opacity: 1, y: 0 }}
+   646→                transition={{ duration: 0.4, delay: 0.05 * i, ease: "easeOut" }}
+   647→                className={cn(
+   648→                  "group relative rounded-2xl border bg-card p-5 lg:p-6 transition-all duration-300 hover:-translate-y-1",
+   649→                  b.borderColor
+   650→                )}
+   651→              >
+   652→                {/* Header row: certification badge + level pill */}
+   653→                <div className="flex items-start justify-between gap-3 mb-4">
+   654→                  <div className="min-w-0">
+   655→                    <Badge
+   656→                      className={cn(
+   657→                        "mb-2 font-mono text-[10px] uppercase tracking-wider",
+   658→                        b.certTint,
+   659→                        b.certColor,
+   660→                        b.certBorder
+   661→                      )}
+   662→                    >
+   663→                      {b.certification}
+   664→                    </Badge>
+   665→                    <h3 className="text-lg font-semibold leading-tight">
+   666→                      {b.name}
+   667→                    </h3>
+   668→                  </div>
+   669→                  <Badge
+   670→                    variant="outline"
+   671→                    className={cn(
+   672→                      "font-mono text-[10px] uppercase tracking-wider shrink-0",
+   673→                      b.levelTint,
+   674→                      b.levelColor,
+   675→                      b.levelBorder
+   676→                    )}
+   677→                  >
+   678→                    {b.level}
+   679→                  </Badge>
+   680→                </div>
+   681→
+   682→                {/* Meta rows */}
+   683→                <dl className="space-y-2 text-sm mb-5">
+   684→                  <div className="flex items-center gap-2">
+   685→                    <Calendar className="size-3.5 text-muted-foreground shrink-0" aria-hidden />
+   686→                    <span className="text-muted-foreground">{b.schedule}</span>
+   687→                  </div>
+   688→                  <div className="flex items-center gap-2">
+   689→                    <Clock className="size-3.5 text-muted-foreground shrink-0" aria-hidden />
+   690→                    <span className="text-muted-foreground">Starts {b.startDate}</span>
+   691→                  </div>
+   692→                  <div className="flex items-center gap-2">
+   693→                    <Video className="size-3.5 text-muted-foreground shrink-0" aria-hidden />
+   694→                    <span className="text-muted-foreground">{b.mode}</span>
+   695→                  </div>
+   696→                  <div className="flex items-center gap-2">
+   697→                    <Users className="size-3.5 text-muted-foreground shrink-0" aria-hidden />
+   698→                    <span className="text-muted-foreground">{b.instructor}</span>
+   699→                  </div>
+   700→                  <div className="flex items-center gap-2">
+   701→                    <Target className="size-3.5 text-muted-foreground shrink-0" aria-hidden />
+   702→                    <span
+   703→                      className={cn(
+   704→                        b.almostFull
+   705→                          ? "text-amber-300 font-medium"
+   706→                          : "text-emerald-300 font-medium"
+   707→                      )}
+   708→                    >
+   709→                      {b.seats} seats available{b.almostFull ? " · Almost Full" : ""}
+   710→                    </span>
+   711→                  </div>
+   712→                </dl>
+   713→
+   714→                <Button
+   715→                  onClick={() => navigate({ name: "batches" })}
+   716→                  className={cn("w-full btn-premium", b.btnClass)}
+   717→                  size="sm"
+   718→                  aria-label={`View ${b.name}`}
+   719→                >
+   720→                  VIEW BATCH
+   721→                  <ArrowRight className="size-4 ml-2" aria-hidden />
+   722→                </Button>
+   723→              </motion.div>
+   724→            ))}
+   725→          </div>
+   726→
+   727→          <motion.div
+   728→            {...FADE_IN}
+   729→            transition={{ duration: 0.35, delay: 0.25 }}
+   730→            className="mt-6 text-center"
+   731→          >
+   732→            <Button
+   733→              variant="outline"
+   734→              onClick={() => navigate({ name: "batches" })}
+   735→              aria-label="See all upcoming batches"
+   736→            >
+   737→              See all upcoming batches
+   738→              <ArrowRight className="size-4 ml-2" aria-hidden />
+   739→            </Button>
+   740→          </motion.div>
+   741→        </div>
+   742→      </section>
+   743→
+   744→      {/* =====================================================
+   745→          NEW SECTION - FLEXIBLE SCHEDULES
+   746→          6 schedule-option cards: Weekday, Weekend, Morning, Afternoon, Evening, Late Night
+   747→          ===================================================== */}
+   748→      <section
+   749→        aria-labelledby="schedules-heading"
+   750→        className="relative py-8 lg:py-12"
+   751→      >
+   752→        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+   753→          <motion.div {...FADE_UP} className="max-w-2xl mb-6">
+   754→            <p className="text-[10px] font-mono text-violet-300/80 tracking-[0.25em] mb-2">
+   755→              FLEXIBLE SCHEDULES
+   756→            </p>
+   757→            <h2
+   758→              id="schedules-heading"
+   759→              className="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-[-0.02em] mb-3 text-balance"
+   760→            >
+   761→              Train around your life.
+   762→            </h2>
+   763→            <p className="text-sm text-muted-foreground leading-relaxed">
+   764→              Choose a schedule that fits your work, studies and personal
+   765→              commitments. New batches open across every slot, every month.
+   766→            </p>
+   767→          </motion.div>
+   768→
+   769→          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 lg:gap-4">
+   770→            {SCHEDULES.map((s, i) => (
+   771→              <motion.div
+   772→                key={s.type}
+   773→                initial={{ opacity: 0, y: 10 }}
+   774→                animate={{ opacity: 1, y: 0 }}
+   775→                transition={{ duration: 0.3, delay: 0.04 * i, ease: "easeOut" }}
+   776→                className="card-premium rounded-xl p-4 lg:p-5 h-full"
+   777→              >
+   778→                <div
+   779→                  className={cn(
+   780→                    "mb-3 flex size-10 items-center justify-center rounded-lg border border-border/50",
+   781→                    s.tint,
+   782→                    s.color
+   783→                  )}
+   784→                  aria-hidden
+   785→                >
+   786→                  <s.icon className="size-5" />
+   787→                </div>
+   788→                <h3 className="text-sm font-semibold mb-1 font-mono tracking-wider">
+   789→                  {s.type}
+   790→                </h3>
+   791→                <p className="text-xs text-muted-foreground">{s.example}</p>
+   792→              </motion.div>
+   793→            ))}
+   794→          </div>
+   795→        </div>
+   796→      </section>
+   797→
+   798→      {/* =====================================================
+   799→          NEW SECTION - TRAINING METHODOLOGY
+   800→          7-step visual timeline: live lecture → analysis → study → lab →
+   801→          assignment → mock test → exam prep.
+   802→          Horizontal on desktop, vertical on mobile.
+   803→          ===================================================== */}
+   804→      <section
+   805→        aria-labelledby="methodology-heading"
+   806→        className="relative py-8 lg:py-12 overflow-hidden"
+   807→      >
+   808→        <div className="absolute inset-0 bg-grid opacity-[0.04] pointer-events-none" aria-hidden />
+   809→        <div
+   810→          className="absolute right-1/3 top-1/4 size-[400px] rounded-full bg-cyan-500/5 blur-[120px] pointer-events-none"
+   811→          aria-hidden
+   812→        />
+   813→        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+   814→          <motion.div {...FADE_UP} className="max-w-2xl mb-8">
+   815→            <p className="text-[10px] font-mono text-violet-300/80 tracking-[0.25em] mb-2">
+   816→              TRAINING METHODOLOGY
+   817→            </p>
+   818→            <h2
+   819→              id="methodology-heading"
+   820→              className="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-[-0.02em] mb-3 text-balance"
+   821→            >
+   822→              How GuardianX trains you.
+   823→            </h2>
+   824→            <p className="text-sm text-muted-foreground leading-relaxed">
+   825→              Every batch follows the same 7-step framework - from live lecture
+   826→              to exam day. No fluff, no padding - just structured progression
+   827→              that gets you certified.
+   828→            </p>
+   829→          </motion.div>
+   830→
+   831→          {/* Desktop: horizontal timeline */}
+   832→          <div className="hidden lg:block relative">
+   833→            <div
+   834→              className="absolute top-[34px] left-[8%] right-[8%] h-px bg-gradient-to-r from-violet-500/0 via-violet-500/40 to-violet-500/0"
+   835→              aria-hidden
+   836→            />
+   837→            <div className="grid grid-cols-7 gap-3">
+   838→              {METHODOLOGY_STEPS.map((step, i) => (
+   839→                <motion.div
+   840→                  key={step.num}
+   841→                  initial={{ opacity: 0, y: 12 }}
+   842→                  animate={{ opacity: 1, y: 0 }}
+   843→                  transition={{ duration: 0.35, delay: 0.05 * i, ease: "easeOut" }}
+   844→                  className="relative text-center"
+   845→                >
+   846→                  <div className="mx-auto mb-3 flex size-[68px] items-center justify-center rounded-full border border-violet-500/30 bg-card relative z-10">
+   847→                    <step.icon className="size-6 text-violet-300" aria-hidden />
+   848→                  </div>
+   849→                  <div className="font-mono text-[10px] text-violet-300/80 tracking-wider mb-1">
+   850→                    STEP {step.num}
+   851→                  </div>
+   852→                  <h3 className="text-xs font-semibold mb-1">{step.title}</h3>
+   853→                  <p className="text-[10px] text-muted-foreground leading-relaxed">
+   854→                    {step.desc}
+   855→                  </p>
+   856→                </motion.div>
+   857→              ))}
+   858→            </div>
+   859→          </div>
+   860→
+   861→          {/* Mobile / tablet: vertical timeline */}
+   862→          <div className="lg:hidden space-y-2">
+   863→            {METHODOLOGY_STEPS.map((step, i) => (
+   864→              <motion.div
+   865→                key={step.num}
+   866→                initial={{ opacity: 0, y: 10 }}
+   867→                animate={{ opacity: 1, y: 0 }}
+   868→                transition={{ duration: 0.3, delay: 0.04 * i, ease: "easeOut" }}
+   869→                className="flex gap-4"
+   870→              >
+   871→                <div className="flex flex-col items-center">
+   872→                  <div className="flex size-12 items-center justify-center rounded-full border border-violet-500/30 bg-card shrink-0">
+   873→                    <step.icon className="size-5 text-violet-300" aria-hidden />
+   874→                  </div>
+   875→                  {i < METHODOLOGY_STEPS.length - 1 && (
+   876→                    <div className="w-px flex-1 bg-violet-500/20 mt-2 mb-2" aria-hidden />
+   877→                  )}
+   878→                </div>
+   879→                <div className="pt-1 pb-3">
+   880→                  <div className="font-mono text-[10px] text-violet-300/80 tracking-wider mb-1">
+   881→                    STEP {step.num}
+   882→                  </div>
+   883→                  <h3 className="text-sm font-semibold mb-1">{step.title}</h3>
+   884→                  <p className="text-xs text-muted-foreground leading-relaxed">
+   885→                    {step.desc}
+   886→                  </p>
+   887→                </div>
+   888→              </motion.div>
+   889→            ))}
+   890→          </div>
+   891→        </div>
+   892→      </section>
+   893→
+   894→      {/* =====================================================
+   895→          NEW SECTION - EXPERT INSTRUCTORS
+   896→          3 verified instructor profile cards.
+   897→          ===================================================== */}
+   898→      <section
+   899→        aria-labelledby="instructors-heading"
+   900→        className="relative py-8 lg:py-12"
+   901→      >
+   902→        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+   903→          <motion.div {...FADE_UP} className="max-w-2xl mb-6">
+   904→            <p className="text-[10px] font-mono text-violet-300/80 tracking-[0.25em] mb-2">
+   905→              EXPERT INSTRUCTORS
+   906→            </p>
+   907→            <h2
+   908→              id="instructors-heading"
+   909→              className="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-[-0.02em] mb-3 text-balance"
+   910→            >
+   911→              Learn from people who have{" "}
+   912→              <span className="text-gradient-premium">done the work.</span>
+   913→            </h2>
+   914→            <p className="text-sm text-muted-foreground leading-relaxed">
+   915→              Our instructors are working security professionals with real-world
+   916→              experience - not just certifications. Every profile is verified by
+   917→              the GuardianX team.
+   918→            </p>
+   919→          </motion.div>
+   920→
+   921→          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-5">
+   922→            {INSTRUCTORS.map((ins, i) => (
+   923→              <motion.div
+   924→                key={ins.name}
+   925→                initial={{ opacity: 0, y: 12 }}
+   926→                animate={{ opacity: 1, y: 0 }}
+   927→                transition={{ duration: 0.4, delay: 0.05 * i, ease: "easeOut" }}
+   928→                className="card-premium rounded-2xl p-5 lg:p-6 h-full flex flex-col"
+   929→              >
+   930→                {/* Avatar + name */}
+   931→                <div className="flex items-start gap-4 mb-4">
+   932→                  <div
+   933→                    className={cn(
+   934→                      "flex size-14 items-center justify-center rounded-full font-semibold text-base shrink-0",
+   935→                      ins.avatarBg,
+   936→                      ins.avatarColor
+   937→                    )}
+   938→                    aria-hidden
+   939→                  >
+   940→                    {ins.initials}
+   941→                  </div>
+   942→                  <div className="flex-1 min-w-0">
+   943→                    <div className="flex items-center gap-1.5 mb-1">
+   944→                      <h3 className="text-base font-semibold truncate">{ins.name}</h3>
+   945→                      <BadgeCheck
+   946→                        className="size-4 text-emerald-400 shrink-0"
+   947→                        aria-label="Verified instructor"
+   948→                      />
+   949→                    </div>
+   950→                    <p className="text-xs text-muted-foreground">{ins.expertise}</p>
+   951→                  </div>
+   952→                </div>
+   953→
+   954→                {/* Meta rows */}
+   955→                <dl className="space-y-2 mb-4">
+   956→                  <div className="flex items-center justify-between text-xs">
+   957→                    <dt className="text-muted-foreground">Experience</dt>
+   958→                    <dd className="font-medium">{ins.experience}</dd>
+   959→                  </div>
+   960→                  <div className="flex items-center justify-between text-xs gap-3">
+   961→                    <dt className="text-muted-foreground shrink-0">Certifications</dt>
+   962→                    <dd className="font-mono text-[10px] text-right text-foreground/90">
+   963→                      {ins.certs}
+   964→                    </dd>
+   965→                  </div>
+   966→                </dl>
+   967→
+   968→                {/* VERIFIED badge */}
+   969→                <div className="mb-4 flex items-center gap-1.5 text-[10px] font-mono text-emerald-400 tracking-wider">
+   970→                  <BadgeCheck className="size-3" aria-hidden />
+   971→                  VERIFIED INSTRUCTOR PROFILE
+   972→                </div>
+   973→
+   974→                <Button
+   975→                  variant="outline"
+   976→                  size="sm"
+   977→                  className="w-full mt-auto"
+   978→                  aria-label={`View ${ins.name} instructor profile`}
+   979→                >
+   980→                  VIEW INSTRUCTOR
+   981→                  <ArrowRight className="size-4 ml-2" aria-hidden />
+   982→                </Button>
+   983→              </motion.div>
+   984→            ))}
+   985→          </div>
+   986→        </div>
+   987→      </section>
+   988→
+   989→      {/* =====================================================
+   990→          SECTION 2 - PLATFORM INTRODUCTION (6 pillars)
+   991→          ===================================================== */}
+   992→      <section
+   993→        aria-labelledby="platform-heading"
+   994→        className="relative py-8 lg:py-12"
+   995→      >
+   996→        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+   997→          <motion.div {...FADE_UP} className="max-w-2xl mb-6">
+   998→            <p className="text-[10px] font-mono text-violet-300/80 tracking-[0.25em] mb-2">
+   999→              {platformEyebrow}
+  1000→            </p>
+  1001→            <h2
+  1002→              id="platform-heading"
+  1003→              className="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-[-0.02em] mb-3"
+  1004→            >
+  1005→              {platformTitle}
+  1006→            </h2>
+  1007→            <p className="text-sm text-muted-foreground leading-relaxed">
+  1008→              {platformDesc}
+  1009→            </p>
+  1010→          </motion.div>
+  1011→
+  1012→          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 lg:gap-4">
+  1013→            {PILLARS.map((p, i) => (
+  1014→              <motion.div
+  1015→                key={p.title}
+  1016→                initial={{ opacity: 0, y: 10 }}
+  1017→                animate={{ opacity: 1, y: 0 }}
+  1018→                transition={{ duration: 0.35, delay: 0.05 * i, ease: "easeOut" }}
+  1019→                className="card-premium rounded-xl p-4 lg:p-5"
+  1020→              >
+  1021→                <div
+  1022→                  className={cn(
+  1023→                    "mb-3 flex size-10 items-center justify-center rounded-lg border border-border/50",
+  1024→                    p.tint,
+  1025→                    p.color
+  1026→                  )}
+  1027→                  aria-hidden
+  1028→                >
+  1029→                  <p.icon className="size-5" />
+  1030→                </div>
+  1031→                <h3 className="text-sm font-semibold mb-1">{p.title}</h3>
+  1032→                <p className="text-xs text-muted-foreground leading-relaxed">
+  1033→                  {p.desc}
+  1034→                </p>
+  1035→              </motion.div>
+  1036→            ))}
+  1037→          </div>
+  1038→        </div>
+  1039→      </section>
+  1040→
+  1041→      {/* =====================================================
+  1042→          SECTION 3 - CYBER RANGE SHOWCASE
+  1043→          ===================================================== */}
+  1044→      <section
+  1045→        aria-labelledby="range-heading"
+  1046→        className="relative py-8 lg:py-12"
+  1047→      >
+  1048→        <div className="absolute inset-0 bg-grid opacity-[0.04] pointer-events-none" aria-hidden />
+  1049→        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
+  1050→          <motion.div {...FADE_UP} className="max-w-2xl mb-6">
+  1051→            <h2
+  1052→              id="range-heading"
+  1053→              className="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-[-0.02em] mb-3 text-balance"
+  1054→            >
+  1055→              {rangeTitle}
+  1056→            </h2>
+  1057→            <p className="text-sm text-muted-foreground leading-relaxed">
+  1058→              {rangeDesc}
+  1059→            </p>
+  1060→          </motion.div>
+  1061→
+  1062→          <div className="grid lg:grid-cols-2 gap-4 lg:gap-6 items-stretch">
+  1063→            {/* Target info card */}
+  1064→            <motion.div
+  1065→              {...FADE_UP}
+  1066→              transition={{ duration: 0.4, delay: 0.05 }}
+  1067→              className="card-premium rounded-2xl p-5 lg:p-6 scanlines"
+  1068→            >
+  1069→              <div className="flex items-center justify-between mb-4">
+  1070→                <div className="flex items-center gap-2">
+  1071→                  <StatusDot status="online" pulse size="sm" label="TARGET ONLINE" />
+  1072→                </div>
+  1073→                <div className="flex items-center gap-2">
+  1074→                  <span className="inline-flex items-center gap-1.5 rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-wider text-amber-300">
+  1075→                    <Sparkles className="size-3" aria-hidden />
+  1076→                    DEMONSTRATION
+  1077→                  </span>
+  1078→                  <Badge className="bg-violet-500/15 text-violet-300 border-violet-500/30 font-mono text-[10px]">
+  1079→                    DVWA
+  1080→                  </Badge>
+  1081→                </div>
+  1082→              </div>
+  1083→
+  1084→              <p className="text-[10px] font-mono text-amber-300/80 mb-4 tracking-wider">
+  1085→                Interactive demo - sign up to access live labs
+  1086→              </p>
+  1087→
+  1088→              <h3 className="text-base font-semibold mb-4 flex items-center gap-2">
+  1089→                <Server className="size-4 text-cyan-300" aria-hidden />
+  1090→                Target Machine
+  1091→              </h3>
+  1092→
+  1093→              <dl className="space-y-3 font-mono text-sm">
+  1094→                <div className="flex justify-between border-b border-border/40 pb-2">
+  1095→                  <dt className="text-muted-foreground">TARGET</dt>
+  1096→                  <dd className="text-foreground">DVWA</dd>
+  1097→                </div>
+  1098→                <div className="flex justify-between border-b border-border/40 pb-2">
+  1099→                  <dt className="text-muted-foreground">STATUS</dt>
+  1100→                  <dd className="text-emerald-300">ONLINE</dd>
+  1101→                </div>
+  1102→                <div className="flex justify-between border-b border-border/40 pb-2">
+  1103→                  <dt className="text-muted-foreground">IP</dt>
+  1104→                  <dd className="text-cyan-200">10.10.24.14</dd>
+  1105→                </div>
+  1106→              </dl>
+  1107→
+  1108→              <div className="mt-4">
+  1109→                <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider mb-2">
+  1110→                  Open Services
+  1111→                </p>
+  1112→                <div className="flex flex-wrap gap-2">
+  1113→                  {RANGE_SERVICES.map((s) => (
+  1114→                    <span
+  1115→                      key={s.port}
+  1116→                      className="inline-flex items-center gap-1.5 rounded-md border border-border/50 bg-[oklch(0.1_0.008_270)] px-2 py-1 font-mono text-xs"
+  1117→                    >
+  1118→                      <s.icon className={cn("size-3.5", s.color)} aria-hidden />
+  1119→                      <span className="text-cyan-200">{s.port}</span>
+  1120→                      <span className="text-muted-foreground">{s.name}</span>
+  1121→                    </span>
+  1122→                  ))}
+  1123→                </div>
+  1124→              </div>
+  1125→
+  1126→              <Button
+  1127→                className="mt-5 w-full bg-violet-600 hover:bg-violet-500 btn-premium"
+  1128→                onClick={() => navigate({ name: "labs" })}
+  1129→                aria-label="Launch lab"
+  1130→              >
+  1131→                <Crosshair className="size-4 mr-2" aria-hidden />
+  1132→                LAUNCH LAB
+  1133→              </Button>
+  1134→            </motion.div>
+  1135→
+  1136→            {/* Cyber terminal - nmap scan */}
+  1137→            <motion.div
+  1138→              {...FADE_UP}
+  1139→              transition={{ duration: 0.4, delay: 0.15 }}
+  1140→              className="flex"
+  1141→            >
+  1142→              <CyberTerminal
+  1143→                lines={nmapLines}
+  1144→                speed={18}
+  1145→                className="w-full"
+  1146→                prompt="guardian@kali:~$"
+  1147→              />
+  1148→            </motion.div>
+  1149→          </div>
+  1150→        </div>
+  1151→      </section>
+  1152→
+  1153→      {/* =====================================================
+  1154→          SECTION 4 - LEARNING PATHS
+  1155→          ===================================================== */}
+  1156→      <section
+  1157→        aria-labelledby="paths-heading"
+  1158→        className="relative py-8 lg:py-12"
+  1159→      >
+  1160→        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+  1161→          <motion.div {...FADE_UP} className="max-w-2xl mb-6">
+  1162→            <h2
+  1163→              id="paths-heading"
+  1164→              className="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-[-0.02em] mb-3"
+  1165→            >
+  1166→              {pathsTitle}
+  1167→            </h2>
+  1168→            <p className="text-sm text-muted-foreground leading-relaxed">
+  1169→              {pathsDesc}
+  1170→            </p>
+  1171→          </motion.div>
+  1172→
+  1173→          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
+  1174→            {(() => {
+  1175→              type PathCard = {
+  1176→                key: string
+  1177→                title: string
+  1178→                desc: string
+  1179→                icon: React.ComponentType<{ className?: string }>
+  1180→                difficulty: string
+  1181→                duration: string
+  1182→                skills: string
+  1183→                color: string
+  1184→                tint: string
+  1185→              }
+  1186→              const items: PathCard[] =
+  1187→                learningPathRows.length > 0
+  1188→                  ? learningPathRows.map((p) => ({
+  1189→                      key: p.id,
+  1190→                      title: p.title,
+  1191→                      desc: p.subtitle || p.description,
+  1192→                      icon: getCmsIcon(p.icon),
+  1193→                      difficulty: p.difficulty.toUpperCase(),
+  1194→                      duration: p.duration,
+  1195→                      skills: `${p.skillsCount} skills`,
+  1196→                      color: p.color,
+  1197→                      tint: p.tint,
+  1198→                    }))
+  1199→                  : LEARNING_PATHS.map((p) => ({
+  1200→                      key: p.title,
+  1201→                      title: p.title,
+  1202→                      desc: p.desc,
+  1203→                      icon: p.icon,
+  1204→                      difficulty: p.difficulty,
+  1205→                      duration: p.duration,
+  1206→                      skills: p.skills,
+  1207→                      color: p.color,
+  1208→                      tint: p.tint,
+  1209→                    }))
+
+[showing lines 610-1209 of 2956; use offset=1210 with limit to continue reading]

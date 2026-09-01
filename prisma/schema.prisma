@@ -5,7 +5,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -1514,4 +1514,38 @@ model LeadStatusHistory {
   fromStatus String?
   toStatus  String
   changedAt DateTime @default(now())
+}
+
+// ============================================================
+// TRAINING-BATCH-CRUD — public certification training batches
+// (separate from the school-tied `Batch` model).
+// ============================================================
+model TrainingBatch {
+  id              String   @id @default(cuid())
+  certification   String                       // e.g. "CompTIA Security+", "CEH", "CCNA", "CISSP"
+  name            String                       // e.g. "Security+ Weekend Batch"
+  schedule        String                       // human-readable schedule e.g. "Sat + Sun, 7:00 PM - 9:00 PM IST"
+  startDate       String                       // e.g. "October 12" (display string)
+  startIsoDate    String?                      // optional ISO date for sorting/filtering
+  mode            String   @default("Live Online")  // "Live Online" | "On-Campus"
+  instructor      String                       // instructor name
+  instructorId    String?                      // optional link to User
+  seats           Int      @default(20)        // total capacity
+  enrolled        Int      @default(0)         // currently enrolled count
+  level           String   @default("Beginner") // "Beginner" | "Intermediate" | "Advanced"
+  status          String   @default("Open")    // "Open" | "Almost Full" | "Full" | "Completed" | "Cancelled"
+  certColor       String   @default("text-emerald-300")
+  certTint        String   @default("bg-emerald-500/15")
+  certBorder      String   @default("border-emerald-500/30")
+  levelColor      String   @default("text-emerald-300")
+  levelTint       String   @default("bg-emerald-500/10")
+  levelBorder     String   @default("border-emerald-500/30")
+  borderColor     String   @default("border-border/60")
+  btnClass        String   @default("bg-emerald-600 hover:bg-emerald-500")
+  description     String   @default("")        // optional longer description
+  featured        Boolean  @default(false)     // show on homepage
+  order           Int      @default(0)         // sort order
+  published       Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }

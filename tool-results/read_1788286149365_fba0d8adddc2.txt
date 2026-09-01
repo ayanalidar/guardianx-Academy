@@ -1,0 +1,669 @@
+     1→"use client"
+     2→
+     3→import * as React from "react"
+     4→import { motion } from "framer-motion"
+     5→import { useAppStore } from "@/store/app-store"
+     6→import { Button } from "@/components/ui/button"
+     7→import { Badge } from "@/components/ui/badge"
+     8→import { cn } from "@/lib/utils"
+     9→import {
+    10→  ArrowLeft,
+    11→  ArrowRight,
+    12→  Calendar,
+    13→  Clock,
+    14→  Video,
+    15→  Users,
+    16→  Target,
+    17→  Building2,
+    18→  Sparkles,
+    19→  Filter,
+    20→  X,
+    21→  CalendarDays,
+    22→  CalendarCheck,
+    23→  Sun,
+    24→  Sunset,
+    25→  Moon,
+    26→  MapPin,
+    27→  Signal,
+    28→} from "lucide-react"
+    29→
+    30→/* ============================================================
+    31→   BatchesView - dedicated batches discovery page.
+    32→
+    33→   Structure:
+    34→   1. Hero - "Upcoming Certification Batches"
+    35→   2. Filters - Certification, Schedule, Mode, Level
+    36→   3. Batch Grid - detailed batch cards
+    37→   4. CTA - "Don't see your batch?" request flow
+    38→
+    39→   Data is hardcoded for now - will be DB-driven in a later task.
+    40→   ============================================================ */
+    41→
+    42→interface Batch {
+    43→  id: string
+    44→  certification: string
+    45→  certGroup: "Security+" | "CEH" | "CCNA" | "CISSP"
+    46→  name: string
+    47→  schedule: string
+    48→  startDate: string
+    49→  mode: "Live Online" | "On-Campus"
+    50→  instructor: string
+    51→  seats: number
+    52→  almostFull: boolean
+    53→  level: "Beginner" | "Intermediate" | "Advanced"
+    54→  // visual styling per batch (driven by level)
+    55→  certColor: string
+    56→  certTint: string
+    57→  certBorder: string
+    58→  levelColor: string
+    59→  levelTint: string
+    60→  levelBorder: string
+    61→  borderColor: string
+    62→  btnClass: string
+    63→  // for the schedule filter
+    64→  scheduleType: "weekday" | "weekend" | "morning" | "evening" | "late-night"
+    65→}
+    66→
+    67→const BATCHES: Batch[] = [
+    68→  {
+    69→    id: "batch-sec-plus-weekend",
+    70→    certification: "CompTIA Security+",
+    71→    certGroup: "Security+",
+    72→    name: "Security+ Weekend Batch",
+    73→    schedule: "Sat + Sun, 7:00 PM – 9:00 PM IST",
+    74→    startDate: "October 12",
+    75→    mode: "Live Online",
+    76→    instructor: "Senior Cybersecurity Instructor",
+    77→    seats: 12,
+    78→    almostFull: false,
+    79→    level: "Beginner",
+    80→    certColor: "text-emerald-300",
+    81→    certTint: "bg-emerald-500/15",
+    82→    certBorder: "border-emerald-500/30",
+    83→    levelColor: "text-emerald-300",
+    84→    levelTint: "bg-emerald-500/10",
+    85→    levelBorder: "border-emerald-500/30",
+    86→    borderColor: "border-border/60 hover:border-emerald-500/40 hover:shadow-[0_20px_60px_-20px_oklch(0.65_0.15_155_/_0.25)]",
+    87→    btnClass: "bg-emerald-600 hover:bg-emerald-500",
+    88→    scheduleType: "weekend",
+    89→  },
+    90→  {
+    91→    id: "batch-ceh-weekday-evening",
+    92→    certification: "CEH (Certified Ethical Hacker)",
+    93→    certGroup: "CEH",
+    94→    name: "CEH Weekday Evening",
+    95→    schedule: "Mon-Wed-Fri, 8:00 PM – 10:00 PM IST",
+    96→    startDate: "October 20",
+    97→    mode: "Live Online",
+    98→    instructor: "Dr. Sarah Chen",
+    99→    seats: 8,
+   100→    almostFull: false,
+   101→    level: "Intermediate",
+   102→    certColor: "text-amber-300",
+   103→    certTint: "bg-amber-500/15",
+   104→    certBorder: "border-amber-500/30",
+   105→    levelColor: "text-amber-300",
+   106→    levelTint: "bg-amber-500/10",
+   107→    levelBorder: "border-amber-500/30",
+   108→    borderColor: "border-border/60 hover:border-amber-500/40 hover:shadow-[0_20px_60px_-20px_oklch(0.7_0.15_70_/_0.25)]",
+   109→    btnClass: "bg-amber-600 hover:bg-amber-500",
+   110→    scheduleType: "weekday",
+   111→  },
+   112→  {
+   113→    id: "batch-ccna-morning",
+   114→    certification: "CCNA",
+   115→    certGroup: "CCNA",
+   116→    name: "CCNA Morning Batch",
+   117→    schedule: "Tue-Thu, 7:00 AM – 9:00 AM IST",
+   118→    startDate: "November 03",
+   119→    mode: "Live Online",
+   120→    instructor: "Raj Patel",
+   121→    seats: 15,
+   122→    almostFull: false,
+   123→    level: "Beginner",
+   124→    certColor: "text-cyan-300",
+   125→    certTint: "bg-cyan-500/15",
+   126→    certBorder: "border-cyan-500/30",
+   127→    levelColor: "text-emerald-300",
+   128→    levelTint: "bg-emerald-500/10",
+   129→    levelBorder: "border-emerald-500/30",
+   130→    borderColor: "border-border/60 hover:border-cyan-500/40 hover:shadow-[0_20px_60px_-20px_oklch(0.7_0.15_220_/_0.25)]",
+   131→    btnClass: "bg-cyan-600 hover:bg-cyan-500",
+   132→    scheduleType: "morning",
+   133→  },
+   134→  {
+   135→    id: "batch-cissp-weekend-intensive",
+   136→    certification: "CISSP",
+   137→    certGroup: "CISSP",
+   138→    name: "CISSP Weekend Intensive",
+   139→    schedule: "Sat-Sun, 10:00 AM – 1:00 PM IST",
+   140→    startDate: "November 09",
+   141→    mode: "Live Online",
+   142→    instructor: "Alex Mercer",
+   143→    seats: 5,
+   144→    almostFull: true,
+   145→    level: "Advanced",
+   146→    certColor: "text-rose-300",
+   147→    certTint: "bg-rose-500/15",
+   148→    certBorder: "border-rose-500/30",
+   149→    levelColor: "text-rose-300",
+   150→    levelTint: "bg-rose-500/10",
+   151→    levelBorder: "border-rose-500/30",
+   152→    borderColor: "border-border/60 hover:border-rose-500/40 hover:shadow-[0_20px_60px_-20px_oklch(0.65_0.2_15_/_0.25)]",
+   153→    btnClass: "bg-rose-600 hover:bg-rose-500",
+   154→    scheduleType: "weekend",
+   155→  },
+   156→]
+   157→
+   158→/* Filter options ------------------------------------------------ */
+   159→
+   160→const CERT_FILTERS = [
+   161→  { value: "all", label: "All Certifications" },
+   162→  { value: "Security+", label: "CompTIA Security+" },
+   163→  { value: "CEH", label: "CEH" },
+   164→  { value: "CCNA", label: "CCNA" },
+   165→  { value: "CISSP", label: "CISSP" },
+   166→] as const
+   167→
+   168→const SCHEDULE_FILTERS = [
+   169→  { value: "all", label: "All Schedules", icon: Calendar },
+   170→  { value: "weekday", label: "Weekday", icon: CalendarDays },
+   171→  { value: "weekend", label: "Weekend", icon: CalendarCheck },
+   172→  { value: "morning", label: "Morning", icon: Sun },
+   173→  { value: "evening", label: "Evening", icon: Sunset },
+   174→  { value: "late-night", label: "Late Night", icon: Moon },
+   175→] as const
+   176→
+   177→const MODE_FILTERS = [
+   178→  { value: "all", label: "All Modes", icon: Signal },
+   179→  { value: "Live Online", label: "Live Online", icon: Video },
+   180→  { value: "On-Campus", label: "On-Campus", icon: Building2 },
+   181→] as const
+   182→
+   183→const LEVEL_FILTERS = [
+   184→  { value: "all", label: "All Levels" },
+   185→  { value: "Beginner", label: "Beginner" },
+   186→  { value: "Intermediate", label: "Intermediate" },
+   187→  { value: "Advanced", label: "Advanced" },
+   188→] as const
+   189→
+   190→const FADE_UP = {
+   191→  initial: { opacity: 0, y: 10 },
+   192→  animate: { opacity: 1, y: 0 },
+   193→  transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] as const },
+   194→}
+   195→
+   196→export function BatchesView() {
+   197→  const { navigate } = useAppStore()
+   198→
+   199→  /* ----------------------------- filters state ----------------------------- */
+   200→  const [certFilter, setCertFilter] = React.useState<string>("all")
+   201→  const [scheduleFilter, setScheduleFilter] = React.useState<string>("all")
+   202→  const [modeFilter, setModeFilter] = React.useState<string>("all")
+   203→  const [levelFilter, setLevelFilter] = React.useState<string>("all")
+   204→
+   205→  /* --------------------------- filtered batches ---------------------------- */
+   206→  const filteredBatches = React.useMemo(() => {
+   207→    return BATCHES.filter((b) => {
+   208→      if (certFilter !== "all" && b.certGroup !== certFilter) return false
+   209→      if (scheduleFilter !== "all" && b.scheduleType !== scheduleFilter) return false
+   210→      if (modeFilter !== "all" && b.mode !== modeFilter) return false
+   211→      if (levelFilter !== "all" && b.level !== levelFilter) return false
+   212→      return true
+   213→    })
+   214→  }, [certFilter, scheduleFilter, modeFilter, levelFilter])
+   215→
+   216→  const activeFilterCount =
+   217→    (certFilter !== "all" ? 1 : 0) +
+   218→    (scheduleFilter !== "all" ? 1 : 0) +
+   219→    (modeFilter !== "all" ? 1 : 0) +
+   220→    (levelFilter !== "all" ? 1 : 0)
+   221→
+   222→  const clearFilters = () => {
+   223→    setCertFilter("all")
+   224→    setScheduleFilter("all")
+   225→    setModeFilter("all")
+   226→    setLevelFilter("all")
+   227→  }
+   228→
+   229→  return (
+   230→    <div className="relative min-h-screen pt-2 lg:pt-4">
+   231→      {/* Atmospheric background */}
+   232→      <div className="absolute inset-0 bg-mesh opacity-40 pointer-events-none" aria-hidden />
+   233→      <div
+   234→        className="absolute top-0 right-0 w-[600px] h-[400px] bg-violet-600/5 blur-[120px] rounded-full pointer-events-none"
+   235→        aria-hidden
+   236→      />
+   237→      <div
+   238→        className="absolute bottom-0 left-0 w-[500px] h-[300px] bg-cyan-500/5 blur-[120px] rounded-full pointer-events-none"
+   239→        aria-hidden
+   240→      />
+   241→
+   242→      <div className="relative z-10">
+   243→        {/* ====================================================
+   244→            SECTION 1: HERO
+   245→            ==================================================== */}
+   246→        <section className="py-8 lg:py-12">
+   247→          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+   248→            <motion.div
+   249→              initial={{ opacity: 0, y: 8 }}
+   250→              animate={{ opacity: 1, y: 0 }}
+   251→              transition={{ duration: 0.3 }}
+   252→              className="mb-4"
+   253→            >
+   254→              <button
+   255→                onClick={() => navigate({ name: "home" })}
+   256→                className="inline-flex items-center gap-1.5 text-[10px] font-mono text-muted-foreground hover:text-violet-300 transition-colors tracking-[0.2em]"
+   257→              >
+   258→                <ArrowLeft className="h-3 w-3" />
+   259→                BACK TO HOME
+   260→              </button>
+   261→            </motion.div>
+   262→
+   263→            <motion.div
+   264→              initial={{ opacity: 0, y: 8 }}
+   265→              animate={{ opacity: 1, y: 0 }}
+   266→              transition={{ duration: 0.3, delay: 0.05 }}
+   267→              className="flex items-center gap-2 mb-4"
+   268→            >
+   269→              <Calendar className="h-5 w-5 text-violet-300" aria-hidden />
+   270→              <span className="text-[10px] font-mono text-violet-300/80 tracking-[0.25em]">
+   271→                LIVE INSTRUCTOR-LED BATCHES
+   272→              </span>
+   273→            </motion.div>
+   274→
+   275→            <motion.h1
+   276→              initial={{ opacity: 0, y: 8 }}
+   277→              animate={{ opacity: 1, y: 0 }}
+   278→              transition={{ duration: 0.3, delay: 0.1 }}
+   279→              className="text-[clamp(2.25rem,5vw,4rem)] font-bold leading-[1.05] tracking-[-0.03em] mb-4 text-balance"
+   280→            >
+   281→              Upcoming{" "}
+   282→              <span className="text-gradient-premium">Certification Batches</span>
+   283→            </motion.h1>
+   284→
+   285→            <motion.p
+   286→              initial={{ opacity: 0, y: 8 }}
+   287→              animate={{ opacity: 1, y: 0 }}
+   288→              transition={{ duration: 0.3, delay: 0.2 }}
+   289→              className="text-base lg:text-lg text-muted-foreground max-w-2xl mb-6 leading-relaxed"
+   290→            >
+   291→              Live instructor-led training with flexible schedules. Choose a batch
+   292→              that fits your certification goal, time zone, and skill level - then
+   293→              enroll before seats fill up.
+   294→            </motion.p>
+   295→
+   296→            {/* Quick stats strip */}
+   297→            <motion.div
+   298→              initial={{ opacity: 0, y: 8 }}
+   299→              animate={{ opacity: 1, y: 0 }}
+   300→              transition={{ duration: 0.3, delay: 0.3 }}
+   301→              className="flex flex-wrap items-center gap-x-5 gap-y-2 pt-4 border-t border-border/40 max-w-2xl"
+   302→            >
+   303→              <span className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-emerald-300">
+   304→                <span className="size-2 rounded-full bg-emerald-400" aria-hidden />
+   305→                BATCHES OPEN
+   306→              </span>
+   307→              <span className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-cyan-300">
+   308→                <span className="size-2 rounded-full bg-cyan-400" aria-hidden />
+   309→                LIVE SESSIONS
+   310→              </span>
+   311→              <span className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-violet-300">
+   312→                <span className="size-2 rounded-full bg-violet-400" aria-hidden />
+   313→                12 EXPERT INSTRUCTORS
+   314→              </span>
+   315→            </motion.div>
+   316→          </div>
+   317→        </section>
+   318→
+   319→        {/* ====================================================
+   320→            SECTION 2: FILTERS
+   321→            ==================================================== */}
+   322→        <section className="py-6 lg:py-8 border-t border-border/40">
+   323→          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+   324→            <motion.div
+   325→              initial={{ opacity: 0, y: 8 }}
+   326→              animate={{ opacity: 1, y: 0 }}
+   327→              transition={{ duration: 0.3 }}
+   328→              className="flex items-center justify-between gap-4 mb-4"
+   329→            >
+   330→              <div className="flex items-center gap-2">
+   331→                <Filter className="h-4 w-4 text-muted-foreground" aria-hidden />
+   332→                <span className="text-sm font-semibold">Filter Batches</span>
+   333→                {activeFilterCount > 0 && (
+   334→                  <Badge className="bg-violet-500/15 text-violet-300 border-violet-500/30 font-mono text-[10px]">
+   335→                    {activeFilterCount} active
+   336→                  </Badge>
+   337→                )}
+   338→              </div>
+   339→              {activeFilterCount > 0 && (
+   340→                <button
+   341→                  onClick={clearFilters}
+   342→                  className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+   343→                >
+   344→                  <X className="h-3.5 w-3.5" aria-hidden />
+   345→                  Clear filters
+   346→                </button>
+   347→              )}
+   348→            </motion.div>
+   349→
+   350→            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+   351→              {/* Certification filter */}
+   352→              <FilterGroup label="Certification">
+   353→                <FilterSelect
+   354→                  value={certFilter}
+   355→                  onChange={setCertFilter}
+   356→                  options={CERT_FILTERS.map((f) => ({ value: f.value, label: f.label }))}
+   357→                />
+   358→              </FilterGroup>
+   359→
+   360→              {/* Schedule filter */}
+   361→              <FilterGroup label="Schedule">
+   362→                <div className="flex flex-wrap gap-1.5">
+   363→                  {SCHEDULE_FILTERS.map((f) => {
+   364→                    const active = scheduleFilter === f.value
+   365→                    return (
+   366→                      <button
+   367→                        key={f.value}
+   368→                        onClick={() => setScheduleFilter(f.value)}
+   369→                        className={cn(
+   370→                          "inline-flex items-center gap-1 rounded-md border px-2 py-1 font-mono text-[10px] uppercase tracking-wider transition-colors",
+   371→                          active
+   372→                            ? "border-violet-500/40 bg-violet-500/15 text-violet-200"
+   373→                            : "border-border/60 bg-card text-muted-foreground hover:text-foreground hover:border-border"
+   374→                        )}
+   375→                      >
+   376→                        <f.icon className="size-3" aria-hidden />
+   377→                        {f.label}
+   378→                      </button>
+   379→                    )
+   380→                  })}
+   381→                </div>
+   382→              </FilterGroup>
+   383→
+   384→              {/* Mode filter */}
+   385→              <FilterGroup label="Mode">
+   386→                <div className="flex flex-wrap gap-1.5">
+   387→                  {MODE_FILTERS.map((f) => {
+   388→                    const active = modeFilter === f.value
+   389→                    return (
+   390→                      <button
+   391→                        key={f.value}
+   392→                        onClick={() => setModeFilter(f.value)}
+   393→                        className={cn(
+   394→                          "inline-flex items-center gap-1 rounded-md border px-2 py-1 font-mono text-[10px] uppercase tracking-wider transition-colors",
+   395→                          active
+   396→                            ? "border-cyan-500/40 bg-cyan-500/15 text-cyan-200"
+   397→                            : "border-border/60 bg-card text-muted-foreground hover:text-foreground hover:border-border"
+   398→                        )}
+   399→                      >
+   400→                        <f.icon className="size-3" aria-hidden />
+   401→                        {f.label}
+   402→                      </button>
+   403→                    )
+   404→                  })}
+   405→                </div>
+   406→              </FilterGroup>
+   407→
+   408→              {/* Level filter */}
+   409→              <FilterGroup label="Level">
+   410→                <div className="flex flex-wrap gap-1.5">
+   411→                  {LEVEL_FILTERS.map((f) => {
+   412→                    const active = levelFilter === f.value
+   413→                    return (
+   414→                      <button
+   415→                        key={f.value}
+   416→                        onClick={() => setLevelFilter(f.value)}
+   417→                        className={cn(
+   418→                          "inline-flex items-center gap-1 rounded-md border px-2 py-1 font-mono text-[10px] uppercase tracking-wider transition-colors",
+   419→                          active
+   420→                            ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-200"
+   421→                            : "border-border/60 bg-card text-muted-foreground hover:text-foreground hover:border-border"
+   422→                        )}
+   423→                      >
+   424→                        {f.label}
+   425→                      </button>
+   426→                    )
+   427→                  })}
+   428→                </div>
+   429→              </FilterGroup>
+   430→            </div>
+   431→          </div>
+   432→        </section>
+   433→
+   434→        {/* ====================================================
+   435→            SECTION 3: BATCH GRID
+   436→            ==================================================== */}
+   437→        <section className="py-8 lg:py-12 border-t border-border/40">
+   438→          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+   439→            <motion.div
+   440→              initial={{ opacity: 0, y: 8 }}
+   441→              animate={{ opacity: 1, y: 0 }}
+   442→              transition={{ duration: 0.3 }}
+   443→              className="mb-6 flex items-center justify-between gap-4"
+   444→            >
+   445→              <div>
+   446→                <h2 className="text-[clamp(1.5rem,3vw,2rem)] font-bold tracking-[-0.02em]">
+   447→                  Available Batches
+   448→                </h2>
+   449→                <p className="text-xs text-muted-foreground mt-1">
+   450→                  Showing{" "}
+   451→                  <span className="text-foreground font-medium">{filteredBatches.length}</span>{" "}
+   452→                  of {BATCHES.length} upcoming batches
+   453→                </p>
+   454→              </div>
+   455→            </motion.div>
+   456→
+   457→            {filteredBatches.length === 0 ? (
+   458→              <motion.div
+   459→                initial={{ opacity: 0, y: 10 }}
+   460→                animate={{ opacity: 1, y: 0 }}
+   461→                transition={{ duration: 0.3 }}
+   462→                className="rounded-2xl border border-border/60 bg-card p-10 text-center"
+   463→              >
+   464→                <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full border border-border/60 bg-muted/40">
+   465→                  <Filter className="size-5 text-muted-foreground" aria-hidden />
+   466→                </div>
+   467→                <h3 className="text-base font-semibold mb-2">No batches match your filters</h3>
+   468→                <p className="text-sm text-muted-foreground mb-5 max-w-md mx-auto">
+   469→                  Try adjusting or clearing your filters to see all upcoming batches -
+   470→                  or request a custom batch below.
+   471→                </p>
+   472→                <Button variant="outline" onClick={clearFilters}>
+   473→                  Clear all filters
+   474→                </Button>
+   475→              </motion.div>
+   476→            ) : (
+   477→              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-5">
+   478→                {filteredBatches.map((b, i) => (
+   479→                  <motion.div
+   480→                    key={b.id}
+   481→                    initial={{ opacity: 0, y: 12 }}
+   482→                    animate={{ opacity: 1, y: 0 }}
+   483→                    transition={{ duration: 0.4, delay: 0.05 * i, ease: "easeOut" }}
+   484→                    className={cn(
+   485→                      "group relative rounded-2xl border bg-card p-5 lg:p-6 transition-all duration-300 hover:-translate-y-1",
+   486→                      b.borderColor
+   487→                    )}
+   488→                  >
+   489→                    {/* Header row: certification badge + level pill */}
+   490→                    <div className="flex items-start justify-between gap-3 mb-4">
+   491→                      <div className="min-w-0">
+   492→                        <Badge
+   493→                          className={cn(
+   494→                            "mb-2 font-mono text-[10px] uppercase tracking-wider",
+   495→                            b.certTint,
+   496→                            b.certColor,
+   497→                            b.certBorder
+   498→                          )}
+   499→                        >
+   500→                          {b.certification}
+   501→                        </Badge>
+   502→                        <h3 className="text-lg font-semibold leading-tight">
+   503→                          {b.name}
+   504→                        </h3>
+   505→                      </div>
+   506→                      <Badge
+   507→                        variant="outline"
+   508→                        className={cn(
+   509→                          "font-mono text-[10px] uppercase tracking-wider shrink-0",
+   510→                          b.levelTint,
+   511→                          b.levelColor,
+   512→                          b.levelBorder
+   513→                        )}
+   514→                      >
+   515→                        {b.level}
+   516→                      </Badge>
+   517→                    </div>
+   518→
+   519→                    {/* Meta rows */}
+   520→                    <dl className="space-y-2 text-sm mb-5">
+   521→                      <div className="flex items-center gap-2">
+   522→                        <Calendar className="size-3.5 text-muted-foreground shrink-0" aria-hidden />
+   523→                        <span className="text-muted-foreground">{b.schedule}</span>
+   524→                      </div>
+   525→                      <div className="flex items-center gap-2">
+   526→                        <Clock className="size-3.5 text-muted-foreground shrink-0" aria-hidden />
+   527→                        <span className="text-muted-foreground">Starts {b.startDate}</span>
+   528→                      </div>
+   529→                      <div className="flex items-center gap-2">
+   530→                        <Video className="size-3.5 text-muted-foreground shrink-0" aria-hidden />
+   531→                        <span className="text-muted-foreground">{b.mode}</span>
+   532→                      </div>
+   533→                      <div className="flex items-center gap-2">
+   534→                        <Users className="size-3.5 text-muted-foreground shrink-0" aria-hidden />
+   535→                        <span className="text-muted-foreground">{b.instructor}</span>
+   536→                      </div>
+   537→                      <div className="flex items-center gap-2">
+   538→                        <Target className="size-3.5 text-muted-foreground shrink-0" aria-hidden />
+   539→                        <span
+   540→                          className={cn(
+   541→                            b.almostFull
+   542→                              ? "text-amber-300 font-medium"
+   543→                              : "text-emerald-300 font-medium"
+   544→                          )}
+   545→                        >
+   546→                          {b.seats} seats available{b.almostFull ? " · Almost Full" : ""}
+   547→                        </span>
+   548→                      </div>
+   549→                    </dl>
+   550→
+   551→                    <Button
+   552→                      onClick={() => navigate({ name: "contact" })}
+   553→                      className={cn("w-full btn-premium", b.btnClass)}
+   554→                      size="sm"
+   555→                      aria-label={`Enroll in ${b.name}`}
+   556→                    >
+   557→                      ENROLL NOW
+   558→                      <ArrowRight className="size-4 ml-2" aria-hidden />
+   559→                    </Button>
+   560→                  </motion.div>
+   561→                ))}
+   562→              </div>
+   563→            )}
+   564→          </div>
+   565→        </section>
+   566→
+   567→        {/* ====================================================
+   568→            SECTION 4: CTA - Don't see your batch?
+   569→            ==================================================== */}
+   570→        <section className="py-12 lg:py-16 border-t border-border/40 relative overflow-hidden">
+   571→          <div className="absolute inset-0 bg-mesh opacity-60 pointer-events-none" aria-hidden />
+   572→          <div
+   573→            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 size-[500px] rounded-full bg-violet-600/8 blur-[120px] pointer-events-none"
+   574→            aria-hidden
+   575→          />
+   576→          <div className="relative mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 text-center">
+   577→            <motion.div {...FADE_UP}>
+   578→              <div className="inline-flex items-center gap-2 mb-5 rounded-full border border-violet-500/30 bg-violet-500/10 px-3 py-1.5">
+   579→                <Sparkles className="size-3.5 text-violet-300" aria-hidden />
+   580→                <span className="font-mono text-[10px] text-violet-300/90 tracking-[0.25em]">
+   581→                  CUSTOM BATCHES
+   582→                </span>
+   583→              </div>
+   584→
+   585→              <h2 className="text-[clamp(1.75rem,4vw,2.5rem)] font-bold leading-[1.05] tracking-[-0.02em] mb-4 text-balance">
+   586→                Don&apos;t see your <span className="text-gradient-premium">batch?</span>
+   587→              </h2>
+   588→
+   589→              <p className="text-base text-muted-foreground max-w-xl mx-auto mb-7 leading-relaxed">
+   590→                Tell us the certification you want, your preferred schedule, and your
+   591→                time zone. We&apos;ll open a batch when we have enough learners - or
+   592→                arrange a 1-on-1 cohort for your team.
+   593→              </p>
+   594→
+   595→              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+   596→                <Button
+   597→                  size="lg"
+   598→                  onClick={() => navigate({ name: "contact" })}
+   599→                  className="bg-violet-600 hover:bg-violet-500 btn-premium px-8 py-6 text-sm w-full sm:w-auto"
+   600→                  aria-label="Request a batch"
+   601→                >
+   602→                  <Sparkles className="size-4 mr-2" aria-hidden />
+   603→                  REQUEST A BATCH
+   604→                </Button>
+   605→                <Button
+   606→                  size="lg"
+   607→                  variant="outline"
+   608→                  onClick={() => navigate({ name: "catalog" })}
+   609→                  className="px-7 py-6 text-sm w-full sm:w-auto"
+   610→                  aria-label="Browse all courses"
+   611→                >
+   612→                  BROWSE ALL COURSES
+   613→                  <ArrowRight className="size-4 ml-2" aria-hidden />
+   614→                </Button>
+   615→              </div>
+   616→
+   617→              <p className="mt-5 font-mono text-[10px] text-muted-foreground/60 uppercase tracking-wider inline-flex items-center gap-1.5">
+   618→                <MapPin className="size-3" aria-hidden />
+   619→                Custom batches available worldwide · Online &amp; on-campus
+   620→              </p>
+   621→            </motion.div>
+   622→          </div>
+   623→        </section>
+   624→      </div>
+   625→    </div>
+   626→  )
+   627→}
+   628→
+   629→/* ---------------------------------------------------------------- *
+   630→ *  FilterGroup + FilterSelect - small presentational helpers        *
+   631→ * ---------------------------------------------------------------- */
+   632→
+   633→function FilterGroup({ label, children }: { label: string; children: React.ReactNode }) {
+   634→  return (
+   635→    <div className="rounded-xl border border-border/60 bg-card/50 p-3">
+   636→      <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider mb-2">
+   637→        {label}
+   638→      </p>
+   639→      {children}
+   640→    </div>
+   641→  )
+   642→}
+   643→
+   644→function FilterSelect({
+   645→  value,
+   646→  onChange,
+   647→  options,
+   648→}: {
+   649→  value: string
+   650→  onChange: (v: string) => void
+   651→  options: { value: string; label: string }[]
+   652→}) {
+   653→  // Native select - accessible, fast, no extra dep.
+   654→  return (
+   655→    <select
+   656→      value={value}
+   657→      onChange={(e) => onChange(e.target.value)}
+   658→      className="w-full rounded-md border border-border/60 bg-card px-3 py-1.5 text-sm text-foreground focus:border-violet-500/60 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
+   659→      aria-label="Filter by certification"
+   660→    >
+   661→      {options.map((o) => (
+   662→        <option key={o.value} value={o.value}>
+   663→          {o.label}
+   664→        </option>
+   665→      ))}
+   666→    </select>
+   667→  )
+   668→}
+   669→

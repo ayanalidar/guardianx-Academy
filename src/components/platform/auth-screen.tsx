@@ -50,10 +50,53 @@ const STATS = [
 
 export function AuthScreen() {
   const router = useRouter()
-  const { navigate } = useAppStore()
+  const { navigate, pendingView, setPendingView } = useAppStore()
   const [loading, setLoading] = React.useState(false)
   const [showPass, setShowPass] = React.useState(false)
   const [activeTab, setActiveTab] = React.useState("login")
+
+  // If the user was redirected here from a protected view (e.g. they
+  // clicked "Career Paths" while logged out), show a contextual banner
+  // telling them which page they were trying to reach, so the login
+  // screen doesn't feel like it came out of nowhere (master-prompt §10).
+  const pendingLabel = React.useMemo(() => {
+    if (!pendingView) return null
+    const labels: Record<string, string> = {
+      "career-planner": "Career Paths",
+      "skill-assessments": "Skill Assessment",
+      "certificates": "My Certifications",
+      "resume-builder": "Resume Builder",
+      "ctf-platform": "CTF Arena",
+      "weekly-challenges": "Weekly Challenges",
+      "team-missions": "Team Missions",
+      "learning-analytics": "Learning Analytics",
+      "prerequisites-visualizer": "Prerequisites Visualizer",
+      "lab-snapshots": "Lab Snapshots",
+      "bug-bounty": "Bug Bounty",
+      "mock-interview": "Mock Interview",
+      "job-board": "Job Board",
+      "learning": "My Learning",
+      "notes": "My Notes",
+      "live": "Live Sessions",
+      "assignments": "Assignments",
+      "messaging": "Messages",
+      "study-groups": "Study Groups",
+      "office-hours": "Office Hours",
+      "profile": "Profile",
+      "achievements": "Achievements",
+      "leaderboard": "Leaderboard",
+      "community": "Community",
+      "ai-assistant": "AI Assistant",
+      "threat-feed": "Threat Feed",
+      "code-review": "Code Review",
+      "dashboard": "Dashboard",
+      "lab": "Lab",
+      "lesson": "Lesson",
+      "exam-detail": "Exam",
+      "exam": "Exam",
+    }
+    return labels[pendingView.name] || null
+  }, [pendingView])
 
   // CMS-driven hero copy - falls back to defaults.
   const cms = usePageContent("auth")
@@ -84,12 +127,19 @@ export function AuthScreen() {
   const [regEmail, setRegEmail] = React.useState("")
   const [regPass, setRegPass] = React.useState("")
 
-  // After successful auth, fetch the user's role and route accordingly.
-  // Retries up to 3 times with 300ms delay to handle session propagation.
-  // Falls back to the lighter /api/auth/session endpoint if /api/me fails
-  // (e.g. if a downstream DB query in /api/me errors) so login never gets
-  // stuck on a non-auth-related failure.
+  // After successful auth, redirect to the pendingView if the user was
+  // sent here from a protected page (e.g. they clicked "Career Paths"
+  // while logged out). Otherwise route by role to the dashboard. This
+  // ensures the user reaches the page they actually clicked on, per
+  // master-prompt §10.
   async function routeByRole() {
+    // If there's a pendingView, go there first.
+    if (pendingView) {
+      const target = pendingView
+      setPendingView(null)
+      navigate(target)
+      return
+    }
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
         const data = await api<{ user: { role: string } | null }>("/api/me")
@@ -319,6 +369,25 @@ export function AuthScreen() {
                     </TabsTrigger>
                     <TabsTrigger value="register">Register</TabsTrigger>
                   </TabsList>
+
+                  {/* Contextual "log in to access X" banner — shown when the
+                      user was redirected here from a protected page. */}
+                  {pendingLabel && (
+                    <div className="mb-5 rounded-lg border border-violet-500/30 bg-violet-500/10 px-4 py-3 text-sm">
+                      <div className="flex items-start gap-2.5">
+                        <Lock className="h-4 w-4 text-violet-300 shrink-0 mt-0.5" aria-hidden />
+                        <div className="flex-1">
+                          <p className="text-violet-200 font-medium leading-snug">
+                            Log in or create an account to access{" "}
+                            <span className="font-bold">{pendingLabel}</span>.
+                          </p>
+                          <p className="text-violet-300/70 text-xs mt-1">
+                            After signing in, you'll be taken straight there.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* ===== Sign In tab ===== */}
                   <TabsContent value="login">

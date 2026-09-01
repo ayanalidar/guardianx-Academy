@@ -267,7 +267,7 @@ export function BatchesView() {
   }
 
   return (
-    <div className="relative min-h-screen pt-2 lg:pt-4">
+    <div className="relative min-h-screen">
       {/* Atmospheric background */}
       <div className="absolute inset-0 bg-mesh opacity-40 pointer-events-none" aria-hidden />
       <div

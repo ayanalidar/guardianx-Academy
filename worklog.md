@@ -3695,3 +3695,48 @@ Stage Summary:
 - **Login is fixed for all 3 seeded roles + newly registered accounts.** The two root causes were: demo account emails pointing at the wrong domain, and page.tsx not re-fetching the session after login. Both verified working in the browser (admin → Admin Console, student → Dashboard).
 - **The lab flag leak is closed.** CTF answers are no longer shipped to the client in any public API response or React prop. The only way to see a flag is to solve the lab (either by submitting the correct guess via `action: "submit"`, or by triggering the simulated "reveal" via `action: "reveal"` — both server-side, both require an authenticated session). This addresses master-prompt sections 34, 80, 81.
 - **The full master-prompt gap audit is at `agent-ctx/MASTER-PROMPT-AUDIT.md`.** Top remaining priorities for the cron-driven review cycles: build public /instructors view + detail page; create Event model + /events view; complete the mock-exam engine (randomization/subset); add AuditLog model + wire into sensitive mutations; implement /api/health + replace mock platform-health; fix /verify route 404; add SUPER_ADMIN/PROCTOR/INSTITUTION_ADMIN RBAC roles + requireRole() helper; rebuild footer to 7-column spec with LEGAL column; add rate limiting to login + exam endpoints + security headers via middleware. The 15-min webDevReview cron job (ID 352072) will pick these up systematically.
+
+---
+Task ID: CAREER-NAV + INSTITUTIONS-SPACING
+Agent: main (Z.ai Code orchestrator)
+Task: User reported 3 issues: (1) CAREER tab doesn't route to respective pages — if login required it should ask for register; (2) re-check master prompt for anything missed; (3) INSTITUTIONS tabs (schools/colleges/universities) have a space below the header that was removed earlier.
+
+Work Log:
+
+**1. CAREER tab navigation fix (master-prompt §10)** — Diagnosed: when a logged-out user clicks a CAREER dropdown item (Career Paths / Skill Assessment / Certifications / Resume Builder — all non-public views), page.tsx showed `<AuthScreen />` but (a) gave no contextual message explaining WHY the user was seeing a login page, and (b) after login the user was redirected to their role dashboard instead of the page they actually clicked. This made it feel like "the career tab doesn't route."
+
+**Fix:**
+- Added a `pendingView: View | null` field to the Zustand store + `setPendingView()` setter.
+- In `src/app/page.tsx`, when a logged-out user hits a protected view, the code now stores that intended view as `pendingView` (via microtask to avoid setState-during-render) before showing `<AuthScreen />`.
+- In `src/components/platform/auth-screen.tsx`:
+  - Added a `pendingLabel` memo that maps the pendingView name to a human-readable label ("Career Paths", "Skill Assessment", "CTF Arena", "My Learning", etc. — 30+ mappings).
+  - `routeByRole()` now checks `pendingView` FIRST: if set, it navigates to that view (and clears it) instead of the role dashboard. This means after login the user lands on the page they clicked, not the dashboard.
+  - Added a contextual banner above the tabs: "Log in or create an account to access **Career Paths**. After signing in, you'll be taken straight there." — with a Lock icon + violet styling. Only shown when `pendingView` is set.
+
+**Browser verification:**
+- Direct URL `/#/career-planner` (logged out) → URL stays `#/career-planner`, login page shows with banner "Log in or create an account to access Career Paths" ✓
+- Login as student → `POST /api/auth/callback/credentials 200` → URL stays `#/career-planner` → career-planner page renders ("CAREER COMMAND CENTER", "Turn skills into careers.", "AVG SKILL SCORE", "READY ROLES") ✓
+- The user reaches the page they clicked, not the dashboard.
+
+**2. INSTITUTIONS header spacing fix (regression)** — The 3 institution views (`institutions-schools.tsx`, `institutions-colleges.tsx`, `institutions-universities.tsx`) and `batches.tsx` all had `<div className="relative min-h-screen pt-2 lg:pt-4">` — an extra `pt-2 lg:pt-4` (8-16px) on top of the `PublicPageShell`'s `pt-14` (56px). This created a visible gap below the header. The user had previously asked to remove this space, and it had been removed, but crept back in during a refactor. Removed the `pt-2 lg:pt-4` from all 4 views (now just `relative min-h-screen`). The `PublicPageShell`'s `pt-14` is the single source of truth for header offset.
+
+**Browser verification:**
+- `/#/institutions-schools` → content starts immediately after header: "BACK TO INSTITUTIONS" + "GUARDIANX FOR SCHOOLS" + "School Management System" heading. No gap. ✓
+- `/#/institutions-colleges` → content starts immediately: "GUARDIANX FOR COLLEGES" + heading + paragraph. No gap. ✓
+- `/#/institutions-universities` → content starts immediately: "GUARDIANX FOR UNIVERSITIES" + heading + paragraph. No gap. ✓
+
+**3. Master-prompt re-check** — The full audit at `agent-ctx/MASTER-PROMPT-AUDIT.md` (529 lines) covers all 108 sections. The top remaining priorities (unchanged): public /instructors view, Event model + /events, mock-exam engine randomization, AuditLog model, /api/health, /verify route 404, RBAC roles (SUPER_ADMIN/PROCTOR/INSTITUTION_ADMIN), footer 7-column rebuild with LEGAL column, rate limiting + security headers. The 15-min webDevReview cron job (ID 352072) will address these.
+
+Files modified:
+- `src/store/app-store.ts` — added `pendingView` state + `setPendingView` setter.
+- `src/app/page.tsx` — store pendingView when showing AuthScreen for a protected view; read pendingView + setPendingView from store.
+- `src/components/platform/auth-screen.tsx` — added `pendingLabel` memo (30+ view→label mappings); `routeByRole()` redirects to pendingView first; added contextual "log in to access X" banner with Lock icon.
+- `src/views/institutions-schools.tsx` — removed `pt-2 lg:pt-4` from root div (header spacing fix).
+- `src/views/institutions-colleges.tsx` — same.
+- `src/views/institutions-universities.tsx` — same.
+- `src/views/batches.tsx` — same.
+
+Stage Summary:
+- **CAREER tab now works for logged-out users**: clicking any CAREER item shows the login page with a contextual "Log in or create an account to access [page name]" banner; after login the user is redirected to the page they clicked (not the role dashboard). This satisfies master-prompt §10 ("no route should unexpectedly return home; the user should reach the page they clicked on").
+- **INSTITUTIONS pages have no extra space below the header**: removed the `pt-2 lg:pt-4` that was duplicating the `PublicPageShell`'s `pt-14`. Verified on all 3 institution pages.
+- Lint: 0 errors. Browser-verified end-to-end.

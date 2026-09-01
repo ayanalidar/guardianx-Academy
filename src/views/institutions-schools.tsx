@@ -178,7 +178,7 @@ export function InstitutionsSchoolsView() {
   const { navigate } = useAppStore()
 
   return (
-    <div className="relative min-h-screen pt-2 lg:pt-4">
+    <div className="relative min-h-screen">
       {/* Atmospheric background */}
       <div className="absolute inset-0 bg-mesh opacity-40 pointer-events-none" />
       <div className="absolute top-0 right-0 w-[600px] h-[400px] bg-emerald-600/5 blur-[120px] rounded-full pointer-events-none" />

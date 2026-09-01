@@ -161,7 +161,7 @@ function ViewRouter() {
 }
 
 export default function Home() {
-  const { view } = useAppStore()
+  const { view, pendingView, setPendingView } = useAppStore()
   const [session, setSession] = React.useState<any>(null)
   const [sessionChecked, setSessionChecked] = React.useState(false)
   const [, forceRender] = React.useState(0)
@@ -234,7 +234,11 @@ export default function Home() {
   // If NOT logged in:
   //   - "login" view → show AuthScreen (full-screen, has its own header)
   //   - public views (home/impact/contact) → show PublicPageShell with header + footer
-  //   - any other view → redirect to login
+  //   - any other view → remember where the user was trying to go (pendingView)
+  //     and show AuthScreen. After login, AuthScreen redirects them back to
+  //     pendingView instead of the role dashboard (master-prompt §10: no
+  //     route should unexpectedly return home; the user should reach the page
+  //     they clicked on).
   if (!session) {
     if (view.name === "login") {
       return <AuthScreen />
@@ -246,7 +250,12 @@ export default function Home() {
         </PublicPageShell>
       )
     }
-    // Default: show login screen for any authenticated view when not logged in
+    // Protected view, not logged in → remember the intended destination
+    // (if not already set) and show the login screen. We use a microtask
+    // to avoid setState during render.
+    if (!pendingView) {
+      Promise.resolve().then(() => setPendingView(view))
+    }
     return <AuthScreen />
   }
 

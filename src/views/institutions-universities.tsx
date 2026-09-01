@@ -114,7 +114,7 @@ export function InstitutionsUniversitiesView() {
   const { navigate } = useAppStore()
 
   return (
-    <div className="relative min-h-screen pt-2 lg:pt-4">
+    <div className="relative min-h-screen">
       <div className="absolute inset-0 bg-mesh opacity-40 pointer-events-none" />
 
       {/* HERO */}

@@ -82,8 +82,15 @@ export type View =
 interface AppState {
   view: View
   sidebarOpen: boolean
+  /** When a logged-out user tries to access a protected view, we store
+   *  that intended view here so the AuthScreen can (a) show a contextual
+   *  "log in to access X" message and (b) redirect the user back to X
+   *  after a successful login instead of the role dashboard. Cleared
+   *  after a successful redirect or when the user navigates away. */
+  pendingView: View | null
   navigate: (view: View) => void
   setSidebarOpen: (open: boolean) => void
+  setPendingView: (view: View | null) => void
 }
 
 /* --------------------------------------------------------------- *
@@ -98,6 +105,7 @@ const initialView: View = { name: "home" }
 export const useAppStore = create<AppState>((set) => ({
   view: initialView,
   sidebarOpen: false,
+  pendingView: null,
   navigate: (view) => {
     set({ view, sidebarOpen: false })
     if (typeof window !== "undefined") {
@@ -110,6 +118,7 @@ export const useAppStore = create<AppState>((set) => ({
     }
   },
   setSidebarOpen: (sidebarOpen) => set({ sidebarOpen }),
+  setPendingView: (pendingView) => set({ pendingView }),
 }))
 
 /** Read the URL hash and sync the store. Called by page.tsx on mount

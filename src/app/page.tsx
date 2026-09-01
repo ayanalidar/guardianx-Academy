@@ -7,6 +7,7 @@ import { AppShell } from "@/components/platform/app-shell"
 import { PublicPageShell } from "@/components/platform/public-page-shell"
 import { ErrorBoundary } from "@/components/platform/error-boundary"
 import { useAppStore } from "@/store/app-store"
+import { hydrateFromHash } from "@/store/app-store"
 import { HomeView } from "@/views/home"
 import { ImpactView } from "@/views/impact"
 import { ContactView } from "@/views/contact"
@@ -173,6 +174,14 @@ export default function Home() {
     }
     window.addEventListener("guardianx-navigate", handler)
     return () => window.removeEventListener("guardianx-navigate", handler)
+  }, [])
+
+  // Hydrate the view from the URL hash after mount. This makes deep
+  // links, refresh, and direct-URL entry work — e.g. visiting
+  // `/#/batches` loads straight into the BatchesView. We do this in
+  // a useEffect (not at module load) to avoid SSR hydration mismatches.
+  React.useEffect(() => {
+    hydrateFromHash()
   }, [])
 
   // Check session via fetch instead of useSession hook (avoids CLIENT_FETCH_ERROR blocking)

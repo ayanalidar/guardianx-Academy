@@ -1,0 +1,129 @@
+"use client"
+
+/**
+ * URL-hash router for GuardianX Academy SPA.
+ *
+ * The platform runs on a single Next.js route (`/`) per the sandbox
+ * constraint, but every public view must have a real, shareable URL
+ * (master-prompt section 7-10). We satisfy both by serializing the
+ * Zustand `View` state into the URL hash:
+ *
+ *   `#/`                              → { name: "home" }
+ *   `#/batches`                       → { name: "batches" }
+ *   `#/course/<courseId>`             → { name: "course", courseId }
+ *   `#/course/<courseId>/lesson/<id>` → { name: "lesson", courseId, lessonId }
+ *   `#/lab/<labSlug>`                 → { name: "lab", labSlug }
+ *   `#/exam/<examId>`                 → { name: "exam-detail", examId }
+ *
+ * This gives us: URL changes on nav, refresh works, browser back/forward
+ * works, direct URL entry works, "open in new tab" works — all while
+ * staying on the single `/` Next.js route.
+ */
+
+import type { View } from "@/store/app-store"
+
+/* ----------------------------- serialization ---------------------------- */
+
+/** Convert a View object into a URL hash string (without leading "#"). */
+export function viewToHash(view: View): string {
+  switch (view.name) {
+    case "home":
+      return "/"
+    case "course":
+      return `/course/${encodeURIComponent(view.courseId)}`
+    case "lesson":
+      return `/course/${encodeURIComponent(view.courseId)}/lesson/${encodeURIComponent(view.lessonId)}`
+    case "lab":
+      return `/lab/${encodeURIComponent(view.labSlug)}`
+    case "exam-detail":
+      return `/exam/${encodeURIComponent(view.examId)}`
+    default:
+      return `/${view.name}`
+  }
+}
+
+/** Convert a URL hash (with or without leading "#") into a View object.
+ *  Returns { name: "home" } for unrecognized / empty hashes. */
+export function hashToView(hash: string): View {
+  const raw = hash.replace(/^#/, "")
+  // Treat empty / "#" / "#/" as home
+  if (!raw || raw === "/" || raw === "") return { name: "home" }
+
+  // Strip leading slash for parsing
+  const path = raw.startsWith("/") ? raw.slice(1) : raw
+  const parts = path.split("/").map(decodeURIComponent)
+
+  // /course/<id>
+  if (parts[0] === "course" && parts[1]) {
+    if (parts[2] === "lesson" && parts[3]) {
+      return { name: "lesson", courseId: parts[1], lessonId: parts[3] }
+    }
+    return { name: "course", courseId: parts[1] }
+  }
+  // /lab/<slug>
+  if (parts[0] === "lab" && parts[1]) {
+    return { name: "lab", labSlug: parts[1] }
+  }
+  // /exam/<id>
+  if (parts[0] === "exam" && parts[1]) {
+    return { name: "exam-detail", examId: parts[1] }
+  }
+
+  // /<view-name> — validate against the known set so we never produce
+  // an unknown view from a user-typed URL.
+  const knownViews: View["name"][] = [
+    "home", "impact", "contact", "login", "institutions",
+    "institutions-schools", "institutions-colleges", "institutions-universities",
+    "dashboard", "catalog", "batches", "learning", "notes", "live",
+    "labs", "certificates", "achievements", "leaderboard", "instructor",
+    "school", "admin", "community", "profile", "assignments", "messaging",
+    "study-groups", "office-hours", "auth", "ai-assistant", "threat-feed",
+    "code-review", "career-planner", "job-board", "mock-interview",
+    "resume-builder", "ctf-platform", "weekly-challenges", "team-missions",
+    "learning-analytics", "skill-assessments", "prerequisites-visualizer",
+    "lab-snapshots", "cyber-range", "learning-paths", "skill-tree",
+    "bug-bounty", "parent-portal", "course-studio", "cms", "exams",
+    "credentials", "invoice-generator", "proposal-maker", "admin-lead-crm",
+    "admin-batch-calendar", "admin-student-progress", "admin-revenue",
+    "admin-cert-bulk", "admin-email-campaign", "admin-instructor-assignment",
+    "admin-audit-log", "admin-platform-health", "admin-notifications",
+    "support",
+  ]
+  if (knownViews.includes(parts[0] as View["name"])) {
+    return { name: parts[0] as View["name"] }
+  }
+
+  // Unknown → fall back to home so the app never crashes on a bad URL
+  return { name: "home" }
+}
+
+/* ----------------------------- side-effects ----------------------------- */
+
+/** Push a view into the URL hash WITHOUT triggering a hashchange event
+ *  (we use history.replaceState for the initial-load sync, and
+ *  history.pushState for user-initiated navigation so the back button
+ *  works). The store listener will pick up state changes. */
+export function pushViewToHash(view: View) {
+  if (typeof window === "undefined") return
+  const hash = `#${viewToHash(view)}`
+  // Only push if it actually changed — avoids spamming history
+  if (window.location.hash !== hash) {
+    window.history.pushState({ view }, "", hash)
+  }
+}
+
+/** Replace the current hash without adding a history entry. Used for
+ *  the initial-load sync so we don't pollute the back stack. */
+export function replaceViewInHash(view: View) {
+  if (typeof window === "undefined") return
+  const hash = `#${viewToHash(view)}`
+  if (window.location.hash !== hash) {
+    window.history.replaceState({ view }, "", hash)
+  }
+}
+
+/** Read the current view from the URL hash. SSR-safe (returns home). */
+export function readViewFromHash(): View {
+  if (typeof window === "undefined") return { name: "home" }
+  return hashToView(window.location.hash)
+}

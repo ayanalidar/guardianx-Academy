@@ -1,0 +1,14 @@
+{
+  "name": "guardianx-lab-orchestrator",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "bun --hot index.ts"
+  },
+  "dependencies": {
+    "dockerode": "^5.0.1"
+  },
+  "devDependencies": {
+    "@types/dockerode": "^4.0.1"
+  }
+}

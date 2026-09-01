@@ -1,0 +1,11 @@
+{
+  "name": "guardianx-terminal-gateway",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "bun --hot index.ts"
+  },
+  "dependencies": {
+    "ws": "^8.16.0"
+  }
+}

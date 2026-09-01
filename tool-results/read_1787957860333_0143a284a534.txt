@@ -1,0 +1,1190 @@
+     1→"use client"
+     2→
+     3→import * as React from "react"
+     4→import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+     5→import { api } from "@/lib/api"
+     6→import { useAppStore } from "@/store/app-store"
+     7→import { useUser } from "@/hooks/use-user"
+     8→import { colorFor, DIFFICULTY_COLORS } from "@/lib/colors"
+     9→import { Card } from "@/components/ui/card"
+    10→import { Button } from "@/components/ui/button"
+    11→import { Badge } from "@/components/ui/badge"
+    12→import { Input } from "@/components/ui/input"
+    13→import { Textarea } from "@/components/ui/textarea"
+    14→import { Skeleton } from "@/components/ui/skeleton"
+    15→import { Progress } from "@/components/ui/progress"
+    16→import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+    17→import {
+    18→  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+    19→} from "@/components/ui/select"
+    20→import {
+    21→  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+    22→} from "@/components/ui/table"
+    23→import {
+    24→  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+    25→  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+    26→} from "@/components/ui/alert-dialog"
+    27→import {
+    28→  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+    29→  PieChart, Pie, Cell, Legend, RadialBarChart, RadialBar, PolarAngleAxis,
+    30→} from "recharts"
+    31→import {
+    32→  Building2, GraduationCap, Calendar, Users, BarChart3, Plus, Save, X,
+    33→  Trash2, Pencil, Search, Award, Flame, CheckCircle2, XCircle, Clock,
+    34→  Megaphone, FileText, TrendingUp, Target, ShieldCheck,
+    35→} from "lucide-react"
+    36→import { cn } from "@/lib/utils"
+    37→import { toast } from "sonner"
+    38→
+    39→// ---------- Types ----------
+    40→interface SchoolInfo { id: string; name: string; city?: string | null; contactEmail?: string | null; address?: string | null; contactPerson?: string | null; contactPhone?: string | null }
+    41→interface BatchStudent {
+    42→  id: string; userId: string; enrolledAt: string
+    43→  user: { id: string; name: string; email: string; avatar: string | null; title: string | null; xp: number; level: number }
+    44→}
+    45→interface SchoolBatch {
+    46→  id: string; schoolId: string; name: string; courseIds: string
+    47→  startDate: string; endDate: string | null; status: string; createdAt: string
+    48→  studentCount: number; students?: BatchStudent[]
+    49→}
+    50→interface SchoolStudent {
+    51→  id: string; name: string; email: string; avatar: string | null; title: string | null
+    52→  xp: number; level: number; streak: number; createdAt: string
+    53→  batches: { id: string; name: string; status: string; enrolledAt: string }[]
+    54→  enrollments: { progress: number; completed: boolean; course: { id: string; title: string; shortName: string; color: string } }[]
+    55→  labsSolved: number; labsAttempted: number; certificates: number; notes: number
+    56→  attendancePresent: number; attendanceAbsent: number; avgProgress: number
+    57→}
+    58→
+    59→const ATTENDANCE_STATUSES = [
+    60→  { value: "present", label: "Present", color: "text-emerald-400 border-emerald-500/30 bg-emerald-500/10", icon: CheckCircle2 },
+    61→  { value: "late", label: "Late", color: "text-amber-400 border-amber-500/30 bg-amber-500/10", icon: Clock },
+    62→  { value: "absent", label: "Absent", color: "text-red-400 border-red-500/30 bg-red-500/10", icon: XCircle },
+    63→  { value: "excused", label: "Excused", color: "text-cyan-400 border-cyan-500/30 bg-cyan-500/10", icon: FileText },
+    64→]
+    65→
+    66→// ---------- Main view ----------
+    67→export function SchoolDashboardView() {
+    68→  const { user } = useUser()
+    69→  const [tab, setTab] = React.useState("overview")
+    70→
+    71→  if (user && user.role !== "INSTRUCTOR" && user.role !== "ADMIN") {
+    72→    return (
+    73→      <Card className="p-12 text-center border-dashed">
+    74→        <ShieldCheck className="h-10 w-10 text-red-400 mx-auto mb-3" />
+    75→        <p className="font-medium mb-1">School access required</p>
+    76→        <p className="text-sm text-muted-foreground">This dashboard is restricted to instructors and administrators.</p>
+    77→      </Card>
+    78→    )
+    79→  }
+    80→
+    81→  return (
+    82→    <div className="space-y-6">
+    83→      {/* Hero */}
+    84→      <div className="relative overflow-hidden rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-950/30 via-background to-background p-6 lg:p-8 scanlines holo-border">
+    85→        <div className="absolute inset-0 bg-grid opacity-30" />
+    86→        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+    87→          <div className="space-y-3">
+    88→            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-400 text-xs font-mono">
+    89→              <Building2 className="h-3 w-3" /> SCHOOL MANAGEMENT
+    90→            </div>
+    91→            <h1 className="text-3xl font-bold tracking-tight">
+    92→              Institution Dashboard
+    93→            </h1>
+    94→            <p className="text-muted-foreground max-w-xl">
+    95→              Manage students, batches, attendance, exams, and reports for your cyber security training program.
+    96→            </p>
+    97→          </div>
+    98→          <div className="hidden lg:flex items-center gap-3">
+    99→            <div className="text-center px-5 py-3 rounded-xl border border-amber-500/20 bg-card/40 backdrop-blur">
+   100→              <Calendar className="h-7 w-7 text-amber-400 mx-auto mb-1" />
+   101→              <div className="text-xs text-muted-foreground uppercase tracking-wider">Today</div>
+   102→              <div className="text-sm font-bold text-amber-400 font-mono">
+   103→                {new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+   104→              </div>
+   105→            </div>
+   106→          </div>
+   107→        </div>
+   108→      </div>
+   109→
+   110→      <Tabs value={tab} onValueChange={setTab}>
+   111→        <TabsList className="bg-muted/50 backdrop-blur">
+   112→          <TabsTrigger value="overview" className="gap-1.5"><BarChart3 className="h-3.5 w-3.5" /> Overview</TabsTrigger>
+   113→          <TabsTrigger value="students" className="gap-1.5"><Users className="h-3.5 w-3.5" /> Students</TabsTrigger>
+   114→          <TabsTrigger value="batches" className="gap-1.5"><GraduationCap className="h-3.5 w-3.5" /> Batches</TabsTrigger>
+   115→          <TabsTrigger value="attendance" className="gap-1.5"><Calendar className="h-3.5 w-3.5" /> Attendance</TabsTrigger>
+   116→          <TabsTrigger value="reports" className="gap-1.5"><FileText className="h-3.5 w-3.5" /> Reports</TabsTrigger>
+   117→        </TabsList>
+   118→
+   119→        <TabsContent value="overview" className="mt-6"><OverviewTab /></TabsContent>
+   120→        <TabsContent value="students" className="mt-6"><StudentsTab /></TabsContent>
+   121→        <TabsContent value="batches" className="mt-6"><BatchesTab /></TabsContent>
+   122→        <TabsContent value="attendance" className="mt-6"><AttendanceTab /></TabsContent>
+   123→        <TabsContent value="reports" className="mt-6"><ReportsTab /></TabsContent>
+   124→      </Tabs>
+   125→    </div>
+   126→  )
+   127→}
+   128→
+   129→// ================= OVERVIEW TAB =================
+   130→function OverviewTab() {
+   131→  const { data: batchesData, isLoading } = useQuery<{ school: SchoolInfo; batches: SchoolBatch[] }>({
+   132→    queryKey: ["school", "batches"],
+   133→    queryFn: () => api("/api/school/batches"),
+   134→  })
+   135→  const { data: studentsData } = useQuery<{ students: SchoolStudent[] }>({
+   136→    queryKey: ["school", "students"],
+   137→    queryFn: () => api("/api/school/students"),
+   138→  })
+   139→  const { data: reportsData } = useQuery<any>({
+   140→    queryKey: ["school", "reports"],
+   141→    queryFn: () => api("/api/school/reports"),
+   142→  })
+   143→
+   144→  if (isLoading || !batchesData) {
+   145→    return (
+   146→      <div className="space-y-4">
+   147→        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+   148→          {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-28" />)}
+   149→        </div>
+   150→        <Skeleton className="h-64" />
+   151→      </div>
+   152→    )
+   153→  }
+   154→
+   155→  const school = batchesData.school
+   156→  const batches = batchesData.batches
+   157→  const students = studentsData?.students ?? []
+   158→  const activeBatches = batches.filter((b) => b.status === "active").length
+   159→  const totalStudents = students.length
+   160→  const avgProgress = students.length
+   161→    ? Math.round(students.reduce((a, s) => a + s.avgProgress, 0) / students.length)
+   162→    : 0
+   163→  const totalCerts = students.reduce((a, s) => a + s.certificates, 0)
+   164→  const reports = reportsData
+   165→
+   166→  const statCards = [
+   167→    { label: "Total Students", value: totalStudents, sub: "across all batches", icon: Users, color: "text-emerald-400", bg: "bg-emerald-500/10" },
+   168→    { label: "Active Batches", value: activeBatches, sub: `${batches.length} total`, icon: GraduationCap, color: "text-amber-400", bg: "bg-amber-500/10" },
+   169→    { label: "Avg Progress", value: `${avgProgress}%`, sub: "course completion", icon: TrendingUp, color: "text-cyan-400", bg: "bg-cyan-500/10" },
+   170→    { label: "Certifications", value: totalCerts, sub: "earned by students", icon: Award, color: "text-violet-400", bg: "bg-violet-500/10" },
+   171→  ]
+   172→
+   173→  return (
+   174→    <div className="space-y-6">
+   175→      {/* School info card */}
+   176→      <Card className="p-5 lg:p-6 relative overflow-hidden holo-border">
+   177→        <div className="absolute inset-0 bg-grid opacity-10" />
+   178→        <div className="relative z-10 flex flex-col lg:flex-row gap-6">
+   179→          <div className="flex-1 space-y-3">
+   180→            <div className="flex items-center gap-3">
+   181→              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400">
+   182→                <Building2 className="h-6 w-6" />
+   183→              </div>
+   184→              <div>
+   185→                <h2 className="text-xl font-bold">{school.name}</h2>
+   186→                <p className="text-xs text-muted-foreground">{school.city || "Location not set"} · ID: {school.id.slice(0, 8)}</p>
+   187→              </div>
+   188→            </div>
+   189→            <div className="grid sm:grid-cols-2 gap-2 text-sm">
+   190→              {school.contactPerson && <div className="flex items-center gap-2"><Users className="h-3.5 w-3.5 text-muted-foreground" /> {school.contactPerson}</div>}
+   191→              {school.contactEmail && <div className="flex items-center gap-2"><FileText className="h-3.5 w-3.5 text-muted-foreground" /> {school.contactEmail}</div>}
+   192→              {school.contactPhone && <div className="flex items-center gap-2"><Megaphone className="h-3.5 w-3.5 text-muted-foreground" /> {school.contactPhone}</div>}
+   193→              {school.address && <div className="flex items-center gap-2 sm:col-span-2"><Building2 className="h-3.5 w-3.5 text-muted-foreground" /> {school.address}</div>}
+   194→            </div>
+   195→          </div>
+   196→          <AnnouncementComposer />
+   197→        </div>
+   198→      </Card>
+   199→
+   200→      {/* Stat cards */}
+   201→      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+   202→        {statCards.map((s) => (
+   203→          <Card key={s.label} className="p-5 relative overflow-hidden card-hover">
+   204→            <div className={cn("absolute -right-4 -top-4 h-20 w-20 rounded-full blur-2xl opacity-50", s.bg)} />
+   205→            <div className="relative z-10">
+   206→              <div className={cn("inline-flex p-2 rounded-lg mb-3", s.bg)}>
+   207→                <s.icon className={cn("h-5 w-5", s.color)} />
+   208→              </div>
+   209→              <div className="text-2xl font-bold tabular-nums">{s.value}</div>
+   210→              <div className="text-xs text-muted-foreground mt-1">{s.label}</div>
+   211→              <div className="text-[10px] text-muted-foreground mt-0.5">{s.sub}</div>
+   212→            </div>
+   213→          </Card>
+   214→        ))}
+   215→      </div>
+   216→
+   217→      {/* Active batches + Recent activity */}
+   218→      <div className="grid lg:grid-cols-2 gap-4">
+   219→        <Card className="p-5">
+   220→          <div className="flex items-center justify-between mb-4">
+   221→            <h3 className="font-semibold flex items-center gap-2 text-sm">
+   222→              <GraduationCap className="h-4 w-4 text-amber-400" /> Active Batches
+   223→            </h3>
+   224→            <Badge variant="outline" className="text-[10px] text-amber-400 border-amber-500/30">{activeBatches} active</Badge>
+   225→          </div>
+   226→          {batches.length === 0 ? (
+   227→            <div className="text-center py-8 text-sm text-muted-foreground">
+   228→              <GraduationCap className="h-8 w-8 mx-auto mb-2 opacity-50" />
+   229→              No batches yet. Create one in the Batches tab.
+   230→            </div>
+   231→          ) : (
+   232→            <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+   233→              {batches.slice(0, 6).map((b) => (
+   234→                <div key={b.id} className="flex items-center gap-3 p-2 rounded-lg border border-border hover:bg-accent/30 transition-colors">
+   235→                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-mono font-bold">
+   236→                    {b.name.slice(0, 2).toUpperCase()}
+   237→                  </div>
+   238→                  <div className="flex-1 min-w-0">
+   239→                    <div className="text-sm font-medium truncate">{b.name}</div>
+   240→                    <div className="text-[10px] text-muted-foreground">
+   241→                      {b.studentCount} students · Started {new Date(b.startDate).toLocaleDateString()}
+   242→                    </div>
+   243→                  </div>
+   244→                  <Badge variant="outline" className={cn(
+   245→                    "text-[9px]",
+   246→                    b.status === "active" && "text-emerald-400 border-emerald-500/30 bg-emerald-500/10",
+   247→                    b.status === "completed" && "text-cyan-400 border-cyan-500/30 bg-cyan-500/10",
+   248→                    b.status === "paused" && "text-amber-400 border-amber-500/30 bg-amber-500/10",
+   249→                  )}>
+   250→                    {b.status}
+   251→                  </Badge>
+   252→                </div>
+   253→              ))}
+   254→            </div>
+   255→          )}
+   256→        </Card>
+   257→
+   258→        <Card className="p-5">
+   259→          <div className="flex items-center justify-between mb-4">
+   260→            <h3 className="font-semibold flex items-center gap-2 text-sm">
+   261→              <Flame className="h-4 w-4 text-orange-400" /> Top Students (by XP)
+   262→            </h3>
+   263→            <Badge variant="outline" className="text-[10px] text-orange-400 border-orange-500/30">{students.length} total</Badge>
+   264→          </div>
+   265→          {students.length === 0 ? (
+   266→            <div className="text-center py-8 text-sm text-muted-foreground">
+   267→              <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
+   268→              No students enrolled yet.
+   269→            </div>
+   270→          ) : (
+   271→            <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+   272→              {students.slice(0, 8).map((s, i) => (
+   273→                <div key={s.id} className="flex items-center gap-3 p-2 rounded-lg border border-border hover:bg-accent/30 transition-colors">
+   274→                  <div className={cn(
+   275→                    "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-mono font-bold",
+   276→                    i === 0 ? "bg-amber-500/20 text-amber-400 border border-amber-500/40" : "bg-muted text-muted-foreground"
+   277→                  )}>
+   278→                    {i + 1}
+   279→                  </div>
+   280→                  <div className="flex-1 min-w-0">
+   281→                    <div className="text-sm font-medium truncate">{s.name}</div>
+   282→                    <div className="text-[10px] text-muted-foreground">Lv {s.level} · {s.batches.length} batch(es)</div>
+   283→                  </div>
+   284→                  <div className="text-right">
+   285→                    <div className="text-sm font-mono text-orange-400">{s.xp.toLocaleString()}</div>
+   286→                    <div className="text-[9px] text-muted-foreground">XP</div>
+   287→                  </div>
+   288→                </div>
+   289→              ))}
+   290→            </div>
+   291→          )}
+   292→        </Card>
+   293→      </div>
+   294→
+   295→      {/* Attendance + completion quick stats */}
+   296→      {reports && (
+   297→        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+   298→          <Card className="p-4">
+   299→            <div className="text-xs text-muted-foreground mb-1">Attendance Rate</div>
+   300→            <div className="text-2xl font-bold text-emerald-400">{reports.attendanceStats.rate}%</div>
+   301→            <Progress value={reports.attendanceStats.rate} className="mt-2 h-1.5" />
+   302→          </Card>
+   303→          <Card className="p-4">
+   304→            <div className="text-xs text-muted-foreground mb-1">Course Completion</div>
+   305→            <div className="text-2xl font-bold text-cyan-400">{reports.completionRate}%</div>
+   306→            <Progress value={reports.completionRate} className="mt-2 h-1.5" />
+   307→          </Card>
+   308→          <Card className="p-4">
+   309→            <div className="text-xs text-muted-foreground mb-1">Labs Solved</div>
+   310→            <div className="text-2xl font-bold text-violet-400">{reports.totals.labsSolved}</div>
+   311→            <div className="text-[10px] text-muted-foreground mt-2">across all students</div>
+   312→          </Card>
+   313→          <Card className="p-4">
+   314→            <div className="text-xs text-muted-foreground mb-1">Certifications Earned</div>
+   315→            <div className="text-2xl font-bold text-amber-400">{reports.totals.certs}</div>
+   316→            <div className="text-[10px] text-muted-foreground mt-2">verified certificates</div>
+   317→          </Card>
+   318→        </div>
+   319→      )}
+   320→    </div>
+   321→  )
+   322→}
+   323→
+   324→// Announcement composer
+   325→function AnnouncementComposer() {
+   326→  const qc = useQueryClient()
+   327→  const [open, setOpen] = React.useState(false)
+   328→  const [title, setTitle] = React.useState("")
+   329→  const [message, setMessage] = React.useState("")
+   330→
+   331→  const post = useMutation({
+   332→    mutationFn: () => api("/api/school/announcements", {
+   333→      method: "POST",
+   334→      body: JSON.stringify({ title, message }),
+   335→    }),
+   336→    onSuccess: (r: any) => {
+   337→      qc.invalidateQueries({ queryKey: ["notifications"] })
+   338→      toast.success(`Announcement sent to ${r.sent} students`)
+   339→      setTitle("")
+   340→      setMessage("")
+   341→      setOpen(false)
+   342→    },
+   343→    onError: (e: any) => toast.error(e.message),
+   344→  })
+   345→
+   346→  if (!open) {
+   347→    return (
+   348→      <div className="flex flex-col justify-center">
+   349→        <Button variant="outline" onClick={() => setOpen(true)} className="border-amber-500/30 text-amber-400 hover:bg-amber-500/10">
+   350→          <Megaphone className="h-4 w-4 mr-1.5" /> Post Announcement
+   351→        </Button>
+   352→      </div>
+   353→    )
+   354→  }
+   355→
+   356→  return (
+   357→    <div className="w-full lg:max-w-md p-4 rounded-xl border border-amber-500/20 bg-amber-500/[0.03] space-y-3">
+   358→      <div className="flex items-center gap-2">
+   359→        <Megaphone className="h-4 w-4 text-amber-400" />
+   360→        <span className="text-sm font-semibold">Post Announcement</span>
+   361→        <Button size="sm" variant="ghost" className="ml-auto h-7" onClick={() => setOpen(false)}><X className="h-3.5 w-3.5" /></Button>
+   362→      </div>
+   363→      <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Announcement title" />
+   364→      <Textarea
+   365→        value={message}
+   366→        onChange={(e) => setMessage(e.target.value)}
+   367→        placeholder="Your message to all students..."
+   368→        className="min-h-[80px] text-xs"
+   369→      />
+   370→      <Button size="sm" onClick={() => post.mutate()} disabled={!title.trim() || !message.trim() || post.isPending} className="bg-amber-500 text-amber-950 hover:bg-amber-400">
+   371→        <Megaphone className="h-3.5 w-3.5 mr-1" /> {post.isPending ? "Sending..." : "Send to all students"}
+   372→      </Button>
+   373→    </div>
+   374→  )
+   375→}
+   376→
+   377→// ================= STUDENTS TAB =================
+   378→function StudentsTab() {
+   379→  const { data, isLoading } = useQuery<{ students: SchoolStudent[] }>({
+   380→    queryKey: ["school", "students"],
+   381→    queryFn: () => api("/api/school/students"),
+   382→  })
+   383→  const [search, setSearch] = React.useState("")
+   384→
+   385→  const students = data?.students ?? []
+   386→  const filtered = students.filter(
+   387→    (s) => s.name.toLowerCase().includes(search.toLowerCase()) || s.email.toLowerCase().includes(search.toLowerCase())
+   388→  )
+   389→
+   390→  if (isLoading) return <Skeleton className="h-96" />
+   391→
+   392→  return (
+   393→    <div className="space-y-4">
+   394→      <div className="relative">
+   395→        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+   396→        <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search students by name or email..." className="pl-9" />
+   397→      </div>
+   398→
+   399→      {filtered.length === 0 ? (
+   400→        <Card className="p-12 text-center border-dashed">
+   401→          <Users className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+   402→          <p className="font-medium mb-1">No students found</p>
+   403→          <p className="text-sm text-muted-foreground">Add students to batches from the Batches tab.</p>
+   404→        </Card>
+   405→      ) : (
+   406→        <Card className="overflow-hidden">
+   407→          <Table>
+   408→            <TableHeader>
+   409→              <TableRow>
+   410→                <TableHead>Student</TableHead>
+   411→                <TableHead className="text-center">Batches</TableHead>
+   412→                <TableHead className="text-center hidden md:table-cell">Courses</TableHead>
+   413→                <TableHead className="hidden lg:table-cell">Progress</TableHead>
+   414→                <TableHead className="text-center hidden md:table-cell">Labs</TableHead>
+   415→                <TableHead className="text-center hidden md:table-cell">Certs</TableHead>
+   416→                <TableHead className="text-center hidden lg:table-cell">Attendance</TableHead>
+   417→                <TableHead className="text-center">XP / Lv</TableHead>
+   418→              </TableRow>
+   419→            </TableHeader>
+   420→            <TableBody>
+   421→              {filtered.map((s) => {
+   422→                const initials = s.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
+   423→                return (
+   424→                  <TableRow key={s.id}>
+   425→                    <TableCell>
+   426→                      <div className="flex items-center gap-3">
+   427→                        <div className="h-9 w-9 shrink-0 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-mono font-bold flex items-center justify-center border border-emerald-500/20">
+   428→                          {initials}
+   429→                        </div>
+   430→                        <div className="min-w-0">
+   431→                          <div className="font-medium truncate">{s.name}</div>
+   432→                          <div className="text-xs text-muted-foreground truncate">{s.email}</div>
+   433→                        </div>
+   434→                      </div>
+   435→                    </TableCell>
+   436→                    <TableCell className="text-center">
+   437→                      <div className="flex flex-wrap gap-1 justify-center">
+   438→                        {s.batches.slice(0, 2).map((b) => (
+   439→                          <Badge key={b.id} variant="outline" className="text-[9px]">{b.name}</Badge>
+   440→                        ))}
+   441→                        {s.batches.length > 2 && <Badge variant="outline" className="text-[9px]">+{s.batches.length - 2}</Badge>}
+   442→                      </div>
+   443→                    </TableCell>
+   444→                    <TableCell className="text-center hidden md:table-cell">
+   445→                      <div className="text-sm font-mono">{s.enrollments.length}</div>
+   446→                    </TableCell>
+   447→                    <TableCell className="hidden lg:table-cell">
+   448→                      <div className="flex items-center gap-2 w-32">
+   449→                        <Progress value={s.avgProgress} className="h-1.5" />
+   450→                        <span className="text-xs font-mono text-muted-foreground">{s.avgProgress}%</span>
+   451→                      </div>
+   452→                    </TableCell>
+   453→                    <TableCell className="text-center hidden md:table-cell">
+   454→                      <div className="text-sm font-mono text-violet-400">{s.labsSolved}</div>
+   455→                      <div className="text-[10px] text-muted-foreground">of {s.labsAttempted}</div>
+   456→                    </TableCell>
+   457→                    <TableCell className="text-center hidden md:table-cell">
+   458→                      <div className="text-sm font-mono text-amber-400">{s.certificates}</div>
+   459→                    </TableCell>
+   460→                    <TableCell className="text-center hidden lg:table-cell">
+   461→                      <div className="text-sm font-mono text-emerald-400">{s.attendancePresent}</div>
+   462→                      <div className="text-[10px] text-red-400">{s.attendanceAbsent} absent</div>
+   463→                    </TableCell>
+   464→                    <TableCell className="text-center">
+   465→                      <div className="text-sm font-mono text-orange-400">{s.xp.toLocaleString()}</div>
+   466→                      <div className="text-[10px] text-muted-foreground">Lv {s.level}</div>
+   467→                    </TableCell>
+   468→                  </TableRow>
+   469→                )
+   470→              })}
+   471→            </TableBody>
+   472→          </Table>
+   473→        </Card>
+   474→      )}
+   475→    </div>
+   476→  )
+   477→}
+   478→
+   479→// ================= BATCHES TAB =================
+   480→function BatchesTab() {
+   481→  const { data, isLoading } = useQuery<{ school: SchoolInfo; batches: SchoolBatch[] }>({
+   482→    queryKey: ["school", "batches"],
+   483→    queryFn: () => api("/api/school/batches"),
+   484→  })
+   485→  const [showNew, setShowNew] = React.useState(false)
+   486→  const [editingId, setEditingId] = React.useState<string | null>(null)
+   487→  const [managingId, setManagingId] = React.useState<string | null>(null)
+   488→
+   489→  const batches = data?.batches ?? []
+   490→
+   491→  if (isLoading) {
+   492→    return <div className="grid lg:grid-cols-2 gap-4">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-40" />)}</div>
+   493→  }
+   494→
+   495→  return (
+   496→    <div className="space-y-4">
+   497→      <div className="flex items-center justify-between">
+   498→        <div>
+   499→          <h2 className="text-xl font-bold">Batches ({batches.length})</h2>
+   500→          <p className="text-sm text-muted-foreground">Create and manage student batches</p>
+   501→        </div>
+   502→        <Button onClick={() => setShowNew((s) => !s)} className="bg-amber-500 text-amber-950 hover:bg-amber-400">
+   503→          <Plus className="h-4 w-4 mr-1" /> {showNew ? "Cancel" : "Add Batch"}
+   504→        </Button>
+   505→      </div>
+   506→
+   507→      {showNew && <BatchForm mode="create" onClose={() => setShowNew(false)} />}
+   508→
+   509→      {batches.length === 0 ? (
+   510→        <Card className="p-12 text-center border-dashed">
+   511→          <GraduationCap className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+   512→          <p className="font-medium mb-1">No batches yet</p>
+   513→          <p className="text-sm text-muted-foreground">Click "Add Batch" to create your first batch.</p>
+   514→        </Card>
+   515→      ) : (
+   516→        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+   517→          {batches.map((b) => (
+   518→            <BatchCard key={b.id} batch={b} onEdit={() => setEditingId(editingId === b.id ? null : b.id)} onManage={() => setManagingId(managingId === b.id ? null : b.id)} editing={editingId === b.id} />
+   519→          ))}
+   520→        </div>
+   521→      )}
+   522→
+   523→      {managingId && <BatchStudentsManager batchId={managingId} onClose={() => setManagingId(null)} />}
+   524→    </div>
+   525→  )
+   526→}
+   527→
+   528→function BatchCard({ batch, onEdit, onManage, editing }: { batch: SchoolBatch; onEdit: () => void; onManage: () => void; editing: boolean }) {
+   529→  const statusColor = batch.status === "active"
+   530→    ? "text-emerald-400 border-emerald-500/30 bg-emerald-500/10"
+   531→    : batch.status === "completed"
+   532→    ? "text-cyan-400 border-cyan-500/30 bg-cyan-500/10"
+   533→    : "text-amber-400 border-amber-500/30 bg-amber-500/10"
+   534→
+   535→  return (
+   536→    <Card className="overflow-hidden">
+   537→      <div className="p-4">
+   538→        <div className="flex items-start gap-3 mb-3">
+   539→          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 font-mono font-bold text-sm">
+   540→            {batch.name.slice(0, 2).toUpperCase()}
+   541→          </div>
+   542→          <div className="flex-1 min-w-0">
+   543→            <div className="font-semibold truncate">{batch.name}</div>
+   544→            <div className="text-[10px] text-muted-foreground">
+   545→              Started {new Date(batch.startDate).toLocaleDateString()}
+   546→            </div>
+   547→          </div>
+   548→          <Badge variant="outline" className={cn("text-[9px]", statusColor)}>{batch.status}</Badge>
+   549→        </div>
+   550→        <div className="grid grid-cols-2 gap-2 text-xs mb-3">
+   551→          <div className="rounded-lg border border-border p-2">
+   552→            <div className="text-[10px] text-muted-foreground">Students</div>
+   553→            <div className="font-mono font-bold">{batch.studentCount}</div>
+   554→          </div>
+   555→          <div className="rounded-lg border border-border p-2">
+   556→            <div className="text-[10px] text-muted-foreground">Ends</div>
+   557→            <div className="font-mono text-xs">{batch.endDate ? new Date(batch.endDate).toLocaleDateString() : "—"}</div>
+   558→          </div>
+   559→        </div>
+   560→        <div className="flex items-center gap-1.5">
+   561→          <Button size="sm" variant="outline" className="flex-1 h-8" onClick={onManage}>
+   562→            <Users className="h-3.5 w-3.5 mr-1" /> Students
+   563→          </Button>
+   564→          <Button size="sm" variant="outline" className="h-8" onClick={onEdit}>
+   565→            <Pencil className="h-3.5 w-3.5" />
+   566→          </Button>
+   567→        </div>
+   568→      </div>
+   569→      {editing && (
+   570→        <div className="border-t border-border">
+   571→          <BatchForm mode="edit" batch={batch} onClose={onEdit} />
+   572→        </div>
+   573→      )}
+   574→    </Card>
+   575→  )
+   576→}
+   577→
+   578→function BatchForm({ mode, batch, onClose }: {
+   579→  mode: "create" | "edit"
+   580→  batch?: SchoolBatch
+   581→  onClose: () => void
+   582→}) {
+   583→  const qc = useQueryClient()
+   584→  const [form, setForm] = React.useState({
+   585→    name: batch?.name ?? "",
+   586→    courseIds: batch?.courseIds ?? "",
+   587→    startDate: batch?.startDate ? new Date(batch.startDate).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10),
+   588→    endDate: batch?.endDate ? new Date(batch.endDate).toISOString().slice(0, 10) : "",
+   589→    status: batch?.status ?? "active",
+   590→  })
+   591→  const set = (k: keyof typeof form, v: any) => setForm((f) => ({ ...f, [k]: v }))
+   592→
+   593→  const save = useMutation({
+   594→    mutationFn: async () => {
+   595→      const payload = {
+   596→        name: form.name,
+   597→        courseIds: form.courseIds,
+   598→        startDate: form.startDate,
+   599→        endDate: form.endDate || null,
+   600→        status: form.status,
+   601→      }
+   602→      if (mode === "create") {
+   603→        return api("/api/school/batches", { method: "POST", body: JSON.stringify(payload) })
+   604→      } else {
+   605→        return api(`/api/school/batches/${batch!.id}`, { method: "PATCH", body: JSON.stringify(payload) })
+   606→      }
+   607→    },
+   608→    onSuccess: () => {
+   609→      qc.invalidateQueries({ queryKey: ["school", "batches"] })
+   610→      qc.invalidateQueries({ queryKey: ["school", "students"] })
+   611→      qc.invalidateQueries({ queryKey: ["school", "reports"] })
+   612→      toast.success(mode === "create" ? "Batch created" : "Batch updated")
+   613→      onClose()
+   614→    },
+   615→    onError: (e: any) => toast.error(e.message),
+   616→  })
+   617→
+   618→  return (
+   619→    <div className="p-4 bg-amber-500/[0.03] space-y-3 animate-fade-in-up">
+   620→      <div className="flex items-center gap-2">
+   621→        {mode === "create" ? <Plus className="h-4 w-4 text-amber-400" /> : <Pencil className="h-4 w-4 text-amber-400" />}
+   622→        <span className="text-sm font-semibold">{mode === "create" ? "New Batch" : "Edit Batch"}</span>
+   623→        <Button size="sm" variant="ghost" className="ml-auto h-7" onClick={onClose}><X className="h-3.5 w-3.5" /></Button>
+   624→      </div>
+   625→      <div className="space-y-1.5">
+   626→        <label className="text-xs text-muted-foreground">Batch Name *</label>
+   627→        <Input value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="e.g. CEH Batch 2025 — Morning" />
+   628→      </div>
+   629→      <div className="space-y-1.5">
+   630→        <label className="text-xs text-muted-foreground">Course IDs (comma separated — optional)</label>
+   631→        <Input value={form.courseIds} onChange={(e) => set("courseIds", e.target.value)} placeholder="course-id-1,course-id-2" className="font-mono text-xs" />
+   632→      </div>
+   633→      <div className="grid sm:grid-cols-2 gap-3">
+   634→        <div className="space-y-1.5">
+   635→          <label className="text-xs text-muted-foreground">Start Date</label>
+   636→          <Input type="date" value={form.startDate} onChange={(e) => set("startDate", e.target.value)} />
+   637→        </div>
+   638→        <div className="space-y-1.5">
+   639→          <label className="text-xs text-muted-foreground">End Date (optional)</label>
+   640→          <Input type="date" value={form.endDate} onChange={(e) => set("endDate", e.target.value)} />
+   641→        </div>
+   642→      </div>
+   643→      <div className="space-y-1.5">
+   644→        <label className="text-xs text-muted-foreground">Status</label>
+   645→        <Select value={form.status} onValueChange={(v) => set("status", v)}>
+   646→          <SelectTrigger><SelectValue /></SelectTrigger>
+   647→          <SelectContent>
+   648→            <SelectItem value="active">Active</SelectItem>
+   649→            <SelectItem value="paused">Paused</SelectItem>
+   650→            <SelectItem value="completed">Completed</SelectItem>
+   651→          </SelectContent>
+   652→        </Select>
+   653→      </div>
+   654→      <Button size="sm" onClick={() => save.mutate()} disabled={!form.name.trim() || save.isPending} className="bg-amber-500 text-amber-950 hover:bg-amber-400">
+   655→        <Save className="h-3.5 w-3.5 mr-1" /> {save.isPending ? "Saving..." : mode === "create" ? "Create Batch" : "Save Changes"}
+   656→      </Button>
+   657→    </div>
+   658→  )
+   659→}
+   660→
+   661→function BatchStudentsManager({ batchId, onClose }: { batchId: string; onClose: () => void }) {
+   662→  const qc = useQueryClient()
+   663→  const { data, isLoading } = useQuery<any>({
+   664→    queryKey: ["school", "batch", batchId],
+   665→    queryFn: () => api(`/api/school/batches/${batchId}`),
+   666→  })
+   667→  const batch = data?.batch
+   668→  const [addEmail, setAddEmail] = React.useState("")
+   669→  const [addName, setAddName] = React.useState("")
+   670→
+   671→  const addStudent = useMutation({
+   672→    mutationFn: () => api(`/api/school/batches/${batchId}/students`, {
+   673→      method: "POST",
+   674→      body: JSON.stringify({ email: addEmail, name: addName }),
+   675→    }),
+   676→    onSuccess: (r: any) => {
+   677→      qc.invalidateQueries({ queryKey: ["school", "batch", batchId] })
+   678→      qc.invalidateQueries({ queryKey: ["school", "batches"] })
+   679→      qc.invalidateQueries({ queryKey: ["school", "students"] })
+   680→      qc.invalidateQueries({ queryKey: ["school", "reports"] })
+   681→      toast.success(`${r.student.user.name} added to batch`)
+   682→      setAddEmail("")
+   683→      setAddName("")
+   684→    },
+   685→    onError: (e: any) => toast.error(e.message),
+   686→  })
+   687→
+   688→  const removeStudent = useMutation({
+   689→    mutationFn: (studentId: string) => api(`/api/school/batches/${batchId}/students/${studentId}`, { method: "DELETE" }),
+   690→    onSuccess: () => {
+   691→      qc.invalidateQueries({ queryKey: ["school", "batch", batchId] })
+   692→      qc.invalidateQueries({ queryKey: ["school", "batches"] })
+   693→      qc.invalidateQueries({ queryKey: ["school", "students"] })
+   694→      qc.invalidateQueries({ queryKey: ["school", "reports"] })
+   695→      toast.success("Student removed from batch")
+   696→    },
+   697→    onError: (e: any) => toast.error(e.message),
+   698→  })
+   699→
+   700→  if (isLoading || !batch) return <Skeleton className="h-72" />
+   701→
+   702→  return (
+   703→    <Card className="overflow-hidden border-amber-500/20">
+   704→      <div className="p-4 border-b border-border bg-amber-500/[0.03] flex items-center gap-3">
+   705→        <Users className="h-5 w-5 text-amber-400" />
+   706→        <div className="flex-1">
+   707→          <div className="font-semibold">Manage Students — {batch.name}</div>
+   708→          <div className="text-xs text-muted-foreground">{batch.students.length} student(s) enrolled</div>
+   709→        </div>
+   710→        <Button size="sm" variant="ghost" onClick={onClose}><X className="h-4 w-4" /></Button>
+   711→      </div>
+   712→      <div className="p-4 space-y-4">
+   713→        {/* Add student */}
+   714→        <div className="rounded-lg border border-dashed border-amber-500/30 p-3 bg-amber-500/[0.02]">
+   715→          <div className="text-xs font-semibold text-amber-400 mb-2 flex items-center gap-1.5">
+   716→            <Plus className="h-3.5 w-3.5" /> Add Student to Batch
+   717→          </div>
+   718→          <div className="grid sm:grid-cols-3 gap-2">
+   719→            <Input value={addEmail} onChange={(e) => setAddEmail(e.target.value)} placeholder="student@email.com" className="text-xs" />
+   720→            <Input value={addName} onChange={(e) => setAddName(e.target.value)} placeholder="Full name (optional)" className="text-xs" />
+   721→            <Button size="sm" onClick={() => addStudent.mutate()} disabled={!addEmail.trim() || addStudent.isPending} className="bg-amber-500 text-amber-950 hover:bg-amber-400">
+   722→              {addStudent.isPending ? "Adding..." : "Add Student"}
+   723→            </Button>
+   724→          </div>
+   725→          <p className="text-[10px] text-muted-foreground mt-1.5">
+   726→            If the email exists, the user is linked. Otherwise a placeholder student account is created (password: student123).
+   727→          </p>
+   728→        </div>
+   729→
+   730→        {/* Students list */}
+   731→        {batch.students.length === 0 ? (
+   732→          <div className="text-center py-8 text-sm text-muted-foreground">No students in this batch yet.</div>
+   733→        ) : (
+   734→          <div className="space-y-1.5 max-h-80 overflow-y-auto pr-1">
+   735→            {batch.students.map((s: any) => {
+   736→              const initials = s.user.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
+   737→              return (
+   738→                <div key={s.id} className="flex items-center gap-3 p-2 rounded-lg border border-border hover:bg-accent/30 transition-colors">
+   739→                  <div className="h-8 w-8 shrink-0 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-mono font-bold flex items-center justify-center border border-emerald-500/20">
+   740→                    {initials}
+   741→                  </div>
+   742→                  <div className="flex-1 min-w-0">
+   743→                    <div className="text-sm font-medium truncate">{s.user.name}</div>
+   744→                    <div className="text-[10px] text-muted-foreground truncate">{s.user.email} · Lv {s.user.level}</div>
+   745→                  </div>
+   746→                  <button
+   747→                    onClick={() => { if (confirm(`Remove ${s.user.name} from this batch?`)) removeStudent.mutate(s.id) }}
+   748→                    className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors"
+   749→                    title="Remove from batch"
+   750→                    aria-label="Remove from batch"
+   751→                  >
+   752→                    <Trash2 className="h-3.5 w-3.5" />
+   753→                  </button>
+   754→                </div>
+   755→              )
+   756→            })}
+   757→          </div>
+   758→        )}
+   759→      </div>
+   760→    </Card>
+   761→  )
+   762→}
+   763→
+   764→// ================= ATTENDANCE TAB =================
+   765→function AttendanceTab() {
+   766→  const { data: batchesData } = useQuery<{ batches: SchoolBatch[] }>({
+   767→    queryKey: ["school", "batches"],
+   768→    queryFn: () => api("/api/school/batches"),
+   769→  })
+   770→  const [batchId, setBatchId] = React.useState("")
+   771→  const [date, setDate] = React.useState(new Date().toISOString().slice(0, 10))
+   772→
+   773→  const batches = batchesData?.batches ?? []
+   774→  React.useEffect(() => {
+   775→    if (!batchId && batches.length > 0) setBatchId(batches[0].id)
+   776→  }, [batches, batchId])
+   777→
+   778→  if (batches.length === 0) {
+   779→    return (
+   780→      <Card className="p-12 text-center border-dashed">
+   781→        <Calendar className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+   782→        <p className="font-medium mb-1">No batches available</p>
+   783→        <p className="text-sm text-muted-foreground">Create a batch first to mark attendance.</p>
+   784→      </Card>
+   785→    )
+   786→  }
+   787→
+   788→  return (
+   789→    <div className="space-y-4">
+   790→      <Card className="p-4">
+   791→        <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-end">
+   792→          <div className="flex-1 space-y-1.5">
+   793→            <label className="text-xs text-muted-foreground">Batch</label>
+   794→            <Select value={batchId} onValueChange={setBatchId}>
+   795→              <SelectTrigger><SelectValue placeholder="Select batch" /></SelectTrigger>
+   796→              <SelectContent>
+   797→                {batches.map((b) => <SelectItem key={b.id} value={b.id}>{b.name} ({b.studentCount} students)</SelectItem>)}
+   798→              </SelectContent>
+   799→            </Select>
+   800→          </div>
+   801→          <div className="space-y-1.5">
+   802→            <label className="text-xs text-muted-foreground">Date</label>
+   803→            <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+   804→          </div>
+   805→        </div>
+   806→      </Card>
+   807→
+   808→      {batchId && <AttendanceMarker batchId={batchId} date={date} />}
+   809→    </div>
+   810→  )
+   811→}
+   812→
+   813→function AttendanceMarker({ batchId, date }: { batchId: string; date: string }) {
+   814→  const qc = useQueryClient()
+   815→  const { data: batchData } = useQuery<any>({
+   816→    queryKey: ["school", "batch", batchId],
+   817→    queryFn: () => api(`/api/school/batches/${batchId}`),
+   818→  })
+   819→  const { data: existingAtt } = useQuery<any>({
+   820→    queryKey: ["school", "attendance", batchId, date],
+   821→    queryFn: () => api(`/api/school/attendance?batchId=${batchId}&date=${date}`),
+   822→    enabled: !!batchId && !!date,
+   823→  })
+   824→
+   825→  const batch = batchData?.batch
+   826→  const students: any[] = batch?.students ?? []
+   827→  const existingMap: Record<string, any> = {}
+   828→  for (const a of (existingAtt?.attendance ?? [])) {
+   829→    existingMap[a.batchStudentId] = a
+   830→  }
+   831→
+   832→  // Local status map (batchStudentId -> status)
+   833→  const [statusMap, setStatusMap] = React.useState<Record<string, string>>({})
+   834→
+   835→  React.useEffect(() => {
+   836→    const m: Record<string, string> = {}
+   837→    for (const s of students) {
+   838→      m[s.id] = existingMap[s.id]?.status ?? "present"
+   839→    }
+   840→    setStatusMap(m)
+   841→  }, [students.length, existingAtt?.attendance?.length, date])
+   842→
+   843→  const save = useMutation({
+   844→    mutationFn: () => {
+   845→      const records = students.map((s) => ({
+   846→        batchStudentId: s.id,
+   847→        status: statusMap[s.id] ?? "present",
+   848→      }))
+   849→      return api("/api/school/attendance", {
+   850→        method: "POST",
+   851→        body: JSON.stringify({ batchId, date, records }),
+   852→      })
+   853→    },
+   854→    onSuccess: () => {
+   855→      qc.invalidateQueries({ queryKey: ["school", "attendance", batchId, date] })
+   856→      qc.invalidateQueries({ queryKey: ["school", "reports"] })
+   857→      qc.invalidateQueries({ queryKey: ["school", "students"] })
+   858→      toast.success(`Attendance saved for ${students.length} students`)
+   859→    },
+   860→    onError: (e: any) => toast.error(e.message),
+   861→  })
+   862→
+   863→  if (students.length === 0) {
+   864→    return (
+   865→      <Card className="p-12 text-center border-dashed">
+   866→        <Users className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+   867→        <p className="font-medium mb-1">No students in this batch</p>
+   868→        <p className="text-sm text-muted-foreground">Add students from the Batches tab first.</p>
+   869→      </Card>
+   870→    )
+   871→  }
+   872→
+   873→  const summary = ATTENDANCE_STATUSES.map((s) => ({
+   874→    ...s,
+   875→    count: students.filter((st) => (statusMap[st.id] ?? "present") === s.value).length,
+   876→  }))
+   877→
+   878→  return (
+   879→    <Card className="overflow-hidden">
+   880→      <div className="p-4 border-b border-border flex items-center gap-3 flex-wrap">
+   881→        <div className="flex-1">
+   882→          <div className="font-semibold text-sm">Mark Attendance — {new Date(date).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}</div>
+   883→          <div className="text-xs text-muted-foreground">{students.length} students</div>
+   884→        </div>
+   885→        {/* Quick summary */}
+   886→        <div className="flex flex-wrap items-center gap-2">
+   887→          {summary.map((s) => (
+   888→            <Badge key={s.value} variant="outline" className={cn("text-[10px]", s.color)}>
+   889→              <s.icon className="h-3 w-3 mr-0.5" /> {s.count} {s.label}
+   890→            </Badge>
+   891→          ))}
+   892→        </div>
+   893→        <Button size="sm" onClick={() => save.mutate()} disabled={save.isPending} className="bg-emerald-500 text-emerald-950 hover:bg-emerald-400">
+   894→          <Save className="h-3.5 w-3.5 mr-1" /> {save.isPending ? "Saving..." : "Save Attendance"}
+   895→        </Button>
+   896→      </div>
+   897→      <div className="p-4">
+   898→        <div className="space-y-2">
+   899→          {students.map((s) => {
+   900→            const initials = s.user.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
+   901→            const current = statusMap[s.id] ?? "present"
+   902→            return (
+   903→              <div key={s.id} className="flex items-center gap-3 p-2 rounded-lg border border-border hover:bg-accent/20 transition-colors">
+   904→                <div className="h-8 w-8 shrink-0 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-mono font-bold flex items-center justify-center border border-emerald-500/20">
+   905→                  {initials}
+   906→                </div>
+   907→                <div className="flex-1 min-w-0">
+   908→                  <div className="text-sm font-medium truncate">{s.user.name}</div>
+   909→                  <div className="text-[10px] text-muted-foreground truncate">{s.user.email}</div>
+   910→                </div>
+   911→                <div className="flex items-center gap-1">
+   912→                  {ATTENDANCE_STATUSES.map((sOpt) => (
+   913→                    <button
+   914→                      key={sOpt.value}
+   915→                      onClick={() => setStatusMap((m) => ({ ...m, [s.id]: sOpt.value }))}
+   916→                      className={cn(
+   917→                        "px-2 py-1 rounded-md text-[10px] font-medium border transition-all flex items-center gap-1",
+   918→                        current === sOpt.value ? sOpt.color : "border-border text-muted-foreground hover:bg-accent/50"
+   919→                      )}
+   920→                      aria-label={`Mark ${s.user.name} as ${sOpt.label}`}
+   921→                    >
+   922→                      <sOpt.icon className="h-3 w-3" /> {sOpt.label}
+   923→                    </button>
+   924→                  ))}
+   925→                </div>
+   926→              </div>
+   927→            )
+   928→          })}
+   929→        </div>
+   930→      </div>
+   931→    </Card>
+   932→  )
+   933→}
+   934→
+   935→// ================= REPORTS TAB =================
+   936→function ReportsTab() {
+   937→  const { data, isLoading } = useQuery<any>({
+   938→    queryKey: ["school", "reports"],
+   939→    queryFn: () => api("/api/school/reports"),
+   940→  })
+   941→
+   942→  if (isLoading || !data) {
+   943→    return (
+   944→      <div className="space-y-4">
+   945→        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+   946→          {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-28" />)}
+   947→        </div>
+   948→        <Skeleton className="h-72" />
+   949→      </div>
+   950→    )
+   951→  }
+   952→
+   953→  const t = data.totals
+   954→  const statCards = [
+   955→    { label: "Total Students", value: t.students, sub: "across batches", icon: Users, color: "text-emerald-400", bg: "bg-emerald-500/10" },
+   956→    { label: "Completion Rate", value: `${data.completionRate}%`, sub: `${t.completed}/${t.enrollments} courses done`, icon: TrendingUp, color: "text-cyan-400", bg: "bg-cyan-500/10" },
+   957→    { label: "Labs Solved", value: t.labsSolved, sub: "by all students", icon: Target, color: "text-violet-400", bg: "bg-violet-500/10" },
+   958→    { label: "Attendance Rate", value: `${data.attendanceStats.rate}%`, sub: `${data.attendanceStats.present} present`, icon: CheckCircle2, color: "text-amber-400", bg: "bg-amber-500/10" },
+   959→  ]
+   960→
+   961→  const completionGauge = [{ name: "completion", value: data.completionRate, fill: "#06b6d4" }]
+   962→  const attendanceGauge = [{ name: "attendance", value: data.attendanceStats.rate, fill: "#10b981" }]
+   963→
+   964→  return (
+   965→    <div className="space-y-6">
+   966→      {/* Stat cards */}
+   967→      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+   968→        {statCards.map((s) => (
+   969→          <Card key={s.label} className="p-5 relative overflow-hidden card-hover">
+   970→            <div className={cn("absolute -right-4 -top-4 h-20 w-20 rounded-full blur-2xl opacity-50", s.bg)} />
+   971→            <div className="relative z-10">
+   972→              <div className={cn("inline-flex p-2 rounded-lg mb-3", s.bg)}>
+   973→                <s.icon className={cn("h-5 w-5", s.color)} />
+   974→              </div>
+   975→              <div className="text-2xl font-bold tabular-nums">{s.value}</div>
+   976→              <div className="text-xs text-muted-foreground mt-1">{s.label}</div>
+   977→              <div className="text-[10px] text-muted-foreground mt-0.5">{s.sub}</div>
+   978→            </div>
+   979→          </Card>
+   980→        ))}
+   981→      </div>
+   982→
+   983→      {/* Gauges + charts */}
+   984→      <div className="grid lg:grid-cols-2 gap-4">
+   985→        {/* Completion rate gauge */}
+   986→        <Card className="p-5">
+   987→          <div className="flex items-center justify-between mb-4">
+   988→            <div>
+   989→              <h3 className="font-semibold flex items-center gap-2 text-sm">
+   990→                <TrendingUp className="h-4 w-4 text-cyan-400" /> Course Completion
+   991→              </h3>
+   992→              <p className="text-[10px] text-muted-foreground">Across all student enrollments</p>
+   993→            </div>
+   994→            <Badge variant="outline" className="text-[10px] text-cyan-400 border-cyan-500/30">{t.completed} / {t.enrollments}</Badge>
+   995→          </div>
+   996→          <ResponsiveContainer width="100%" height={200}>
+   997→            <RadialBarChart innerRadius="60%" outerRadius="100%" data={completionGauge} startAngle={90} endAngle={90 - (data.completionRate * 3.6)}>
+   998→              <PolarAngleAxis type="number" domain={[0, 100]} angleAxisId={0} tick={false} />
+   999→              <RadialBar background dataKey="value" cornerRadius={10} />
+  1000→              <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" className="fill-foreground" style={{ fontSize: "32px", fontWeight: "bold" }}>
+  1001→                {data.completionRate}%
+  1002→              </text>
+  1003→            </RadialBarChart>
+  1004→          </ResponsiveContainer>
+  1005→        </Card>
+  1006→
+  1007→        {/* Attendance gauge */}
+  1008→        <Card className="p-5">
+  1009→          <div className="flex items-center justify-between mb-4">
+  1010→            <div>
+  1011→              <h3 className="font-semibold flex items-center gap-2 text-sm">
+  1012→                <CheckCircle2 className="h-4 w-4 text-emerald-400" /> Attendance Rate
+  1013→              </h3>
+  1014→              <p className="text-[10px] text-muted-foreground">Present + late vs total</p>
+  1015→            </div>
+  1016→            <Badge variant="outline" className="text-[10px] text-emerald-400 border-emerald-500/30">
+  1017→              {data.attendanceStats.present + data.attendanceStats.late} / {data.attendanceStats.present + data.attendanceStats.absent + data.attendanceStats.late + data.attendanceStats.excused}
+  1018→            </Badge>
+  1019→          </div>
+  1020→          <ResponsiveContainer width="100%" height={200}>
+  1021→            <RadialBarChart innerRadius="60%" outerRadius="100%" data={attendanceGauge} startAngle={90} endAngle={90 - (data.attendanceStats.rate * 3.6)}>
+  1022→              <PolarAngleAxis type="number" domain={[0, 100]} angleAxisId={0} tick={false} />
+  1023→              <RadialBar background dataKey="value" cornerRadius={10} />
+  1024→              <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" className="fill-foreground" style={{ fontSize: "32px", fontWeight: "bold" }}>
+  1025→                {data.attendanceStats.rate}%
+  1026→              </text>
+  1027→            </RadialBarChart>
+  1028→          </ResponsiveContainer>
+  1029→        </Card>
+  1030→
+  1031→        {/* Lab performance by difficulty */}
+  1032→        <Card className="p-5">
+  1033→          <div className="flex items-center justify-between mb-4">
+  1034→            <div>
+  1035→              <h3 className="font-semibold flex items-center gap-2 text-sm">
+  1036→                <Target className="h-4 w-4 text-violet-400" /> Lab Performance by Difficulty
+  1037→              </h3>
+  1038→              <p className="text-[10px] text-muted-foreground">Attempted vs solved</p>
+  1039→            </div>
+  1040→          </div>
+  1041→          <ResponsiveContainer width="100%" height={220}>
+  1042→            <BarChart data={data.labPerformance.byDifficulty} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
+  1043→              <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.3 0.02 190 / 0.3)" />
+  1044→              <XAxis dataKey="name" tick={{ fill: "#6b7d75", fontSize: 10 }} axisLine={{ stroke: "#334155" }} />
+  1045→              <YAxis tick={{ fill: "#6b7d75", fontSize: 10 }} allowDecimals={false} axisLine={{ stroke: "#334155" }} />
+  1046→              <Tooltip contentStyle={{ background: "oklch(0.2 0.014 195)", border: "1px solid oklch(0.3 0.02 190)", borderRadius: 8, fontSize: 12 }} cursor={{ fill: "oklch(0.3 0.02 190 / 0.2)" }} />
+  1047→              <Legend wrapperStyle={{ fontSize: 11 }} />
+  1048→              <Bar dataKey="total" name="Attempted" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+  1049→              <Bar dataKey="completed" name="Solved" fill="#10b981" radius={[4, 4, 0, 0]} />
+  1050→            </BarChart>
+  1051→          </ResponsiveContainer>
+  1052→        </Card>
+  1053→
+  1054→        {/* Attendance distribution */}
+  1055→        <Card className="p-5">
+  1056→          <div className="flex items-center justify-between mb-4">
+  1057→            <div>
+  1058→              <h3 className="font-semibold flex items-center gap-2 text-sm">
+  1059→                <Calendar className="h-4 w-4 text-amber-400" /> Attendance Breakdown
+  1060→              </h3>
+  1061→              <p className="text-[10px] text-muted-foreground">Status distribution</p>
+  1062→            </div>
+  1063→          </div>
+  1064→          <ResponsiveContainer width="100%" height={220}>
+  1065→            <PieChart>
+  1066→              <Pie
+  1067→                data={[
+  1068→                  { name: "Present", value: data.attendanceStats.present, color: "#10b981" },
+  1069→                  { name: "Late", value: data.attendanceStats.late, color: "#f59e0b" },
+  1070→                  { name: "Absent", value: data.attendanceStats.absent, color: "#ef4444" },
+  1071→                  { name: "Excused", value: data.attendanceStats.excused, color: "#06b6d4" },
+  1072→                ]}
+  1073→                dataKey="value"
+  1074→                nameKey="name"
+  1075→                cx="50%"
+  1076→                cy="50%"
+  1077→                outerRadius={80}
+  1078→                label
+  1079→              >
+  1080→                {[
+  1081→                  { name: "Present", value: data.attendanceStats.present, color: "#10b981" },
+  1082→                  { name: "Late", value: data.attendanceStats.late, color: "#f59e0b" },
+  1083→                  { name: "Absent", value: data.attendanceStats.absent, color: "#ef4444" },
+  1084→                  { name: "Excused", value: data.attendanceStats.excused, color: "#06b6d4" },
+  1085→                ].map((e, i) => <Cell key={i} fill={e.color} />)}
+  1086→              </Pie>
+  1087→              <Legend wrapperStyle={{ fontSize: 11 }} />
+  1088→              <Tooltip contentStyle={{ background: "oklch(0.2 0.014 195)", border: "1px solid oklch(0.3 0.02 190)", borderRadius: 8, fontSize: 12 }} />
+  1089→            </PieChart>
+  1090→          </ResponsiveContainer>
+  1091→        </Card>
+  1092→      </div>
+  1093→
+  1094→      {/* Per-batch progress table */}
+  1095→      <Card className="overflow-hidden">
+  1096→        <div className="p-4 border-b border-border">
+  1097→          <h3 className="font-semibold flex items-center gap-2 text-sm">
+  1098→            <GraduationCap className="h-4 w-4 text-amber-400" /> Per-Batch Performance
+  1099→          </h3>
+  1100→          <p className="text-[10px] text-muted-foreground">Detailed breakdown by batch</p>
+  1101→        </div>
+  1102→        <Table>
+  1103→          <TableHeader>
+  1104→            <TableRow>
+  1105→              <TableHead>Batch</TableHead>
+  1106→              <TableHead className="text-center">Students</TableHead>
+  1107→              <TableHead className="text-center hidden md:table-cell">Enrollments</TableHead>
+  1108→              <TableHead className="text-center hidden md:table-cell">Completed</TableHead>
+  1109→              <TableHead className="hidden lg:table-cell">Avg Progress</TableHead>
+  1110→              <TableHead className="text-center hidden md:table-cell">Labs Solved</TableHead>
+  1111→              <TableHead className="text-center hidden md:table-cell">Certs</TableHead>
+  1112→              <TableHead className="text-center hidden lg:table-cell">Attendance</TableHead>
+  1113→            </TableRow>
+  1114→          </TableHeader>
+  1115→          <TableBody>
+  1116→            {data.batchProgress.length === 0 ? (
+  1117→              <TableRow>
+  1118→                <TableCell colSpan={8} className="text-center text-sm text-muted-foreground py-8">No batch data yet.</TableCell>
+  1119→              </TableRow>
+  1120→            ) : (
+  1121→              data.batchProgress.map((b: any) => (
+  1122→                <TableRow key={b.id}>
+  1123→                  <TableCell>
+  1124→                    <div className="font-medium">{b.name}</div>
+  1125→                    <Badge variant="outline" className={cn(
+  1126→                      "text-[9px] mt-0.5",
+  1127→                      b.status === "active" && "text-emerald-400 border-emerald-500/30 bg-emerald-500/10",
+  1128→                      b.status === "completed" && "text-cyan-400 border-cyan-500/30 bg-cyan-500/10",
+  1129→                      b.status === "paused" && "text-amber-400 border-amber-500/30 bg-amber-500/10",
+  1130→                    )}>{b.status}</Badge>
+  1131→                  </TableCell>
+  1132→                  <TableCell className="text-center font-mono">{b.studentCount}</TableCell>
+  1133→                  <TableCell className="text-center hidden md:table-cell font-mono">{b.enrollments}</TableCell>
+  1134→                  <TableCell className="text-center hidden md:table-cell font-mono text-emerald-400">{b.completed}</TableCell>
+  1135→                  <TableCell className="hidden lg:table-cell">
+  1136→                    <div className="flex items-center gap-2 w-32">
+  1137→                      <Progress value={b.avgProgress} className="h-1.5" />
+  1138→                      <span className="text-xs font-mono text-muted-foreground">{b.avgProgress}%</span>
+  1139→                    </div>
+  1140→                  </TableCell>
+  1141→                  <TableCell className="text-center hidden md:table-cell font-mono text-violet-400">{b.labsSolved}</TableCell>
+  1142→                  <TableCell className="text-center hidden md:table-cell font-mono text-amber-400">{b.certs}</TableCell>
+  1143→                  <TableCell className="text-center hidden lg:table-cell">
+  1144→                    <span className={cn("font-mono text-sm", b.attendanceRate >= 80 ? "text-emerald-400" : b.attendanceRate >= 50 ? "text-amber-400" : "text-red-400")}>
+  1145→                      {b.attendanceRate}%
+  1146→                    </span>
+  1147→                  </TableCell>
+  1148→                </TableRow>
+  1149→              ))
+  1150→            )}
+  1151→          </TableBody>
+  1152→        </Table>
+  1153→      </Card>
+  1154→
+  1155→      {/* Certifications by course */}
+  1156→      {data.certificationStats.byCourse.length > 0 && (
+  1157→        <Card className="p-5">
+  1158→          <div className="flex items-center justify-between mb-4">
+  1159→            <div>
+  1160→              <h3 className="font-semibold flex items-center gap-2 text-sm">
+  1161→                <Award className="h-4 w-4 text-amber-400" /> Certifications by Course
+  1162→              </h3>
+  1163→              <p className="text-[10px] text-muted-foreground">{data.certificationStats.total} total certificates earned</p>
+  1164→            </div>
+  1165→          </div>
+  1166→          <div className="space-y-2">
+  1167→            {data.certificationStats.byCourse.map((c: any) => {
+  1168→              const col = colorFor(c.course.color)
+  1169→              return (
+  1170→                <div key={c.course.id} className="flex items-center gap-3 p-2 rounded-lg border border-border">
+  1171→                  <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg font-mono font-bold text-xs border", col.bg, col.border, col.text)}>
+  1172→                    {c.course.shortName.slice(0, 3)}
+  1173→                  </div>
+  1174→                  <div className="flex-1 min-w-0">
+  1175→                    <div className="text-sm font-medium truncate">{c.course.title}</div>
+  1176→                    <div className="text-[10px] text-muted-foreground">{c.count} certificate{c.count !== 1 ? "s" : ""} earned</div>
+  1177→                  </div>
+  1178→                  <Badge variant="outline" className="text-[10px] text-amber-400 border-amber-500/30 bg-amber-500/10">
+  1179→                    <Award className="h-3 w-3 mr-0.5" /> {c.count}
+  1180→                  </Badge>
+  1181→                </div>
+  1182→              )
+  1183→            })}
+  1184→          </div>
+  1185→        </Card>
+  1186→      )}
+  1187→    </div>
+  1188→  )
+  1189→}
+  1190→

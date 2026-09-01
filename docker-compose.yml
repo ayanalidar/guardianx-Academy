@@ -1,0 +1,74 @@
+# GuardianX Lab Platform — Docker Compose
+# 
+# This file defines all services for the GuardianX lab platform.
+# In production, the web app (Next.js) and mini-services run on the main server,
+# while lab containers are spun up dynamically by the orchestrator.
+#
+# Usage:
+#   docker-compose up -d          # Start all services
+#   docker-compose logs -f        # View logs
+#   docker-compose down           # Stop all services
+
+version: "3.8"
+
+services:
+  # === Web Application (Next.js) ===
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=file:/data/db/custom.db
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-guardianx-dev-secret}
+      - NEXTAUTH_URL=http://localhost:3000
+      - DOCKER_AVAILABLE=1
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    volumes:
+      - db-data:/data/db
+      - /var/run/docker.sock:/var/run/docker.sock  # Docker socket for orchestrator
+    depends_on:
+      - lab-orchestrator
+      - terminal-gateway
+    restart: unless-stopped
+
+  # === Lab Orchestrator (port 3004) ===
+  lab-orchestrator:
+    build:
+      context: ./mini-services/lab-orchestrator
+      dockerfile: Dockerfile
+    ports:
+      - "3004:3004"
+    environment:
+      - DOCKER_AVAILABLE=1
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock  # Access to Docker Engine
+    restart: unless-stopped
+
+  # === Terminal Gateway (port 3005) ===
+  terminal-gateway:
+    build:
+      context: ./mini-services/terminal-gateway
+      dockerfile: Dockerfile
+    ports:
+      - "3005:3005"
+    environment:
+      - DOCKER_AVAILABLE=1
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock  # For Docker exec
+    restart: unless-stopped
+
+  # === WebRTC Signaling (port 3003) ===
+  live-signaling:
+    build:
+      context: ./mini-services/live-signaling
+      dockerfile: Dockerfile
+    ports:
+      - "3003:3003"
+    restart: unless-stopped
+
+volumes:
+  db-data:

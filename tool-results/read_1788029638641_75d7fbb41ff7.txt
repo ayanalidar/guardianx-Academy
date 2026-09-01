@@ -1,0 +1,687 @@
+     1→// GuardianX LMS — Prisma schema
+     2→
+     3→generator client {
+     4→  provider = "prisma-client-js"
+     5→}
+     6→
+     7→datasource db {
+     8→  provider = "sqlite"
+     9→  url      = env("DATABASE_URL")
+    10→}
+    11→
+    12→model User {
+    13→  id            String   @id @default(cuid())
+    14→  email         String   @unique
+    15→  name          String
+    16→  passwordHash  String
+    17→  role          String   @default("STUDENT") // STUDENT | INSTRUCTOR | ADMIN | SCHOOL_ADMIN
+    18→  avatar        String?
+    19→  bio           String?
+    20→  title         String? // e.g. "Senior Security Engineer"
+    21→  xp            Int      @default(0)
+    22→  level         Int      @default(1)
+    23→  streak        Int      @default(0)
+    24→  lastActiveDate String? // YYYY-MM-DD for streak tracking
+    25→  schoolId      String? // linked school (for school-admin / school students)
+    26→  createdAt     DateTime @default(now())
+    27→  updatedAt     DateTime @updatedAt
+    28→
+    29→  enrollments     Enrollment[]
+    30→  progress        LessonProgress[]
+    31→  notes           Note[]
+    32→  quizAttempts    QuizAttempt[]
+    33→  taughtCourses   Course[]
+    34→  labProgress     LabProgress[]
+    35→  certificates    Certificate[]
+    36→  liveSessionsHost LiveSession[] @relation("hostedSessions")
+    37→  liveSessionMembers LiveSessionMember[]
+    38→  discussions     Discussion[]
+    39→  replies         DiscussionReply[]
+    40→  achievements    UserAchievement[]
+    41→  activities      UserActivity[]
+    42→  notifications   Notification[]
+    43→  reviews         CourseReview[]
+    44→  bookmarks       Bookmark[]
+    45→  // New relations
+    46→  assignmentsCreated   Assignment[]
+    47→  submissions          AssignmentSubmission[]
+    48→  rubricsCreated       GradingRubric[]
+    49→  officeHourSlots      OfficeHourSlot[]
+    50→  officeHourBookings   OfficeHourBooking[]
+    51→  messageThreadsA      MessageThread[] @relation("threadUserA")
+    52→  messageThreadsB      MessageThread[] @relation("threadUserB")
+    53→  messages             Message[]
+    54→  studyGroupsCreated   StudyGroup[]
+    55→  studyGroupMemberships StudyGroupMember[]
+    56→  peerReviewsGiven     PeerReview[]
+    57→  peerReviewsReceived  PeerReview[] @relation("reviewedSubmissions")
+    58→  attendanceRecords    AttendanceRecord[]
+    59→  emailsReceived       EmailLog[]
+    60→  schoolMemberships    SchoolMember[]
+    61→  batchMemberships     BatchMember[]
+    62→}
+    63→
+    64→// ============================================================
+    65→// School / Institution model — multi-tenant schools, colleges, universities
+    66→// ============================================================
+    67→model School {
+    68→  id            String   @id @default(cuid())
+    69→  schoolCode    String   @unique // e.g. "GXS-DELHI-001" — used for institution login
+    70→  name          String
+    71→  type          String   @default("SCHOOL") // SCHOOL | COLLEGE | UNIVERSITY
+    72→  email         String?  // contact email
+    73→  phone         String?
+    74→  address       String?
+    75→  city          String?
+    76→  state         String?
+    77→  country       String   @default("India")
+    78→  logoUrl       String?
+    79→  website       String?
+    80→  // School admin credentials (the person who logs in via the School Portal tab)
+    81→  adminName     String
+    82→  adminEmail    String   @unique
+    83→  passwordHash  String
+    84→  status        String   @default("active") // active | suspended | pending
+    85→  maxStudents   Int      @default(500)
+    86→  createdAt     DateTime @default(now())
+    87→  updatedAt     DateTime @updatedAt
+    88→
+    89→  members       SchoolMember[]
+    90→  batches       Batch[]
+    91→}
+    92→
+    93→model SchoolMember {
+    94→  id            String   @id @default(cuid())
+    95→  schoolId      String
+    96→  school        School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+    97→  userId        String
+    98→  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    99→  role          String   @default("STUDENT") // STUDENT | INSTRUCTOR | SCHOOL_ADMIN
+   100→  joinedAt      DateTime @default(now())
+   101→
+   102→  @@unique([schoolId, userId])
+   103→}
+   104→
+   105→model Batch {
+   106→  id            String   @id @default(cuid())
+   107→  schoolId      String
+   108→  school        School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+   109→  name          String   // e.g. "Batch 2024-A"
+   110→  courseIds     String   @default("") // comma-separated course IDs assigned to this batch
+   111→  startDate     DateTime?
+   112→  endDate       DateTime?
+   113→  status        String   @default("active") // active | completed | archived
+   114→  createdAt     DateTime @default(now())
+   115→
+   116→  members       BatchMember[]
+   117→}
+   118→
+   119→model BatchMember {
+   120→  id            String   @id @default(cuid())
+   121→  batchId       String
+   122→  batch         Batch    @relation(fields: [batchId], references: [id], onDelete: Cascade)
+   123→  userId        String
+   124→  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   125→  enrolledAt    DateTime @default(now())
+   126→
+   127→  @@unique([batchId, userId])
+   128→}
+   129→
+   130→model Achievement {
+   131→  id          String   @id @default(cuid())
+   132→  code        String   @unique // e.g. FIRST_LAB, STREAK_7
+   133→  title       String
+   134→  description String
+   135→  icon        String   @default("award") // lucide icon name
+   136→  color       String   @default("emerald")
+   137→  xp          Int      @default(50)
+   138→  tier        String   @default("bronze") // bronze | silver | gold | platinum
+   139→  userAchievements UserAchievement[]
+   140→}
+   141→
+   142→model UserAchievement {
+   143→  id            String   @id @default(cuid())
+   144→  userId        String
+   145→  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   146→  achievementId String
+   147→  achievement   Achievement @relation(fields: [achievementId], references: [id])
+   148→  earnedAt      DateTime @default(now())
+   149→
+   150→  @@unique([userId, achievementId])
+   151→}
+   152→
+   153→model UserActivity {
+   154→  id          String   @id @default(cuid())
+   155→  userId      String
+   156→  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   157→  type        String   // lesson_completed | lab_solved | quiz_passed | note_created | course_enrolled | cert_earned
+   158→  xp          Int      @default(0)
+   159→  meta        String   @default("") // JSON-ish metadata
+   160→  date        String   // YYYY-MM-DD (for daily aggregation / streaks)
+   161→  createdAt   DateTime @default(now())
+   162→}
+   163→
+   164→model Course {
+   165→  id            String   @id @default(cuid())
+   166→  slug          String   @unique
+   167→  title         String
+   168→  shortName     String // e.g. "CEH"
+   169→  description   String
+   170→  longDescription String
+   171→  category      String // Certification / Networking / Cloud Security / etc.
+   172→  level         String // Beginner | Intermediate | Advanced
+   173→  durationHours Int      @default(40)
+   174→  price         Float    @default(0)
+   175→  rating        Float    @default(4.5)
+   176→  studentsCount Int      @default(0)
+   177→  thumbnail     String?
+   178→  color         String   @default("emerald") // theme accent
+   179→  tags          String   @default("") // comma separated
+   180→  certBody      String? // e.g. "EC-Council"
+   181→  published     Boolean  @default(true)
+   182→  prerequisiteIds String @default("") // comma-separated course IDs (Course Prerequisites feature)
+   183→  certificateTemplateId String? // optional template override
+   184→  createdAt     DateTime @default(now())
+   185→  updatedAt     DateTime @updatedAt
+   186→
+   187→  instructorId  String
+   188→  instructor    User     @relation(fields: [instructorId], references: [id])
+   189→
+   190→  modules       Module[]
+   191→  enrollments   Enrollment[]
+   192→  certificates  Certificate[]
+   193→  discussions   Discussion[]
+   194→  labs          Lab[]
+   195→  liveSessions  LiveSession[]
+   196→  reviews       CourseReview[]
+   197→  bookmarks     Bookmark[]
+   198→  // New relations
+   199→  assignments   Assignment[]
+   200→  rubrics       GradingRubric[]
+   201→  attendanceRecords AttendanceRecord[]
+   202→  studyGroups   StudyGroup[]
+   203→}
+   204→
+   205→model Module {
+   206→  id          String   @id @default(cuid())
+   207→  courseId    String
+   208→  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+   209→  title       String
+   210→  description String?
+   211→  order       Int      @default(0)
+   212→  lessons     Lesson[]
+   213→}
+   214→
+   215→model Lesson {
+   216→  id          String   @id @default(cuid())
+   217→  moduleId    String
+   218→  module      Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+   219→  title       String
+   220→  type        String   @default("reading") // reading | pdf | video | lab
+   221→  content     String   @default("") // markdown / html text content
+   222→  pdfUrl      String?
+   223→  pdfPages    Int      @default(0)
+   224→  durationMin Int      @default(15)
+   225→  order       Int      @default(0)
+   226→  preview     Boolean  @default(false) // free preview
+   227→
+   228→  progress    LessonProgress[]
+   229→  notes       Note[]
+   230→  quiz        Quiz?
+   231→}
+   232→
+   233→model Enrollment {
+   234→  id          String   @id @default(cuid())
+   235→  userId      String
+   236→  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   237→  courseId    String
+   238→  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+   239→  progress    Float    @default(0) // percentage 0-100
+   240→  completed   Boolean  @default(false)
+   241→  enrolledAt  DateTime @default(now())
+   242→  lastAccessed DateTime?
+   243→
+   244→  @@unique([userId, courseId])
+   245→}
+   246→
+   247→model LessonProgress {
+   248→  id          String   @id @default(cuid())
+   249→  userId      String
+   250→  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   251→  lessonId    String
+   252→  lesson      Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+   253→  completed   Boolean  @default(false)
+   254→  position    Int      @default(0) // pdf page or video position
+   255→  updatedAt   DateTime @updatedAt
+   256→
+   257→  @@unique([userId, lessonId])
+   258→}
+   259→
+   260→model Note {
+   261→  id          String   @id @default(cuid())
+   262→  userId      String
+   263→  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   264→  lessonId    String?
+   265→  lesson      Lesson?  @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+   266→  courseId    String?
+   267→  title       String   @default("Untitled note")
+   268→  content     String   @default("")
+   269→  color       String   @default("default")
+   270→  pinned      Boolean  @default(false)
+   271→  createdAt   DateTime @default(now())
+   272→  updatedAt   DateTime @updatedAt
+   273→}
+   274→
+   275→model Quiz {
+   276→  id          String   @id @default(cuid())
+   277→  lessonId    String   @unique
+   278→  lesson      Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+   279→  title       String
+   280→  description String?
+   281→  questions   Question[]
+   282→  attempts    QuizAttempt[]
+   283→}
+   284→
+   285→model Question {
+   286→  id          String   @id @default(cuid())
+   287→  quizId      String
+   288→  quiz        Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+   289→  text        String
+   290→  options     String   @default("") // pipe separated options
+   291→  answerIndex Int      @default(0)
+   292→  explanation String?
+   293→}
+   294→
+   295→model QuizAttempt {
+   296→  id          String   @id @default(cuid())
+   297→  userId      String
+   298→  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   299→  quizId      String
+   300→  quiz        Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+   301→  score       Int      @default(0) // percentage
+   302→  answers     String   @default("[]") // JSON
+   303→  passed      Boolean  @default(false)
+   304→  createdAt   DateTime @default(now())
+   305→}
+   306→
+   307→model Certificate {
+   308→  id          String   @id @default(cuid())
+   309→  userId      String
+   310→  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   311→  courseId    String
+   312→  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+   313→  certificateId String @unique
+   314→  issuedAt    DateTime @default(now())
+   315→  score       Int      @default(0)
+   316→  templateId  String?
+   317→  template    CertificateTemplate? @relation("certificateTemplate", fields: [templateId], references: [id])
+   318→  verificationHash String? // tamper-evident hash for verification
+   319→}
+   320→
+   321→model Lab {
+   322→  id            String   @id @default(cuid())
+   323→  courseId      String?
+   324→  course        Course?  @relation(fields: [courseId], references: [id])
+   325→  title         String
+   326→  slug          String   @unique
+   327→  description   String
+   328→  longDescription String
+   329→  category      String // Web Security | Network | Privilege Escalation | Cryptography | Forensics | Reverse Engineering
+   330→  difficulty    String   @default("Easy") // Easy | Medium | Hard | Insane
+   331→  durationMin   Int      @default(30)
+   332→  points        Int      @default(100)
+   333→  tags          String   @default("")
+   334→  scenario      String   @default("") // markdown scenario/instructions
+   335→  objectives    String   @default("") // pipe separated objectives
+   336→  hints         String   @default("") // pipe separated hints
+   337→  flag          String   @default("FLAG{}") // CTF flag
+   338→  commands      String   @default("") // pipe separated available commands
+   339→  virtualEnv    String   @default("linux") // simulated env type
+   340→  color         String   @default("emerald")
+   341→  published     Boolean  @default(true)
+   342→  autoGrade     Boolean  @default(true) // auto-grade submission when flag matches
+   343→  xpReward      Int      @default(100) // XP awarded on completion
+   344→  passingScore  Int      @default(100) // minimum score to pass (auto-graded labs)
+   345→  createdAt     DateTime @default(now())
+   346→
+   347→  progress      LabProgress[]
+   348→}
+   349→
+   350→model LabProgress {
+   351→  id          String   @id @default(cuid())
+   352→  userId      String
+   353→  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   354→  labId       String
+   355→  lab         Lab      @relation(fields: [labId], references: [id], onDelete: Cascade)
+   356→  status      String   @default("not_started") // not_started | in_progress | completed
+   357→  flagFound   Boolean  @default(false)
+   358→  hintsUsed    Int      @default(0)
+   359→  timeSpentMs Int      @default(0) // cumulative time spent in the lab terminal (ms)
+   360→  startedAt   DateTime?
+   361→  completedAt DateTime?
+   362→  updatedAt   DateTime @updatedAt
+   363→
+   364→  @@unique([userId, labId])
+   365→}
+   366→
+   367→model LiveSession {
+   368→  id          String   @id @default(cuid())
+   369→  title       String
+   370→  description String?
+   371→  hostId      String
+   372→  host        User     @relation("hostedSessions", fields: [hostId], references: [id])
+   373→  courseId    String?
+   374→  course      Course?  @relation(fields: [courseId], references: [id])
+   375→  roomId      String   @unique // socket.io room
+   376→  status      String   @default("scheduled") // scheduled | live | ended
+   377→  scheduledAt DateTime
+   378→  startedAt   DateTime?
+   379→  endedAt     DateTime?
+   380→  maxStudents Int      @default(50)
+   381→  createdAt   DateTime @default(now())
+   382→
+   383→  members     LiveSessionMember[]
+   384→}
+   385→
+   386→model LiveSessionMember {
+   387→  id          String   @id @default(cuid())
+   388→  sessionId   String
+   389→  session     LiveSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+   390→  userId      String
+   391→  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   392→  role        String   @default("viewer") // host | cohost | viewer
+   393→  canShare    Boolean  @default(false)
+   394→  joinedAt    DateTime @default(now())
+   395→
+   396→  @@unique([sessionId, userId])
+   397→}
+   398→
+   399→model Discussion {
+   400→  id          String   @id @default(cuid())
+   401→  courseId    String
+   402→  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+   403→  userId      String
+   404→  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   405→  title       String
+   406→  content     String
+   407→  pinned      Boolean  @default(false)
+   408→  createdAt   DateTime @default(now())
+   409→
+   410→  replies     DiscussionReply[]
+   411→}
+   412→
+   413→model DiscussionReply {
+   414→  id          String   @id @default(cuid())
+   415→  discussionId String
+   416→  discussion  Discussion @relation(fields: [discussionId], references: [id], onDelete: Cascade)
+   417→  userId      String
+   418→  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   419→  content     String
+   420→  createdAt   DateTime @default(now())
+   421→}
+   422→
+   423→model Notification {
+   424→  id          String   @id @default(cuid())
+   425→  userId      String
+   426→  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   427→  type        String   // achievement | level_up | course_update | live_start | reply | streak | welcome | certificate
+   428→  title       String
+   429→  message     String
+   430→  icon        String   @default("bell") // lucide icon name
+   431→  color       String   @default("emerald")
+   432→  link        String?  // optional view target, JSON-encoded e.g. {"name":"achievements"}
+   433→  read        Boolean  @default(false)
+   434→  createdAt   DateTime @default(now())
+   435→}
+   436→
+   437→model CourseReview {
+   438→  id          String   @id @default(cuid())
+   439→  courseId    String
+   440→  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+   441→  userId      String
+   442→  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   443→  rating      Int      // 1-5 stars
+   444→  title       String   @default("")
+   445→  content     String   @default("")
+   446→  createdAt   DateTime @default(now())
+   447→
+   448→  @@unique([userId, courseId])
+   449→}
+   450→
+   451→model Bookmark {
+   452→  id          String   @id @default(cuid())
+   453→  userId      String
+   454→  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   455→  courseId    String
+   456→  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+   457→  createdAt   DateTime @default(now())
+   458→
+   459→  @@unique([userId, courseId])
+   460→}
+   461→
+   462→// ============================================================
+   463→// NEW MODELS — GuardianX Academy feature expansion
+   464→// ============================================================
+   465→
+   466→// --- Assignment System + Grading Rubric + Peer Review ---
+   467→model Assignment {
+   468→  id            String   @id @default(cuid())
+   469→  courseId      String
+   470→  course        Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+   471→  moduleId      String?  // optional module link
+   472→  title         String
+   473→  description   String   @default("")
+   474→  instructions  String   @default("") // markdown
+   475→  pointsPossible Int     @default(100)
+   476→  dueDate       DateTime
+   477→  allowLate     Boolean  @default(true)
+   478→  latePenalty   Int      @default(10) // percent per day
+   479→  submissionType String  @default("text") // text | file | url
+   480→  enablePeerReview Boolean @default(false)
+   481→  peerReviewCount Int    @default(2) // how many peers review each submission
+   482→  peerReviewDueDate DateTime?
+   483→  rubricId      String?
+   484→  rubric        GradingRubric? @relation("assignmentRubric", fields: [rubricId], references: [id])
+   485→  published     Boolean  @default(true)
+   486→  createdAt     DateTime @default(now())
+   487→  updatedAt     DateTime @updatedAt
+   488→
+   489→  submissions   AssignmentSubmission[]
+   490→  instructorId  String
+   491→  instructor    User     @relation(fields: [instructorId], references: [id])
+   492→}
+   493→
+   494→model AssignmentSubmission {
+   495→  id            String   @id @default(cuid())
+   496→  assignmentId  String
+   497→  assignment    Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+   498→  userId        String
+   499→  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   500→  content       String   @default("") // text submission
+   501→  fileUrl       String?  // file or URL submission
+   502→  submittedAt   DateTime @default(now())
+   503→  late          Boolean  @default(false)
+   504→  grade         Int?     // final grade 0-100
+   505→  gradedAt      DateTime?
+   506→  gradedBy      String?
+   507→  feedback      String   @default("") // instructor feedback
+   508→  rubricScores  String   @default("[]") // JSON array of per-criterion scores
+   509→  status        String   @default("submitted") // submitted | graded | returned | resubmitted
+   510→
+   511→  peerReviews   PeerReview[]
+   512→
+   513→  @@unique([assignmentId, userId])
+   514→}
+   515→
+   516→model GradingRubric {
+   517→  id            String   @id @default(cuid())
+   518→  title         String
+   519→  description   String   @default("")
+   520→  courseId      String?
+   521→  course        Course?  @relation(fields: [courseId], references: [id])
+   522→  createdBy     String
+   523→  creator       User     @relation(fields: [createdBy], references: [id])
+   524→  criteria      RubricCriterion[]
+   525→  assignments   Assignment[] @relation("assignmentRubric")
+   526→  createdAt     DateTime @default(now())
+   527→  updatedAt     DateTime @updatedAt
+   528→}
+   529→
+   530→model RubricCriterion {
+   531→  id            String   @id @default(cuid())
+   532→  rubricId      String
+   533→  rubric        GradingRubric @relation(fields: [rubricId], references: [id], onDelete: Cascade)
+   534→  label         String   // e.g. "Technical Accuracy"
+   535→  description   String   @default("")
+   536→  points        Int      @default(25) // max points for this criterion
+   537→  order         Int      @default(0)
+   538→}
+   539→
+   540→model PeerReview {
+   541→  id            String   @id @default(cuid())
+   542→  submissionId  String
+   543→  submission    AssignmentSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+   544→  reviewerId    String
+   545→  reviewer      User     @relation(fields: [reviewerId], references: [id], onDelete: Cascade)
+   546→  reviewedUserId String
+   547→  reviewedUser  User     @relation("reviewedSubmissions", fields: [reviewedUserId], references: [id], onDelete: Cascade)
+   548→  rating        Int      @default(0) // 1-5
+   549→  feedback      String   @default("")
+   550→  rubricScores  String   @default("[]") // JSON
+   551→  submittedAt   DateTime @default(now())
+   552→
+   553→  @@unique([submissionId, reviewerId])
+   554→}
+   555→
+   556→// --- Office Hours Scheduler ---
+   557→model OfficeHourSlot {
+   558→  id            String   @id @default(cuid())
+   559→  instructorId  String
+   560→  instructor    User     @relation(fields: [instructorId], references: [id], onDelete: Cascade)
+   561→  courseId      String?  // optional course-specific
+   562→  startAt       DateTime
+   563→  endAt         DateTime
+   564→  mode          String   @default("video") // video | in-person | chat
+   565→  location      String   @default("") // meeting link or room
+   566→  maxBookings   Int      @default(1)
+   567→  bookings      OfficeHourBooking[]
+   568→  createdAt     DateTime @default(now())
+   569→}
+   570→
+   571→model OfficeHourBooking {
+   572→  id            String   @id @default(cuid())
+   573→  slotId        String
+   574→  slot          OfficeHourSlot @relation(fields: [slotId], references: [id], onDelete: Cascade)
+   575→  studentId     String
+   576→  student       User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+   577→  topic         String   @default("")
+   578→  notes         String   @default("")
+   579→  status        String   @default("booked") // booked | completed | cancelled
+   580→  createdAt     DateTime @default(now())
+   581→
+   582→  @@unique([slotId, studentId])
+   583→}
+   584→
+   585→// --- Student Messaging ---
+   586→model MessageThread {
+   587→  id            String   @id @default(cuid())
+   588→  userAId       String
+   589→  userA         User     @relation("threadUserA", fields: [userAId], references: [id], onDelete: Cascade)
+   590→  userBId       String
+   591→  userB         User     @relation("threadUserB", fields: [userBId], references: [id], onDelete: Cascade)
+   592→  lastMessageAt DateTime @default(now())
+   593→  messages      Message[]
+   594→
+   595→  @@unique([userAId, userBId])
+   596→}
+   597→
+   598→model Message {
+   599→  id            String   @id @default(cuid())
+   600→  threadId      String
+   601→  thread        MessageThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+   602→  senderId      String
+   603→  sender        User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+   604→  content       String
+   605→  read          Boolean  @default(false)
+   606→  createdAt     DateTime @default(now())
+   607→}
+   608→
+   609→// --- Study Groups ---
+   610→model StudyGroup {
+   611→  id            String   @id @default(cuid())
+   612→  title         String
+   613→  description   String   @default("")
+   614→  courseId      String?  // optional course link
+   615→  course        Course?  @relation(fields: [courseId], references: [id], onDelete: SetNull)
+   616→  creatorId     String
+   617→  creator       User     @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+   618→  maxMembers    Int      @default(10)
+   619→  isPrivate     Boolean  @default(false)
+   620→  joinCode      String?  // required if private
+   621→  meetingLink   String?  // optional video/chat link
+   622→  tags          String   @default("")
+   623→  createdAt     DateTime @default(now())
+   624→  members       StudyGroupMember[]
+   625→}
+   626→
+   627→model StudyGroupMember {
+   628→  id            String   @id @default(cuid())
+   629→  groupId       String
+   630→  group         StudyGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+   631→  userId        String
+   632→  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   633→  role          String   @default("member") // owner | member
+   634→  joinedAt      DateTime @default(now())
+   635→
+   636→  @@unique([groupId, userId])
+   637→}
+   638→
+   639→// --- Attendance Tracking ---
+   640→model AttendanceRecord {
+   641→  id            String   @id @default(cuid())
+   642→  courseId      String
+   643→  course        Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+   644→  userId        String
+   645→  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   646→  date          String   // YYYY-MM-DD
+   647→  sessionType   String   @default("live") // live | in-person | exam
+   648→  status        String   @default("present") // present | absent | late | excused
+   649→  notes         String   @default("")
+   650→  recordedAt    DateTime @default(now())
+   651→
+   652→  @@unique([courseId, userId, date, sessionType])
+   653→}
+   654→
+   655→// --- Certificate Templates ---
+   656→model CertificateTemplate {
+   657→  id            String   @id @default(cuid())
+   658→  name          String
+   659→  description   String   @default("")
+   660→  // Visual config (JSON-encoded)
+   661→  primaryColor  String   @default("#10b981") // emerald
+   662→  accentColor   String   @default("#06b6d4") // cyan
+   663→  fontFamily    String   @default("serif")
+   664→  borderStyle   String   @default("classic") // classic | modern | minimal | holographic
+   665→  logoUrl       String?
+   666→  signatureText String   @default("Director, GuardianX Academy")
+   667→  sealStyle     String   @default("emerald") // emerald | gold | cyan | holographic
+   668→  backgroundPattern String @default("grid") // grid | particles | none | circuit
+   669→  isDefault     Boolean  @default(false)
+   670→  createdAt     DateTime @default(now())
+   671→  updatedAt     DateTime @updatedAt
+   672→  certificates  Certificate[] @relation("certificateTemplate")
+   673→}
+   674→
+   675→// --- Email Notifications (log + stub) ---
+   676→model EmailLog {
+   677→  id            String   @id @default(cuid())
+   678→  userId        String?
+   679→  user          User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+   680→  toEmail       String
+   681→  subject       String
+   682→  body          String
+   683→  type          String   @default("notification") // notification | certificate | assignment | reminder | welcome
+   684→  status        String   @default("sent") // sent | failed | queued
+   685→  sentAt        DateTime @default(now())
+   686→}
+   687→

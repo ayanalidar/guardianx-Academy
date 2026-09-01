@@ -3805,3 +3805,70 @@ Stage Summary:
   3. No `<section className="py-8 lg:py-12">` adding 32-48px of top padding inside the hero (the content's `py-12 lg:py-16` is the homepage's exact hero padding).
   4. No duplicate `bg-mesh` overlay (PublicPageShell already provides one).
 - Lint: 0 errors. TSC: 0 errors in edited files. Ready for browser verification by main agent.
+
+---
+Task ID: INSTITUTIONS-HERO-FIX-V3
+Agent: subagent (Z.ai Code)
+Task: User complained (3rd time) that the 3 institution views (schools/colleges/universities) have a HUGE ~250-300px gap below the header before the hero content appears. The previous fix (INSTITUTIONS-SPACING-V2, which only swapped the root wrapper to `<main className="relative">` and merged padding into the content div) was insufficient because the ROOT CAUSE was deeper: the hero section used a 2-column grid with `items-center`, and the right column held a `<ParticleLogo size={680} />` — making the grid ROW 680px tall. With `items-center`, the left text content was vertically CENTERED in that 680px row, so it appeared pushed down by ~250-300px from the top. The homepage avoids this by placing the ParticleLogo in an `absolute`-positioned div (NOT in the grid flow), so it doesn't affect content flow. This task replicates the homepage's exact pattern in all 3 institution views.
+
+Work Log:
+
+**Root cause confirmed by inspection:** All 3 institution heroes had the same structure:
+```tsx
+<section className="relative overflow-hidden">
+  [atmospheric blur orb if schools]
+  <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full py-12 lg:py-16">
+    <div className="grid lg:grid-cols-2 gap-8 items-center">   // ← grid row is 680px tall
+      <div>...text content...</div>                            // ← left col vertically CENTERED in 680px
+      <motion.div className="relative flex items-center justify-center">
+        <ParticleLogo size={680} interactive showGlow />        // ← the 680px-tall element
+      </motion.div>
+    </div>
+  </div>
+</section>
+```
+
+**Files modified (3):**
+1. `src/views/institutions-schools.tsx`
+2. `src/views/institutions-colleges.tsx`
+3. `src/views/institutions-universities.tsx`
+
+**Transformation applied to each file's HERO section (Section 1) only; all other sections and ALL text/buttons/motion-animations/classnames left UNCHANGED:**
+
+1. Removed the right-column `<motion.div className="relative flex items-center justify-center"><ParticleLogo size={680} interactive showGlow /></motion.div>` from INSIDE the grid.
+2. Added two new absolute-positioned ParticleLogo blocks INSIDE `<section>` BEFORE the content div (matching the homepage pattern exactly):
+   - Desktop: `<div className="hidden lg:block absolute right-[6%] top-1/2 -translate-y-1/2 pointer-events-auto"><motion.div initial={{opacity:0,scale:0.7}} animate={{opacity:1,scale:1}} transition={{duration:0.8,delay:0.1,ease:[0.16,1,0.3,1]}}><ParticleLogo size={680} interactive showGlow /></motion.div></div>`
+   - Mobile: `<div className="lg:hidden absolute inset-x-0 top-0 h-[44vh] flex items-center justify-center pointer-events-none"><ParticleLogo size={340} interactive={false} showGlow /></div>`
+3. Changed the content div's class from `py-12 lg:py-16` → `py-12 lg:py-16 pt-[48vh] lg:pt-16` (mobile gets 48vh top padding to clear the 44vh-tall mobile logo; desktop gets 64px top padding since the desktop logo is positioned to the right side, not above content).
+4. Changed the grid wrapper `<div className="grid lg:grid-cols-2 gap-8 items-center">` → `<div className="max-w-3xl">` (so the left text content is now constrained to max-w-3xl, matching the homepage's `max-w-3xl` text container).
+5. For schools: kept the existing atmospheric blur orb (`<div className="absolute top-0 right-0 w-[600px] h-[400px] bg-emerald-600/5 blur-[120px] rounded-full pointer-events-none" aria-hidden />`) alongside the new absolute ParticleLogo blocks.
+6. For colleges & universities: they had NO atmospheric blur orbs in the hero — added the absolute ParticleLogo blocks only (no invented blur orbs).
+
+**Before/after — hero section outer structure (each file):**
+
+`institutions-schools.tsx` (had atmospheric blur orb):
+- Before: `<section className="relative overflow-hidden">` → atmospheric blur orb div → `<div className="relative z-10 ... py-12 lg:py-16">` → `<div className="grid lg:grid-cols-2 gap-8 items-center">` → `<div>` (left text) + right motion.div(ParticleLogo 680)
+- After: `<section className="relative overflow-hidden">` → atmospheric blur orb div (KEPT) → desktop absolute ParticleLogo block (NEW) → mobile absolute ParticleLogo block (NEW) → `<div className="relative z-10 ... py-12 lg:py-16 pt-[48vh] lg:pt-16">` → `<div className="max-w-3xl">` → `<div>` (left text only)
+
+`institutions-colleges.tsx` (no blur orb):
+- Before: `<section className="relative overflow-hidden">` → `<div className="relative z-10 ... py-12 lg:py-16">` → `<div className="grid lg:grid-cols-2 gap-8 items-center">` → `<div>` (left text) + right motion.div(ParticleLogo 680)
+- After: `<section className="relative overflow-hidden">` → desktop absolute ParticleLogo block (NEW) → mobile absolute ParticleLogo block (NEW) → `<div className="relative z-10 ... py-12 lg:py-16 pt-[48vh] lg:pt-16">` → `<div className="max-w-3xl">` → `<div>` (left text only)
+
+`institutions-universities.tsx` (no blur orb):
+- Before: `<section className="relative overflow-hidden">` → `<div className="relative z-10 ... py-12 lg:py-16">` → `<div className="grid lg:grid-cols-2 gap-8 items-center">` → `<div>` (left text) + right motion.div(ParticleLogo 680)
+- After: `<section className="relative overflow-hidden">` → desktop absolute ParticleLogo block (NEW) → mobile absolute ParticleLogo block (NEW) → `<div className="relative z-10 ... py-12 lg:py-16 pt-[48vh] lg:pt-16">` → `<div className="max-w-3xl">` → `<div>` (left text only)
+
+**Verification:**
+- `bun run lint` → **0 errors**, 1 unrelated warning (`src/lib/db.ts:25:5 Unused eslint-disable directive` — pre-existing, not introduced by this task).
+- `npx tsc --noEmit 2>&1 | grep -E "institutions" | head` → **empty** (no type errors in any of the 3 edited files).
+- `grep -n "lg:grid-cols-2 gap-8 items-center"` across the 3 files → no matches (the hero grid wrapper has been removed; the unrelated `grid lg:grid-cols-2 gap-6` in schools' Section 3 is preserved as expected).
+- `grep -n "ParticleLogo size={680}"` → exactly 1 match per file (the new absolute desktop one). No leftover ParticleLogo in grid columns.
+- Did NOT run the dev server (per task instructions — main agent will verify in the browser). Note: the most recent dev.log showed a transient Turbopack panic ("Failed to write app endpoint /page") that occurred around the time of file edits — this is a known Turbopack filesystem-watcher race, NOT a syntax error (lint+tsc are clean). The main agent will restart the dev server to verify visually.
+
+**Issues encountered:**
+- None. All 3 file edits applied cleanly via MultiEdit. The closing-tag patterns I targeted (the right motion.div + its surrounding `</div>`s) were unique in each file because they appear only at the end of the hero section (intermediate sections in these files use `py-6 lg:py-8` / `py-8 lg:py-12` patterns, not the `grid lg:grid-cols-2 gap-8 items-center` hero pattern).
+
+Stage Summary:
+- All 3 institution hero sections now use the homepage's exact absolute-positioned ParticleLogo pattern: the desktop logo (680px) is absolutely positioned on the right at `top-1/2 -translate-y-1/2`, the mobile logo (340px) is absolutely positioned at the top occupying 44vh, and the text content flows from the top of the section (with `pt-[48vh] lg:pt-16` to clear the logos). The `items-center` grid row that was forcing the text to vertically center in a 680px-tall row is GONE — text now starts at the top of the hero content div, eliminating the ~250-300px gap the user has been seeing.
+- The schools view retains its atmospheric blur orb alongside the new absolute ParticleLogo blocks. The colleges and universities views did not have blur orbs and none were invented.
+- Lint: 0 errors. TSC: 0 errors in edited files. Ready for browser verification by main agent.

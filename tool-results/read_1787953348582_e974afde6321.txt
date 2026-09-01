@@ -1,0 +1,390 @@
+     1→"use client"
+     2→
+     3→import * as React from "react"
+     4→import { useAppStore } from "@/store/app-store"
+     5→import { useSession } from "next-auth/react"
+     6→import { Card } from "@/components/ui/card"
+     7→import { Button } from "@/components/ui/button"
+     8→import { Badge } from "@/components/ui/badge"
+     9→import {
+    10→  Shield, Terminal, Zap, Lock, Rocket, ArrowRight, Sparkles, Building2,
+    11→  Heart, MessageSquare, Users, Award, BookOpen, FlaskConical, Radio,
+    12→  TrendingUp, Star, CheckCircle2, ChevronRight, Globe, Cpu, Network,
+    13→  Cloud, Server, Brain, Target, Trophy, GraduationCap, Eye, Clock,
+    14→} from "lucide-react"
+    15→import { cn } from "@/lib/utils"
+    16→
+    17→export function HomeView() {
+    18→  const { navigate } = useAppStore()
+    19→  const { data: session } = useSession()
+    20→
+    21→  return (
+    22→    <div className="min-h-screen flex flex-col bg-background">
+    23→      {/* === NAV BAR === */}
+    24→      <header className="sticky top-0 z-50 flex h-16 items-center gap-4 border-b border-border bg-background/80 backdrop-blur-xl px-4 lg:px-8">
+    25→        <button onClick={() => navigate({ name: "home" })} className="flex items-center gap-2.5 group">
+    26→          <div className="relative">
+    27→            <Shield className="h-8 w-8 text-emerald-400" strokeWidth={1.5} />
+    28→            <div className="absolute inset-0 bg-emerald-500/30 blur-md rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+    29→          </div>
+    30→          <div className="text-left">
+    31→            <div className="font-bold text-lg leading-none tracking-tight">
+    32→              Guardian<span className="text-emerald-400">X</span>
+    33→            </div>
+    34→            <div className="text-[9px] text-muted-foreground font-mono tracking-widest">SECURE · LEARN · DEFEND</div>
+    35→          </div>
+    36→        </button>
+    37→
+    38→        <nav className="hidden md:flex items-center gap-1 ml-8">
+    39→          <button onClick={() => navigate({ name: "home" })} className="px-3 py-1.5 rounded-lg text-sm font-medium text-foreground hover:bg-accent/50 transition-colors">Home</button>
+    40→          <button onClick={() => navigate({ name: "certifications" })} className="px-3 py-1.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors">Certifications</button>
+    41→          <button onClick={() => navigate({ name: "partners" })} className="px-3 py-1.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors">Partners</button>
+    42→          <button onClick={() => navigate({ name: "impact" })} className="px-3 py-1.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors">Impact</button>
+    43→          <button onClick={() => navigate({ name: "contact" })} className="px-3 py-1.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors">Contact</button>
+    44→        </nav>
+    45→
+    46→        <div className="ml-auto flex items-center gap-2">
+    47→          {session ? (
+    48→            <Button onClick={() => navigate({ name: "dashboard" })} className="bg-emerald-500 text-emerald-950 hover:bg-emerald-400">
+    49→              Dashboard <ArrowRight className="h-4 w-4 ml-1" />
+    50→            </Button>
+    51→          ) : (
+    52→            <>
+    53→              <Button variant="ghost" size="sm" onClick={() => navigate({ name: "auth" })} className="hidden sm:flex">Sign In</Button>
+    54→              <Button size="sm" onClick={() => navigate({ name: "auth" })} className="bg-emerald-500 text-emerald-950 hover:bg-emerald-400">
+    55→                Get Started <ArrowRight className="h-3.5 w-3.5 ml-1" />
+    56→              </Button>
+    57→            </>
+    58→          )}
+    59→        </div>
+    60→      </header>
+    61→
+    62→      {/* === HERO === */}
+    63→      <section className="relative flex items-center justify-center overflow-hidden py-20 lg:py-32 holo-gradient">
+    64→        <div className="aurora-bg" />
+    65→        <div className="particle-network" />
+    66→        <div className="data-stream" />
+    67→        <div className="orb bg-emerald-500 w-96 h-96 top-10 -left-20 blob" />
+    68→        <div className="orb bg-cyan-500 w-80 h-80 bottom-10 -right-20 blob" style={{ animationDelay: "3s" }} />
+    69→        <div className="orb bg-violet-500 w-64 h-64 top-1/2 left-1/2 blob" style={{ animationDelay: "6s" }} />
+    70→        <div className="absolute inset-0 bg-grid opacity-30" />
+    71→        <div className="scan-line" />
+    72→
+    73→        <div className="relative z-10 max-w-5xl mx-auto text-center px-6">
+    74→          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs font-mono mb-8 animate-scale-reveal holo-badge">
+    75→            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 pulse-dot" />
+    76→            SYSTEM ONLINE · 31 LABS · 27 CERTIFICATIONS · PROCTORED EXAMS
+    77→          </div>
+    78→
+    79→          <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6">
+    80→            <span className="block animate-reveal-up neon-text">Master Cyber Security.</span>
+    81→            <span className="block text-holo animate-reveal-up stagger-2 glitch">Become a Guardian.</span>
+    82→          </h1>
+    83→
+    84→          <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto mb-10 animate-reveal-up stagger-3">
+    85→            GuardianX Academy delivers industry-leading cyber security certification training through in-premises classes at schools, colleges, and universities — plus virtual batches for individual learners. Practice with real-world payloads, hands-on labs, and proctored examinations.
+    86→          </p>
+    87→
+    88→          <div className="flex flex-col sm:flex-row gap-3 justify-center animate-reveal-up stagger-4">
+    89→            <Button size="lg" className="bg-emerald-500 text-emerald-950 hover:bg-emerald-400 h-12 px-8 text-base breathe neon-border" onClick={() => navigate({ name: "auth" })}>
+    90→              <Rocket className="h-5 w-5 mr-2" /> Start Learning Free
+    91→            </Button>
+    92→            <Button size="lg" variant="outline" className="h-12 px-8 text-base glass-card holo-border border-emerald-500/20" onClick={() => navigate({ name: "partners" })}>
+    93→              <Building2 className="h-5 w-5 mr-2" /> For Institutions
+    94→            </Button>
+    95→          </div>
+    96→
+    97→          {/* Floating preview cards */}
+    98→          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-16 max-w-4xl mx-auto">
+    99→            {[
+   100→              { icon: BookOpen, label: "27 Certifications", value: "CEH · CISSP · CCNA", color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" },
+   101→              { icon: Terminal, label: "31 Docker Labs", value: "Real Container Instances", color: "text-violet-400 bg-violet-500/10 border-violet-500/20" },
+   102→              { icon: Radio, label: "Live Sessions", value: "Screen-share + Voice", color: "text-red-400 bg-red-500/10 border-red-500/20" },
+   103→              { icon: Shield, label: "Proctored Exams", value: "Anti-Cheat System", color: "text-amber-400 bg-amber-500/10 border-amber-500/20" },
+   104→            ].map((c, i) => (
+   105→              <div key={i} className={cn("glass-card rounded-xl p-4 border animate-float holo-shimmer glass-reflection", c.color.split(" ").slice(-1)[0])} style={{ animationDelay: `${i * 0.5}s` }}>
+   106→                <c.icon className={cn("h-6 w-6 mb-2", c.color.split(" ")[0])} />
+   107→                <div className="text-sm font-bold">{c.value}</div>
+   108→                <div className="text-[10px] text-muted-foreground mt-0.5">{c.label}</div>
+   109→              </div>
+   110→            ))}
+   111→          </div>
+   112→        </div>
+   113→      </section>
+   114→
+   115→      {/* === STATS BAR === */}
+   116→      <section className="border-y border-border bg-sidebar/30 py-8 holo-gradient">
+   117→        <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 px-6">
+   118→          {[
+   119→            { value: "15,000+", label: "Students Trained", icon: Users, color: "text-emerald-400" },
+   120→            { value: "50+", label: "Partner Campuses", icon: Building2, color: "text-cyan-400" },
+   121→            { value: "8,500+", label: "Certifications Earned", icon: Award, color: "text-amber-400" },
+   122→            { value: "94%", label: "Job Placement", icon: TrendingUp, color: "text-violet-400" },
+   123→          ].map((s, i) => (
+   124→            <div key={i} className="text-center animate-reveal-up blur-in" style={{ animationDelay: `${i * 0.1}s` }}>
+   125→              <s.icon className={cn("h-6 w-6 mx-auto mb-2", s.color)} />
+   126→              <div className={cn("text-2xl md:text-3xl font-bold tabular-nums neon-text", s.color)}>{s.value}</div>
+   127→              <div className="text-xs text-muted-foreground mt-1">{s.label}</div>
+   128→            </div>
+   129→          ))}
+   130→        </div>
+   131→      </section>
+   132→
+   133→      {/* === FEATURES === */}
+   134→      <section className="py-20 max-w-6xl mx-auto px-6">
+   135→        <div className="text-center mb-12">
+   136→          <Badge variant="outline" className="text-xs mb-4 border-emerald-500/30 text-emerald-400">
+   137→            <Sparkles className="h-3 w-3 mr-1" /> WHY GUARDIANX
+   138→          </Badge>
+   139→          <h2 className="text-3xl md:text-4xl font-bold mb-3">Everything You Need to Master Cyber Security</h2>
+   140→          <p className="text-muted-foreground max-w-2xl mx-auto">
+   141→            From beginner networking to advanced exploitation — a complete ecosystem for cyber security education.
+   142→          </p>
+   143→        </div>
+   144→
+   145→        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 perspective-1000">
+   146→          {[
+   147→            { icon: BookOpen, title: "Certification Courses", desc: "27 industry-recognized tracks: CEH, CCNA, CISSP, CyberArk, OSCP, and more. PDF materials, on-the-go notes, and quizzes per lesson.", color: "emerald", features: ["19+ lessons per course", "Interactive quizzes", "Proctored final exams"] },
+   148→            { icon: Terminal, title: "Docker-Powered Labs", desc: "31 hands-on labs with dedicated Docker containers per student. Real Kali Linux attack boxes, isolated networks, and dynamic flags — modeled after Hack The Box & TryHackMe.", color: "violet", features: ["Real Docker containers per session", "xterm.js in-browser terminal", "Dynamic flags (non-shareable)", "Isolated network per student"] },
+   149→            { icon: Radio, title: "Live Instructor Sessions", desc: "Real-time screen-sharing workshops with two-way voice. Instructors share their screen; students can present back. WebRTC peer-to-peer.", color: "red", features: ["WebRTC peer-to-peer", "Screen share + voice", "Live chat & Q&A", "Presenter handoff"] },
+   150→            { icon: Shield, title: "Proctored Examinations", desc: "Anti-cheat exam system with fullscreen lockdown, tab-switch detection, copy/paste blocking, randomized questions, and comprehensive activity logging.", color: "amber", features: ["Fullscreen lockdown", "Tab-switch detection", "Randomized Q&A", "Auto-void on violations"] },
+   151→            { icon: Award, title: "Verifiable Certificates", desc: "Earn industry-recognized completion certificates with PDF export. Proctored exam required for certification.", color: "amber", features: ["PDF certificate export", "Unique verify ID", "Proctored exam required", "Course score included"] },
+   152→            { icon: Trophy, title: "Gamified Learning", desc: "Earn XP, level up, unlock achievements, and compete on global leaderboards. Daily streaks keep you motivated.", color: "cyan", features: ["14 achievements", "XP & level system", "Global leaderboard"] },
+   153→            { icon: Network, title: "Community & Support", desc: "Join course-specific discussions, get help from peers and instructors, and access our payload library.", color: "teal", features: ["Discussion forums", "Payload library", "24/7 platform access"] },
+   154→          ].map((f, i) => (
+   155→            <div key={i} className={cn("animate-reveal-up blur-in", `stagger-${(i % 6) + 1}`)}>
+   156→              <Card className="p-6 h-full card-3d relative overflow-hidden group holo-border holo-shimmer glass-reflection">
+   157→                <div className="card-3d-content relative z-10">
+   158→                  <div className={cn(
+   159→                    "inline-flex p-3 rounded-2xl mb-4 transition-transform group-hover:scale-110",
+   160→                    f.color === "emerald" && "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
+   161→                    f.color === "violet" && "bg-violet-500/10 text-violet-400 border border-violet-500/20",
+   162→                    f.color === "red" && "bg-red-500/10 text-red-400 border border-red-500/20",
+   163→                    f.color === "amber" && "bg-amber-500/10 text-amber-400 border border-amber-500/20",
+   164→                    f.color === "cyan" && "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20",
+   165→                    f.color === "teal" && "bg-teal-500/10 text-teal-400 border border-teal-500/20",
+   166→                  )}>
+   167→                    <f.icon className="h-6 w-6" />
+   168→                  </div>
+   169→                  <h3 className="text-lg font-bold mb-2">{f.title}</h3>
+   170→                  <p className="text-sm text-muted-foreground mb-4 leading-relaxed">{f.desc}</p>
+   171→                  <ul className="space-y-1.5">
+   172→                    {f.features.map((feat, fi) => (
+   173→                      <li key={fi} className="flex items-center gap-2 text-xs text-muted-foreground">
+   174→                        <CheckCircle2 className={cn(
+   175→                          "h-3.5 w-3.5 shrink-0",
+   176→                          f.color === "emerald" && "text-emerald-400",
+   177→                          f.color === "violet" && "text-violet-400",
+   178→                          f.color === "red" && "text-red-400",
+   179→                          f.color === "amber" && "text-amber-400",
+   180→                          f.color === "cyan" && "text-cyan-400",
+   181→                          f.color === "teal" && "text-teal-400",
+   182→                        )} />
+   183→                        {feat}
+   184→                      </li>
+   185→                    ))}
+   186→                  </ul>
+   187→                </div>
+   188→              </Card>
+   189→            </div>
+   190→          ))}
+   191→        </div>
+   192→      </section>
+   193→
+   194→      {/* === CERTIFICATIONS CTA (links to dedicated page) === */}
+   195→      <section className="py-20 bg-sidebar/20">
+   196→        <div className="max-w-4xl mx-auto px-6 text-center">
+   197→          <Badge variant="outline" className="text-xs mb-4 border-cyan-500/30 text-cyan-400">
+   198→            <BookOpen className="h-3 w-3 mr-1" /> CERTIFICATIONS
+   199→          </Badge>
+   200→          <h2 className="text-3xl md:text-4xl font-bold mb-3">Explore Our Certification Programs</h2>
+   201→          <p className="text-muted-foreground max-w-2xl mx-auto mb-6">
+   202→            From foundational networking to advanced exploitation and privileged access management — GuardianX Academy offers 27 certification tracks across cyber security, networking, cloud, and identity management. All certifications require passing a proctored examination.
+   203→          </p>
+   204→          <Button size="lg" variant="outline" className="h-12 px-8 glass-card border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10" onClick={() => navigate({ name: "certifications" })}>
+   205→            View All Certifications <ArrowRight className="h-4 w-4 ml-2" />
+   206→          </Button>
+   207→        </div>
+   208→      </section>
+   209→
+   210→      {/* === LAB SHOWCASE === */}
+   211→      <section className="py-20 max-w-6xl mx-auto px-6">
+   212→        <div className="grid lg:grid-cols-2 gap-12 items-center">
+   213→          <div className="animate-reveal-left">
+   214→            <Badge variant="outline" className="text-xs mb-4 border-violet-500/30 text-violet-400">
+   215→              <Terminal className="h-3 w-3 mr-1" /> HANDS-ON LABS
+   216→            </Badge>
+   217→            <h2 className="text-3xl md:text-4xl font-bold mb-4">Real Docker Containers. Real Exploits.</h2>
+   218→            <p className="text-muted-foreground mb-6 leading-relaxed">
+   219→              Every lab spins up dedicated Docker containers — a vulnerable target machine and a Kali Linux attack box — connected via an isolated network. You get a real bash shell in your browser via xterm.js, with dynamic flags that are unique per session (no sharing). Powered by real exploit payloads from <a href="https://github.com/swisskyrepo/PayloadsAllTheThings" target="_blank" rel="noopener" className="text-emerald-400 hover:underline">PayloadsAllTheThings</a>.
+   220→            </p>
+   221→            <div className="space-y-3 mb-6">
+   222→              {[
+   223→                { icon: Terminal, text: "xterm.js in-browser terminal connected to real Docker containers" },
+   224→                { icon: Zap, text: "SQLi, XSS, SSRF, Command Injection, JWT, Log4Shell, IDOR & more" },
+   225→                { icon: Target, text: "Dynamic flags — unique per session, non-guessable, non-shareable" },
+   226→                { icon: Shield, text: "Isolated Docker networks — no cross-tenant communication" },
+   227→                { icon: Clock, text: "60-minute TTL — containers auto-destroyed when session ends" },
+   228→              ].map((item, i) => (
+   229→                <div key={i} className="flex items-center gap-3">
+   230→                  <div className="p-1.5 rounded-lg bg-violet-500/10 text-violet-400 shrink-0">
+   231→                    <item.icon className="h-4 w-4" />
+   232→                  </div>
+   233→                  <span className="text-sm text-muted-foreground">{item.text}</span>
+   234→                </div>
+   235→              ))}
+   236→            </div>
+   237→            <Button className="bg-violet-500 hover:bg-violet-400" onClick={() => navigate({ name: "auth" })}>
+   238→              <Terminal className="h-4 w-4 mr-2" /> Try the Labs
+   239→            </Button>
+   240→          </div>
+   241→
+   242→          {/* Terminal mockup */}
+   243→          <div className="animate-reveal-right">
+   244→            <Card className="overflow-hidden border-violet-500/20 shadow-2xl">
+   245→              <div className="flex items-center gap-2 px-4 py-2 bg-muted/50 border-b border-border">
+   246→                <div className="flex gap-1.5">
+   247→                  <div className="h-3 w-3 rounded-full bg-red-500/70" />
+   248→                  <div className="h-3 w-3 rounded-full bg-amber-500/70" />
+   249→                  <div className="h-3 w-3 rounded-full bg-emerald-500/70" />
+   250→                </div>
+   251→                <span className="text-xs font-mono text-muted-foreground ml-2">guardian@guardianx-lab: ~/labs/sqli-login-bypass</span>
+   252→                <span className="ml-auto text-[10px] font-mono text-emerald-400 flex items-center gap-1">
+   253→                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 pulse-dot" /> CONNECTED
+   254→                </span>
+   255→              </div>
+   256→              <div className="p-4 font-mono text-xs h-64 overflow-y-auto bg-[oklch(0.1_0.015_200)]">
+   257→                <div className="text-muted-foreground">GuardianX Lab Terminal v1.0</div>
+   258→                <div className="text-muted-foreground">Type 'help' to see available commands.</div>
+   259→                <div className="mt-2" />
+   260→                <div className="text-emerald-300">$ <span className="text-emerald-300">sqlmap -u "http://vulnlab.local/login" --data "username=admin&password=test" --batch --dbs</span></div>
+   261→                <div className="text-muted-foreground">[INFO] testing connection to the target URL</div>
+   262→                <div className="text-muted-foreground">[INFO] testing if the target parameter 'username' is injectable</div>
+   263→                <div className="text-muted-foreground">[INFO] heuristic (basic) test shows that GET parameter 'username' might be injectable</div>
+   264→                <div className="text-amber-400">[INFO] the back-end DBMS is MySQL</div>
+   265→                <div className="text-emerald-400">[INFO] fetching database names</div>
+   266→                <div className="text-emerald-400">available databases [2]:</div>
+   267→                <div className="text-emerald-400">[*] information_schema</div>
+   268→                <div className="text-emerald-400">[*] vulnapp</div>
+   269→                <div className="mt-2" />
+   270→                <div className="text-emerald-300">$ <span className="text-emerald-300">submit FLAG{'{sql1_1nj3ct10n_m4st3r}'}</span></div>
+   271→                <div className="text-emerald-400 font-bold">✓ FLAG ACCEPTED! Lab solved. Well done, Guardian.</div>
+   272→                <div className="mt-2" />
+   273→                <div className="text-emerald-300">$ <span className="inline-block w-2 h-4 bg-emerald-400 animate-pulse" /></div>
+   274→              </div>
+   275→            </Card>
+   276→          </div>
+   277→        </div>
+   278→      </section>
+   279→
+   280→      {/* === CTA SECTIONS === */}
+   281→      <section className="py-20 bg-sidebar/20">
+   282→        <div className="max-w-6xl mx-auto px-6 grid md:grid-cols-3 gap-6">
+   283→          {/* Partners CTA */}
+   284→          <Card className="p-6 glass-card hover-lift group cursor-pointer border-emerald-500/20 animate-reveal-up blur-in holo-shimmer glass-reflection holo-border" onClick={() => navigate({ name: "partners" })}>
+   285→            <Building2 className="h-10 w-10 text-emerald-400 mb-3 group-hover:scale-110 transition-transform neon-text" />
+   286→            <h3 className="text-lg font-bold mb-2">Partner Institutions</h3>
+   287→            <p className="text-sm text-muted-foreground mb-4">Bring GuardianX training to your school, college, or university campus.</p>
+   288→            <div className="flex items-center gap-1 text-sm text-emerald-400 font-medium">
+   289→              Learn More <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
+   290→            </div>
+   291→          </Card>
+   292→
+   293→          {/* Impact CTA */}
+   294→          <Card className="p-6 glass-card hover-lift group cursor-pointer border-amber-500/20 animate-reveal-up stagger-2 blur-in holo-shimmer glass-reflection holo-border" onClick={() => navigate({ name: "impact" })}>
+   295→            <Heart className="h-10 w-10 text-amber-400 mb-3 group-hover:scale-110 transition-transform neon-text-amber" />
+   296→            <h3 className="text-lg font-bold mb-2">Our Impact</h3>
+   297→            <p className="text-sm text-muted-foreground mb-4">See how we're transforming young minds for future tech careers.</p>
+   298→            <div className="flex items-center gap-1 text-sm text-amber-400 font-medium">
+   299→              See Impact <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
+   300→            </div>
+   301→          </Card>
+   302→
+   303→          {/* Contact CTA */}
+   304→          <Card className="p-6 glass-card hover-lift group cursor-pointer border-cyan-500/20 animate-reveal-up stagger-3 blur-in holo-shimmer glass-reflection holo-border" onClick={() => navigate({ name: "contact" })}>
+   305→            <MessageSquare className="h-10 w-10 text-cyan-400 mb-3 group-hover:scale-110 transition-transform neon-text-cyan" />
+   306→            <h3 className="text-lg font-bold mb-2">Contact Us</h3>
+   307→            <p className="text-sm text-muted-foreground mb-4">Have questions? Reach out — we respond within 24 hours.</p>
+   308→            <div className="flex items-center gap-1 text-sm text-cyan-400 font-medium">
+   309→              Get in Touch <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
+   310→            </div>
+   311→          </Card>
+   312→        </div>
+   313→      </section>
+   314→
+   315→      {/* === FINAL CTA === */}
+   316→      <section className="py-20">
+   317→        <Card className="relative overflow-hidden p-8 lg:p-12 text-center border-emerald-500/20 max-w-4xl mx-auto holo-border depth-shadow-lg">
+   318→          <div className="absolute inset-0 bg-gradient-to-br from-emerald-950/30 via-background to-cyan-950/20" />
+   319→          <div className="particle-network" />
+   320→          <div className="orb bg-emerald-500 w-64 h-64 -top-20 -right-20 blob" />
+   321→          <div className="orb bg-cyan-500 w-64 h-64 -bottom-20 -left-20 blob" style={{ animationDelay: "4s" }} />
+   322→          <div className="scan-line" />
+   323→          <div className="relative z-10">
+   324→            <Shield className="h-12 w-12 text-emerald-400 mx-auto mb-4 animate-float neon-text" />
+   325→            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-holo">Ready to Start Your Journey?</h2>
+   326→            <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
+   327→              Join 15,000+ students mastering cyber security. Sign up free and get instant access to courses, labs, and live sessions.
+   328→            </p>
+   329→            <Button size="lg" className="bg-emerald-500 text-emerald-950 hover:bg-emerald-400 h-12 px-8 text-base breathe neon-border" onClick={() => navigate({ name: "auth" })}>
+   330→              <Rocket className="h-5 w-5 mr-2" /> Get Started Free
+   331→            </Button>
+   332→          </div>
+   333→        </Card>
+   334→      </section>
+   335→
+   336→      {/* === FOOTER === */}
+   337→      <footer className="mt-auto border-t border-border bg-sidebar/30 py-8 px-4 lg:px-8">
+   338→        <div className="max-w-6xl mx-auto">
+   339→          <div className="grid sm:grid-cols-4 gap-8 mb-6">
+   340→            <div>
+   341→              <div className="flex items-center gap-2 mb-3">
+   342→                <Shield className="h-6 w-6 text-emerald-400" strokeWidth={1.5} />
+   343→                <span className="font-bold text-lg">Guardian<span className="text-emerald-400">X</span></span>
+   344→              </div>
+   345→              <p className="text-xs text-muted-foreground">Master cyber security. Become a guardian of the digital world.</p>
+   346→            </div>
+   347→            <div>
+   348→              <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Platform</h4>
+   349→              <div className="space-y-2">
+   350→                <button onClick={() => navigate({ name: "certifications" })} className="block text-xs text-muted-foreground hover:text-emerald-400 transition-colors">Certifications</button>
+   351→                <button onClick={() => navigate({ name: "auth" })} className="block text-xs text-muted-foreground hover:text-emerald-400 transition-colors">Courses</button>
+   352→                <button onClick={() => navigate({ name: "auth" })} className="block text-xs text-muted-foreground hover:text-emerald-400 transition-colors">Cyber Labs</button>
+   353→                <button onClick={() => navigate({ name: "auth" })} className="block text-xs text-muted-foreground hover:text-emerald-400 transition-colors">Proctored Exams</button>
+   354→                <button onClick={() => navigate({ name: "auth" })} className="block text-xs text-muted-foreground hover:text-emerald-400 transition-colors">Live Sessions</button>
+   355→              </div>
+   356→            </div>
+   357→            <div>
+   358→              <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Company</h4>
+   359→              <div className="space-y-2">
+   360→                <button onClick={() => navigate({ name: "partners" })} className="block text-xs text-muted-foreground hover:text-emerald-400 transition-colors">Partner Institutions</button>
+   361→                <button onClick={() => navigate({ name: "impact" })} className="block text-xs text-muted-foreground hover:text-emerald-400 transition-colors">Our Impact</button>
+   362→                <button onClick={() => navigate({ name: "contact" })} className="block text-xs text-muted-foreground hover:text-emerald-400 transition-colors">Contact Us</button>
+   363→              </div>
+   364→            </div>
+   365→            <div>
+   366→              <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Resources</h4>
+   367→              <div className="space-y-2">
+   368→                <a href="https://github.com/swisskyrepo/PayloadsAllTheThings" target="_blank" rel="noopener" className="block text-xs text-muted-foreground hover:text-emerald-400 transition-colors">Payloads Library ↗</a>
+   369→                <button onClick={() => navigate({ name: "auth" })} className="block text-xs text-muted-foreground hover:text-emerald-400 transition-colors">Demo Accounts</button>
+   370→                <span className="block text-xs text-muted-foreground">student@guardianx.io</span>
+   371→              </div>
+   372→            </div>
+   373→          </div>
+   374→          <div className="pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
+   375→            <div className="flex items-center gap-2">
+   376→              <Shield className="h-3.5 w-3.5 text-emerald-400" />
+   377→              <span className="font-mono">GuardianX LMS · v2.0.0</span>
+   378→            </div>
+   379→            <div className="flex items-center gap-4">
+   380→              <span>© 2025 GuardianX Security Education</span>
+   381→              <span className="hidden sm:inline">·</span>
+   382→              <span className="hidden sm:inline font-mono">Encrypted end-to-end</span>
+   383→            </div>
+   384→          </div>
+   385→        </div>
+   386→      </footer>
+   387→    </div>
+   388→  )
+   389→}
+   390→

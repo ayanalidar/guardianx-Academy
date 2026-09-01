@@ -1,0 +1,593 @@
+     1→     1→"use client"
+     2→     2→
+     3→     3→import * as React from "react"
+     4→     4→import Link from "next/link"
+     5→     5→import { signOut } from "next-auth/react"
+     6→     6→import {
+     7→     7→  Shield, LayoutDashboard, BookOpen, GraduationCap, StickyNote,
+     8→     8→  Radio, FlaskConical, Award, Users, User, LogOut, Menu, X,
+     9→     9→  Search, Sun, Moon, Bell, Terminal, ChevronRight, Settings,
+    10→    10→  Trophy, Zap, Flame, Crown, CheckCheck, Sparkles, Presentation,
+    11→    11→  Building2, Heart, MessageSquare,
+    12→    12→} from "lucide-react"
+    13→    13→import { useAppStore, type View } from "@/store/app-store"
+    14→    14→import { useUser } from "@/hooks/use-user"
+    15→    15→import { Button } from "@/components/ui/button"
+    16→    16→import { Input } from "@/components/ui/input"
+    17→    17→import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+    18→    18→import { Badge } from "@/components/ui/badge"
+    19→    19→import {
+    20→    20→  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+    21→    21→  DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuLabel,
+    22→    22→} from "@/components/ui/dropdown-menu"
+    23→    23→import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+    24→    24→import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+    25→    25→import { ScrollArea } from "@/components/ui/scroll-area"
+    26→    26→import { useTheme } from "next-themes"
+    27→    27→import { useNotifications, type AppNotification } from "@/hooks/use-notifications"
+    28→    28→import { cn } from "@/lib/utils"
+    29→    29→
+    30→    30→interface NavItem {
+    31→    31→  label: string
+    32→    32→  icon: React.ComponentType<{ className?: string }>
+    33→    33→  view: View
+    34→    34→  roles?: string[]
+    35→    35→}
+    36→    36→
+    37→    37→const NAV_ITEMS: NavItem[] = [
+    38→    38→  { label: "Dashboard", icon: LayoutDashboard, view: { name: "dashboard" } },
+    39→    39→  { label: "Course Catalog", icon: BookOpen, view: { name: "catalog" } },
+    40→    40→  { label: "My Learning", icon: GraduationCap, view: { name: "learning" } },
+    41→    41→  { label: "Notes", icon: StickyNote, view: { name: "notes" } },
+    42→    42→  { label: "Live Sessions", icon: Radio, view: { name: "live" } },
+    43→    43→  { label: "Cyber Labs", icon: FlaskConical, view: { name: "labs" } },
+    44→    44→  { label: "Achievements", icon: Trophy, view: { name: "achievements" } },
+    45→    45→  { label: "Leaderboards", icon: Crown, view: { name: "leaderboard" } },
+    46→    46→  { label: "Certificates", icon: Award, view: { name: "certificates" } },
+    47→    47→  { label: "Community", icon: Users, view: { name: "community" } },
+    48→    48→]
+    49→    49→
+    50→    50→function Logo({ onClick }: { onClick?: () => void }) {
+    51→    51→  return (
+    52→    52→    <button onClick={onClick} className="flex items-center gap-2.5 group">
+    53→    53→      <div className="relative">
+    54→    54→        <Shield className="h-8 w-8 text-emerald-400" strokeWidth={1.5} />
+    55→    55→        <div className="absolute inset-0 bg-emerald-500/30 blur-md rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+    56→    56→      </div>
+    57→    57→      <div className="text-left">
+    58→    58→        <div className="font-bold text-lg leading-none tracking-tight">
+    59→    59→          Guardian<span className="text-emerald-400">X</span>
+    60→    60→        </div>
+    61→    61→        <div className="text-[9px] text-muted-foreground font-mono tracking-widest">SECURE · LEARN · DEFEND</div>
+    62→    62→      </div>
+    63→    63→    </button>
+    64→    64→  )
+    65→    65→}
+    66→    66→
+    67→    67→function NavList({ onNavigate }: { onNavigate?: () => void }) {
+    68→    68→  const { view, navigate } = useAppStore()
+    69→    69→  const { user } = useUser()
+    70→    70→
+    71→    71→  return (
+    72→    72→    <nav className="space-y-1">
+    73→    73→      {NAV_ITEMS.map((item) => {
+    74→    74→        const active = view.name === item.view.name
+    75→    75→        return (
+    76→    76→          <button
+    77→    77→            key={item.label}
+    78→    78→            onClick={() => {
+    79→    79→              navigate(item.view)
+    80→    80→              onNavigate?.()
+    81→    81→            }}
+    82→    82→            className={cn(
+    83→    83→              "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group relative",
+    84→    84→              active
+    85→    85→                ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+    86→    86→                : "text-muted-foreground hover:text-foreground hover:bg-accent/50 border border-transparent"
+    87→    87→            )}
+    88→    88→          >
+    89→    89→            {active && <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-0.5 bg-emerald-400 rounded-r" />}
+    90→    90→            <item.icon className={cn("h-4 w-4 shrink-0", active && "text-emerald-400")} />
+    91→    91→            <span className="flex-1 text-left">{item.label}</span>
+    92→    92→            {active && <ChevronRight className="h-3.5 w-3.5" />}
+    93→    93→          </button>
+    94→    94→        )
+    95→    95→      })}
+    96→    96→      {user?.role === "INSTRUCTOR" || user?.role === "ADMIN" ? (
+    97→    97→        <button
+    98→    98→          onClick={() => { navigate({ name: "instructor" }); onNavigate?.() }}
+    99→    99→          className={cn(
+   100→   100→            "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group relative border",
+   101→   101→            view.name === "instructor"
+   102→   102→              ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/20"
+   103→   103→              : "text-muted-foreground hover:text-foreground hover:bg-accent/50 border-transparent"
+   104→   104→          )}
+   105→   105→        >
+   106→   106→          {view.name === "instructor" && <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-0.5 bg-cyan-400 rounded-r" />}
+   107→   107→          <Presentation className="h-4 w-4 shrink-0" />
+   108→   108→          <span className="flex-1 text-left">Instructor</span>
+   109→   109→          {view.name === "instructor" && <ChevronRight className="h-3.5 w-3.5" />}
+   110→   110→        </button>
+   111→   111→      ) : null}
+   112→   112→    </nav>
+   113→   113→  )
+   114→   114→}
+   115→   115→
+   116→   116→function SidebarFooter() {
+   117→   117→  const { user, stats } = useUser()
+   118→   118→  const { navigate } = useAppStore()
+   119→   119→  if (!user) return null
+   120→   120→  const initials = user.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
+   121→   121→  return (
+   122→   122→    <div className="mt-auto space-y-3">
+   123→   123→      <div className="rounded-lg border border-border bg-card/50 p-3">
+   124→   124→        <div className="flex items-center gap-3 mb-3">
+   125→   125→          <Avatar className="h-9 w-9 border border-emerald-500/20">
+   126→   126→            <AvatarImage src={user.avatar ?? undefined} />
+   127→   127→            <AvatarFallback className="bg-emerald-500/10 text-emerald-400 text-xs font-mono">{initials}</AvatarFallback>
+   128→   128→          </Avatar>
+   129→   129→          <div className="min-w-0 flex-1">
+   130→   130→            <div className="text-sm font-medium truncate">{user.name}</div>
+   131→   131→            <div className="text-xs text-muted-foreground truncate">{user.title}</div>
+   132→   132→          </div>
+   133→   133→        </div>
+   134→   134→        <div className="grid grid-cols-3 gap-1 text-center">
+   135→   135→          <div>
+   136→   136→            <div className="text-sm font-bold text-emerald-400">{stats?.enrollments ?? 0}</div>
+   137→   137→            <div className="text-[9px] text-muted-foreground uppercase">Courses</div>
+   138→   138→          </div>
+   139→   139→          <div>
+   140→   140→            <div className="text-sm font-bold text-cyan-400">{stats?.labsDone ?? 0}</div>
+   141→   141→            <div className="text-[9px] text-muted-foreground uppercase">Labs</div>
+   142→   142→          </div>
+   143→   143→          <div>
+   144→   144→            <div className="text-sm font-bold text-amber-400">{stats?.certificates ?? 0}</div>
+   145→   145→            <div className="text-[9px] text-muted-foreground uppercase">Certs</div>
+   146→   146→          </div>
+   147→   147→        </div>
+   148→   148→      </div>
+   149→   149→    </div>
+   150→   150→  )
+   151→   151→}
+   152→   152→
+   153→   153→function ThemeToggle() {
+   154→   154→  const { theme, setTheme } = useTheme()
+   155→   155→  const [mounted, setMounted] = React.useState(false)
+   156→   156→  React.useEffect(() => setMounted(true), [])
+   157→   157→  if (!mounted) return <div className="h-9 w-9" />
+   158→   158→  return (
+   159→   159→    <Button
+   160→   160→      variant="ghost"
+   161→   161→      size="icon"
+   162→   162→      className="h-9 w-9"
+   163→   163→      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+   164→   164→      title="Toggle theme"
+   165→   165→      aria-label="Toggle dark/light theme"
+   166→   166→    >
+   167→   167→      {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+   168→   168→    </Button>
+   169→   169→  )
+   170→   170→}
+   171→   171→
+   172→   172→export function AppShell({ children }: { children: React.ReactNode }) {
+   173→   173→  const { sidebarOpen, setSidebarOpen, navigate } = useAppStore()
+   174→   174→  const { user, stats, gamification } = useUser()
+   175→   175→  const [commandOpen, setCommandOpen] = React.useState(false)
+   176→   176→
+   177→   177→  // ⌘K / Ctrl+K to open command palette
+   178→   178→  React.useEffect(() => {
+   179→   179→    const handler = (e: KeyboardEvent) => {
+   180→   180→      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+   181→   181→        e.preventDefault()
+   182→   182→        setCommandOpen((o) => !o)
+   183→   183→      }
+   184→   184→    }
+   185→   185→    window.addEventListener("keydown", handler)
+   186→   186→    return () => window.removeEventListener("keydown", handler)
+   187→   187→  }, [])
+   188→   188→
+   189→   189→  return (
+   190→   190→    <div className="min-h-screen flex bg-background bg-grid">
+   191→   191→      {/* Desktop sidebar */}
+   192→   192→      <aside className="hidden lg:flex w-64 shrink-0 flex-col border-r border-border bg-sidebar/50 backdrop-blur p-4 sticky top-0 h-screen">
+   193→   193→        <div className="mb-8 px-1">
+   194→   194→          <Logo onClick={() => navigate({ name: "dashboard" })} />
+   195→   195→        </div>
+   196→   196→        <NavList />
+   197→   197→        <SidebarFooter />
+   198→   198→      </aside>
+   199→   199→
+   200→   200→      {/* Mobile sidebar (Sheet) */}
+   201→   201→      <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+   202→   202→        <SheetContent side="left" className="w-72 p-4 flex flex-col">
+   203→   203→          <SheetHeader className="mb-6">
+   204→   204→            <SheetTitle className="text-left">
+   205→   205→              <Logo onClick={() => setSidebarOpen(false)} />
+   206→   206→            </SheetTitle>
+   207→   207→          </SheetHeader>
+   208→   208→          <NavList onNavigate={() => setSidebarOpen(false)} />
+   209→   209→          <SidebarFooter />
+   210→   210→        </SheetContent>
+   211→   211→      </Sheet>
+   212→   212→
+   213→   213→      {/* Main */}
+   214→   214→      <div className="flex-1 flex flex-col min-w-0">
+   215→   215→        {/* Top bar */}
+   216→   216→        <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border bg-background/80 backdrop-blur px-4 lg:px-6">
+   217→   217→          <Button
+   218→   218→            variant="ghost"
+   219→   219→            size="icon"
+   220→   220→            className="lg:hidden"
+   221→   221→            onClick={() => setSidebarOpen(true)}
+   222→   222→          >
+   223→   223→            <Menu className="h-5 w-5" />
+   224→   224→          </Button>
+   225→   225→
+   226→   226→          <button
+   227→   227→            onClick={() => setCommandOpen(true)}
+   228→   228→            className="relative flex-1 max-w-md flex items-center gap-2 h-9 px-3 rounded-lg bg-muted/50 border border-transparent hover:border-border text-muted-foreground text-sm transition-colors group"
+   229→   229→          >
+   230→   230→            <Search className="h-4 w-4 shrink-0" />
+   231→   231→            <span className="flex-1 text-left">Search courses, labs, notes...</span>
+   232→   232→            <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded border border-border bg-background/60 text-[10px] font-mono">⌘K</kbd>
+   233→   233→          </button>
+   234→   234→
+   235→   235→          <div className="flex items-center gap-2 ml-auto">
+   236→   236→            {/* XP / Level widget */}
+   237→   237→            {gamification && (
+   238→   238→              <button
+   239→   239→                onClick={() => navigate({ name: "achievements" })}
+   240→   240→                className="hidden md:flex items-center gap-3 px-3 py-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/10 transition-colors group"
+   241→   241→                title={`${gamification.rank} · ${gamification.xp} XP`}
+   242→   242→              >
+   243→   243→                <div className="flex items-center gap-1.5">
+   244→   244→                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-bold font-mono">
+   245→   245→                    {gamification.level}
+   246→   246→                  </div>
+   247→   247→                  <span className="text-xs font-mono text-emerald-400">{gamification.xp.toLocaleString()} XP</span>
+   248→   248→                </div>
+   249→   249→                <div className="h-1 w-12 rounded-full bg-muted overflow-hidden">
+   250→   250→                  <div className="h-full bg-emerald-400 rounded-full transition-all" style={{ width: `${gamification.levelInfo.progress}%` }} />
+   251→   251→                </div>
+   252→   252→                {gamification.streak > 0 && (
+   253→   253→                  <div className="flex items-center gap-0.5 text-orange-400" title={`${gamification.streak}-day streak`}>
+   254→   254→                    <Flame className="h-3.5 w-3.5" fill="currentColor" />
+   255→   255→                    <span className="text-xs font-mono">{gamification.streak}</span>
+   256→   256→                  </div>
+   257→   257→                )}
+   258→   258→              </button>
+   259→   259→            )}
+   260→   260→            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/5 text-xs">
+   261→   261→              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 pulse-dot" />
+   262→   262→              <span className="text-emerald-400 font-mono">SECURE</span>
+   263→   263→            </div>
+   264→   264→            <ThemeToggle />
+   265→   265→            <NotificationsButton />
+   266→   266→            <DropdownMenu>
+   267→   267→              <DropdownMenuTrigger asChild>
+   268→   268→                <button className="flex items-center gap-2 rounded-full hover:bg-accent p-1 pr-2">
+   269→   269→                  <Avatar className="h-8 w-8 border border-border">
+   270→   270→                    <AvatarImage src={user?.avatar ?? undefined} />
+   271→   271→                    <AvatarFallback className="bg-emerald-500/10 text-emerald-400 text-xs font-mono">
+   272→   272→                      {user?.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)}
+   273→   273→                    </AvatarFallback>
+   274→   274→                  </Avatar>
+   275→   275→                </button>
+   276→   276→              </DropdownMenuTrigger>
+   277→   277→              <DropdownMenuContent align="end" className="w-56">
+   278→   278→                <DropdownMenuLabel>
+   279→   279→                  <div className="flex flex-col">
+   280→   280→                    <span className="text-sm font-medium">{user?.name}</span>
+   281→   281→                    <span className="text-xs text-muted-foreground">{user?.email}</span>
+   282→   282→                    <Badge variant="outline" className="w-fit mt-1 text-[10px] border-emerald-500/30 text-emerald-400">
+   283→   283→                      {user?.role}
+   284→   284→                    </Badge>
+   285→   285→                  </div>
+   286→   286→                </DropdownMenuLabel>
+   287→   287→                <DropdownMenuSeparator />
+   288→   288→                <DropdownMenuItem onClick={() => navigate({ name: "profile" })}>
+   289→   289→                  <User className="h-4 w-4 mr-2" /> Profile
+   290→   290→                </DropdownMenuItem>
+   291→   291→                <DropdownMenuItem onClick={() => navigate({ name: "certificates" })}>
+   292→   292→                  <Award className="h-4 w-4 mr-2" /> Certificates
+   293→   293→                </DropdownMenuItem>
+   294→   294→                <DropdownMenuItem onClick={() => navigate({ name: "notes" })}>
+   295→   295→                  <StickyNote className="h-4 w-4 mr-2" /> My Notes
+   296→   296→                </DropdownMenuItem>
+   297→   297→                <DropdownMenuSeparator />
+   298→   298→                <DropdownMenuItem onClick={() => signOut()} className="text-red-400 focus:text-red-400">
+   299→   299→                  <LogOut className="h-4 w-4 mr-2" /> Sign Out
+   300→   300→                </DropdownMenuItem>
+   301→   301→              </DropdownMenuContent>
+   302→   302→            </DropdownMenu>
+   303→   303→          </div>
+   304→   304→        </header>
+   305→   305→
+   306→   306→        <main className="flex-1 p-4 lg:p-8 max-w-[1400px] w-full mx-auto">
+   307→   307→          {children}
+   308→   308→        </main>
+   309→   309→
+   310→   310→        <footer className="mt-auto border-t border-border bg-sidebar/30 py-6 px-4 lg:px-8">
+   311→   311→          <div className="max-w-[1400px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
+   312→   312→            <div className="flex items-center gap-2">
+   313→   313→              <Shield className="h-3.5 w-3.5 text-emerald-400" />
+   314→   314→              <span className="font-mono">GuardianX LMS · v2.0.0</span>
+   315→   315→            </div>
+   316→   316→            <div className="flex items-center gap-4">
+   317→   317→              <button onClick={() => navigate({ name: "partners" })} className="hover:text-emerald-400 transition-colors">Partners</button>
+   318→   318→              <button onClick={() => navigate({ name: "impact" })} className="hover:text-amber-400 transition-colors">Impact</button>
+   319→   319→              <button onClick={() => navigate({ name: "contact" })} className="hover:text-cyan-400 transition-colors">Contact</button>
+   320→   320→              <span className="hidden sm:inline">·</span>
+   321→   321→              <span className="hidden sm:inline font-mono">© 2025 GuardianX</span>
+   322→   322→            </div>
+   323→   323→          </div>
+   324→   324→        </footer>
+   325→   325→      </div>
+   326→   326→      <CommandPalette open={commandOpen} onOpenChange={setCommandOpen} />
+   327→   327→    </div>
+   328→   328→  )
+   329→   329→}
+   330→   330→
+   331→   331→// ---- Command Palette (⌘K) ----
+   332→   332→function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
+   333→   333→  const { navigate } = useAppStore()
+   334→   334→  const [q, setQ] = React.useState("")
+   335→   335→  const [results, setResults] = React.useState<{ courses: any[]; labs: any[]; notes: any[] }>({ courses: [], labs: [], notes: [] })
+   336→   336→
+   337→   337→  React.useEffect(() => {
+   338→   338→    if (!q.trim()) {
+   339→   339→      setResults({ courses: [], labs: [], notes: [] })
+   340→   340→      return
+   341→   341→    }
+   342→   342→    const t = setTimeout(async () => {
+   343→   343→      try {
+   344→   344→        const r = await fetch(`/api/search?q=${encodeURIComponent(q)}`)
+   345→   345→        const data = await r.json()
+   346→   346→        setResults(data)
+   347→   347→      } catch {}
+   348→   348→    }, 150)
+   349→   349→    return () => clearTimeout(t)
+   350→   350→  }, [q])
+   351→   351→
+   352→   352→  React.useEffect(() => {
+   353→   353→    if (!open) setQ("")
+   354→   354→  }, [open])
+   355→   355→
+   356→   356→  const navItems = [
+   357→   357→    { label: "Dashboard", icon: LayoutDashboard, view: { name: "dashboard" } as const },
+   358→   358→    { label: "Course Catalog", icon: BookOpen, view: { name: "catalog" } as const },
+   359→   359→    { label: "My Learning", icon: GraduationCap, view: { name: "learning" } as const },
+   360→   360→    { label: "Cyber Labs", icon: FlaskConical, view: { name: "labs" } as const },
+   361→   361→    { label: "Achievements", icon: Trophy, view: { name: "achievements" } as const },
+   362→   362→    { label: "Live Sessions", icon: Radio, view: { name: "live" } as const },
+   363→   363→    { label: "My Notes", icon: StickyNote, view: { name: "notes" } as const },
+   364→   364→    { label: "Certificates", icon: Award, view: { name: "certificates" } as const },
+   365→   365→    { label: "Community", icon: Users, view: { name: "community" } as const },
+   366→   366→    { label: "Profile", icon: User, view: { name: "profile" } as const },
+   367→   367→    { label: "Partner Institutions", icon: Building2, view: { name: "partners" } as const },
+   368→   368→    { label: "Our Impact", icon: Heart, view: { name: "impact" } as const },
+   369→   369→    { label: "Contact Us", icon: MessageSquare, view: { name: "contact" } as const },
+   370→   370→  ]
+   371→   371→
+   372→   372→  const go = (view: any) => {
+   373→   373→    navigate(view)
+   374→   374→    onOpenChange(false)
+   375→   375→  }
+   376→   376→
+   377→   377→  return (
+   378→   378→    <Dialog open={open} onOpenChange={onOpenChange}>
+   379→   379→      <DialogContent className="p-0 gap-0 max-w-xl overflow-hidden">
+   380→   380→        <DialogTitle className="sr-only">Command Palette</DialogTitle>
+   381→   381→        <DialogDescription className="sr-only">Search courses, labs, and navigate the platform.</DialogDescription>
+   382→   382→        <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
+   383→   383→          <Search className="h-4 w-4 text-muted-foreground" />
+   384→   384→          <input
+   385→   385→            autoFocus
+   386→   386→            value={q}
+   387→   387→            onChange={(e) => setQ(e.target.value)}
+   388→   388→            placeholder="Search courses, labs, or jump to..."
+   389→   389→            className="flex-1 bg-transparent outline-none text-sm placeholder:text-muted-foreground"
+   390→   390→          />
+   391→   391→          <kbd className="text-[10px] font-mono text-muted-foreground px-1.5 py-0.5 rounded border border-border">ESC</kbd>
+   392→   392→        </div>
+   393→   393→        <div className="max-h-[400px] overflow-y-auto p-2">
+   394→   394→          {!q.trim() ? (
+   395→   395→            <div className="p-2">
+   396→   396→              <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-2 py-1.5">Quick Navigation</div>
+   397→   397→              {navItems.map((item) => (
+   398→   398→                <button
+   399→   399→                  key={item.label}
+   400→   400→                  onClick={() => go(item.view)}
+   401→   401→                  className="w-full flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-accent/50 text-sm text-left transition-colors"
+   402→   402→                >
+   403→   403→                  <item.icon className="h-4 w-4 text-emerald-400" />
+   404→   404→                  <span className="flex-1">{item.label}</span>
+   405→   405→                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+   406→   406→                </button>
+   407→   407→              ))}
+   408→   408→            </div>
+   409→   409→          ) : (
+   410→   410→            <div className="space-y-3 p-2">
+   411→   411→              {results.courses.length === 0 && results.labs.length === 0 && results.notes.length === 0 && (
+   412→   412→                <div className="text-center py-8 text-sm text-muted-foreground">
+   413→   413→                  <Search className="h-6 w-6 mx-auto mb-2 opacity-50" />
+   414→   414→                  No results for "{q}"
+   415→   415→                </div>
+   416→   416→              )}
+   417→   417→              {results.courses.length > 0 && (
+   418→   418→                <div>
+   419→   419→                  <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-2 py-1.5">Courses</div>
+   420→   420→                  {results.courses.map((c) => (
+   421→   421→                    <button
+   422→   422→                      key={c.id}
+   423→   423→                      onClick={() => go({ name: "course", courseId: c.id })}
+   424→   424→                      className="w-full flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-accent/50 text-sm text-left transition-colors"
+   425→   425→                    >
+   426→   426→                      <BookOpen className="h-4 w-4 text-emerald-400 shrink-0" />
+   427→   427→                      <span className="flex-1 truncate">{c.title}</span>
+   428→   428→                      <Badge variant="outline" className="text-[9px]">{c.shortName}</Badge>
+   429→   429→                    </button>
+   430→   430→                  ))}
+   431→   431→                </div>
+   432→   432→              )}
+   433→   433→              {results.labs.length > 0 && (
+   434→   434→                <div>
+   435→   435→                  <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-2 py-1.5">Labs</div>
+   436→   436→                  {results.labs.map((l) => (
+   437→   437→                    <button
+   438→   438→                      key={l.id}
+   439→   439→                      onClick={() => go({ name: "lab", labSlug: l.slug })}
+   440→   440→                      className="w-full flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-accent/50 text-sm text-left transition-colors"
+   441→   441→                    >
+   442→   442→                      <Terminal className="h-4 w-4 text-violet-400 shrink-0" />
+   443→   443→                      <span className="flex-1 truncate">{l.title}</span>
+   444→   444→                      <Badge variant="outline" className="text-[9px]">{l.difficulty}</Badge>
+   445→   445→                    </button>
+   446→   446→                  ))}
+   447→   447→                </div>
+   448→   448→              )}
+   449→   449→              {results.notes.length > 0 && (
+   450→   450→                <div>
+   451→   451→                  <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-2 py-1.5">My Notes</div>
+   452→   452→                  {results.notes.map((n) => (
+   453→   453→                    <button
+   454→   454→                      key={n.id}
+   455→   455→                      onClick={() => n.lesson ? go({ name: "lesson", lessonId: n.lesson.id, courseId: n.lesson.courseId }) : go({ name: "notes" })}
+   456→   456→                      className="w-full flex items-start gap-3 px-2 py-2 rounded-lg hover:bg-accent/50 text-sm text-left transition-colors"
+   457→   457→                    >
+   458→   458→                      <StickyNote className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+   459→   459→                      <div className="flex-1 min-w-0">
+   460→   460→                        <div className="truncate font-medium">{n.title}</div>
+   461→   461→                        {n.content && <div className="truncate text-xs text-muted-foreground">{n.content}</div>}
+   462→   462→                      </div>
+   463→   463→                      {n.lesson && <Badge variant="outline" className="text-[9px] shrink-0">{n.lesson.courseShortName}</Badge>}
+   464→   464→                    </button>
+   465→   465→                  ))}
+   466→   466→                </div>
+   467→   467→              )}
+   468→   468→            </div>
+   469→   469→          )}
+   470→   470→        </div>
+   471→   471→      </DialogContent>
+   472→   472→    </Dialog>
+   473→   473→  )
+   474→   474→}
+   475→   475→
+   476→   476→// ---- Notifications Button + Dropdown ----
+   477→   477→const NOTIF_ICONS: Record<string, any> = {
+   478→   478→  trophy: Trophy, award: Award, crown: Crown, flame: Flame, zap: Zap,
+   479→   479→  book: BookOpen, terminal: Terminal, shield: Shield, sparkles: Sparkles, bell: Bell,
+   480→   480→}
+   481→   481→const NOTIF_COLORS: Record<string, string> = {
+   482→   482→  emerald: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30",
+   483→   483→  amber: "bg-amber-500/10 text-amber-400 border-amber-500/30",
+   484→   484→  cyan: "bg-cyan-500/10 text-cyan-400 border-cyan-500/30",
+   485→   485→  violet: "bg-violet-500/10 text-violet-400 border-violet-500/30",
+   486→   486→  orange: "bg-orange-500/10 text-orange-400 border-orange-500/30",
+   487→   487→  red: "bg-red-500/10 text-red-400 border-red-500/30",
+   488→   488→}
+   489→   489→
+   490→   490→function timeAgo(date: string): string {
+   491→   491→  const diff = Date.now() - new Date(date).getTime()
+   492→   492→  const m = Math.floor(diff / 60000)
+   493→   493→  if (m < 1) return "just now"
+   494→   494→  if (m < 60) return `${m}m ago`
+   495→   495→  const h = Math.floor(m / 60)
+   496→   496→  if (h < 24) return `${h}h ago`
+   497→   497→  const d = Math.floor(h / 24)
+   498→   498→  if (d < 7) return `${d}d ago`
+   499→   499→  return new Date(date).toLocaleDateString()
+   500→   500→}
+   501→   501→
+   502→   502→function NotificationsButton() {
+   503→   503→  const { navigate } = useAppStore()
+   504→   504→  const { notifications, unreadCount, markAllRead, markRead, deleteNotif } = useNotifications()
+   505→   505→  const [open, setOpen] = React.useState(false)
+   506→   506→
+   507→   507→  function handleClick(n: AppNotification) {
+   508→   508→    markRead.mutate(n.id)
+   509→   509→    if (n.link) navigate(n.link as View)
+   510→   510→    setOpen(false)
+   511→   511→  }
+   512→   512→
+   513→   513→  return (
+   514→   514→    <DropdownMenu open={open} onOpenChange={setOpen}>
+   515→   515→      <DropdownMenuTrigger asChild>
+   516→   516→        <button className="relative h-9 w-9 inline-flex items-center justify-center rounded-md hover:bg-accent transition-colors" aria-label="Notifications">
+   517→   517→          <Bell className="h-4 w-4" />
+   518→   518→          {unreadCount > 0 && (
+   519→   519→            <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-1 flex items-center justify-center rounded-full bg-red-500 text-white text-[9px] font-bold font-mono border-2 border-background">
+   520→   520→              {unreadCount > 9 ? "9+" : unreadCount}
+   521→   521→            </span>
+   522→   522→          )}
+   523→   523→        </button>
+   524→   524→      </DropdownMenuTrigger>
+   525→   525→      <DropdownMenuContent align="end" className="w-80 p-0">
+   526→   526→        <div className="flex items-center justify-between px-3 py-2.5 border-b border-border">
+   527→   527→          <div className="flex items-center gap-2">
+   528→   528→            <Bell className="h-3.5 w-3.5 text-emerald-400" />
+   529→   529→            <span className="text-sm font-semibold">Notifications</span>
+   530→   530→            {unreadCount > 0 && (
+   531→   531→              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-red-500/15 text-red-400">{unreadCount} new</span>
+   532→   532→            )}
+   533→   533→          </div>
+   534→   534→          {unreadCount > 0 && (
+   535→   535→            <button
+   536→   536→              onClick={() => markAllRead.mutate()}
+   537→   537→              className="text-[10px] text-muted-foreground hover:text-emerald-400 flex items-center gap-1 transition-colors"
+   538→   538→            >
+   539→   539→              <CheckCheck className="h-3 w-3" /> Mark all read
+   540→   540→            </button>
+   541→   541→          )}
+   542→   542→        </div>
+   543→   543→        <ScrollArea className="h-[360px]">
+   544→   544→          {notifications.length === 0 ? (
+   545→   545→            <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
+   546→   546→              <Bell className="h-8 w-8 text-muted-foreground/50 mb-2" />
+   547→   547→              <p className="text-xs text-muted-foreground">No notifications yet</p>
+   548→   548→              <p className="text-[10px] text-muted-foreground/70 mt-1">Achievements, level-ups, and updates will appear here</p>
+   549→   549→            </div>
+   550→   550→          ) : (
+   551→   551→            <div className="divide-y divide-border">
+   552→   552→              {notifications.map((n) => {
+   553→   553→                const Icon = NOTIF_ICONS[n.icon] ?? Bell
+   554→   554→                const colorClass = NOTIF_COLORS[n.color] ?? NOTIF_COLORS.emerald
+   555→   555→                return (
+   556→   556→                  <div
+   557→   557→                    key={n.id}
+   558→   558→                    className={cn(
+   559→   559→                      "group/n relative w-full flex items-start gap-3 px-3 py-3 hover:bg-accent/50 text-left transition-colors cursor-pointer",
+   560→   560→                      !n.read && "bg-emerald-500/[0.03]",
+   561→   561→                    )}
+   562→   562→                    onClick={() => handleClick(n)}
+   563→   563→                  >
+   564→   564→                    <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border", colorClass)}>
+   565→   565→                      <Icon className="h-4 w-4" />
+   566→   566→                    </div>
+   567→   567→                    <div className="flex-1 min-w-0">
+   568→   568→                      <div className="flex items-start justify-between gap-2">
+   569→   569→                        <p className={cn("text-xs font-medium leading-snug line-clamp-2", !n.read && "text-foreground")}>{n.title}</p>
+   570→   570→                        {!n.read && <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shrink-0 mt-1" />}
+   571→   571→                      </div>
+   572→   572→                      <p className="text-[11px] text-muted-foreground line-clamp-2 mt-0.5">{n.message}</p>
+   573→   573→                      <p className="text-[9px] text-muted-foreground/70 font-mono mt-1">{timeAgo(n.createdAt)}</p>
+   574→   574→                    </div>
+   575→   575→                    <button
+   576→   576→                      onClick={(e) => { e.stopPropagation(); deleteNotif.mutate(n.id) }}
+   577→   577→                      className="absolute right-2 top-2 opacity-0 group-hover/n:opacity-100 transition-opacity p-1 rounded hover:bg-red-500/15 text-muted-foreground hover:text-red-400"
+   578→   578→                      title="Delete notification"
+   579→   579→                      aria-label="Delete notification"
+   580→   580→                    >
+   581→   581→                      <X className="h-3 w-3" />
+   582→   582→                    </button>
+   583→   583→                  </div>
+   584→   584→                )
+   585→   585→              })}
+   586→   586→            </div>
+   587→   587→          )}
+   588→   588→        </ScrollArea>
+   589→   589→      </DropdownMenuContent>
+   590→   590→    </DropdownMenu>
+   591→   591→  )
+   592→   592→}
+   593→   593→

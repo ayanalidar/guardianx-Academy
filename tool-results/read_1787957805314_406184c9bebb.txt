@@ -1,0 +1,1025 @@
+     1→"use client"
+     2→
+     3→import * as React from "react"
+     4→import { useAppStore } from "@/store/app-store"
+     5→import { Card } from "@/components/ui/card"
+     6→import { Button } from "@/components/ui/button"
+     7→import { Badge } from "@/components/ui/badge"
+     8→import {
+     9→  Shield, Building2, School, GraduationCap, Users, Award, Terminal,
+    10→  CheckCircle2, ArrowRight, Zap, TrendingUp, Globe, Lock, BarChart3,
+    11→  Wifi, BookOpen, Calendar, Rocket, Heart, Star, ChevronRight, Sparkles,
+    12→  Presentation, Network, Cpu, Cloud, Server, MapPin, Clock, Mail, Phone,
+    13→  FileText, Briefcase, Trophy, BookMarked, FlaskConical, Landmark,
+    14→} from "lucide-react"
+    15→import { cn } from "@/lib/utils"
+    16→
+    17→export function PartnerInstitutionsView() {
+    18→  const { navigate } = useAppStore()
+    19→
+    20→  return (
+    21→    <div className="space-y-0">
+    22→      {/* === HERO with drone-flythrough animation === */}
+    23→      <section className="relative min-h-[500px] md:min-h-[600px] flex items-center justify-center overflow-hidden rounded-2xl border border-border mesh-gradient">
+    24→        {/* Aurora background */}
+    25→        <div className="aurora-bg" />
+    26→        {/* Floating orbs */}
+    27→        <div className="orb bg-emerald-500 w-96 h-96 top-10 -left-20" />
+    28→        <div className="orb bg-cyan-500 w-80 h-80 bottom-10 -right-20" style={{ animationDelay: "3s" }} />
+    29→        <div className="orb bg-violet-500 w-64 h-64 top-1/2 left-1/2" style={{ animationDelay: "6s" }} />
+    30→
+    31→        {/* Grid overlay */}
+    32→        <div className="absolute inset-0 bg-grid opacity-20" />
+    33→
+    34→        <div className="relative z-10 max-w-4xl mx-auto text-center px-4 sm:px-6 py-12 sm:py-20">
+    35→          {/* Badge */}
+    36→          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs font-mono mb-6 animate-scale-reveal">
+    37→            <Building2 className="h-3.5 w-3.5" />
+    38→            PARTNER INSTITUTIONS PROGRAM
+    39→          </div>
+    40→
+    41→          {/* Kinetic title */}
+    42→          <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6">
+    43→            <span className="block animate-reveal-up">Bring Cyber Security</span>
+    44→            <span className="block text-gradient-animated animate-reveal-up stagger-2">Training to Your Campus</span>
+    45→          </h1>
+    46→
+    47→          <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 animate-reveal-up stagger-3">
+    48→            GuardianX partners with schools, colleges, and universities to deliver industry-grade cyber security certification training directly at your premises — with in-person classes, hands-on labs, and proctored examinations. Virtual batches are also available for individual learners.
+    49→          </p>
+    50→
+    51→          {/* CTA buttons */}
+    52→          <div className="flex flex-col sm:flex-row gap-3 justify-center animate-reveal-up stagger-4">
+    53→            <Button
+    54→              size="lg"
+    55→              className="bg-emerald-500 text-emerald-950 hover:bg-emerald-400 h-12 px-8 text-base"
+    56→              onClick={() => navigate({ name: "contact" })}
+    57→            >
+    58→              <Rocket className="h-5 w-5 mr-2" /> Become a Partner
+    59→            </Button>
+    60→            <Button
+    61→              size="lg"
+    62→              variant="outline"
+    63→              className="h-12 px-8 text-base glass-card border-emerald-500/20"
+    64→              onClick={() => navigate({ name: "impact" })}
+    65→            >
+    66→              See Our Impact <ArrowRight className="h-4 w-4 ml-2" />
+    67→            </Button>
+    68→          </div>
+    69→
+    70→          {/* Floating stats */}
+    71→          <div className="grid grid-cols-3 gap-3 sm:gap-6 mt-12 sm:mt-16 max-w-2xl mx-auto animate-reveal-up stagger-5">
+    72→            {[
+    73→              { value: "50+", label: "Partner Campuses", icon: Building2 },
+    74→              { value: "15K+", label: "Students Trained", icon: Users },
+    75→              { value: "98%", label: "Cert Pass Rate", icon: Award },
+    76→            ].map((s, i) => (
+    77→              <div key={i} className="glass-card rounded-xl p-3 sm:p-4 animate-float" style={{ animationDelay: `${i * 0.5}s` }}>
+    78→                <s.icon className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-400 mx-auto mb-2" />
+    79→                <div className="text-xl sm:text-2xl md:text-3xl font-bold tabular-nums text-emerald-400">{s.value}</div>
+    80→                <div className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wider mt-1">{s.label}</div>
+    81→              </div>
+    82→            ))}
+    83→          </div>
+    84→        </div>
+    85→
+    86→        {/* Scanline effect */}
+    87→        <div className="absolute inset-0 scanlines pointer-events-none" />
+    88→      </section>
+    89→
+    90→      {/* === PARTNER DIRECTORY (interactive segments) === */}
+    91→      <PartnerDirectory />
+    92→
+    93→      {/* === HOW IT WORKS (drone-shot timeline) === */}
+    94→      <section className="py-20 relative overflow-hidden">
+    95→        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-emerald-950/10 to-transparent" />
+    96→        <div className="relative z-10">
+    97→          <div className="text-center mb-12">
+    98→            <Badge variant="outline" className="text-xs mb-4 border-cyan-500/30 text-cyan-400">
+    99→              <Terminal className="h-3 w-3 mr-1" /> THE PROCESS
+   100→            </Badge>
+   101→            <h2 className="text-3xl md:text-4xl font-bold mb-3">How the Partnership Works</h2>
+   102→            <p className="text-muted-foreground max-w-2xl mx-auto">
+   103→              From initial consultation to full deployment — a seamless 4-step onboarding journey.
+   104→            </p>
+   105→          </div>
+   106→
+   107→          {/* Timeline with SVG path */}
+   108→          <div className="relative max-w-5xl mx-auto px-6">
+   109→            {/* Animated SVG path */}
+   110→            <svg className="absolute left-1/2 -translate-x-1/2 top-0 h-full hidden md:block" width="4" height="100%" viewBox="0 0 4 800" fill="none">
+   111→              <line x1="2" y1="0" x2="2" y2="800" stroke="oklch(0.72 0.17 155 / 0.3)" strokeWidth="2" strokeDasharray="6 6" className="draw-path" />
+   112→            </svg>
+   113→
+   114→            {[
+   115→              { step: "01", title: "Consultation & Needs Assessment", desc: "We meet with your institution's leadership to understand your goals, student demographics, and infrastructure. Custom curriculum mapping to your existing courses.", icon: Presentation, color: "emerald" },
+   116→              { step: "02", title: "Infrastructure Setup", desc: "Our team sets up the GuardianX platform on your premises or cloud. We configure lab environments, student accounts, and integrate with your LMS.", icon: Server, color: "cyan" },
+   117→              { step: "03", title: "In-Premises Classes", desc: "Certified instructors conduct in-person classes at your campus. Students get access to PDF materials, on-the-go notes, quizzes, and hands-on cyber labs. Virtual batch option available for remote learners.", icon: GraduationCap, color: "violet" },
+   118→              { step: "04", title: "Certification & Placement", desc: "Students earn industry-recognized certifications. We provide placement assistance and connect top performers with our hiring partner network.", icon: Award, color: "amber" },
+   119→            ].map((s, i) => (
+   120→              <div
+   121→                key={i}
+   122→                className={cn(
+   123→                  "flex gap-6 mb-12 last:mb-0 animate-reveal-up",
+   124→                  `stagger-${i + 1}`,
+   125→                  i % 2 === 1 && "md:flex-row-reverse",
+   126→                )}
+   127→              >
+   128→                {/* Icon node */}
+   129→                <div className="hidden md:flex shrink-0 w-12 h-12 items-center justify-center rounded-full border-2 border-emerald-500/30 bg-background z-10 relative">
+   130→                  <s.icon className="h-5 w-5 text-emerald-400" />
+   131→                  <div className="absolute inset-0 rounded-full border-2 border-emerald-500/20 radar-ring" />
+   132→                </div>
+   133→
+   134→                {/* Content card */}
+   135→                <div className={cn("flex-1", i % 2 === 1 && "md:text-right")}>
+   136→                  <Card className="p-5 glass-card hover-lift">
+   137→                    <div className={cn("flex items-center gap-3 mb-2", i % 2 === 1 && "md:flex-row-reverse")}>
+   138→                      <span className="text-3xl font-bold font-mono text-emerald-400/30">{s.step}</span>
+   139→                      <h3 className="text-lg font-semibold">{s.title}</h3>
+   140→                    </div>
+   141→                    <p className="text-sm text-muted-foreground leading-relaxed">{s.desc}</p>
+   142→                  </Card>
+   143→                </div>
+   144→                {/* Spacer for alternating */}
+   145→                <div className="hidden md:block flex-1" />
+   146→              </div>
+   147→            ))}
+   148→          </div>
+   149→        </div>
+   150→      </section>
+   151→
+   152→      {/* === TRAINING MODELS (In-Premises vs Virtual) === */}
+   153→      <section className="py-20">
+   154→        <div className="text-center mb-12">
+   155→          <Badge variant="outline" className="text-xs mb-4 border-cyan-500/30 text-cyan-400">
+   156→            <Globe className="h-3 w-3 mr-1" /> TRAINING MODELS
+   157→          </Badge>
+   158→          <h2 className="text-3xl md:text-4xl font-bold mb-3">Two Ways to Learn</h2>
+   159→          <p className="text-muted-foreground max-w-2xl mx-auto">
+   160→            Choose the model that fits your institution — in-premises classes for campus training, or virtual batches for individual learners.
+   161→          </p>
+   162→        </div>
+   163→
+   164→        <div className="grid lg:grid-cols-2 gap-6 max-w-5xl mx-auto">
+   165→          {/* In-Premises */}
+   166→          <Card className="p-6 glass-card border-emerald-500/20 relative overflow-hidden hover-lift">
+   167→            <div className="orb bg-emerald-500 w-48 h-48 -top-10 -right-10" />
+   168→            <div className="relative z-10">
+   169→              <div className="inline-flex p-3 rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mb-4">
+   170→                <Building2 className="h-6 w-6" />
+   171→              </div>
+   172→              <h3 className="text-xl font-bold mb-2">In-Premises Training</h3>
+   173→              <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
+   174→                Our certified instructors visit your campus to conduct in-person classes. We set up the lab infrastructure on your premises and deliver proctored examinations on-site.
+   175→              </p>
+   176→              <div className="space-y-2 mb-4">
+   177→                {["Instructor visits your campus", "Lab infrastructure on-site", "In-person proctored exams", "Faculty training included", "Best for schools, colleges, universities"].map((f, i) => (
+   178→                  <div key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
+   179→                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" /> {f}
+   180→                  </div>
+   181→                ))}
+   182→              </div>
+   183→              <Button className="w-full bg-emerald-500 text-emerald-950 hover:bg-emerald-400" onClick={() => navigate({ name: "contact" })}>
+   184→                <Building2 className="h-4 w-4 mr-2" /> Inquire About In-Premises
+   185→              </Button>
+   186→            </div>
+   187→          </Card>
+   188→
+   189→          {/* Virtual Batches */}
+   190→          <Card className="p-6 glass-card border-cyan-500/20 relative overflow-hidden hover-lift">
+   191→            <div className="orb bg-cyan-500 w-48 h-48 -top-10 -right-10" />
+   192→            <div className="relative z-10">
+   193→              <div className="inline-flex p-3 rounded-2xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 mb-4">
+   194→                <Globe className="h-6 w-6" />
+   195→              </div>
+   196→              <h3 className="text-xl font-bold mb-2">Virtual Batches</h3>
+   197→              <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
+   198→                For individual learners who prefer online training. We create scheduled virtual batches with live online instructor sessions, screen-sharing, and online proctored exams.
+   199→              </p>
+   200→              <div className="space-y-2 mb-4">
+   201→                {["Scheduled cohort batches", "Live online instructor sessions", "Screen-sharing & two-way voice", "Online proctored examinations", "Best for individual learners"].map((f, i) => (
+   202→                  <div key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
+   203→                    <CheckCircle2 className="h-3.5 w-3.5 text-cyan-400 shrink-0" /> {f}
+   204→                  </div>
+   205→                ))}
+   206→              </div>
+   207→              <Button className="w-full bg-cyan-500 text-cyan-950 hover:bg-cyan-400" onClick={() => navigate({ name: "auth" })}>
+   208→                <Rocket className="h-4 w-4 mr-2" /> Join a Virtual Batch
+   209→              </Button>
+   210→            </div>
+   211→          </Card>
+   212→        </div>
+   213→      </section>
+   214→
+   215→      {/* === FEATURES GRID (glass cards with float) === */}
+   216→      <section className="py-20">
+   217→        <div className="text-center mb-12">
+   218→          <Badge variant="outline" className="text-xs mb-4 border-violet-500/30 text-violet-400">
+   219→            <Zap className="h-3 w-3 mr-1" /> WHAT YOU GET
+   220→          </Badge>
+   221→          <h2 className="text-3xl md:text-4xl font-bold mb-3">Everything Your Institution Needs</h2>
+   222→          <p className="text-muted-foreground max-w-2xl mx-auto">
+   223→            A complete cyber security training ecosystem, delivered to your campus.
+   224→          </p>
+   225→        </div>
+   226→
+   227→        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+   228→          {[
+   229→            { icon: Terminal, title: "Hands-On Labs", desc: "25+ interactive CTF-style labs with real-world scenarios", color: "text-violet-400 bg-violet-500/10" },
+   230→            { icon: Presentation, title: "In-Premises Classes", desc: "Instructor-led in-person classes at your campus (not online)", color: "text-red-400 bg-red-500/10" },
+   231→            { icon: BookOpen, title: "Study Materials", desc: "PDF documents, on-the-go notes, and quizzes per lesson", color: "text-emerald-400 bg-emerald-500/10" },
+   232→            { icon: Award, title: "Verifiable Certificates", desc: "Industry-recognized completion certificates with PDF export", color: "text-amber-400 bg-amber-500/10" },
+   233→            { icon: BarChart3, title: "Progress Analytics", desc: "Real-time dashboards for faculty to track student progress", color: "text-cyan-400 bg-cyan-500/10" },
+   234→            { icon: Network, title: "Lab Infrastructure", desc: "We set up and maintain all lab environments on your premises", color: "text-teal-400 bg-teal-500/10" },
+   235→            { icon: Users, title: "Faculty Training", desc: "Train-the-trainer programs to upskill your teaching staff", color: "text-orange-400 bg-orange-500/10" },
+   236→            { icon: Globe, title: "Hiring Network", desc: "Connect top students with our industry hiring partner network", color: "text-rose-400 bg-rose-500/10" },
+   237→          ].map((f, i) => (
+   238→            <Card
+   239→              key={i}
+   240→              className={cn("p-5 glass-card hover-lift animate-reveal-up group", `stagger-${(i % 6) + 1}`)}
+   241→            >
+   242→              <div className={cn("inline-flex p-2.5 rounded-xl mb-3 transition-transform group-hover:scale-110", f.color)}>
+   243→                <f.icon className="h-5 w-5" />
+   244→              </div>
+   245→              <h3 className="font-semibold text-sm mb-1">{f.title}</h3>
+   246→              <p className="text-xs text-muted-foreground leading-relaxed">{f.desc}</p>
+   247→            </Card>
+   248→          ))}
+   249→        </div>
+   250→      </section>
+   251→
+   252→      {/* === PARTNER LOGOS MARQUEE === */}
+   253→      <section className="py-12 overflow-hidden border-y border-border">
+   254→        <p className="text-center text-xs text-muted-foreground uppercase tracking-widest mb-6">Trusted by Leading Institutions</p>
+   255→        <div className="flex gap-12 animate-marquee whitespace-nowrap">
+   256→          {[...Array(2)].map((_, dup) => (
+   257→            <div key={dup} className="flex gap-12 items-center shrink-0">
+   258→              {["MIT Tech", "Stanford Online", "IIT Delhi", "NUS Computing", "ETH Zurich", "Tsinghua", "Oxford CS", "Tokyo Tech"].map((name, i) => (
+   259→                <div key={i} className="flex items-center gap-2 text-muted-foreground/40 hover:text-muted-foreground transition-colors">
+   260→                  <Building2 className="h-5 w-5" />
+   261→                  <span className="text-sm font-semibold whitespace-nowrap">{name}</span>
+   262→                </div>
+   263→              ))}
+   264→            </div>
+   265→          ))}
+   266→        </div>
+   267→      </section>
+   268→
+   269→      {/* === TESTIMONIALS === */}
+   270→      <section className="py-20">
+   271→        <div className="text-center mb-12">
+   272→          <Badge variant="outline" className="text-xs mb-4 border-amber-500/30 text-amber-400">
+   273→            <Star className="h-3 w-3 mr-1" /> TESTIMONIALS
+   274→          </Badge>
+   275→          <h2 className="text-3xl md:text-4xl font-bold mb-3">What Partners Say</h2>
+   276→        </div>
+   277→
+   278→        <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+   279→          {[
+   280→            {
+   281→              quote: "GuardianX transformed our cyber curriculum. Our CCNA pass rate jumped from 60% to 95% after implementing their labs.",
+   282→              author: "Dr. Anita Krishnan",
+   283→              role: "Head of CS, Bangalore Institute of Technology",
+   284→              initials: "AK",
+   285→            },
+   286→            {
+   287→              quote: "The live instructor sessions are incredible. Students get real-world insights that textbooks simply can't provide.",
+   288→              author: "Prof. James Mitchell",
+   289→              role: "Cyber Security Faculty, Oxford",
+   290→              initials: "JM",
+   291→            },
+   292→            {
+   293→              quote: "Setting up the lab infrastructure was seamless. GuardianX handled everything and our students were hacking in week one.",
+   294→              author: "Dr. Yuki Sato",
+   295→              role: "Department Chair, Tokyo Tech",
+   296→              initials: "YS",
+   297→            },
+   298→          ].map((t, i) => (
+   299→            <Card key={i} className={cn("p-6 glass-card animate-reveal-up", `stagger-${i + 1}`)}>
+   300→              <div className="flex gap-0.5 mb-4">
+   301→                {[...Array(5)].map((_, si) => (
+   302→                  <Star key={si} className="h-4 w-4 text-amber-400 fill-amber-400" />
+   303→                ))}
+   304→              </div>
+   305→              <p className="text-sm text-foreground leading-relaxed mb-4 italic">"{t.quote}"</p>
+   306→              <div className="flex items-center gap-3 pt-3 border-t border-border">
+   307→                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-bold font-mono border border-emerald-500/20">
+   308→                  {t.initials}
+   309→                </div>
+   310→                <div>
+   311→                  <div className="text-sm font-medium">{t.author}</div>
+   312→                  <div className="text-xs text-muted-foreground">{t.role}</div>
+   313→                </div>
+   314→              </div>
+   315→            </Card>
+   316→          ))}
+   317→        </div>
+   318→      </section>
+   319→
+   320→      {/* === CTA SECTION === */}
+   321→      <section className="py-20">
+   322→        <Card className="relative overflow-hidden p-8 lg:p-12 text-center border-emerald-500/20">
+   323→          <div className="absolute inset-0 bg-gradient-to-br from-emerald-950/30 via-background to-cyan-950/20" />
+   324→          <div className="orb bg-emerald-500 w-64 h-64 -top-20 -right-20" />
+   325→          <div className="orb bg-cyan-500 w-64 h-64 -bottom-20 -left-20" style={{ animationDelay: "4s" }} />
+   326→          <div className="relative z-10 max-w-2xl mx-auto">
+   327→            <Shield className="h-12 w-12 text-emerald-400 mx-auto mb-4 animate-float" />
+   328→            <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Transform Your Campus?</h2>
+   329→            <p className="text-muted-foreground mb-6">
+   330→              Join 50+ institutions preparing the next generation of cyber defenders. Schedule a free consultation today.
+   331→            </p>
+   332→            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+   333→              <Button size="lg" className="bg-emerald-500 text-emerald-950 hover:bg-emerald-400 h-12 px-8" onClick={() => navigate({ name: "contact" })}>
+   334→                <Rocket className="h-5 w-5 mr-2" /> Schedule Consultation
+   335→              </Button>
+   336→              <Button size="lg" variant="outline" className="h-12 px-8" onClick={() => navigate({ name: "impact" })}>
+   337→                <Heart className="h-4 w-4 mr-2" /> See Our Impact
+   338→              </Button>
+   339→            </div>
+   340→          </div>
+   341→        </Card>
+   342→      </section>
+   343→    </div>
+   344→  )
+   345→}
+   346→
+   347→// ============ PARTNER DIRECTORY COMPONENT ============
+   348→
+   349→interface Partner {
+   350→  name: string
+   351→  shortName: string
+   352→  type: "school" | "college" | "university"
+   353→  location: string
+   354→  city: string
+   355→  country: string
+   356→  established: number
+   357→  studentsCount: string
+   358→  mouSigned: string // date
+   359→  mouDuration: string // e.g. "3 years"
+   360→  partnershipLevel: "Platinum" | "Gold" | "Silver" | "Bronze"
+   361→  coursesOffered: string[]
+   362→  studentsTrained: number
+   363→  certificationsEarned: number
+   364→  labsSetup: number
+   365→  facultyTrained: number
+   366→  description: string
+   367→  achievements: string[]
+   368→  contactPerson: string
+   369→  contactRole: string
+   370→  email: string
+   371→  phone: string
+   372→  website: string
+   373→  color: string
+   374→  gradient: string
+   375→}
+   376→
+   377→const PARTNERS: Partner[] = [
+   378→  // ===== SCHOOLS =====
+   379→  {
+   380→    name: "Delhi Public School, Bangalore",
+   381→    shortName: "DPS",
+   382→    type: "school",
+   383→    location: "Kanakapura Road",
+   384→    city: "Bangalore",
+   385→    country: "India",
+   386→    established: 2001,
+   387→    studentsCount: "3,500+",
+   388→    mouSigned: "Jan 2024",
+   389→    mouDuration: "5 years",
+   390→    partnershipLevel: "Platinum",
+   391→    coursesOffered: ["Cyber Awareness (Grade 6-8)", "Safe Online Habits (Grade 9-10)", "Intro to Coding Security (Grade 11-12)"],
+   392→    studentsTrained: 1200,
+   393→    certificationsEarned: 0,
+   394→    labsSetup: 2,
+   395→    facultyTrained: 15,
+   396→    description: "One of Bangalore's premier K-12 institutions, DPS Bangalore has integrated GuardianX cyber awareness programs across middle and high school. Students participate in interactive CTF games, digital safety workshops, and age-appropriate security challenges.",
+   397→    achievements: ["Best Cyber Awareness Program Award 2024", "100% student participation in digital safety modules", "Inter-school CTF competition winners (3 years running)", "Featured in 'Cyber Safe Schools' national report"],
+   398→    contactPerson: "Dr. Meera Krishnan",
+   399→    contactRole: "Principal",
+   400→    email: "principal@dpsbangalore.edu.in",
+   401→    phone: "+91 80 2649 2001",
+   402→    website: "dpsbangalore.edu.in",
+   403→    color: "emerald",
+   404→    gradient: "from-emerald-500/20 to-transparent",
+   405→  },
+   406→  {
+   407→    name: "Greenwood International School",
+   408→    shortName: "GIS",
+   409→    type: "school",
+   410→    location: "Whitefield",
+   411→    city: "Bangalore",
+   412→    country: "India",
+   413→    established: 2004,
+   414→    studentsCount: "2,200+",
+   415→    mouSigned: "Aug 2023",
+   416→    mouDuration: "3 years",
+   417→    partnershipLevel: "Gold",
+   418→    coursesOffered: ["Digital Citizenship (Grade 5-7)", "Cyber Safety Basics (Grade 8-10)", "Python Security Intro (Grade 11-12)"],
+   419→    studentsTrained: 850,
+   420→    certificationsEarned: 0,
+   421→    labsSetup: 1,
+   422→    facultyTrained: 8,
+   423→    description: "An IB World School focused on holistic education, Greenwood has adopted GuardianX for its digital literacy curriculum. The school runs a dedicated 'Cyber Guardians' club where students explore ethical hacking basics in a safe environment.",
+   424→    achievements: ["IB Cyber Security Excellence Award", "Cyber Guardians Club: 120+ active members", "Hosted inter-school cyber quiz 2024", "Parent awareness workshops: 500+ attendees"],
+   425→    contactPerson: "Mr. Rajiv Menon",
+   426→    contactRole: "Vice Principal — Technology",
+   427→    email: "tech@greenwood.edu.in",
+   428→    phone: "+91 80 2845 1100",
+   429→    website: "greenwood.edu.in",
+   430→    color: "emerald",
+   431→    gradient: "from-emerald-500/15 to-transparent",
+   432→  },
+   433→  {
+   434→    name: "The Heritage School, Pune",
+   435→    shortName: "THS",
+   436→    type: "school",
+   437→    location: "Wakad",
+   438→    city: "Pune",
+   439→    country: "India",
+   440→    established: 2008,
+   441→    studentsCount: "1,800+",
+   442→    mouSigned: "Mar 2024",
+   443→    mouDuration: "3 years",
+   444→    partnershipLevel: "Silver",
+   445→    coursesOffered: ["Cyber Awareness (Grade 6-9)", "Safe Social Media (Grade 10-12)"],
+   446→    studentsTrained: 450,
+   447→    certificationsEarned: 0,
+   448→    labsSetup: 1,
+   449→    facultyTrained: 6,
+   450→    description: "A progressive CBSE school in Pune, Heritage integrated GuardianX cyber awareness modules into their value-added curriculum. The school hosts annual 'Cyber Safety Week' events with interactive sessions for students and parents.",
+   451→    achievements: ["Cyber Safety Week: 1000+ participants", "Student cyber ambassadors program launched", "Top 3 in Pune inter-school CTF 2024"],
+   452→    contactPerson: "Ms. Sunita Agarwal",
+   453→    contactRole: "Academic Coordinator",
+   454→    email: "academic@heritagepune.edu.in",
+   455→    phone: "+91 20 6678 4500",
+   456→    website: "heritagepune.edu.in",
+   457→    color: "emerald",
+   458→    gradient: "from-emerald-500/10 to-transparent",
+   459→  },
+   460→  {
+   461→    name: "Sunrise Public School, Hyderabad",
+   462→    shortName: "SPS",
+   463→    type: "school",
+   464→    location: "Gachibowli",
+   465→    city: "Hyderabad",
+   466→    country: "India",
+   467→    established: 2010,
+   468→    studentsCount: "2,800+",
+   469→    mouSigned: "Sep 2023",
+   470→    mouDuration: "5 years",
+   471→    partnershipLevel: "Gold",
+   472→    coursesOffered: ["Digital Safety (Grade 3-5)", "Cyber Awareness (Grade 6-8)", "Intro to Cyber Security (Grade 9-12)"],
+   473→    studentsTrained: 920,
+   474→    certificationsEarned: 0,
+   475→    labsSetup: 2,
+   476→    facultyTrained: 12,
+   477→    description: "A tech-forward school in Hyderabad's IT corridor, Sunrise was one of GuardianX's earliest school partners. They have a dedicated 'Cyber Lab' with 30 terminals where students practice hands-on security challenges.",
+   478→    achievements: ["First school in Telangana with dedicated Cyber Lab", "Cyber ambassador program: 80 students", "Hosted GuardianX inter-school hackathon 2024", "Parent cyber safety workshops: 600+ parents trained"],
+   479→    contactPerson: "Mr. Vikram Reddy",
+   480→    contactRole: "Director — Technology Integration",
+   481→    email: "vikram@sunrisehyd.edu.in",
+   482→    phone: "+91 40 2312 7800",
+   483→    website: "sunrisehyd.edu.in",
+   484→    color: "emerald",
+   485→    gradient: "from-emerald-500/12 to-transparent",
+   486→  },
+   487→
+   488→  // ===== COLLEGES =====
+   489→  {
+   490→    name: "Bangalore Institute of Technology",
+   491→    shortName: "BIT",
+   492→    type: "college",
+   493→    location: "KR Circle",
+   494→    city: "Bangalore",
+   495→    country: "India",
+   496→    established: 1979,
+   497→    studentsCount: "6,500+",
+   498→    mouSigned: "Jun 2023",
+   499→    mouDuration: "5 years",
+   500→    partnershipLevel: "Platinum",
+   501→    coursesOffered: ["CCNA Certification Track", "RHCSA System Administration", "CEH Ethical Hacking", "WAPT Web Pentesting"],
+   502→    studentsTrained: 1850,
+   503→    certificationsEarned: 420,
+   504→    labsSetup: 4,
+   505→    facultyTrained: 22,
+   506→    description: "One of Karnataka's top engineering colleges, BIT has embedded GuardianX certification tracks into its Computer Science and Information Science electives. The college has a state-of-the-art Cyber Security Lab with 60 terminals, equipped for hands-on penetration testing and network security exercises. GuardianX instructors conduct weekly in-premises classes, and students take proctored exams on-site.",
+   507→    achievements: ["Best Cyber Security Education Partnership 2024", "420+ industry certifications earned by students", "95% CCNA pass rate (up from 60% pre-partnership)", "Hosted National Cyber Security Hackathon 2024", "Cyber Security Center of Excellence established", "Placement: 180+ students placed in security roles"],
+   508→    contactPerson: "Dr. Anita Krishnan",
+   509→    contactRole: "Professor & Head, Department of CSE",
+   510→    email: "hod.cse@bit-bangalore.edu.in",
+   511→    phone: "+91 80 2672 1783",
+   512→    website: "bit-bangalore.edu.in",
+   513→    color: "cyan",
+   514→    gradient: "from-cyan-500/20 to-transparent",
+   515→  },
+   516→  {
+   517→    name: "Pune Institute of Computer Technology",
+   518→    shortName: "PICT",
+   519→    type: "college",
+   520→    location: "Dhankawadi",
+   521→    city: "Pune",
+   522→    country: "India",
+   523→    established: 1983,
+   524→    studentsCount: "4,200+",
+   525→    mouSigned: "Aug 2023",
+   526→    mouDuration: "3 years",
+   527→    partnershipLevel: "Gold",
+   528→    coursesOffered: ["CEH Certification Prep", "WAPT Web Application Security", "CyberArk PAM Fundamentals", "CCNA Networking"],
+   529→    studentsTrained: 1100,
+   530→    certificationsEarned: 280,
+   531→    labsSetup: 3,
+   532→    facultyTrained: 15,
+   533→    description: "A premier computer engineering college in Pune, PICT integrated GuardianX courses into its IT and Computer Engineering curriculum as industry electives. The college has 3 dedicated lab environments set up by GuardianX, including a network simulation lab and a web application security testing lab. Instructors visit campus twice weekly for hands-on sessions.",
+   534→    achievements: ["280+ students certified in CEH, WAPT, CCNA", "Inter-college CTF champions 2023 & 2024", "Cyber Security Innovation Lab inaugurated 2024", "Industry mentorship: 50+ students mentored", "Average salary hike: 35% for certified students"],
+   535→    contactPerson: "Prof. Suresh Kulkarni",
+   536→    contactRole: "Dean — Industry Relations",
+   537→    email: "dean.ir@pict.edu",
+   538→    phone: "+91 20 2437 2247",
+   539→    website: "pict.edu",
+   540→    color: "cyan",
+   541→    gradient: "from-cyan-500/15 to-transparent",
+   542→  },
+   543→  {
+   544→    name: "Chennai College of Engineering",
+   545→    shortName: "CCE",
+   546→    type: "college",
+   547→    location: "Guindy",
+   548→    city: "Chennai",
+   549→    country: "India",
+   550→    established: 1995,
+   551→    studentsCount: "3,800+",
+   552→    mouSigned: "Nov 2023",
+   553→    mouDuration: "3 years",
+   554→    partnershipLevel: "Silver",
+   555→    coursesOffered: ["CCNA Network Fundamentals", "RHCSA Linux Admin", "Intro to Ethical Hacking"],
+   556→    studentsTrained: 650,
+   557→    certificationsEarned: 145,
+   558→    labsSetup: 2,
+   559→    facultyTrained: 10,
+   560→    description: "An Anna University-affiliated college in Chennai, CCE offers GuardianX certification tracks as part of its skill-development program. The college has set up two GuardianX labs with 40 terminals each, and students take proctored certification exams on campus at the end of each semester.",
+   561→    achievements: ["145 certifications earned in first year", "Cyber security club: 200+ members", "Tamil Nadu inter-college CTF runners-up 2024", "Faculty certification: 10 professors RHCSA-certified"],
+   562→    contactPerson: "Dr. Lakshmi Narayanan",
+   563→    contactRole: "Professor, Department of IT",
+   564→    email: "hod.it@ccechennai.edu.in",
+   565→    phone: "+91 44 2235 1700",
+   566→    website: "ccechennai.edu.in",
+   567→    color: "cyan",
+   568→    gradient: "from-cyan-500/10 to-transparent",
+   569→  },
+   570→  {
+   571→    name: "Mumbai Polytechnic Institute",
+   572→    shortName: "MPI",
+   573→    type: "college",
+   574→    location: "Andheri West",
+   575→    city: "Mumbai",
+   576→    country: "India",
+   577→    established: 1988,
+   578→    studentsCount: "2,500+",
+   579→    mouSigned: "Feb 2024",
+   580→    mouDuration: "3 years",
+   581→    partnershipLevel: "Bronze",
+   582→    coursesOffered: ["CCNA Network Basics", "Linux Administration Fundamentals"],
+   583→    studentsTrained: 380,
+   584→    certificationsEarned: 72,
+   585→    labsSetup: 1,
+   586→    facultyTrained: 5,
+   587→    description: "A leading polytechnic in Mumbai, MPI introduced GuardianX networking and system administration courses as part of its diploma program. The college has one GuardianX lab with 25 terminals, and instructors visit bi-weekly for hands-on workshops.",
+   588→    achievements: ["72 students CCNA-certified in 6 months", "Diploma curriculum updated with security modules", "Industry visit to cyber security firm organized"],
+   589→    contactPerson: "Mr. Prakash Shinde",
+   590→    contactRole: "Training & Placement Officer",
+   591→    email: "tpo@mpimumbai.edu.in",
+   592→    phone: "+91 22 2624 3001",
+   593→    website: "mpimumbai.edu.in",
+   594→    color: "cyan",
+   595→    gradient: "from-cyan-500/8 to-transparent",
+   596→  },
+   597→
+   598→  // ===== UNIVERSITIES =====
+   599→  {
+   600→    name: "Indian Institute of Technology, Delhi",
+   601→    shortName: "IIT-D",
+   602→    type: "university",
+   603→    location: "Hauz Khas",
+   604→    city: "New Delhi",
+   605→    country: "India",
+   606→    established: 1961,
+   607→    studentsCount: "12,000+",
+   608→    mouSigned: "Jan 2023",
+   609→    mouDuration: "5 years",
+   610→    partnershipLevel: "Platinum",
+   611→    coursesOffered: ["CISSP Security Management", "CyberArk PAM Architecture", "Advanced WAPT & API Security", "Cloud Security (AWS/Azure)", "OSCP Prep"],
+   612→    studentsTrained: 2400,
+   613→    certificationsEarned: 680,
+   614→    labsSetup: 6,
+   615→    facultyTrained: 35,
+   616→    description: "India's premier engineering institution, IIT Delhi partnered with GuardianX to establish a Cyber Security Center of Excellence. The partnership includes advanced research labs for penetration testing, cloud security, and identity management. GuardianX conducts in-premises proctored examinations, and the university offers GuardianX certifications as part of its MTech in Cyber Security program. Joint research publications, PhD-level content collaboration, and industry-academia innovation grants are key features of this partnership.",
+   617→    achievements: ["680+ advanced certifications (CISSP, CyberArk, OSCP)", "Cyber Security Center of Excellence — 6 research labs", "12 joint research publications in 2024", "Innovation grant: ₹50L for security research", "Industry placements: 240+ students in top security firms", "Hosted International Cyber Security Conference 2024", "Faculty exchange program with global universities"],
+   618→    contactPerson: "Prof. Dr. Subbarao Nuvvula",
+   619→    contactRole: "Head, Center for Cyber Security",
+   620→    email: "ccs@iitd.ac.in",
+   621→    phone: "+91 11 2659 1111",
+   622→    website: "iitd.ac.in",
+   623→    color: "violet",
+   624→    gradient: "from-violet-500/20 to-transparent",
+   625→  },
+   626→  {
+   627→    name: "National University of Singapore",
+   628→    shortName: "NUS",
+   629→    type: "university",
+   630→    location: "Kent Ridge",
+   631→    city: "Singapore",
+   632→    country: "Singapore",
+   633→    established: 1905,
+   634→    studentsCount: "43,000+",
+   635→    mouSigned: "Mar 2023",
+   636→    mouDuration: "5 years",
+   637→    partnershipLevel: "Platinum",
+   638→    coursesOffered: ["CISSP Certification Track", "CyberArk IAM & PAM", "Advanced Cloud Security", "OSCP Penetration Testing", "GCFA Digital Forensics"],
+   639→    studentsTrained: 1950,
+   640→    certificationsEarned: 540,
+   641→    labsSetup: 5,
+   642→    facultyTrained: 28,
+   643→    description: "Asia's #1 university, NUS partnered with GuardianX to enhance its School of Computing's cyber security curriculum. The partnership includes a dedicated Cyber Range facility with simulated enterprise environments for red team / blue team exercises. GuardianX instructors conduct in-premises classes for postgraduate students, and the university hosts GuardianX proctored certification exams quarterly. The collaboration also includes joint research on AI-driven threat detection and zero-trust architectures.",
+   644→    achievements: ["540+ advanced certifications earned", "Cyber Range facility: 5 simulated enterprise environments", "Joint AI threat detection research: 8 papers published", "NUS-GuardianX Cyber Security Hackathon: 500+ participants", "Industry partnership network: 30+ hiring partners", "Best University Cyber Security Program — Asia 2024"],
+   645→    contactPerson: "Prof. Dr. Winston Tan",
+   646→    contactRole: "Director, NUS Cyber Security Program",
+   647→    email: "cybersec@nus.edu.sg",
+   648→    phone: "+65 6516 6666",
+   649→    website: "nus.edu.sg",
+   650→    color: "violet",
+   651→    gradient: "from-violet-500/18 to-transparent",
+   652→  },
+   653→  {
+   654→    name: "Vellore Institute of Technology",
+   655→    shortName: "VIT",
+   656→    type: "university",
+   657→    location: "Vellore Campus",
+   658→    city: "Vellore",
+   659→    country: "India",
+   660→    established: 1984,
+   661→    studentsCount: "35,000+",
+   662→    mouSigned: "Jul 2023",
+   663→    mouDuration: "5 years",
+   664→    partnershipLevel: "Gold",
+   665→    coursesOffered: ["CEH Ethical Hacking", "CCNA Networking", "RHCSA Linux Admin", "WAPT Web Security", "CISSP Security Management"],
+   666→    studentsTrained: 3200,
+   667→    certificationsEarned: 890,
+   668→    labsSetup: 4,
+   669→    facultyTrained: 30,
+   670→    description: "One of India's largest private universities, VIT integrated GuardianX certification tracks across its CSE, IT, and Cyber Security degree programs. The university has 4 dedicated GuardianX labs across its Vellore and Chennai campuses. In-premises classes are conducted by GuardianX-certified instructors, and students take proctored exams on-site. VIT also runs a GuardianX Virtual Batch for distance-learning students.",
+   671→    achievements: ["890+ certifications across 5 tracks", "4 GuardianX labs (Vellore + Chennai campuses)", "Cyber Security specialization: 600+ enrolled students", "Placement rate: 96% for certified students", "Inter-university CTF: champions 2023, 2024", "Faculty development: 30 professors trained & certified"],
+   672→    contactPerson: "Dr. Chandrasekaran V",
+   673→    contactRole: "Dean — School of Computer Science",
+   674→    email: "dean.scs@vit.ac.in",
+   675→    phone: "+91 416 220 2020",
+   676→    website: "vit.ac.in",
+   677→    color: "violet",
+   678→    gradient: "from-violet-500/15 to-transparent",
+   679→  },
+   680→  {
+   681→    name: "BITS Pilani, Hyderabad Campus",
+   682→    shortName: "BITS-H",
+   683→    type: "university",
+   684→    location: "Jawahar Nagar",
+   685→    city: "Hyderabad",
+   686→    country: "India",
+   687→    established: 2008,
+   688→    studentsCount: "8,500+",
+   689→    mouSigned: "Oct 2023",
+   690→    mouDuration: "3 years",
+   691→    partnershipLevel: "Gold",
+   692→    coursesOffered: ["CEH Certification", "WAPT Web Pentesting", "Cloud Security (AWS)", "CCNP Enterprise"],
+   693→    studentsTrained: 1450,
+   694→    certificationsEarned: 312,
+   695→    labsSetup: 3,
+   696→    facultyTrained: 18,
+   697→    description: "BITS Pilani's Hyderabad campus, located in India's cyber security hub, partnered with GuardianX for its MSc in Information Systems and BE Computer Science programs. The campus has 3 GuardianX labs and benefits from proximity to the city's security industry. GuardianX conducts in-premises workshops, hackathons, and proctored certification exams each semester.",
+   698→    achievements: ["312 certifications in first year", "Hyderabad Cyber Security Hackathon: co-hosted with GuardianX", "Industry mentorship: 80 students paired with security pros", "Research collaboration: 4 papers on cloud security", "Startup incubation: 3 student security startups launched"],
+   699→    contactPerson: "Prof. Dr. Ramesh Hariharan",
+   700→    contactRole: "Professor, Department of CSIS",
+   701→    email: "csis.hyd@bits-pilani.ac.in",
+   702→    phone: "+91 40 6630 3500",
+   703→    website: "bits-pilani.ac.in/hyderabad",
+   704→    color: "violet",
+   705→    gradient: "from-violet-500/12 to-transparent",
+   706→  },
+   707→  {
+   708→    name: "SRM Institute of Science and Technology",
+   709→    shortName: "SRM",
+   710→    type: "university",
+   711→    location: "Kattankulathur",
+   712→    city: "Chennai",
+   713→    country: "India",
+   714→    established: 1985,
+   715→    studentsCount: "52,000+",
+   716→    mouSigned: "May 2023",
+   717→    mouDuration: "5 years",
+   718→    partnershipLevel: "Platinum",
+   719→    coursesOffered: ["CEH Ethical Hacking", "CCNA Networking", "CCNP Enterprise", "RHCSA Linux", "WAPT Web Security", "CyberArk PAM", "CISSP Management"],
+   720→    studentsTrained: 4100,
+   721→    certificationsEarned: 1120,
+   722→    labsSetup: 6,
+   723→    facultyTrained: 42,
+   724→    description: "One of India's largest universities, SRM has the most comprehensive GuardianX partnership. With 7 certification tracks integrated across CSE, IT, and MCA programs, SRM has 6 dedicated GuardianX labs across its Kattankulathur and Ramapuram campuses. The university runs both in-premises classes and virtual batches, making it the largest GuardianX training partner by student volume. Proctored exams are conducted monthly on campus.",
+   725→    achievements: ["1120+ certifications — highest among all partners", "6 labs across 2 campuses", "42 faculty members trained & certified", "Annual GuardianX-SRM Cyber Fest: 2000+ participants", "Placement: 450+ students in security roles (2024)", "Best GuardianX Partner University 2024", "Cyber Security incubation center established"],
+   726→    contactPerson: "Dr. T. R. Srinivasan",
+   727→    contactRole: "Director — School of Computing",
+   728→    email: "director.soc@srmist.edu.in",
+   729→    phone: "+91 44 2745 2270",
+   730→    website: "srmist.edu.in",
+   731→    color: "violet",
+   732→    gradient: "from-violet-500/20 to-transparent",
+   733→  },
+   734→]
+   735→
+   736→const LEVEL_COLORS: Record<string, string> = {
+   737→  Platinum: "text-cyan-300 bg-cyan-300/10 border-cyan-300/30",
+   738→  Gold: "text-amber-400 bg-amber-400/10 border-amber-400/30",
+   739→  Silver: "text-slate-300 bg-slate-300/10 border-slate-300/30",
+   740→  Bronze: "text-orange-600 bg-orange-600/10 border-orange-600/30",
+   741→}
+   742→
+   743→const TYPE_CONFIG = {
+   744→  school: { label: "Schools & K-12", icon: School, color: "emerald", count: 0 },
+   745→  college: { label: "Colleges & Diploma", icon: GraduationCap, color: "cyan", count: 0 },
+   746→  university: { label: "Universities", icon: Landmark, color: "violet", count: 0 },
+   747→}
+   748→
+   749→function PartnerDirectory() {
+   750→  const [activeSegment, setActiveSegment] = React.useState<"school" | "college" | "university" | null>(null)
+   751→  const [expandedPartner, setExpandedPartner] = React.useState<string | null>(null)
+   752→
+   753→  // Calculate counts
+   754→  const counts = {
+   755→    school: PARTNERS.filter((p) => p.type === "school").length,
+   756→    college: PARTNERS.filter((p) => p.type === "college").length,
+   757→    university: PARTNERS.filter((p) => p.type === "university").length,
+   758→  }
+   759→
+   760→  const filteredPartners = activeSegment ? PARTNERS.filter((p) => p.type === activeSegment) : []
+   761→
+   762→  return (
+   763→    <section className="py-20 px-1">
+   764→      <div className="text-center mb-12">
+   765→        <Badge variant="outline" className="text-xs mb-4 border-emerald-500/30 text-emerald-400">
+   766→          <Building2 className="h-3 w-3 mr-1" /> OUR PARTNERS
+   767→        </Badge>
+   768→        <h2 className="text-3xl md:text-4xl font-bold mb-3">Partner Institutions Directory</h2>
+   769→        <p className="text-muted-foreground max-w-2xl mx-auto">
+   770→          Tap a segment to explore our partner {counts.school + counts.college + counts.university} institutions across schools, colleges, and universities.
+   771→        </p>
+   772→      </div>
+   773→
+   774→      {/* Segment selector */}
+   775→      <div className="grid md:grid-cols-3 gap-5 max-w-5xl mx-auto mb-8 perspective-1000">
+   776→        {(["school", "college", "university"] as const).map((type) => {
+   777→          const config = TYPE_CONFIG[type]
+   778→          const Icon = config.icon
+   779→          const isActive = activeSegment === type
+   780→          const count = counts[type]
+   781→          return (
+   782→            <button
+   783→              key={type}
+   784→              onClick={() => setActiveSegment(isActive ? null : type)}
+   785→              className={cn(
+   786→                "animate-reveal-up text-left group transition-all",
+   787→                `stagger-${type === "school" ? 1 : type === "college" ? 2 : 3}`,
+   788→              )}
+   789→            >
+   790→              <Card className={cn(
+   791→                "p-6 h-full card-3d relative overflow-hidden transition-all",
+   792→                isActive && "ring-2",
+   793→                isActive && config.color === "emerald" && "ring-emerald-500/50 border-emerald-500/30",
+   794→                isActive && config.color === "cyan" && "ring-cyan-500/50 border-cyan-500/30",
+   795→                isActive && config.color === "violet" && "ring-violet-500/50 border-violet-500/30",
+   796→              )}>
+   797→                <div className={cn(
+   798→                  "absolute inset-0 bg-gradient-to-br opacity-30 transition-opacity group-hover:opacity-50",
+   799→                  config.color === "emerald" && "from-emerald-500/20 to-transparent",
+   800→                  config.color === "cyan" && "from-cyan-500/20 to-transparent",
+   801→                  config.color === "violet" && "from-violet-500/20 to-transparent",
+   802→                )} />
+   803→                <div className="card-3d-content relative z-10">
+   804→                  <div className="flex items-center justify-between mb-4">
+   805→                    <div className={cn(
+   806→                      "inline-flex p-3 rounded-2xl border transition-transform group-hover:scale-110",
+   807→                      config.color === "emerald" && "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+   808→                      config.color === "cyan" && "bg-cyan-500/10 text-cyan-400 border-cyan-500/20",
+   809→                      config.color === "violet" && "bg-violet-500/10 text-violet-400 border-violet-500/20",
+   810→                    )}>
+   811→                      <Icon className="h-7 w-7" />
+   812→                    </div>
+   813→                    <div className={cn(
+   814→                      "text-right",
+   815→                      config.color === "emerald" && "text-emerald-400",
+   816→                      config.color === "cyan" && "text-cyan-400",
+   817→                      config.color === "violet" && "text-violet-400",
+   818→                    )}>
+   819→                      <div className="text-3xl font-bold tabular-nums">{count}</div>
+   820→                      <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Partners</div>
+   821→                    </div>
+   822→                  </div>
+   823→                  <h3 className="text-xl font-bold mb-1">{config.label}</h3>
+   824→                  <p className="text-xs text-muted-foreground mb-4">
+   825→                    {type === "school" && "Cyber awareness & digital safety programs for K-12 students"}
+   826→                    {type === "college" && "Industry-aligned certification prep embedded in diploma curriculum"}
+   827→                    {type === "university" && "Advanced research labs, CISSP/PAM programs & industry collaboration"}
+   828→                  </p>
+   829→                  <div className={cn(
+   830→                    "flex items-center gap-1 text-sm font-medium transition-colors",
+   831→                    config.color === "emerald" && "text-emerald-400",
+   832→                    config.color === "cyan" && "text-cyan-400",
+   833→                    config.color === "violet" && "text-violet-400",
+   834→                  )}>
+   835→                    {isActive ? "Hide partners" : "View partners"} <ChevronRight className={cn("h-4 w-4 transition-transform", isActive && "rotate-90")} />
+   836→                  </div>
+   837→                </div>
+   838→              </Card>
+   839→            </button>
+   840→          )
+   841→        })}
+   842→      </div>
+   843→
+   844→      {/* Partner cards grid */}
+   845→      {activeSegment && (
+   846→        <div className="space-y-6 max-w-6xl mx-auto animate-fade-in-up">
+   847→          <div className="flex items-center gap-3">
+   848→            <div className={cn(
+   849→              "p-2 rounded-lg border",
+   850→              TYPE_CONFIG[activeSegment].color === "emerald" && "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+   851→              TYPE_CONFIG[activeSegment].color === "cyan" && "bg-cyan-500/10 text-cyan-400 border-cyan-500/20",
+   852→              TYPE_CONFIG[activeSegment].color === "violet" && "bg-violet-500/10 text-violet-400 border-violet-500/20",
+   853→            )}>
+   854→              {React.createElement(TYPE_CONFIG[activeSegment].icon, { className: "h-5 w-5" })}
+   855→            </div>
+   856→            <h3 className="text-xl font-bold">{TYPE_CONFIG[activeSegment].label}</h3>
+   857→            <Badge variant="outline" className="text-xs">{filteredPartners.length} institutions</Badge>
+   858→          </div>
+   859→
+   860→          {filteredPartners.map((p, i) => (
+   861→            <PartnerCard
+   862→              key={p.name}
+   863→              partner={p}
+   864→              index={i}
+   865→              isExpanded={expandedPartner === p.name}
+   866→              onToggle={() => setExpandedPartner(expandedPartner === p.name ? null : p.name)}
+   867→            />
+   868→          ))}
+   869→        </div>
+   870→      )}
+   871→    </section>
+   872→  )
+   873→}
+   874→
+   875→function PartnerCard({ partner: p, index, isExpanded, onToggle }: {
+   876→  partner: Partner
+   877→  index: number
+   878→  isExpanded: boolean
+   879→  onToggle: () => void
+   880→}) {
+   881→  const colorClass = p.color === "emerald" ? "text-emerald-400" : p.color === "cyan" ? "text-cyan-400" : "text-violet-400"
+   882→  const bgClass = p.color === "emerald" ? "bg-emerald-500/10 border-emerald-500/20" : p.color === "cyan" ? "bg-cyan-500/10 border-cyan-500/20" : "bg-violet-500/10 border-violet-500/20"
+   883→
+   884→  return (
+   885→    <Card
+   886→      className={cn("overflow-hidden glass-card hover-lift animate-reveal-up relative", `stagger-${(index % 6) + 1}`)}
+   887→    >
+   888→      <div className={cn("absolute inset-0 bg-gradient-to-r opacity-10 pointer-events-none", p.gradient)} />
+   889→
+   890→      {/* Header row */}
+   891→      <div className="relative z-10 p-5 lg:p-6">
+   892→        <div className="flex items-start gap-4">
+   893→          {/* Institution logo/initials */}
+   894→          <div className={cn("flex h-14 w-14 lg:h-16 lg:w-16 shrink-0 items-center justify-center rounded-2xl font-mono font-bold text-lg lg:text-xl border", bgClass, colorClass)}>
+   895→            {p.shortName}
+   896→          </div>
+   897→
+   898→          {/* Title + meta */}
+   899→          <div className="flex-1 min-w-0">
+   900→            <div className="flex items-center gap-2 mb-1 flex-wrap">
+   901→              <h3 className="text-lg lg:text-xl font-bold">{p.name}</h3>
+   902→              <Badge className={cn("text-[9px] border", LEVEL_COLORS[p.partnershipLevel])}>
+   903→                <Trophy className="h-2.5 w-2.5 mr-0.5" /> {p.partnershipLevel}
+   904→              </Badge>
+   905→            </div>
+   906→            <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+   907→              <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> {p.city}, {p.country}</span>
+   908→              <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> Est. {p.established}</span>
+   909→              <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {p.studentsCount} students</span>
+   910→            </div>
+   911→          </div>
+   912→
+   913→          {/* Expand button */}
+   914→          <button
+   915→            onClick={onToggle}
+   916→            className={cn("shrink-0 p-2 rounded-lg transition-colors hover:bg-accent/50", colorClass)}
+   917→            aria-label={isExpanded ? "Collapse" : "Expand"}
+   918→          >
+   919→            <ChevronRight className={cn("h-5 w-5 transition-transform", isExpanded && "rotate-90")} />
+   920→          </button>
+   921→        </div>
+   922→
+   923→        {/* Description */}
+   924→        <p className="text-sm text-muted-foreground leading-relaxed mt-3 mb-4">{p.description}</p>
+   925→
+   926→        {/* Quick stats */}
+   927→        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+   928→          {[
+   929→            { icon: Users, label: "Students Trained", value: p.studentsTrained.toLocaleString(), color: "text-emerald-400" },
+   930→            { icon: Award, label: "Certifications", value: p.certificationsEarned.toString(), color: "text-amber-400" },
+   931→            { icon: Terminal, label: "Labs Setup", value: p.labsSetup.toString(), color: "text-violet-400" },
+   932→            { icon: Briefcase, label: "Faculty Trained", value: p.facultyTrained.toString(), color: "text-cyan-400" },
+   933→          ].map((s, i) => (
+   934→            <div key={i} className="glass-card rounded-lg p-3 text-center">
+   935→              <s.icon className={cn("h-4 w-4 mx-auto mb-1", s.color)} />
+   936→              <div className={cn("text-lg font-bold tabular-nums", s.color)}>{s.value}</div>
+   937→              <div className="text-[9px] text-muted-foreground">{s.label}</div>
+   938→            </div>
+   939→          ))}
+   940→        </div>
+   941→
+   942→        {/* MOU info bar */}
+   943→        <div className="flex items-center gap-3 p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/15 mb-4">
+   944→          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/10 border border-emerald-500/20 shrink-0">
+   945→            <FileText className="h-4 w-4 text-emerald-400" />
+   946→          </div>
+   947→          <div className="flex-1 min-w-0">
+   948→            <div className="text-xs font-semibold text-emerald-400">MOU Signed</div>
+   949→            <div className="text-[10px] text-muted-foreground">{p.mouSigned} · Duration: {p.mouDuration} · Partnership Level: {p.partnershipLevel}</div>
+   950→          </div>
+   951→          <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+   952→        </div>
+   953→
+   954→        {/* Courses offered */}
+   955→        <div className="mb-4">
+   956→          <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
+   957→            <BookMarked className="h-3 w-3" /> Courses Offered
+   958→          </div>
+   959→          <div className="flex flex-wrap gap-2">
+   960→            {p.coursesOffered.map((c, i) => (
+   961→              <Badge key={i} variant="outline" className={cn("text-[10px]", colorClass, "border-current/30")}>{c}</Badge>
+   962→            ))}
+   963→          </div>
+   964→        </div>
+   965→
+   966→        {/* Expandable details */}
+   967→        {isExpanded && (
+   968→          <div className="space-y-4 animate-fade-in-up pt-4 border-t border-border">
+   969→            {/* Achievements */}
+   970→            <div>
+   971→              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
+   972→                <Trophy className="h-3 w-3" /> Key Achievements
+   973→              </div>
+   974→              <div className="grid sm:grid-cols-2 gap-2">
+   975→                {p.achievements.map((a, i) => (
+   976→                  <div key={i} className="flex items-start gap-2 p-2 rounded-lg bg-muted/20">
+   977→                    <CheckCircle2 className={cn("h-3.5 w-3.5 shrink-0 mt-0.5", colorClass)} />
+   978→                    <span className="text-xs text-muted-foreground">{a}</span>
+   979→                  </div>
+   980→                ))}
+   981→              </div>
+   982→            </div>
+   983→
+   984→            {/* Contact info */}
+   985→            <div>
+   986→              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
+   987→                <Mail className="h-3 w-3" /> Institution Contact
+   988→              </div>
+   989→              <div className="grid sm:grid-cols-2 gap-3">
+   990→                <div className="p-3 rounded-lg glass-card">
+   991→                  <div className="text-sm font-medium">{p.contactPerson}</div>
+   992→                  <div className="text-[10px] text-muted-foreground mb-2">{p.contactRole}</div>
+   993→                  <div className="space-y-1">
+   994→                    <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+   995→                      <Mail className="h-3 w-3" /> {p.email}
+   996→                    </div>
+   997→                    <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+   998→                      <Phone className="h-3 w-3" /> {p.phone}
+   999→                    </div>
+  1000→                    <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+  1001→                      <Globe className="h-3 w-3" /> {p.website}
+  1002→                    </div>
+  1003→                  </div>
+  1004→                </div>
+  1005→                <div className="p-3 rounded-lg glass-card">
+  1006→                  <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Location</div>
+  1007→                  <div className="space-y-1">
+  1008→                    <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+  1009→                      <MapPin className="h-3 w-3" /> {p.name}, {p.location}
+  1010→                    </div>
+  1011→                    <div className="text-[11px] text-muted-foreground">{p.city}, {p.country}</div>
+  1012→                    <div className="flex items-center gap-2 text-[11px] text-muted-foreground mt-2">
+  1013→                      <Calendar className="h-3 w-3" /> Established {p.established}
+  1014→                    </div>
+  1015→                  </div>
+  1016→                </div>
+  1017→              </div>
+  1018→            </div>
+  1019→          </div>
+  1020→        )}
+  1021→      </div>
+  1022→    </Card>
+  1023→  )
+  1024→}
+  1025→

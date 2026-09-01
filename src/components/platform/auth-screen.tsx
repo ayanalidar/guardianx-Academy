@@ -28,9 +28,9 @@ import { AnimatedLogo } from "@/components/platform/animated-logo"
 // Demo accounts - only shown in development, never in production
 const IS_DEV = process.env.NODE_ENV !== "production"
 const DEMO_ACCOUNTS = IS_DEV ? [
-  { label: "Student", email: "student@academy.guardianx.cloud", password: "student123", icon: GraduationCap, color: "text-violet-300", tint: "bg-violet-500/10 border-violet-500/30" },
-  { label: "Instructor", email: "instructor@academy.guardianx.cloud", password: "instructor123", icon: User, color: "text-cyan-300", tint: "bg-cyan-500/10 border-cyan-500/30" },
-  { label: "Admin", email: "admin@academy.guardianx.cloud", password: "admin123", icon: Shield, color: "text-amber-300", tint: "bg-amber-500/10 border-amber-500/30" },
+  { label: "Student", email: "student@guardianx.io", password: "student123", icon: GraduationCap, color: "text-violet-300", tint: "bg-violet-500/10 border-violet-500/30" },
+  { label: "Instructor", email: "instructor@guardianx.io", password: "instructor123", icon: User, color: "text-cyan-300", tint: "bg-cyan-500/10 border-cyan-500/30" },
+  { label: "Admin", email: "admin@guardianx.io", password: "admin123", icon: Shield, color: "text-amber-300", tint: "bg-amber-500/10 border-amber-500/30" },
 ] : []
 
 const FEATURES = [
@@ -86,6 +86,9 @@ export function AuthScreen() {
 
   // After successful auth, fetch the user's role and route accordingly.
   // Retries up to 3 times with 300ms delay to handle session propagation.
+  // Falls back to the lighter /api/auth/session endpoint if /api/me fails
+  // (e.g. if a downstream DB query in /api/me errors) so login never gets
+  // stuck on a non-auth-related failure.
   async function routeByRole() {
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
@@ -108,7 +111,20 @@ export function AuthScreen() {
       }
       await new Promise(r => setTimeout(r, 300))
     }
-    // Fallback: go to dashboard
+    // Fallback: try the lighter session endpoint before giving up
+    try {
+      const r = await fetch("/api/auth/session", { credentials: "include" })
+      const data = await r.json()
+      const role = data?.user?.role
+      if (role === "ADMIN") navigate({ name: "admin" })
+      else if (role === "INSTRUCTOR") navigate({ name: "instructor" })
+      else if (role === "SCHOOL_ADMIN") navigate({ name: "school" })
+      else if (role) navigate({ name: "dashboard" })
+      else navigate({ name: "home" })
+      return
+    } catch {
+      // Final fallback: go to dashboard
+    }
     navigate({ name: "dashboard" })
   }
 

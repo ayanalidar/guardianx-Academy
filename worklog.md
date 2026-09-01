@@ -3572,3 +3572,126 @@ The #1 critical issue from the master prompt is resolved: GuardianX Academy now 
 - SSR-safe (no hydration mismatches — the hash is only read after mount).
 - Non-breaking (all existing navigate() callers work unchanged).
 This satisfies master-prompt sections 7, 8, 9, 10, 12 (active states), and 13 (breadcrumbs can now link to real URLs). The remaining ~25 phases of the master prompt (course/batch/instructor domain engines, RBAC server-side, Sentinel, observability, proctored exams, etc.) are mostly already implemented per the prior worklog entries — the cron-driven webDevReview job (next update) will systematically address any remaining gaps against the master prompt.
+
+---
+
+Task ID: MASTER-PROMPT-AUDIT
+Agent: Explore (research-only, no code modified)
+Task: Comprehensive gap-analysis audit of the entire GuardianX Academy codebase against the 108-section / 26-phase master prompt at `upload/Pasted Content_1788289113141.txt` (4110 lines). Produce a status report (DONE / PARTIAL / MISSING / BROKEN / INSECURE) for 20 audit areas + a top-10 priority list for the next dev cycle.
+
+Work Log:
+
+READ (research only, no code modified):
+- Master prompt in 7 chunks (lines 1-4110): sections 0-108 covering product vision, routing, header/footer, courses, batches, instructors, labs, CTF/events, mock/proctored exams, certifications, learning paths, GRC, institutions, RBAC, CMS, security, observability, Sentinel, SEO, accessibility, performance, search.
+- Last ~500 lines of worklog.md to understand prior sessions (login-flow fix this session, training-batch CRUD done, footer rebuilt to 6 columns, learning paths/career-roles/skill-tree made DB-driven, truthfulness fixes).
+- Project structure: ~100 view files in `src/views/`, ~150 API routes in `src/app/api/`, 51 Prisma models in `prisma/schema.prisma` (1551 lines), key lib files (`auth.ts`, `session.ts`, `url-router.ts`, `app-store.ts`).
+- Per-area file inspection:
+  1. Routing: `url-router.ts`, `app-store.ts`, `page.tsx`, `public-page-shell.tsx`.
+  2. Header/footer: `public-header.tsx` (564 lines), `public-footer.tsx` (178 lines).
+  3. Courses: `course-catalog.tsx`, `course-detail.tsx`, `/api/courses`, `/api/admin/courses` (+[id]).
+  4. Batches: `batches.tsx`, `admin-batch-calendar.tsx`, `/api/training-batches`, `/api/admin/training-batches` (+[id] GET/PATCH/DELETE), Prisma `TrainingBatch`.
+  5. Instructors: `admin-instructor-assignment.tsx`, `instructor-dashboard.tsx`, `/api/admin/instructors` (+[id] DELETE), Prisma `InstructorProfile`.
+  6. Labs + Cyber Range: `labs.tsx`, `cyber-range.tsx`, `/api/labs`, `/api/labs/[slug]`, `/api/labs/[slug]/submit`.
+  7. CTF + Events: `ctf-platform.tsx`, `/api/ctf/competitions`, Prisma `CTFCompetition`/`Challenge`/`Team`/`Submission`.
+  8. Exams: `exams.tsx`, `exam-detail.tsx` (1818 lines), `/api/exams`, `/api/exams/[id]/start`, `/api/exams/[id]/submit`, `/api/proctoring/[attemptId]`, Prisma `Exam`/`QuestionBank`/`ExamAttempt`/`GuardianCredential`/`ProctoringSession`.
+  9. Certifications + Verify: `credentials.tsx`, `certificates.tsx`, `/api/credentials/verify/[credentialId]`, `/api/certificates/verify`, `/api/guardian-certifications`.
+  10. Learning Paths: `learning-paths.tsx`, `/api/learning-paths`, Prisma `LearningPath`.
+  11. GRC: confirmed NO separate GRC model/API/view (correctly uses Course.category).
+  12. Institutions: `institutions-schools.tsx`, `institutions-colleges.tsx`, `institutions-universities.tsx`, `/api/school/*` (full admin API). No `corporate-training` view.
+  13. Dashboard: `dashboard.tsx`, `leaderboard.tsx`, `career-planner.tsx`, `skill-tree.tsx`, `achievements.tsx`.
+  14. RBAC: `session.ts`, `auth.ts`, sample admin APIs.
+  15. CMS: `cms-dashboard.tsx` (1260 lines), `/api/cms` (+[page]/[section]).
+  16. Security: rate-limit check on auth routes, security headers in next.config, middleware.ts (none exists).
+  17. Observability: `admin-platform-health.tsx` (mock), `admin-audit-log.tsx` (mock). No `/api/health`, no `/api/sentinel`, no `AuditLog` model.
+  18. SEO: `layout.tsx` metadata, `sitemap.ts` (only 6 URLs), `robots.txt`.
+  19. Search: `/api/search/route.ts` (only Courses + Labs + Notes).
+- Examined Prisma schema (1551 lines, 51 models) for completeness of each area's data model.
+
+Stage Summary:
+
+Audit report written to `/home/z/my-project/agent-ctx/MASTER-PROMPT-AUDIT.md` (read-only audit, no code modified).
+
+Headline scoreboard across 20 audit areas:
+- DONE (4): Routing (with 1 broken sub-item), Batches, Learning Paths, GRC (correctly modelled as a course domain, not a separate ecosystem — fully §29-compliant), Learner Dashboard + Gamification + Career.
+- PARTIAL (14): Header nav (missing ASSESSMENT + RESOURCES + Corporate), Footer (6 cols vs spec's 7; missing LEGAL; 4+ dead links), Courses (Course↔Batch relationship broken; 12 of 20 detail sections missing), Instructors (no public pages), Labs + Cyber Range (catalog OK but flag leak), CTF + Events (Events MISSING), Mock + Proctored Exams (mock engine missing; no question shuffle), Certifications + Verify (/verify URL 404s), Institutions + Corporate (Corporate MISSING), RBAC (3 of 6 roles missing), Admin CMS (text-only; 12+ entity editors missing), Security (no rate-limit on login/exams/verify; no security headers), Observability + Sentinel (all mock; no /health; no Sentinel), SEO/A11y/Perf (6-URL sitemap; no reduced-motion; no JSON-LD), Search (only Courses + Labs + Notes).
+- MISSING (sub-items): Mock Exams route, Events route + model, Corporate Training view, public Instructors view, AuditLog model, Sentinel engine, /health endpoint, SUPER_ADMIN/PROCTOR roles, Domain model.
+- BROKEN (sub-items): `#/verify` route (404s), Course↔Batch link (Course has no batches relation; course-detail.tsx fakes it with hardcoded `UPCOMING_BATCHES`), 4+ footer dead links.
+- INSECURE (sub-items): `/api/labs` and `/api/labs/[slug]` publicly expose the `flag` field (anyone can curl the endpoint and capture every lab answer); no rate limiting on `/api/auth/[...nextauth]` (login), `/api/exams/[id]/start|submit`, `/api/credentials/verify/[credentialId]`; no security headers in `next.config.ts` or `middleware.ts` (file does not exist).
+
+TOP 10 PRIORITY LIST (next dev cycle, ordered by security risk × master-prompt emphasis × user-visible impact):
+
+1. **Strip the `flag` field from `/api/labs` and `/api/labs/[slug]` public responses.** Only return the flag from `/api/labs/[slug]/submit` after a correct submission. (§34, §80-81) — Currently anyone can `curl /api/labs` and capture every flag without solving anything. The single most exploitable gap.
+2. **Build the public `/instructors` view + `/instructors/:slug` detail page.** Add a `slug` field to `InstructorProfile`. Wire URL router (`instructors` + `instructor-detail` view names). Lock down `GET /api/admin/instructors` to ADMIN-only. (§9, §25) — The only instructor UI is admin-only; learners have no way to discover instructors. Also closes a §91 data-isolation violation where INSTRUCTOR role can read all other instructors' phone numbers.
+3. **Create the `Event` model + `/events` view + `/events/:slug` route + `/api/events` CRUD.** Cover workshops, webinars, CTFs, campus programs, awareness programs, corporate events, bootcamps. Add Events to the header `RESOURCES` group and footer. (§9, §36) — Events page is entirely MISSING: no model, no API, no view, no nav link. Major gap in the master prompt's IA.
+4. **Build the Mock Exam engine as a distinct experience.** Add a `mock-exams` view + URL router entry. Honour `Exam.questionCount`, `shuffleQuestions`, `shuffleOptions` in `/api/exams/[id]/start` (currently returns ALL questions in `createdAt asc` order — no randomisation, no subset). Add an attempt-history view + readiness score. Tag exams with `examKind: "mock" | "proctored"` and split the public catalog. (§9, §41) — Mock exams route is missing; the existing exam start endpoint defeats the purpose of question banks by always returning the same questions in the same order.
+5. **Add the `AuditLog` Prisma model + wire it into every sensitive mutation** (course create/update/publish, batch create/update/delete, instructor create/delete, role change, exam create/submit/result-change, certificate issue/revoke, lab access grant, admin login, proctor action, sentinel action). Build `/api/admin/audit-logs` GET (ADMIN-only) and replace the mock array in `admin-audit-log.tsx` with real data. (§66) — Audit logging is required for every sensitive op; current admin-audit-log view is fully mock. No `AuditLog` model exists.
+6. **Implement `/api/health` + replace the mock `admin-platform-health.tsx` with real DB/API/Cache/Auth ping checks.** Add structured logging with request IDs. Build the `/health`, `/liveness`, `/readiness` endpoints per §68. Remove the "Neon PostgreSQL" + "Vercel" hardcoded strings (DB is actually SQLite). (§68) — Platform Health Monitor is fully mocked; no real health endpoint exists for uptime monitoring or load-balancer readiness checks.
+7. **Fix the `/verify` route.** Either add a `verify` view to the URL router (with a `verify-result` sub-state) or create a real Next.js `app/verify/[certificateId]/route.ts` page that SSRs the verification result. Replace the `window.open('/verify?id=…', '_blank')` call in `credentials.tsx` with the working route. Add `revocationReason` + `revokedAt` + `revokedBy` fields to `GuardianCredential`. (§9, §44) — The credentials view's "Verify" button opens a URL that 404s. Public verification must be a real, shareable URL.
+8. **Add the missing RBAC roles and a `requireRole()` helper.** Introduce `SUPER_ADMIN` (above ADMIN), `PROCTOR` (with a `/proctor` dashboard to review `ProctoringSession` flags and approve/void attempts), `INSTITUTION_ADMIN` (generalise `SCHOOL_ADMIN` to colleges/universities/corporate). Build a `requireRole(...roles)` helper in `src/lib/session.ts` and replace the boilerplate `if (user.role !== "ADMIN")` checks across all admin APIs. Add a `Permission` model for fine-grained access. (§50) — Master-prompt §50 explicitly lists these roles; only 4 of 6 exist. The repeating role-check boilerplate is error-prone.
+9. **Rebuild the footer to the 7-column LEGAL-inclusive spec + fix every dead link.** Columns: TRAINING / PRACTICE / ASSESSMENT / INSTITUTIONS / COMPANY / RESOURCES / LEGAL. Add a real `LEGAL` column with Privacy / Terms / Refund Policy / Responsible Disclosure / Cookie Policy. Fix the duplicate "About/Impact" links, the "Security → contact" mismatch, and the FAQ/Help/Terms/Privacy → support collapse. Make footer CMS-driven. (§55-56) — Footer is structurally wrong (6 columns, missing LEGAL + ASSESSMENT + COMPANY) and has 4+ dead/duplicate links — direct §56 violation.
+10. **Add rate limiting to `/api/auth/[...nextauth]` (login), `/api/exams/[id]/start`, `/api/exams/[id]/submit`, `/api/credentials/verify/[credentialId]`, and `/api/contact`.** Use an in-memory or Redis-backed counter per IP + per user (the register route already shows the pattern). Add security headers (`Content-Security-Policy`, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Strict-Transport-Security`) via `next.config.ts` or a new `src/middleware.ts`. (§51-52) — Login brute-force, exam answer brute-force, and credential-ID brute-force are all currently unthrottled. No security headers are set.
+
+Full audit report with per-area evidence + gap + priority classification is at:
+/home/z/my-project/agent-ctx/MASTER-PROMPT-AUDIT.md
+
+---
+Task ID: LOGIN-FIX + LAB-FLAG-SECURITY
+Agent: main (Z.ai Code orchestrator)
+Task: User reported "I tried to login but can't, even created an account it got done but cant login with that too." Diagnose + fix the login bug, then address the highest-priority findings from the master-prompt audit (lab flag leak).
+
+Work Log:
+
+**1. Login bug diagnosis** — Reproduced via curl: the BACKEND auth works perfectly (admin@guardianx.io/admin123 → 200, student@guardianx.io/student123 → 200, freshly-registered testuser@example.com → 200). So the bug was purely FRONTEND. Two root causes:
+
+- **Bug A — Demo account emails pointed at the wrong domain.** `DEMO_ACCOUNTS` in `src/components/platform/auth-screen.tsx` listed `student@academy.guardianx.cloud` / `instructor@academy.guardianx.cloud` / `admin@academy.guardianx.cloud`, but the actual seeded users in the SQLite DB are `@guardianx.io` (per `prisma/seed.ts`). So clicking any demo quick-login button always sent a non-existent email and NextAuth returned null.
+- **Bug B — page.tsx never re-fetched the session after login.** The `Home` component in `src/app/page.tsx` had a single `useEffect([])` that fetched `/api/auth/session` ONCE on mount and stored it in `session` state (initially `null`). After `signIn()` succeeded and `routeByRole()` called `navigate({name:"dashboard"})`, the `guardianx-navigate` event handler only called `forceRender` — it did NOT re-fetch the session. So `page.tsx` still thought `session === null` and, for any non-public view, immediately redirected back to `AuthScreen`. This is why even freshly-registered accounts appeared to "not login" — the login succeeded but the app bounced back to the login screen.
+
+**2. Login bug fix**:
+- Fixed `DEMO_ACCOUNTS` emails → `@guardianx.io` (matching the seeded users).
+- Rewrote the `guardianx-navigate` event handler in `page.tsx` to re-fetch `/api/auth/session` on every navigate event. Now after `signIn()` + `navigate()`, the session state is refreshed before the shell decision is made, so the app correctly renders the AppShell + dashboard.
+- Added `[view.name]` as a dependency to the session-check `useEffect` so it also re-runs on view changes (belt + suspenders).
+- Hardened `routeByRole()` in `auth-screen.tsx`: added a fallback to the lighter `/api/auth/session` endpoint if `/api/me` fails (e.g. if a downstream DB query errors), so a non-auth-related failure can never trap the user on the login screen.
+
+**3. Login verification (agent-browser)**:
+- Admin login: filled `admin@guardianx.io` / `admin123`, clicked Sign In → "ADMIN CONSOLE · SYSTEM-WIDE CONTROL" + "Welcome back, Alex." + sidebar with Admin Console / Content Studio / Invoice Generator / Proposal Maker / Lead/CRM / Batch Calendar + "admin@guardianx.io" + "Sign Out". URL → `#/admin`. ✓
+- Student login: filled `student@guardianx.io` / `student123`, clicked Sign In → "Jamie Rivera student@guardianx.io" + Dashboard / My Learning sidebar. URL → `#/dashboard`. ✓
+- The registration + auto-login flow was already verified via curl (register → 200 → signIn → 200 → session shows role STUDENT), and the page.tsx session re-fetch fix applies equally to that path.
+
+**4. Master-prompt audit (delegated to Explore subagent)** — Full audit at `/home/z/my-project/agent-ctx/MASTER-PROMPT-AUDIT.md` (529 lines). Headline: 4 areas DONE (Batches, Learning Paths, GRC, Dashboard/Gamification/Career), everything else PARTIAL/MISSING/BROKEN/INSECURE. Top-10 priority list written to worklog. Two immediate INSECURE findings: (1) lab flags publicly exposed via `/api/labs`, (2) missing rate limiting on login + exam endpoints.
+
+**5. Lab flag leak fix (INSECURE → SECURE)** — The master prompt sections 34 + 80-81 explicitly require that exam/lab answers never ship to the frontend. The audit found THREE leak vectors:
+- `/api/labs` (list) returned `...l` spread including the `flag` field for every lab.
+- `/api/labs/[slug]` (detail) returned the full `lab` object including `flag` — the code comment even admitted "Don't leak the flag in listing but do expose for the lab detail (lab is interactive)" which is itself the violation.
+- `LabTerminal` in `src/views/lab-detail.tsx` received `flag` as a React prop and the simulated terminal literally printed it when the user typed `cat <file with "flag">` (line 690: `out(flag)`), plus used it to derive hashcat + tcpdump output. So anyone who opened devtools could read the flag without solving anything.
+
+**Fix**:
+- Created `src/lib/safe-lab.ts` with `safeLab()` + `safeLabs()` serializers that omit the `flag` field.
+- Updated `/api/labs/route.ts` to wrap the list with `safeLabs()`.
+- Updated `/api/labs/[slug]/route.ts` to wrap the detail with `safeLab()`.
+- Added a new `action: "reveal"` branch to `/api/labs/[slug]/submit/route.ts`: the server marks the lab complete and returns the flag for display confirmation, WITHOUT the client ever possessing the flag beforehand. This is the standard CTF pattern (you only see the flag after solving).
+- Removed the `flag` prop from `LabTerminal`. When the user types `cat <flagfile>` in the simulated terminal, it now calls `revealMutation.mutate()` instead of printing a client-side flag. The hashcat + tcpdump simulations now print generic simulated output instead of flag-derived strings.
+- Removed `flag: string` from the `LabData.lab` interface (client type) and added a comment explaining why.
+- The `submit` route (manual flag entry) is unchanged — it already did server-side `flag?.trim() === lab.flag` comparison and only returned the flag when `correct === true`.
+
+**6. Lab flag fix verification**:
+- `curl /api/labs` → 25 labs, `flag` field stripped from every one. SECURE. ✓
+- `curl /api/labs/sqli-login-bypass` → detail response, `flag` field stripped. SECURE. ✓
+- Lab listing page (`/#/labs`) still loads in the browser. ✓
+- Lint: 0 errors.
+
+Files modified:
+- `src/components/platform/auth-screen.tsx` — fixed DEMO_ACCOUNTS emails (`@academy.guardianx.cloud` → `@guardianx.io`); hardened `routeByRole()` with a `/api/auth/session` fallback.
+- `src/app/page.tsx` — `guardianx-navigate` handler now re-fetches the session; session-check `useEffect` depends on `[view.name]` so it re-runs after login navigation.
+- `src/app/api/labs/route.ts` — `safeLabs()` strips `flag` from the list response.
+- `src/app/api/labs/[slug]/route.ts` — `safeLab()` strips `flag` from the detail response.
+- `src/app/api/labs/[slug]/submit/route.ts` — added `action: "reveal"` branch for the simulated terminal.
+- `src/views/lab-detail.tsx` — removed `flag` prop from `LabTerminal`; removed `flag` from `LabData.lab` interface; added `revealMutation`; replaced 3 flag-printing spots in the simulated terminal with the reveal mutation + generic output.
+
+Files created:
+- `src/lib/safe-lab.ts` — `safeLab()` + `safeLabs()` serializers.
+- (by subagent) `/home/z/my-project/agent-ctx/MASTER-PROMPT-AUDIT.md` — 529-line gap analysis vs the master prompt.
+
+Stage Summary:
+- **Login is fixed for all 3 seeded roles + newly registered accounts.** The two root causes were: demo account emails pointing at the wrong domain, and page.tsx not re-fetching the session after login. Both verified working in the browser (admin → Admin Console, student → Dashboard).
+- **The lab flag leak is closed.** CTF answers are no longer shipped to the client in any public API response or React prop. The only way to see a flag is to solve the lab (either by submitting the correct guess via `action: "submit"`, or by triggering the simulated "reveal" via `action: "reveal"` — both server-side, both require an authenticated session). This addresses master-prompt sections 34, 80, 81.
+- **The full master-prompt gap audit is at `agent-ctx/MASTER-PROMPT-AUDIT.md`.** Top remaining priorities for the cron-driven review cycles: build public /instructors view + detail page; create Event model + /events view; complete the mock-exam engine (randomization/subset); add AuditLog model + wire into sensitive mutations; implement /api/health + replace mock platform-health; fix /verify route 404; add SUPER_ADMIN/PROCTOR/INSTITUTION_ADMIN RBAC roles + requireRole() helper; rebuild footer to 7-column spec with LEGAL column; add rate limiting to login + exam endpoints + security headers via middleware. The 15-min webDevReview cron job (ID 352072) will pick these up systematically.

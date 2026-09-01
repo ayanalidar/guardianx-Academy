@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/session"
+import { safeLab } from "@/lib/safe-lab"
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
@@ -13,6 +14,11 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ slu
     progress = await db.labProgress.findUnique({ where: { userId_labId: { userId: user.id, labId: lab.id } } })
   }
 
-  // Don't leak the flag in listing but do expose for the lab detail (lab is interactive)
-  return NextResponse.json({ lab, progress })
+  // SECURITY: the flag is NEVER shipped to the client — not even on the
+  // lab detail page. The client submits a guess to /api/labs/[slug]/submit
+  // and the server tells it whether the guess was correct. Only after a
+  // correct submission does the submit route echo the flag back for
+  // confirmation (master-prompt §34, §80-81). This was previously leaking
+  // the full lab object including `flag` to every unauthenticated visitor.
+  return NextResponse.json({ lab: safeLab(lab), progress })
 }

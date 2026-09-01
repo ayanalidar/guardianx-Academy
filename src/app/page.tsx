@@ -166,15 +166,25 @@ export default function Home() {
   const [sessionChecked, setSessionChecked] = React.useState(false)
   const [, forceRender] = React.useState(0)
 
-  // Listen for navigation events (fallback for when Zustand re-render doesn't trigger)
+  // Listen for navigation events — re-fetch the session after every navigate.
+  // This is critical for the post-login flow: signIn() sets the session cookie,
+  // then auth-screen calls navigate({name:"dashboard"}); without re-fetching
+  // the session here, page.tsx still thinks session=null and bounces back to
+  // the AuthScreen. Re-fetching on the navigate event ensures the session
+  // state is fresh right before we decide which shell to render.
   React.useEffect(() => {
     const handler = () => {
-      setSession(prev => prev) // Force re-render
+      // Force re-render...
       forceRender((v: number) => v + 1)
+      // ...and re-fetch the session in case it just changed (login/logout).
+      fetch("/api/auth/session", { credentials: "include" })
+        .then(r => r.json())
+        .then(data => { setSession(data?.user ? data : null); setSessionChecked(true) })
+        .catch(() => { /* keep existing session state */ })
     }
     window.addEventListener("guardianx-navigate", handler)
     return () => window.removeEventListener("guardianx-navigate", handler)
-  }, [])
+  }, [forceRender])
 
   // Hydrate the view from the URL hash after mount. This makes deep
   // links, refresh, and direct-URL entry work — e.g. visiting
@@ -184,13 +194,15 @@ export default function Home() {
     hydrateFromHash()
   }, [])
 
-  // Check session via fetch instead of useSession hook (avoids CLIENT_FETCH_ERROR blocking)
+  // Check session via fetch instead of useSession hook (avoids CLIENT_FETCH_ERROR blocking).
+  // Re-runs whenever the view name changes so that after a successful login +
+  // navigate(), the session state is refreshed before the shell decision.
   React.useEffect(() => {
     fetch("/api/auth/session", { credentials: "include" })
       .then(r => r.json())
       .then(data => { setSession(data?.user ? data : null); setSessionChecked(true) })
       .catch(() => { setSession(null); setSessionChecked(true) })
-  }, [])
+  }, [view.name])
 
   // Force re-render when view changes
   React.useEffect(() => {

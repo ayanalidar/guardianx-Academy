@@ -46,7 +46,11 @@ interface LabData {
   lab: {
     id: string; slug: string; title: string; description: string; longDescription: string
     category: string; difficulty: string; durationMin: number; points: number; tags: string
-    scenario: string; objectives: string; hints: string; flag: string; commands: string; color: string
+    scenario: string; objectives: string; hints: string; commands: string; color: string
+    // NOTE: `flag` is intentionally omitted from the client type. The
+    // server never ships the flag in the lab detail response — it's only
+    // returned from /api/labs/[slug]/submit after a correct submission
+    // or a "reveal" action. See src/lib/safe-lab.ts (master-prompt §34, §80-81).
   }
   progress: { status: string; flagFound: boolean; hintsUsed: number; timeSpentMs?: number; attempts?: number } | null
 }
@@ -216,7 +220,6 @@ export function LabDetailView() {
                 labSlug={slug}
                 labTitle={lab.title}
                 commands={commands}
-                flag={lab.flag}
                 started={started}
                 done={done}
                 onStart={() => startMutation.mutate()}
@@ -534,8 +537,8 @@ function HintsPanel({ slug, hintsString, hintsUsed, difficulty }: { slug: string
 /* ============================================================
    LabTerminal - premium terminal with violet accent
    ============================================================ */
-function LabTerminal({ labSlug, labTitle, commands, flag, started, done, onStart }: {
-  labSlug: string; labTitle: string; commands: string[]; flag: string; started: boolean; done: boolean; onStart: () => void
+function LabTerminal({ labSlug, labTitle, commands, started, done, onStart }: {
+  labSlug: string; labTitle: string; commands: string[]; started: boolean; done: boolean; onStart: () => void
 }) {
   const qc = useQueryClient()
   const [history, setHistory] = React.useState<{ type: "in" | "out" | "err" | "ok"; text: string }[]>([
@@ -599,6 +602,7 @@ function LabTerminal({ labSlug, labTitle, commands, flag, started, done, onStart
     onSuccess: (data) => {
       if (data.correct) {
         setHistory((h) => [...h, { type: "ok", text: "✓ FLAG ACCEPTED! Lab solved. Well done, Guardian." }])
+        if (data.flag) setHistory((h) => [...h, { type: "ok", text: `  Flag: ${data.flag}` }])
         toast.success("Flag captured! Lab complete!")
         qc.invalidateQueries({ queryKey: ["lab", labSlug] })
         qc.invalidateQueries({ queryKey: ["me"] })
@@ -610,6 +614,43 @@ function LabTerminal({ labSlug, labTitle, commands, flag, started, done, onStart
       } else {
         setHistory((h) => [...h, { type: "err", text: "✗ Incorrect flag. Try again." }])
         toast.error("Incorrect flag")
+      }
+    },
+  })
+
+  // "reveal" mutation — used by the simulated terminal when the user
+  // "finds" the flag through gameplay (e.g. types `cat /root/flag.txt`).
+  // The server marks the lab complete and returns the flag for display,
+  // WITHOUT ever shipping the flag to the client in the lab detail
+  // response. This closes the devtools-leak vulnerability (§34, §80-81).
+  const revealMutation = useMutation({
+    mutationFn: async () => {
+      const r = await fetch(`/api/labs/${labSlug}/submit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "reveal" }),
+        credentials: "include",
+      })
+      if (!r.ok) throw new Error("Reveal failed")
+      return r.json()
+    },
+    onSuccess: (data) => {
+      if (data.correct && data.flag) {
+        setHistory((h) => [
+          ...h,
+          { type: "ok", text: `[+] Flag recovered: ${data.flag}` },
+          { type: "ok", text: "✓ FLAG ACCEPTED! Lab solved. Well done, Guardian." },
+        ])
+        toast.success("Flag captured! Lab complete!")
+        qc.invalidateQueries({ queryKey: ["lab", labSlug] })
+        qc.invalidateQueries({ queryKey: ["me"] })
+        qc.invalidateQueries({ queryKey: ["achievements"] })
+        qc.invalidateQueries({ queryKey: ["lab-stats"] })
+        if (data.gamification) {
+          import("@/components/providers/gamification-toaster").then((m) => m.showGamification(data.gamification))
+        }
+      } else {
+        setHistory((h) => [...h, { type: "err", text: "✗ Could not recover flag. Try a different approach." }])
       }
     },
   })
@@ -687,7 +728,14 @@ function LabTerminal({ labSlug, labTitle, commands, flag, started, done, onStart
             out("Hint: 'find . -exec cat /root/flag.txt \\;' reads files as root")
           } else if (c === "cat") {
             if (args[0]?.includes("flag")) {
-              out(flag)
+              // SECURITY: don't print the flag from a client-side prop.
+              // The flag is only ever known to the server. Trigger the
+              // server-side "reveal" action which marks the lab complete
+              // and returns the flag for display AFTER solving
+              // (master-prompt §34, §80-81).
+              out("[+] Reading flag file...")
+              out("[+] Flag found! Submitting to verify...")
+              revealMutation.mutate()
             } else {
               out(args[0] ? `[${args[0]}] (file not accessible in sandbox simulation)` : "Usage: cat <file>")
             }
@@ -697,11 +745,12 @@ function LabTerminal({ labSlug, labTitle, commands, flag, started, done, onStart
             out("[*] Algorithm: MD5")
             out("[*] Wordlist: rockyou.txt")
             out("[*] Cracking... [####################] 100%")
-            out(`[+] Recovered plaintext: ${flag.replace("FLAG{", "").replace("}", "").replace(/_/g, " ")}`)
+            out("[+] Hash cracked. Use 'cat <flagfile>' to read the recovered flag.")
           } else if (c === "nc" || c === "tshark" || c === "tcpdump") {
             out("[*] Capturing traffic on interface eth0...")
             out("10.10.10.5.80 > 10.10.10.1.54321: HTTP POST /comment")
-            out("Header: X-D: " + Buffer.from(flag).toString("base64").slice(0, 30) + "...")
+            out("Header: X-D: c2VyZS1wbGFpbi1leHRyYWN0ZWQtZnJvbS10cmFmZmlj...")
+            out("[*] Suspicious header detected. Investigate the target to recover the flag.")
           } else if (c === "impacket-getuserspns") {
             out("[*] Requesting TGS for service account 'svc_sql'")
             out("[*] Found SPN: HTTP/web-svc.corp.local")

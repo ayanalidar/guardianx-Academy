@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/session"
+import { safeLabs } from "@/lib/safe-lab"
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
@@ -31,8 +32,11 @@ export async function GET(req: NextRequest) {
     progressMap = Object.fromEntries(progress.map((p) => [p.labId, p]))
   }
 
+  // SECURITY: `safeLabs()` strips the `flag` field so CTF answers are
+  // never exposed in the public listing. Flags are only revealed by
+  // /api/labs/[slug]/submit after a correct submission (master-prompt §34, §80-81).
   return NextResponse.json({
-    labs: labs.map((l) => ({
+    labs: safeLabs(labs).map((l) => ({
       ...l,
       progress: progressMap[l.id] ?? null,
     })),

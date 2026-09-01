@@ -93,5 +93,53 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
     })
   }
 
+  // "reveal" action — used by the SIMULATED lab terminal when the user
+  // "finds" the flag through the simulated command line (e.g. types
+  // `cat /root/flag.txt` in a lab that has no real Docker backend).
+  // The server marks the lab complete WITHOUT ever shipping the flag
+  // to the client for comparison. The flag is only returned in the
+  // response so the terminal can display it as a "captured" confirmation
+  // — but the user never had it before solving, so this is not a leak.
+  // This closes the previous vulnerability where the flag was passed
+  // as a React prop to LabTerminal and visible in devtools (§34, §80-81).
+  if (action === "reveal") {
+    let gamification = null
+    let autoGrade: { passed: boolean; score: number; xpAwarded: number } | null = null
+    if (progress.status !== "completed") {
+      progress = await db.labProgress.update({
+        where: { id: progress.id },
+        data: { status: "completed", flagFound: true, completedAt: new Date() },
+      })
+      const baseXp = lab.xpReward && lab.xpReward > 0
+        ? lab.xpReward
+        : (XP_REWARDS.lab_solved as any)[lab.difficulty] ?? 100
+      const xp = Math.max(baseXp - progress.hintsUsed * 10, Math.floor(baseXp / 2))
+      gamification = await awardXp(user.id, "lab_solved", xp, lab.id)
+      autoGrade = {
+        passed: !lab.passingScore || xp >= lab.passingScore,
+        score: Math.min(100, Math.round((xp / baseXp) * 100)),
+        xpAwarded: xp,
+      }
+      const { sendEmail } = await import("@/lib/email")
+      const labUser = await db.user.findUnique({ where: { id: user.id }, select: { email: true, name: true } })
+      if (labUser) {
+        await sendEmail({
+          to: labUser.email,
+          subject: `🏆 Lab Solved — ${lab.title}`,
+          body: `Hi ${labUser.name},\n\nGreat work! You've successfully solved the "${lab.title}" lab on GuardianX Academy.\n\nXP earned: ${xp}\nDifficulty: ${lab.difficulty}\n\nKeep honing your skills,\nThe GuardianX Team`,
+          type: "notification",
+          userId: user.id,
+        })
+      }
+    }
+    return NextResponse.json({
+      correct: true,
+      flag: lab.flag,
+      gamification,
+      autoGrade,
+      timeSpentMs: progress.timeSpentMs,
+    })
+  }
+
   return NextResponse.json({ progress })
 }

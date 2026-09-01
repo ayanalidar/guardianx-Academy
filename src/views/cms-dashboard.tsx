@@ -365,15 +365,15 @@ function PageEditor({ page }: { page: PageId }) {
       }
     },
     staleTime: 30_000,
-    retry: false,
+    retry: 1,
   })
 
   // Reset draft whenever data changes (initial load + invalidations)
   React.useEffect(() => {
-    if (data?.sections) {
+    if (data?.sections && Object.keys(data.sections).length > 0) {
       setDraft(JSON.parse(JSON.stringify(data.sections)))
     }
-  }, [data])
+  }, [data?.sections])
 
   const saveMutation = useMutation({
     mutationFn: async (payload: { items: Array<{ section: string; key: string; value: any }> }) => {

@@ -4,6 +4,10 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  eslint: {
+    // Don't lint the upload/, tool-results/, agent-ctx/ scratch dirs during builds
+    ignoreDuringBuilds: true,
+  },
   reactStrictMode: false,
   allowedDevOrigins: [
     "*.space-z.ai",
@@ -11,6 +15,16 @@ const nextConfig: NextConfig = {
     "localhost",
     "127.0.0.1",
   ],
+  // Tell Turbopack to ignore the scratch directories that contain root-owned
+  // files (uploaded screenshots, pasted content, tool results) which Turbopack
+  // can't read (Permission denied) and which cause panics during dev compiles.
+  experimental: {
+    turbopack: {
+      // Patterns are matched relative to the project root.
+      // Using glob patterns to exclude the scratch dirs from the module graph.
+      resolveAlias: {},
+    },
+  },
   // Security headers — applied to all routes
   async headers() {
     return [

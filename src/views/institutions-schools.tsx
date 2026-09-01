@@ -188,9 +188,24 @@ export function InstitutionsSchoolsView() {
             className="absolute top-0 right-0 w-[600px] h-[400px] bg-emerald-600/5 blur-[120px] rounded-full pointer-events-none"
             aria-hidden
           />
-          <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full py-12 lg:py-16">
-            <div className="grid lg:grid-cols-2 gap-8 items-center">
-              {/* Left - text */}
+          {/* Desktop: large interactive particle logo on the right - absolute so it doesn't push content down */}
+          <div className="hidden lg:block absolute right-[6%] top-1/2 -translate-y-1/2 pointer-events-auto">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.7 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <ParticleLogo size={680} interactive showGlow />
+            </motion.div>
+          </div>
+
+          {/* Mobile: smaller particle logo absolute at top */}
+          <div className="lg:hidden absolute inset-x-0 top-0 h-[44vh] flex items-center justify-center pointer-events-none">
+            <ParticleLogo size={340} interactive={false} showGlow />
+          </div>
+
+          <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full py-12 lg:py-16 pt-[48vh] lg:pt-16">
+            <div className="max-w-3xl">
               <div>
                 <motion.div
                   initial={{ opacity: 0, y: 8 }}
@@ -280,16 +295,6 @@ export function InstitutionsSchoolsView() {
                   </div>
                 </motion.div>
               </div>
-
-              {/* Right - particle logo */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.85 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                className="relative flex items-center justify-center"
-              >
-                <ParticleLogo size={680} interactive showGlow />
-              </motion.div>
             </div>
           </div>
         </section>

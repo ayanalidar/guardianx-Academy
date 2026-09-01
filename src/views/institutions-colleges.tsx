@@ -134,8 +134,20 @@ export function InstitutionsCollegesView() {
     <main className="relative">
       {/* HERO */}
       <section className="relative overflow-hidden">
-        <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full py-12 lg:py-16">
-          <div className="grid lg:grid-cols-2 gap-8 items-center">
+        {/* Desktop: large interactive particle logo on the right - absolute so it doesn't push content down */}
+        <div className="hidden lg:block absolute right-[6%] top-1/2 -translate-y-1/2 pointer-events-auto">
+          <motion.div initial={{ opacity: 0, scale: 0.7 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}>
+            <ParticleLogo size={680} interactive showGlow />
+          </motion.div>
+        </div>
+
+        {/* Mobile: smaller particle logo absolute at top */}
+        <div className="lg:hidden absolute inset-x-0 top-0 h-[44vh] flex items-center justify-center pointer-events-none">
+          <ParticleLogo size={340} interactive={false} showGlow />
+        </div>
+
+        <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full py-12 lg:py-16 pt-[48vh] lg:pt-16">
+          <div className="max-w-3xl">
             <div>
               <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="flex items-center gap-2 mb-4">
                 <Building className="h-5 w-5 text-cyan-300" />
@@ -157,9 +169,6 @@ export function InstitutionsCollegesView() {
                 </Button>
               </motion.div>
             </div>
-            <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6, delay: 0.2 }} className="relative flex items-center justify-center">
-              <ParticleLogo size={680} interactive showGlow />
-            </motion.div>
           </div>
         </div>
       </section>

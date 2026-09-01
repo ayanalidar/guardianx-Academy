@@ -178,17 +178,17 @@ export function InstitutionsSchoolsView() {
   const { navigate } = useAppStore()
 
   return (
-    <div className="relative min-h-screen">
-      {/* Atmospheric background */}
-      <div className="absolute inset-0 bg-mesh opacity-40 pointer-events-none" />
-      <div className="absolute top-0 right-0 w-[600px] h-[400px] bg-emerald-600/5 blur-[120px] rounded-full pointer-events-none" />
-
-      <div className="relative z-10">
-        {/* ====================================================
-            SECTION 1: HERO
-            ==================================================== */}
-        <section className="py-8 lg:py-12">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <main className="relative">
+      {/* ====================================================
+          SECTION 1: HERO
+          ==================================================== */}
+        <section className="relative overflow-hidden">
+          {/* Atmospheric background */}
+          <div
+            className="absolute top-0 right-0 w-[600px] h-[400px] bg-emerald-600/5 blur-[120px] rounded-full pointer-events-none"
+            aria-hidden
+          />
+          <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full py-12 lg:py-16">
             <div className="grid lg:grid-cols-2 gap-8 items-center">
               {/* Left - text */}
               <div>
@@ -619,7 +619,6 @@ export function InstitutionsSchoolsView() {
             </motion.div>
           </div>
         </section>
-      </div>
-    </div>
+    </main>
   )
 }

@@ -3740,3 +3740,68 @@ Stage Summary:
 - **CAREER tab now works for logged-out users**: clicking any CAREER item shows the login page with a contextual "Log in or create an account to access [page name]" banner; after login the user is redirected to the page they clicked (not the role dashboard). This satisfies master-prompt §10 ("no route should unexpectedly return home; the user should reach the page they clicked on").
 - **INSTITUTIONS pages have no extra space below the header**: removed the `pt-2 lg:pt-4` that was duplicating the `PublicPageShell`'s `pt-14`. Verified on all 3 institution pages.
 - Lint: 0 errors. Browser-verified end-to-end.
+
+---
+Task ID: INSTITUTIONS-SPACING-V2
+Agent: subagent (Z.ai Code)
+Task: User complained TWICE that the 3 institution views (schools/colleges/universities) and `batches.tsx` have a visible gap below the header that does NOT match the homepage. The previous fix (CAREER-NAV + INSTITUTIONS-SPACING, which only removed `pt-2 lg:pt-4` from the root div) was insufficient. Root cause identified by main agent: these views used a structurally different root wrapper than the homepage — `<div className="relative min-h-screen">` + a duplicate `<div className="absolute inset-0 bg-mesh ...">` + an extra `<div className="relative z-10">` wrapper + `<section className="py-8 lg:py-12">` (32-48px top padding). The homepage uses `<main className="relative">` (no min-h-screen, no extra wrapper), atmospheric divs INSIDE the first section, and a `<div className="relative z-10 ... py-12 lg:py-16">` content wrapper inside the section.
+
+Work Log:
+
+**Files modified (4):**
+1. `src/views/institutions-schools.tsx`
+2. `src/views/institutions-colleges.tsx`
+3. `src/views/institutions-universities.tsx`
+4. `src/views/batches.tsx`
+
+**Transformation applied to each file** (root structure only; all other sections and ALL content/classnames left UNCHANGED):
+
+For schools & batches (had `relative z-10` wrapper + atmospheric blur orbs):
+- Outer `<div className="relative min-h-screen">` → `<main className="relative">`
+- Removed the root-level `<div className="absolute inset-0 bg-mesh opacity-40 pointer-events-none" />` (PublicPageShell already provides bg-mesh)
+- Moved the atmospheric blur orb `<div>`s INSIDE the first `<section>` (as first children, before content); added `aria-hidden`
+- Removed the `<div className="relative z-10">` wrapper around all sections
+- First section: `<section className="py-8 lg:py-12">` → `<section className="relative overflow-hidden">`
+- First section's content div: `<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">` → `<div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full py-12 lg:py-16">` (combining z-10 + padding into the content wrapper, matching homepage)
+- Closing: removed one `</div>` (the relative z-10 closing) and changed outermost `</div>` → `</main>`
+
+For colleges & universities (no `relative z-10` wrapper, no blur orbs — simpler structure):
+- Outer `<div className="relative min-h-screen">` → `<main className="relative">`
+- Removed the root-level `<div className="absolute inset-0 bg-mesh opacity-40 pointer-events-none" />`
+- First section: `<section className="relative py-6 lg:py-8">` → `<section className="relative overflow-hidden">`
+- First section's content div: `<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">` → `<div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full py-12 lg:py-16">`
+- Closing: changed outermost `</div>` → `</main>` (no extra `</div>` to remove — there was no `relative z-10` wrapper)
+
+**Before/after — root structure (outer 2-3 lines) of each file:**
+
+`institutions-schools.tsx`:
+- Before: `<div className="relative min-h-screen">` → `<div className="absolute inset-0 bg-mesh opacity-40 pointer-events-none" />` + `<div className="absolute top-0 right-0 ... bg-emerald-600/5 ... blur-[120px] ..." />` → `<div className="relative z-10">` → `<section className="py-8 lg:py-12">` → `<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">`
+- After: `<main className="relative">` → `<section className="relative overflow-hidden">` → (atmospheric blur orb div with `aria-hidden`) → `<div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full py-12 lg:py-16">`
+
+`institutions-colleges.tsx`:
+- Before: `<div className="relative min-h-screen">` → `<div className="absolute inset-0 bg-mesh opacity-40 pointer-events-none" />` → `<section className="relative py-6 lg:py-8">` → `<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">`
+- After: `<main className="relative">` → `<section className="relative overflow-hidden">` → `<div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full py-12 lg:py-16">`
+
+`institutions-universities.tsx`:
+- Before: `<div className="relative min-h-screen">` → `<div className="absolute inset-0 bg-mesh opacity-40 pointer-events-none" />` → `<section className="relative py-6 lg:py-8">` → `<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">`
+- After: `<main className="relative">` → `<section className="relative overflow-hidden">` → `<div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full py-12 lg:py-16">`
+
+`batches.tsx`:
+- Before: `<div className="relative min-h-screen">` → `<div className="absolute inset-0 bg-mesh opacity-40 pointer-events-none" aria-hidden />` + 2 atmospheric blur orbs (violet + cyan) → `<div className="relative z-10">` → `<section className="py-8 lg:py-12">` → `<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">`
+- After: `<main className="relative">` → `<section className="relative overflow-hidden">` → (2 atmospheric blur orbs with `aria-hidden`) → `<div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full py-12 lg:py-16">`
+
+**Verification:**
+- `bun run lint` → 0 errors, 1 unrelated warning (`src/lib/db.ts:25:5 Unused eslint-disable directive` — pre-existing, not introduced by this task).
+- `npx tsc --noEmit 2>&1 | grep -E "views/institutions|views/batches"` → empty (no type errors in any of the 4 edited files). The full TSC run reports many pre-existing errors in `prisma/`, `skills/`, `src/app/api/` etc., but NONE in the 4 files edited here.
+- Did NOT run the dev server (per task instructions — main agent will verify in the browser).
+
+**Issues encountered:**
+- None. All 4 edits applied cleanly via MultiEdit. The closing-tag pattern `</section>\n      </div>\n    </div>\n  )\n}` was unique in schools and batches (only appears at the very end of the function — intermediate sections are followed by other `<section>`s, not by the outer `</div>`). For colleges/universities, the closing pattern `</section>\n    </div>\n  )\n}` was similarly unique.
+
+Stage Summary:
+- All 3 institution views + batches view now share the homepage's exact root structure: `<main className="relative">` (no min-h-screen, no extra z-10 wrapper, no duplicate bg-mesh, atmospheric divs inside the hero section, content in a single `relative z-10 ... py-12 lg:py-16` wrapper). The visible gap below the header on these views should now be eliminated because:
+  1. No `min-h-screen` forcing the page to fill viewport height (which previously left empty space at the top under sticky header when content was short).
+  2. No extra `<div className="relative z-10">` wrapper adding another layout layer.
+  3. No `<section className="py-8 lg:py-12">` adding 32-48px of top padding inside the hero (the content's `py-12 lg:py-16` is the homepage's exact hero padding).
+  4. No duplicate `bg-mesh` overlay (PublicPageShell already provides one).
+- Lint: 0 errors. TSC: 0 errors in edited files. Ready for browser verification by main agent.

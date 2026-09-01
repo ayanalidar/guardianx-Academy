@@ -131,12 +131,10 @@ export function InstitutionsCollegesView() {
   const { navigate } = useAppStore()
 
   return (
-    <div className="relative min-h-screen">
-      <div className="absolute inset-0 bg-mesh opacity-40 pointer-events-none" />
-
+    <main className="relative">
       {/* HERO */}
-      <section className="relative py-6 lg:py-8">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <section className="relative overflow-hidden">
+        <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full py-12 lg:py-16">
           <div className="grid lg:grid-cols-2 gap-8 items-center">
             <div>
               <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="flex items-center gap-2 mb-4">
@@ -282,6 +280,6 @@ export function InstitutionsCollegesView() {
           </div>
         </div>
       </section>
-    </div>
+    </main>
   )
 }

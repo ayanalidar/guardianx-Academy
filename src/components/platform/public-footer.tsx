@@ -152,8 +152,8 @@ export function PublicFooter() {
           ))}
         </div>
 
-        {/* Contact info + legal */}
-        <div className="mt-10 pt-6 border-t border-border/50 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+        {/* Contact info + legal + made-by */}
+        <div className="mt-10 pt-6 border-t border-border/50 flex flex-col gap-4">
           <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
             <span className="flex items-center gap-1.5">
               <Mail className="h-3.5 w-3.5 text-violet-300" /> academy@guardianx.in
@@ -162,14 +162,26 @@ export function PublicFooter() {
               <MapPin className="h-3.5 w-3.5 text-violet-300" /> Bengaluru, India
             </span>
           </div>
-          <div className="flex items-center gap-4 text-[11px] text-muted-foreground">
-            <span>© {new Date().getFullYear()} GuardianX Academy</span>
-            <span className="opacity-30">·</span>
-            <button className="hover:text-violet-300 transition-colors">Privacy</button>
-            <span className="opacity-30">·</span>
-            <button className="hover:text-violet-300 transition-colors">Terms</button>
-            <span className="opacity-30">·</span>
-            <button className="hover:text-violet-300 transition-colors">Security</button>
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 text-[11px] text-muted-foreground">
+            <div className="flex items-center gap-4">
+              <span>© {new Date().getFullYear()} GuardianX Academy</span>
+              <span className="opacity-30">·</span>
+              <button onClick={() => navigate({ name: "support" })} className="hover:text-violet-300 transition-colors">Privacy</button>
+              <span className="opacity-30">·</span>
+              <button onClick={() => navigate({ name: "support" })} className="hover:text-violet-300 transition-colors">Terms</button>
+              <span className="opacity-30">·</span>
+              <button onClick={() => navigate({ name: "contact" })} className="hover:text-violet-300 transition-colors">Security</button>
+            </div>
+            {/* Made + maintained by line */}
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground/70">
+                Made &amp; Maintained by
+              </span>
+              <span className="inline-flex items-center gap-1.5 text-xs font-bold tracking-tight">
+                <Shield className="h-3.5 w-3.5 text-violet-400" aria-hidden />
+                GuardianX
+              </span>
+            </div>
           </div>
         </div>
       </div>

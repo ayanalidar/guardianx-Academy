@@ -190,6 +190,8 @@ function SidebarFooter() {
 
   if (!user) return null
 
+  const isAdmin = user.role === "ADMIN"
+
   return (
     <div className="mt-auto pt-4 border-t border-border/40 space-y-3">
       {/* User card */}
@@ -207,17 +209,30 @@ function SidebarFooter() {
         <Settings className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
       </button>
 
-      {/* XP / Level bar */}
-      {stats && (
+      {/* ADMIN: System Admin badge + platform-control label (no XP bar) */}
+      {isAdmin ? (
         <div className="px-2">
-          <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-1">
-            <span>Level {stats.level}</span>
-            <span>{stats.xp} XP</span>
-          </div>
-          <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-violet-500 to-cyan-500 rounded-full" style={{ width: `${Math.min(100, (stats.xp % 1000) / 10)}%` }} />
+          <div className="flex items-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-1.5">
+            <Shield className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+            <div className="flex flex-col leading-tight">
+              <span className="text-[10px] font-mono text-amber-300 tracking-[0.2em]">SYSTEM ADMIN</span>
+              <span className="text-[9px] text-muted-foreground">Platform control</span>
+            </div>
           </div>
         </div>
+      ) : (
+        /* Non-admin: XP / Level bar (existing behavior) */
+        stats && (
+          <div className="px-2">
+            <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-1">
+              <span>Level {stats.level}</span>
+              <span>{stats.xp} XP</span>
+            </div>
+            <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-violet-500 to-cyan-500 rounded-full" style={{ width: `${Math.min(100, (stats.xp % 1000) / 10)}%` }} />
+            </div>
+          </div>
+        )
       )}
 
       {/* Logout */}

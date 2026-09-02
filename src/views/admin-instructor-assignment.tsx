@@ -94,72 +94,11 @@ export function InstructorAssignmentView() {
     },
   })
 
-  // Merge API instructors with the seed/demo fallback so the page is never empty
+  // Use real instructors from the API. Never mask empty data with fake fallbacks —
+  // that would put non-existent IDs in the UI, causing 404s on delete. Instead we
+  // render a friendly empty state when there are no real instructors yet.
   const apiInstructors = data?.instructors ?? []
-  const FALLBACK: Instructor[] = [
-    {
-      id: "fallback-1",
-      name: "Dr. Sarah Chen",
-      email: "sarah.chen@guardianx.io",
-      avatar: null,
-      title: "Senior Security Engineer",
-      bio: "Certified ethical hacker with 12+ years in penetration testing and web application security.",
-      role: "INSTRUCTOR",
-      profile: {
-        phone: "+91 98765 43210",
-        expertise: ["offensive", "web"],
-        yearsExperience: 12,
-        certifications: ["CEH", "OSCP", "CISSP"],
-        linkedinUrl: "https://linkedin.com/in/sarahchen",
-        maxBatches: 3,
-      },
-      currentBatches: 2,
-      taughtCourses: 4,
-      createdAt: new Date().toISOString(),
-    },
-    {
-      id: "fallback-2",
-      name: "Raj Patel",
-      email: "raj.patel@guardianx.io",
-      avatar: null,
-      title: "Network & SOC Lead",
-      bio: "Network security specialist with deep expertise in SOC operations and incident response.",
-      role: "INSTRUCTOR",
-      profile: {
-        phone: "+91 98765 12345",
-        expertise: ["network", "defensive"],
-        yearsExperience: 8,
-        certifications: ["CCNA", "CCNP", "GCIA"],
-        linkedinUrl: "https://linkedin.com/in/rajpatel",
-        maxBatches: 3,
-      },
-      currentBatches: 2,
-      taughtCourses: 3,
-      createdAt: new Date().toISOString(),
-    },
-    {
-      id: "fallback-3",
-      name: "Alex Mercer",
-      email: "alex.mercer@guardianx.io",
-      avatar: null,
-      title: "Cloud Security Architect",
-      bio: "Cloud security architect specializing in GRC, IAM, and multi-cloud security strategies.",
-      role: "INSTRUCTOR",
-      profile: {
-        phone: "+91 98765 67890",
-        expertise: ["cloud", "grc", "iam"],
-        yearsExperience: 15,
-        certifications: ["CISSP", "CCSP", "CISM"],
-        linkedinUrl: "https://linkedin.com/in/alexmercer",
-        maxBatches: 2,
-      },
-      currentBatches: 1,
-      taughtCourses: 2,
-      createdAt: new Date().toISOString(),
-    },
-  ]
-
-  const instructors = apiInstructors.length > 0 ? apiInstructors : FALLBACK
+  const instructors = apiInstructors
 
   // Filter instructors
   const filteredInstructors = React.useMemo(() => {
@@ -284,7 +223,23 @@ export function InstructorAssignmentView() {
           </div>
 
           {isLoading ? (
-            <Card className="p-8 text-center text-muted-foreground text-sm">Loading instructors...</Card>
+            <Card className="p-8 text-center text-muted-foreground text-sm flex items-center justify-center gap-2">
+              <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-violet-500/40 border-t-violet-400" />
+              Loading instructors...
+            </Card>
+          ) : apiInstructors.length === 0 ? (
+            <Card className="p-10 text-center border-violet-500/20 bg-violet-500/5">
+              <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full border border-violet-500/30 bg-violet-500/10">
+                <UserPlus className="size-5 text-violet-300" aria-hidden />
+              </div>
+              <h3 className="text-base font-semibold mb-2">No instructors yet</h3>
+              <p className="text-sm text-muted-foreground mb-5 max-w-md mx-auto">
+                Add your first instructor to start assigning them to certification batches.
+              </p>
+              <Button size="sm" onClick={() => setAddOpen(true)} className="bg-violet-600 hover:bg-violet-500 btn-premium">
+                <UserPlus className="h-3.5 w-3.5 mr-1.5" /> Add your first instructor
+              </Button>
+            </Card>
           ) : filteredInstructors.length === 0 ? (
             <Card className="p-8 text-center">
               <p className="text-sm text-muted-foreground mb-3">No instructors match your filters.</p>

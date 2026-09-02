@@ -18,6 +18,7 @@ model User {
   avatar        String?
   bio           String?
   title         String? // e.g. "Senior Security Engineer"
+  phone         String? // contact phone (any role) — editable via profile UI
   xp            Int      @default(0)
   level         Int      @default(1)
   streak        Int      @default(0)

@@ -41,20 +41,10 @@ type TrainingBatch = {
   enrolled: number
   level: string
   status: string
-  certColor: string
-  certTint: string
-  certBorder: string
-  levelColor: string
-  levelTint: string
-  levelBorder: string
-  borderColor: string
-  btnClass: string
   description: string
   featured: boolean
   order: number
   published: boolean
-  createdAt: string
-  updatedAt: string
 }
 
 type BatchForm = {
@@ -190,8 +180,14 @@ export function BatchCalendarView() {
   const [submitting, setSubmitting] = React.useState(false)
 
   /* ----------------------------- DB query ----------------------------- */
-  const { data, isLoading, isError, error } = useQuery<{ batches: TrainingBatch[]; count: number }>({
+  // staleTime: 60s — repeat visits are instant (data is cached for 1 minute).
+  // The first compile of the API route is unavoidably slow on Turbopack, so the
+  // skeleton + spinner below gives the user immediate visual feedback.
+  const { data, isLoading, isError, error, isFetching } = useQuery<{ batches: TrainingBatch[]; count: number }>({
     queryKey: ["admin-training-batches"],
+    staleTime: 60_000,
+    gcTime: 5 * 60_000,
+    refetchOnWindowFocus: false,
     queryFn: async () => {
       const res = await fetch("/api/admin/training-batches")
       if (!res.ok) {
@@ -374,8 +370,14 @@ export function BatchCalendarView() {
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
         {/* ----------------------------- loading state ----------------------------- */}
-        {isLoading && (
+        {/* Immediate, friendly loading state — never a blank page. Shown both on
+            the first load (isLoading) and on background re-fetches (isFetching). */}
+        {(isLoading || isFetching) && (
           <div className="space-y-4">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin text-cyan-300" aria-hidden />
+              <span>Loading batches...</span>
+            </div>
             <div className="flex flex-wrap gap-3">
               {Array.from({ length: 4 }).map((_, i) => (
                 <Skeleton key={i} className="h-5 w-24" />

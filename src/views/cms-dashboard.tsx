@@ -34,10 +34,11 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import {
-  FileText, Save, RotateCcw, Plus, Trash2, ChevronUp, ChevronDown,
+  Save, RotateCcw, Plus, Trash2, ChevronUp, ChevronDown,
   Loader2, Search, Eye, EyeOff, Shield, AlertCircle, CheckCircle2,
   Globe, Home as HomeIcon, Building2, BookOpen, Mail, TrendingUp,
   Layout, LayoutPanelLeft, Sparkles, RefreshCw, Database, Hash,
+  Sprout,
 } from "lucide-react"
 import {
   ScrollReveal, FadeIn,
@@ -217,7 +218,7 @@ function Hero() {
               <Sparkles className="h-3 w-3 mr-1" /> ADMIN
             </Badge>
             <Badge variant="outline" className="border-violet-500/30 text-violet-300 bg-violet-500/5">
-              <Database className="h-3 w-3 mr-1" /> Postgres-backed
+              <Database className="h-3 w-3 mr-1" /> Prisma-backed
             </Badge>
           </div>
         </div>
@@ -350,6 +351,9 @@ function PageEditor({ page }: { page: PageId }) {
   const [draft, setDraft] = React.useState<Record<string, SectionData> | null>(null)
   const [openSection, setOpenSection] = React.useState<string | null>(null)
   const [resetDialogOpen, setResetDialogOpen] = React.useState(false)
+  const [addSectionOpen, setAddSectionOpen] = React.useState(false)
+  const [newSectionName, setNewSectionName] = React.useState("")
+  const [newSectionKey, setNewSectionKey] = React.useState("")
 
   const meta = PAGES.find((p) => p.id === page)!
 
@@ -366,24 +370,100 @@ function PageEditor({ page }: { page: PageId }) {
     },
     staleTime: 30_000,
     retry: 1,
+    // Force the query to run on every mount — fixes the issue where the
+    // CMS page showed an empty editor because the query didn't fire
+    // after navigating from the admin dashboard.
+    refetchOnMount: "always",
+    refetchOnWindowFocus: false,
   })
 
-  // Reset draft whenever data changes (initial load + invalidations)
+  // Safety net: if the query hasn't loaded after 500ms, force a refetch.
+  // This handles edge cases where React Query doesn't auto-fire on mount.
   React.useEffect(() => {
-    if (data?.sections && Object.keys(data.sections).length > 0) {
+    if (!data && !isLoading && !isError) {
+      const t = setTimeout(() => refetch(), 500)
+      return () => clearTimeout(t)
+    }
+  }, [data, isLoading, isError, refetch])
+
+  // Reset draft whenever data changes (initial load + invalidations).
+  // Using `data?.sections` (a stable object identity per fetch) avoids
+  // resetting the form on every keystroke — the parent's draft state
+  // is the source of truth while the user is editing.
+  React.useEffect(() => {
+    if (data?.sections) {
       setDraft(JSON.parse(JSON.stringify(data.sections)))
     }
   }, [data?.sections])
 
+  // Re-seed the current page from the canonical defaults. Lets admins
+  // recover an empty CMS without shell access, or revert custom edits
+  // back to the seed. Custom keys not in the seed are preserved.
+  const seedMutation = useMutation({
+    mutationFn: async () => {
+      return api(`/api/admin/site-content/seed`, {
+        method: "POST",
+        body: JSON.stringify({ page }),
+      })
+    },
+    onSuccess: (res: any) => {
+      toast.success(`Seeded ${res?.seeded ?? 0} default items for ${page}`)
+      qc.invalidateQueries({ queryKey: ["cms-content", page] })
+      // The view's useEffect will repopulate `draft` from the new data.
+    },
+    onError: (e: any) => {
+      toast.error(e?.message || "Failed to seed defaults")
+    },
+  })
+
+  const handleSeed = () => seedMutation.mutate()
+
+  // Add a brand-new section to the draft (and on Save, it will be
+  // persisted via the PUT /api/cms/[page] batch upsert).
+  const handleAddSection = () => {
+    const name = newSectionName.trim().replace(/\s+/g, "")
+    const firstKey = newSectionKey.trim().replace(/\s+/g, "") || "newKey"
+    if (!name) {
+      toast.error("Section name is required")
+      return
+    }
+    if (!/^[a-zA-Z][a-zA-Z0-9_-]*$/.test(name)) {
+      toast.error("Section name must start with a letter and only contain letters, digits, dashes or underscores")
+      return
+    }
+    setDraft((prev) => {
+      const next = prev ? { ...prev } : {}
+      if (next[name]) {
+        toast.error(`Section "${name}" already exists`)
+        return prev
+      }
+      next[name] = { [firstKey]: "" }
+      return next
+    })
+    setAddSectionOpen(false)
+    setNewSectionName("")
+    setNewSectionKey("")
+    setOpenSection(name)
+    toast.success(`Added section "${name}" — Save to publish`)
+  }
+
   const saveMutation = useMutation({
-    mutationFn: async (payload: { items: Array<{ section: string; key: string; value: any }> }) => {
+    mutationFn: async (payload: {
+      items: Array<{ section: string; key: string; value: any }>
+      deletes: Array<{ section: string; key: string }>
+    }) => {
       return api(`/api/cms/${page}`, {
         method: "PUT",
         body: JSON.stringify(payload),
       })
     },
-    onSuccess: () => {
-      toast.success("Changes saved · content is live")
+    onSuccess: (res: any) => {
+      const upserted = res?.count ?? 0
+      const deleted = res?.deleted ?? 0
+      const parts: string[] = []
+      if (upserted) parts.push(`${upserted} saved`)
+      if (deleted) parts.push(`${deleted} deleted`)
+      toast.success(parts.length ? `Changes saved · ${parts.join(" · ")} · live now` : "No changes to save")
       qc.invalidateQueries({ queryKey: ["cms-content", page] })
       // Also invalidate other pages (in case shared global content changed)
       if (page === "global") {
@@ -398,12 +478,40 @@ function PageEditor({ page }: { page: PageId }) {
   const handleSave = () => {
     if (!draft) return
     const items: Array<{ section: string; key: string; value: any }> = []
+    const deletes: Array<{ section: string; key: string }> = []
+
+    // Upserts: every key currently in the draft
     for (const [section, keys] of Object.entries(draft)) {
       for (const [key, value] of Object.entries(keys)) {
         items.push({ section, key, value })
       }
     }
-    saveMutation.mutate({ items })
+
+    // Deletes: any (section, key) that exists in the saved data but
+    // is missing from the draft (admin removed the key or the whole
+    // section via the Delete button). Without this, removing a key
+    // from the UI silently kept it in the DB.
+    if (data?.sections) {
+      for (const [section, keys] of Object.entries(data.sections)) {
+        const draftKeys = draft[section]
+        if (!draftKeys) {
+          // whole section removed — delete every key in it
+          for (const key of Object.keys(keys)) {
+            deletes.push({ section, key })
+          }
+        } else {
+          // section exists in draft — delete any key that's missing
+          for (const key of Object.keys(keys)) {
+            if (!(key in draftKeys)) {
+              deletes.push({ section, key })
+            }
+          }
+        }
+      }
+    }
+
+    if (items.length === 0 && deletes.length === 0) return
+    saveMutation.mutate({ items, deletes })
   }
 
   const handleReset = () => {
@@ -419,14 +527,26 @@ function PageEditor({ page }: { page: PageId }) {
     return JSON.stringify(draft) !== JSON.stringify(data.sections)
   }, [draft, data])
 
-  // Compute changes count
+  // Compute changes count (including deletions)
   const changesCount = React.useMemo(() => {
     if (!draft || !data?.sections) return 0
     let n = 0
+    // changed / added keys
     for (const [section, keys] of Object.entries(draft)) {
       for (const [key, value] of Object.entries(keys)) {
         const orig = data.sections[section]?.[key]
         if (JSON.stringify(orig) !== JSON.stringify(value)) n++
+      }
+    }
+    // deleted keys (in data but not in draft)
+    for (const [section, keys] of Object.entries(data.sections)) {
+      const draftKeys = draft[section]
+      if (!draftKeys) {
+        n += Object.keys(keys).length
+      } else {
+        for (const key of Object.keys(keys)) {
+          if (!(key in draftKeys)) n++
+        }
       }
     }
     return n
@@ -477,6 +597,30 @@ function PageEditor({ page }: { page: PageId }) {
             >
               <RefreshCw className={cn("h-3.5 w-3.5 mr-1.5", isLoading && "animate-spin")} />
               Refresh
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setAddSectionOpen(true)}
+              disabled={saveMutation.isPending || seedMutation.isPending}
+              className="h-9"
+            >
+              <Plus className="h-3.5 w-3.5 mr-1.5" />
+              Add Section
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSeed}
+              disabled={saveMutation.isPending || seedMutation.isPending}
+              className="h-9"
+              title={`Re-seed ${page} from the default content (overwrites values of seeded keys; preserves any custom keys you added)`}
+            >
+              {seedMutation.isPending ? (
+                <><Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> Seeding...</>
+              ) : (
+                <><Sprout className="h-3.5 w-3.5 mr-1.5" /> Seed Defaults</>
+              )}
             </Button>
             <Button
               variant="outline"
@@ -540,12 +684,37 @@ function PageEditor({ page }: { page: PageId }) {
 
       {/* === Sections === */}
       {!isLoading && !isError && draft && sectionList.length === 0 && (
-        <Card className="bg-card shadow-lg border border-border p-12 text-center">
-          <FileText className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
-          <h3 className="font-semibold">No content yet</h3>
-          <p className="text-sm text-muted-foreground mt-1">
-            Run the seed script to populate this page with default content.
+        <Card className="bg-card shadow-lg border border-dashed border-amber-500/40 p-8 text-center">
+          <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 mb-4">
+            <Sprout className="h-7 w-7 text-amber-300" />
+          </div>
+          <h3 className="font-semibold text-base">No content yet for the {meta.label} page</h3>
+          <p className="text-sm text-muted-foreground mt-1.5 max-w-md mx-auto leading-relaxed">
+            You can either re-seed this page from the platform's default content
+            (recommended — gives you every section the page renders), or start
+            from scratch by adding your own section.
           </p>
+          <div className="flex items-center justify-center gap-2 mt-5 flex-wrap">
+            <Button
+              onClick={handleSeed}
+              disabled={seedMutation.isPending}
+              className="bg-amber-500 hover:bg-amber-400 text-amber-950 h-9"
+            >
+              {seedMutation.isPending ? (
+                <><Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> Seeding...</>
+              ) : (
+                <><Sprout className="h-3.5 w-3.5 mr-1.5" /> Seed default content</>
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setAddSectionOpen(true)}
+              disabled={seedMutation.isPending}
+              className="h-9"
+            >
+              <Plus className="h-3.5 w-3.5 mr-1.5" /> Add a section manually
+            </Button>
+          </div>
         </Card>
       )}
 
@@ -568,7 +737,7 @@ function PageEditor({ page }: { page: PageId }) {
                   <div className="inline-flex items-center justify-center h-7 w-7 rounded-md bg-violet-500/10 shrink-0">
                     <LayoutPanelLeft className="h-3.5 w-3.5 text-violet-300" />
                   </div>
-                  <div className="text-left">
+                  <div className="text-left flex-1 min-w-0">
                     <div className="text-sm font-semibold">
                       {SECTION_LABELS[section] ?? section}
                     </div>
@@ -576,6 +745,32 @@ function PageEditor({ page }: { page: PageId }) {
                       {section} · {Object.keys(draft[section] || {}).length} keys
                     </div>
                   </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 text-[10px] text-red-400 hover:text-red-300 hover:bg-red-500/10 shrink-0"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      if (
+                        confirm(
+                          `Delete section "${section}"?\n\nThis removes ALL of its keys from your draft. To publish the deletion, click "Save Changes". To undo before saving, click "Reset".`
+                        )
+                      ) {
+                        setDraft((prev) => {
+                          if (!prev) return prev
+                          const next = { ...prev }
+                          delete next[section]
+                          return next
+                        })
+                        toast.success(`Deleted section "${section}" — Save to publish`)
+                      }
+                    }}
+                    title="Delete this section from the draft"
+                  >
+                    <Trash2 className="h-3 w-3 mr-1" />
+                    Delete
+                  </Button>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4 pt-1">
@@ -608,6 +803,56 @@ function PageEditor({ page }: { page: PageId }) {
             </Button>
             <Button onClick={handleReset} className="bg-amber-500 hover:bg-amber-400 text-amber-950">
               Revert changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* === Add Section dialog === */}
+      <Dialog open={addSectionOpen} onOpenChange={setAddSectionOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add a new section to {meta.label}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="new-section-name" className="text-xs font-mono text-muted-foreground">
+                Section name (camelCase or kebab-case, e.g. <code>hero</code>, <code>finalCta</code>, <code>partners</code>)
+              </Label>
+              <Input
+                id="new-section-name"
+                value={newSectionName}
+                onChange={(e) => setNewSectionName(e.target.value)}
+                placeholder="newSection"
+                className="h-9 font-mono text-sm"
+                autoFocus
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="new-section-key" className="text-xs font-mono text-muted-foreground">
+                First key (optional — defaults to <code>newKey</code>)
+              </Label>
+              <Input
+                id="new-section-key"
+                value={newSectionKey}
+                onChange={(e) => setNewSectionKey(e.target.value)}
+                placeholder="title"
+                className="h-9 font-mono text-sm"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              The new section will appear in the accordion below. Edit its keys, then click
+              <span className="font-mono mx-1 text-amber-300">Save Changes</span>
+              to publish. The new section will be visible to consumers that read it
+              via <code>usePageContent("{page}").sections.{newSectionName || "newSection" || "[section]"}</code>.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddSectionOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleAddSection} className="bg-amber-500 hover:bg-amber-400 text-amber-950">
+              <Plus className="h-3.5 w-3.5 mr-1.5" /> Create section
             </Button>
           </DialogFooter>
         </DialogContent>

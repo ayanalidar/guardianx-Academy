@@ -28,12 +28,20 @@ export function StudentProgressView() {
       if (search) params.set("q", search)
       if (courseFilter !== "all") params.set("course", courseFilter)
       const res = await fetch(`/api/admin/students?${params}`)
-      if (!res.ok) return { students: [] }
+      if (!res.ok) return { students: [], total: 0 }
       return res.json()
     },
+    staleTime: 60_000,
   })
 
   const students = data?.students ?? []
+  const totalStudents = (data as any)?.total ?? students.length
+  // Derive summary stats from real data instead of hardcoding them.
+  const avgProgress = students.length > 0
+    ? Math.round(students.reduce((sum: number, s: any) => sum + (s.progress ?? 0), 0) / students.length)
+    : 0
+  const totalLabs = students.reduce((sum: number, s: any) => sum + (s.labsCompleted ?? 0), 0)
+  const totalCerts = students.reduce((sum: number, s: any) => sum + (s.certCount ?? 0), 0)
 
   return (
     <div className="relative min-h-screen">
@@ -57,10 +65,10 @@ export function StudentProgressView() {
         {/* Summary stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[
-            { label: "Total Students", value: 4, icon: Users, color: "text-violet-300", tint: "bg-violet-500/10" },
-            { label: "Avg Course Progress", value: "62%", icon: BookOpen, color: "text-cyan-300", tint: "bg-cyan-500/10" },
-            { label: "Labs Completed", value: 0, icon: FlaskConical, color: "text-amber-300", tint: "bg-amber-500/10" },
-            { label: "Certificates Issued", value: 0, icon: Award, color: "text-emerald-300", tint: "bg-emerald-500/10" },
+            { label: "Total Students", value: totalStudents, icon: Users, color: "text-violet-300", tint: "bg-violet-500/10" },
+            { label: "Avg Course Progress", value: `${avgProgress}%`, icon: BookOpen, color: "text-cyan-300", tint: "bg-cyan-500/10" },
+            { label: "Labs Completed", value: totalLabs, icon: FlaskConical, color: "text-amber-300", tint: "bg-amber-500/10" },
+            { label: "Certificates Issued", value: totalCerts, icon: Award, color: "text-emerald-300", tint: "bg-emerald-500/10" },
           ].map(s => (
             <Card key={s.label} className="p-4">
               <div className="flex items-center gap-3">

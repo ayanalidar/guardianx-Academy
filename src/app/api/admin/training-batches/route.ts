@@ -104,6 +104,9 @@ function computeLevelPalette(level: string) {
 }
 
 // GET /api/admin/training-batches — list ALL batches (incl. unpublished), ordered by order.
+// Uses `select` to return only the fields the admin batch calendar needs — drops the
+// 9 auto-computed color-class columns and the createdAt/updatedAt timestamps (which
+// the calendar never renders). This keeps the JSON payload lean.
 export async function GET() {
   const currentUser = await getCurrentUser()
   if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -113,6 +116,25 @@ export async function GET() {
 
   const batches = await db.trainingBatch.findMany({
     orderBy: [{ order: "asc" }, { startDate: "asc" }],
+    select: {
+      id: true,
+      certification: true,
+      name: true,
+      schedule: true,
+      startDate: true,
+      startIsoDate: true,
+      mode: true,
+      instructor: true,
+      instructorId: true,
+      seats: true,
+      enrolled: true,
+      level: true,
+      status: true,
+      description: true,
+      featured: true,
+      order: true,
+      published: true,
+    },
   })
 
   return NextResponse.json({ batches, count: batches.length })

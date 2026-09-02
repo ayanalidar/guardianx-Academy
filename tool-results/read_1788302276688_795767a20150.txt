@@ -1,0 +1,818 @@
+     1→     1→"use client"
+     2→     2→
+     3→     3→import * as React from "react"
+     4→     4→import { motion, AnimatePresence } from "framer-motion"
+     5→     5→import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+     6→     6→import { useAppStore } from "@/store/app-store"
+     7→     7→import { Button } from "@/components/ui/button"
+     8→     8→import { Card } from "@/components/ui/card"
+     9→     9→import { Badge } from "@/components/ui/badge"
+    10→    10→import { Input } from "@/components/ui/input"
+    11→    11→import { Textarea } from "@/components/ui/textarea"
+    12→    12→import { Label } from "@/components/ui/label"
+    13→    13→import {
+    14→    14→  Select,
+    15→    15→  SelectContent,
+    16→    16→  SelectItem,
+    17→    17→  SelectTrigger,
+    18→    18→  SelectValue,
+    19→    19→} from "@/components/ui/select"
+    20→    20→import {
+    21→    21→  Dialog,
+    22→    22→  DialogContent,
+    23→    23→  DialogHeader,
+    24→    24→  DialogTitle,
+    25→    25→  DialogFooter,
+    26→    26→  DialogClose,
+    27→    27→} from "@/components/ui/dialog"
+    28→    28→import { cn } from "@/lib/utils"
+    29→    29→import {
+    30→    30→  ArrowLeft, Users, Calendar, AlertTriangle, CheckCircle2,
+    31→    31→  UserCog, Clock, Plus, Search, Mail, Phone, Linkedin, Award,
+    32→    32→  Briefcase, Sparkles, X, Filter, UserPlus, BadgeCheck,
+    33→    33→  Shield, Network, Cloud, Bug, Globe, Eye, Zap, Layers,
+    34→    34→  Sword, BookOpen, Trash2,
+    35→    35→} from "lucide-react"
+    36→    36→import { toast } from "sonner"
+    37→    37→
+    38→    38→const EXPERTISE_OPTIONS = [
+    39→    39→  { id: "offensive", label: "Offensive Security", icon: Sword },
+    40→    40→  { id: "defensive", label: "Defensive Security", icon: Shield },
+    41→    41→  { id: "network", label: "Network Security", icon: Network },
+    42→    42→  { id: "web", label: "Web Security", icon: Globe },
+    43→    43→  { id: "cloud", label: "Cloud Security", icon: Cloud },
+    44→    44→  { id: "grc", label: "GRC", icon: Briefcase },
+    45→    45→  { id: "dfir", label: "DFIR", icon: Bug },
+    46→    46→  { id: "iam", label: "IAM & PAM", icon: Layers },
+    47→    47→] as const
+    48→    48→
+    49→    49→interface Instructor {
+    50→    50→  id: string
+    51→    51→  name: string
+    52→    52→  email: string
+    53→    53→  avatar: string | null
+    54→    54→  title: string | null
+    55→    55→  bio: string | null
+    56→    56→  role: string
+    57→    57→  profile: {
+    58→    58→    phone: string | null
+    59→    59→    expertise: string[]
+    60→    60→    yearsExperience: number
+    61→    61→    certifications: string[]
+    62→    62→    linkedinUrl: string | null
+    63→    63→    maxBatches: number
+    64→    64→  } | null
+    65→    65→  currentBatches: number
+    66→    66→  taughtCourses: number
+    67→    67→  createdAt: string
+    68→    68→}
+    69→    69→
+    70→    70→const BATCHES = [
+    71→    71→  { id: "b1", name: "CEH Weekend Batch", cert: "CEH", schedule: "Sat-Sun 7PM", instructor: "Dr. Sarah Chen", status: "assigned" },
+    72→    72→  { id: "b2", name: "Security+ Weekday", cert: "Security+", schedule: "MWF 8PM", instructor: "Raj Patel", status: "assigned" },
+    73→    73→  { id: "b3", name: "CCNA Morning", cert: "CCNA", schedule: "Tue-Thu 7AM", instructor: "Raj Patel", status: "assigned" },
+    74→    74→  { id: "b4", name: "CISSP Weekend", cert: "CISSP", schedule: "Sat-Sun 10AM", instructor: "Alex Mercer", status: "assigned" },
+    75→    75→  { id: "b5", name: "WAPT Bootcamp", cert: "WAPT", schedule: "Mon-Fri 6PM", instructor: null, status: "unassigned" },
+    76→    76→]
+    77→    77→
+    78→    78→export function InstructorAssignmentView() {
+    79→    79→  const { navigate } = useAppStore()
+    80→    80→  const queryClient = useQueryClient()
+    81→    81→  const [batches, setBatches] = React.useState(BATCHES)
+    82→    82→  const [search, setSearch] = React.useState("")
+    83→    83→  const [expertiseFilter, setExpertiseFilter] = React.useState<string>("all")
+    84→    84→  const [addOpen, setAddOpen] = React.useState(false)
+    85→    85→  const [viewProfile, setViewProfile] = React.useState<Instructor | null>(null)
+    86→    86→
+    87→    87→  // Fetch instructors from API
+    88→    88→  const { data, isLoading } = useQuery<{ instructors: Instructor[]; count: number }>({
+    89→    89→    queryKey: ["admin-instructors"],
+    90→    90→    queryFn: async () => {
+    91→    91→      const res = await fetch("/api/admin/instructors")
+    92→    92→      if (!res.ok) return { instructors: [], count: 0 }
+    93→    93→      return res.json()
+    94→    94→    },
+    95→    95→  })
+    96→    96→
+    97→    97→  // Merge API instructors with the seed/demo fallback so the page is never empty
+    98→    98→  const apiInstructors = data?.instructors ?? []
+    99→    99→  const FALLBACK: Instructor[] = [
+   100→   100→    {
+   101→   101→      id: "fallback-1",
+   102→   102→      name: "Dr. Sarah Chen",
+   103→   103→      email: "sarah.chen@guardianx.io",
+   104→   104→      avatar: null,
+   105→   105→      title: "Senior Security Engineer",
+   106→   106→      bio: "Certified ethical hacker with 12+ years in penetration testing and web application security.",
+   107→   107→      role: "INSTRUCTOR",
+   108→   108→      profile: {
+   109→   109→        phone: "+91 98765 43210",
+   110→   110→        expertise: ["offensive", "web"],
+   111→   111→        yearsExperience: 12,
+   112→   112→        certifications: ["CEH", "OSCP", "CISSP"],
+   113→   113→        linkedinUrl: "https://linkedin.com/in/sarahchen",
+   114→   114→        maxBatches: 3,
+   115→   115→      },
+   116→   116→      currentBatches: 2,
+   117→   117→      taughtCourses: 4,
+   118→   118→      createdAt: new Date().toISOString(),
+   119→   119→    },
+   120→   120→    {
+   121→   121→      id: "fallback-2",
+   122→   122→      name: "Raj Patel",
+   123→   123→      email: "raj.patel@guardianx.io",
+   124→   124→      avatar: null,
+   125→   125→      title: "Network & SOC Lead",
+   126→   126→      bio: "Network security specialist with deep expertise in SOC operations and incident response.",
+   127→   127→      role: "INSTRUCTOR",
+   128→   128→      profile: {
+   129→   129→        phone: "+91 98765 12345",
+   130→   130→        expertise: ["network", "defensive"],
+   131→   131→        yearsExperience: 8,
+   132→   132→        certifications: ["CCNA", "CCNP", "GCIA"],
+   133→   133→        linkedinUrl: "https://linkedin.com/in/rajpatel",
+   134→   134→        maxBatches: 3,
+   135→   135→      },
+   136→   136→      currentBatches: 2,
+   137→   137→      taughtCourses: 3,
+   138→   138→      createdAt: new Date().toISOString(),
+   139→   139→    },
+   140→   140→    {
+   141→   141→      id: "fallback-3",
+   142→   142→      name: "Alex Mercer",
+   143→   143→      email: "alex.mercer@guardianx.io",
+   144→   144→      avatar: null,
+   145→   145→      title: "Cloud Security Architect",
+   146→   146→      bio: "Cloud security architect specializing in GRC, IAM, and multi-cloud security strategies.",
+   147→   147→      role: "INSTRUCTOR",
+   148→   148→      profile: {
+   149→   149→        phone: "+91 98765 67890",
+   150→   150→        expertise: ["cloud", "grc", "iam"],
+   151→   151→        yearsExperience: 15,
+   152→   152→        certifications: ["CISSP", "CCSP", "CISM"],
+   153→   153→        linkedinUrl: "https://linkedin.com/in/alexmercer",
+   154→   154→        maxBatches: 2,
+   155→   155→      },
+   156→   156→      currentBatches: 1,
+   157→   157→      taughtCourses: 2,
+   158→   158→      createdAt: new Date().toISOString(),
+   159→   159→    },
+   160→   160→  ]
+   161→   161→
+   162→   162→  const instructors = apiInstructors.length > 0 ? apiInstructors : FALLBACK
+   163→   163→
+   164→   164→  // Filter instructors
+   165→   165→  const filteredInstructors = React.useMemo(() => {
+   166→   166→    return instructors.filter((inst) => {
+   167→   167→      const matchesSearch =
+   168→   168→        !search ||
+   169→   169→        inst.name.toLowerCase().includes(search.toLowerCase()) ||
+   170→   170→        inst.email.toLowerCase().includes(search.toLowerCase()) ||
+   171→   171→        (inst.title || "").toLowerCase().includes(search.toLowerCase())
+   172→   172→      const matchesExpertise =
+   173→   173→        expertiseFilter === "all" ||
+   174→   174→        (inst.profile?.expertise ?? []).includes(expertiseFilter)
+   175→   175→      return matchesSearch && matchesExpertise
+   176→   176→    })
+   177→   177→  }, [instructors, search, expertiseFilter])
+   178→   178→
+   179→   179→  // Create instructor mutation
+   180→   180→  const createMutation = useMutation({
+   181→   181→    mutationFn: async (payload: Record<string, unknown>) => {
+   182→   182→      const res = await fetch("/api/admin/instructors", {
+   183→   183→        method: "POST",
+   184→   184→        headers: { "Content-Type": "application/json" },
+   185→   185→        body: JSON.stringify(payload),
+   186→   186→      })
+   187→   187→      if (!res.ok) {
+   188→   188→        const err = await res.json().catch(() => ({}))
+   189→   189→        throw new Error(err.error || "Failed to create instructor")
+   190→   190→      }
+   191→   191→      return res.json()
+   192→   192→    },
+   193→   193→    onSuccess: () => {
+   194→   194→      queryClient.invalidateQueries({ queryKey: ["admin-instructors"] })
+   195→   195→      toast.success("Instructor created successfully")
+   196→   196→      setAddOpen(false)
+   197→   197→    },
+   198→   198→    onError: (err: Error) => toast.error(err.message),
+   199→   199→  })
+   200→   200→
+   201→   201→  function assignInstructor(batchId: string, instructorName: string) {
+   202→   202→    setBatches(batches.map((b) => (b.id === batchId ? { ...b, instructor: instructorName, status: "assigned" } : b)))
+   203→   203→    toast.success(`Assigned ${instructorName} to batch`)
+   204→   204→  }
+   205→   205→
+   206→   206→  // Delete instructor
+   207→   207→  async function handleDeleteInstructor(id: string) {
+   208→   208→    if (!confirm("Are you sure you want to delete this instructor? This cannot be undone.")) return
+   209→   209→    try {
+   210→   210→      const res = await fetch(`/api/admin/instructors/${id}`, { method: "DELETE" })
+   211→   211→      if (!res.ok) {
+   212→   212→        const err = await res.json().catch(() => ({}))
+   213→   213→        throw new Error(err.error || "Failed to delete")
+   214→   214→      }
+   215→   215→      toast.success("Instructor deleted")
+   216→   216→      queryClient.invalidateQueries({ queryKey: ["admin-instructors"] })
+   217→   217→    } catch (e: any) {
+   218→   218→      toast.error(e.message || "Failed to delete instructor")
+   219→   219→    }
+   220→   220→  }
+   221→   221→
+   222→   222→  function hasConflict(batch: (typeof BATCHES)[number]): boolean {
+   223→   223→    return batches.some((b) => b.id !== batch.id && b.instructor === batch.instructor && b.schedule === batch.schedule)
+   224→   224→  }
+   225→   225→
+   226→   226→  return (
+   227→   227→    <div className="relative min-h-screen bg-mesh">
+   228→   228→      <div className="border-b border-border/40 bg-card/60 backdrop-blur sticky top-0 z-30">
+   229→   229→        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between flex-wrap gap-3">
+   230→   230→          <div className="flex items-center gap-3">
+   231→   231→            <Button variant="ghost" size="sm" onClick={() => navigate({ name: "admin" })}>
+   232→   232→              <ArrowLeft className="h-4 w-4 mr-1.5" /> Admin
+   233→   233→            </Button>
+   234→   234→            <h1 className="text-lg font-bold flex items-center gap-2">
+   235→   235→              <UserCog className="h-5 w-5 text-amber-400" /> Instructor Assignment Manager
+   236→   236→            </h1>
+   237→   237→          </div>
+   238→   238→          <Button size="sm" onClick={() => setAddOpen(true)} className="bg-violet-600 hover:bg-violet-500 btn-premium">
+   239→   239→            <UserPlus className="h-3.5 w-3.5 mr-1.5" /> Add Instructor
+   240→   240→          </Button>
+   241→   241→        </div>
+   242→   242→      </div>
+   243→   243→
+   244→   244→      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+   245→   245→        {/* Instructors section */}
+   246→   246→        <div>
+   247→   247→          <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
+   248→   248→            <div>
+   249→   249→              <h2 className="text-base font-semibold flex items-center gap-2">
+   250→   250→                <Users className="h-4 w-4 text-violet-300" /> Instructors
+   251→   251→                <Badge variant="outline" className="text-[9px] ml-1">{filteredInstructors.length}</Badge>
+   252→   252→              </h2>
+   253→   253→              <p className="text-xs text-muted-foreground mt-0.5">Manage instructor profiles, expertise, and workload</p>
+   254→   254→            </div>
+   255→   255→            {/* Search + filter */}
+   256→   256→            <div className="flex items-center gap-2 flex-wrap">
+   257→   257→              <div className="relative">
+   258→   258→                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+   259→   259→                <Input
+   260→   260→                  placeholder="Search instructors..."
+   261→   261→                  value={search}
+   262→   262→                  onChange={(e) => setSearch(e.target.value)}
+   263→   263→                  className="pl-9 w-[200px] h-9 text-xs"
+   264→   264→                />
+   265→   265→              </div>
+   266→   266→              <Select value={expertiseFilter} onValueChange={setExpertiseFilter}>
+   267→   267→                <SelectTrigger className="w-[180px] h-9 text-xs">
+   268→   268→                  <Filter className="h-3.5 w-3.5 mr-1.5" />
+   269→   269→                  <SelectValue />
+   270→   270→                </SelectTrigger>
+   271→   271→                <SelectContent>
+   272→   272→                  <SelectItem value="all">All Expertise</SelectItem>
+   273→   273→                  {EXPERTISE_OPTIONS.map((opt) => (
+   274→   274→                    <SelectItem key={opt.id} value={opt.id}>
+   275→   275→                      <span className="flex items-center gap-2">
+   276→   276→                        <opt.icon className="h-3.5 w-3.5" />
+   277→   277→                        {opt.label}
+   278→   278→                      </span>
+   279→   279→                    </SelectItem>
+   280→   280→                  ))}
+   281→   281→                </SelectContent>
+   282→   282→              </Select>
+   283→   283→            </div>
+   284→   284→          </div>
+   285→   285→
+   286→   286→          {isLoading ? (
+   287→   287→            <Card className="p-8 text-center text-muted-foreground text-sm">Loading instructors...</Card>
+   288→   288→          ) : filteredInstructors.length === 0 ? (
+   289→   289→            <Card className="p-8 text-center">
+   290→   290→              <p className="text-sm text-muted-foreground mb-3">No instructors match your filters.</p>
+   291→   291→              <Button size="sm" variant="outline" onClick={() => { setSearch(""); setExpertiseFilter("all") }}>
+   292→   292→                Clear filters
+   293→   293→              </Button>
+   294→   294→            </Card>
+   295→   295→          ) : (
+   296→   296→            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+   297→   297→              <AnimatePresence>
+   298→   298→                {filteredInstructors.map((inst, idx) => (
+   299→   299→                  <InstructorCard
+   300→   300→                    key={inst.id}
+   301→   301→                    instructor={inst}
+   302→   302→                    onViewProfile={() => setViewProfile(inst)}
+   303→   303→                    onDelete={() => handleDeleteInstructor(inst.id)}
+   304→   304→                    index={idx}
+   305→   305→                  />
+   306→   306→                ))}
+   307→   307→              </AnimatePresence>
+   308→   308→            </div>
+   309→   309→          )}
+   310→   310→        </div>
+   311→   311→
+   312→   312→        {/* Batch assignments */}
+   313→   313→        <div>
+   314→   314→          <h2 className="text-base font-semibold flex items-center gap-2 mb-4">
+   315→   315→            <Calendar className="h-4 w-4 text-cyan-300" /> Batch Assignments
+   316→   316→          </h2>
+   317→   317→          <Card className="overflow-hidden card-premium">
+   318→   318→            <div className="overflow-x-auto">
+   319→   319→              <table className="w-full">
+   320→   320→                <thead className="bg-muted/50">
+   321→   321→                  <tr className="text-left">
+   322→   322→                    <th className="py-3 px-4 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Batch</th>
+   323→   323→                    <th className="py-3 px-4 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Schedule</th>
+   324→   324→                    <th className="py-3 px-4 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Instructor</th>
+   325→   325→                    <th className="py-3 px-4 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Status</th>
+   326→   326→                  </tr>
+   327→   327→                </thead>
+   328→   328→                <tbody>
+   329→   329→                  {batches.map((b) => {
+   330→   330→                    const conflict = b.instructor && hasConflict(b)
+   331→   331→                    return (
+   332→   332→                      <tr key={b.id} className="border-t border-border/40 hover:bg-muted/30">
+   333→   333→                        <td className="py-3 px-4">
+   334→   334→                          <div className="font-medium text-sm">{b.name}</div>
+   335→   335→                          <Badge variant="outline" className="text-[9px] mt-0.5">{b.cert}</Badge>
+   336→   336→                        </td>
+   337→   337→                        <td className="py-3 px-4 text-sm text-muted-foreground"><Clock className="h-3 w-3 inline mr-1" />{b.schedule}</td>
+   338→   338→                        <td className="py-3 px-4">
+   339→   339→                          <Select value={b.instructor ?? ""} onValueChange={(v) => assignInstructor(b.id, v)}>
+   340→   340→                            <SelectTrigger className="w-[180px] h-8 text-xs"><SelectValue placeholder="Unassigned" /></SelectTrigger>
+   341→   341→                            <SelectContent>
+   342→   342→                              {instructors.map((i) => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
+   343→   343→                            </SelectContent>
+   344→   344→                          </Select>
+   345→   345→                        </td>
+   346→   346→                        <td className="py-3 px-4">
+   347→   347→                          {conflict ? (
+   348→   348→                            <Badge className="text-[9px] bg-rose-500/10 text-rose-300 border border-rose-500/30"><AlertTriangle className="h-3 w-3 mr-1" />Conflict</Badge>
+   349→   349→                          ) : b.instructor ? (
+   350→   350→                            <Badge className="text-[9px] bg-emerald-500/10 text-emerald-300 border border-emerald-500/30"><CheckCircle2 className="h-3 w-3 mr-1" />Assigned</Badge>
+   351→   351→                          ) : (
+   352→   352→                            <Badge className="text-[9px] bg-amber-500/10 text-amber-300 border border-amber-500/30">Unassigned</Badge>
+   353→   353→                          )}
+   354→   354→                        </td>
+   355→   355→                      </tr>
+   356→   356→                    )
+   357→   357→                  })}
+   358→   358→                </tbody>
+   359→   359→              </table>
+   360→   360→            </div>
+   361→   361→          </Card>
+   362→   362→        </div>
+   363→   363→
+   364→   364→        {/* Conflict info */}
+   365→   365→        <Card className="p-4 border-amber-500/20 bg-amber-500/5">
+   366→   366→          <p className="text-xs text-muted-foreground">
+   367→   367→            <span className="text-amber-300 font-semibold">CONFLICT DETECTION:</span> The system automatically detects when an instructor is assigned to two batches with the same schedule. Conflicts are highlighted in red.
+   368→   368→          </p>
+   369→   369→        </Card>
+   370→   370→      </div>
+   371→   371→
+   372→   372→      {/* Add Instructor Dialog */}
+   373→   373→      <AddInstructorDialog open={addOpen} onOpenChange={setAddOpen} onCreate={(payload) => createMutation.mutate(payload)} isCreating={createMutation.isPending} />
+   374→   374→
+   375→   375→      {/* View Profile Dialog */}
+   376→   376→      <ViewProfileDialog instructor={viewProfile} open={!!viewProfile} onOpenChange={(open) => !open && setViewProfile(null)} />
+   377→   377→    </div>
+   378→   378→  )
+   379→   379→}
+   380→   380→
+   381→   381→// ============================================================
+   382→   382→// Subcomponents
+   383→   383→// ============================================================
+   384→   384→
+   385→   385→function ExpertiseIcon({ id, className }: { id: string; className?: string }) {
+   386→   386→  const opt = EXPERTISE_OPTIONS.find((o) => o.id === id)
+   387→   387→  if (!opt) return <Sparkles className={className} />
+   388→   388→  const Icon = opt.icon
+   389→   389→  return <Icon className={className} />
+   390→   390→}
+   391→   391→
+   392→   392→function ExpertiseLabel({ id }: { id: string }) {
+   393→   393→  const opt = EXPERTISE_OPTIONS.find((o) => o.id === id)
+   394→   394→  return <>{opt?.label ?? id}</>
+   395→   395→}
+   396→   396→
+   397→   397→function InstructorCard({ instructor: inst, onViewProfile, onDelete, index }: { instructor: Instructor; onViewProfile: () => void; onDelete: () => void; index: number }) {
+   398→   398→  const initials = inst.name
+   399→   399→    .split(" ")
+   400→   400→    .map((p) => p[0])
+   401→   401→    .slice(0, 2)
+   402→   402→    .join("")
+   403→   403→    .toUpperCase()
+   404→   404→  const workloadPct = inst.profile ? Math.min(100, Math.round((inst.currentBatches / inst.profile.maxBatches) * 100)) : 0
+   405→   405→  const workloadColor = workloadPct >= 100 ? "bg-rose-500" : workloadPct >= 66 ? "bg-amber-500" : "bg-emerald-500"
+   406→   406→  const workloadText = workloadPct >= 100 ? "text-rose-300 border-rose-500/30" : "text-emerald-300 border-emerald-500/30"
+   407→   407→
+   408→   408→  return (
+   409→   409→    <motion.div
+   410→   410→      initial={{ opacity: 0, y: 10 }}
+   411→   411→      animate={{ opacity: 1, y: 0 }}
+   412→   412→      exit={{ opacity: 0, y: -10 }}
+   413→   413→      transition={{ duration: 0.3, delay: index * 0.05 }}
+   414→   414→      className="card-premium rounded-xl p-5"
+   415→   415→    >
+   416→   416→      {/* Header */}
+   417→   417→      <div className="flex items-start gap-3 mb-3">
+   418→   418→        {/* Avatar */}
+   419→   419→        {inst.avatar ? (
+   420→   420→          <img src={inst.avatar} alt={inst.name} className="size-12 rounded-full object-cover border border-border/60" />
+   421→   421→        ) : (
+   422→   422→          <div className="size-12 rounded-full bg-gradient-to-br from-violet-500/30 to-cyan-500/30 border border-border/60 flex items-center justify-center text-sm font-bold text-violet-100 shrink-0">
+   423→   423→            {initials}
+   424→   424→          </div>
+   425→   425→        )}
+   426→   426→        <div className="min-w-0 flex-1">
+   427→   427→          <div className="flex items-center gap-1.5">
+   428→   428→            <h3 className="font-semibold text-sm truncate">{inst.name}</h3>
+   429→   429→            <BadgeCheck className="h-3.5 w-3.5 text-violet-400 shrink-0" />
+   430→   430→          </div>
+   431→   431→          <p className="text-xs text-muted-foreground truncate">{inst.title || "Security Instructor"}</p>
+   432→   432→          <p className="text-[10px] text-muted-foreground truncate">{inst.email}</p>
+   433→   433→        </div>
+   434→   434→      </div>
+   435→   435→
+   436→   436→      {/* Bio */}
+   437→   437→      {inst.bio && <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{inst.bio}</p>}
+   438→   438→
+   439→   439→      {/* Expertise tags */}
+   440→   440→      {inst.profile?.expertise && inst.profile.expertise.length > 0 && (
+   441→   441→        <div className="flex flex-wrap gap-1 mb-3">
+   442→   442→          {inst.profile.expertise.map((e) => (
+   443→   443→            <Badge key={e} variant="outline" className="text-[9px] bg-violet-500/10 text-violet-300 border-violet-500/30">
+   444→   444→              <ExpertiseIcon id={e} className="h-2.5 w-2.5 mr-1" />
+   445→   445→              <ExpertiseLabel id={e} />
+   446→   446→            </Badge>
+   447→   447→          ))}
+   448→   448→        </div>
+   449→   449→      )}
+   450→   450→
+   451→   451→      {/* Years of experience */}
+   452→   452→      {inst.profile?.yearsExperience != null && (
+   453→   453→        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2">
+   454→   454→          <Briefcase className="h-3 w-3" /> {inst.profile.yearsExperience}+ years experience
+   455→   455→        </div>
+   456→   456→      )}
+   457→   457→
+   458→   458→      {/* Certifications */}
+   459→   459→      {inst.profile?.certifications && inst.profile.certifications.length > 0 && (
+   460→   460→        <div className="flex flex-wrap gap-1 mb-3">
+   461→   461→          {inst.profile.certifications.map((c) => (
+   462→   462→            <Badge key={c} className="text-[9px] bg-amber-500/10 text-amber-300 border border-amber-500/30">
+   463→   463→              <Award className="h-2.5 w-2.5 mr-1" /> {c}
+   464→   464→            </Badge>
+   465→   465→          ))}
+   466→   466→        </div>
+   467→   467→      )}
+   468→   468→
+   469→   469→      {/* Workload */}
+   470→   470→      <div className="mb-3">
+   471→   471→        <div className="flex items-center justify-between mb-1">
+   472→   472→          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Workload</span>
+   473→   473→          <Badge variant="outline" className={cn("text-[9px]", workloadText)}>
+   474→   474→            {inst.currentBatches}/{inst.profile?.maxBatches ?? 3} batches
+   475→   475→          </Badge>
+   476→   476→        </div>
+   477→   477→        <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+   478→   478→          <div className={cn("h-full rounded-full transition-all", workloadColor)} style={{ width: `${workloadPct}%` }} />
+   479→   479→        </div>
+   480→   480→      </div>
+   481→   481→
+   482→   482→      {/* Action buttons */}
+   483→   483→      <div className="flex gap-2">
+   484→   484→        <Button size="sm" variant="outline" className="flex-1" onClick={onViewProfile}>
+   485→   485→          <Eye className="h-3.5 w-3.5 mr-1.5" /> View Profile
+   486→   486→        </Button>
+   487→   487→        <Button size="sm" variant="outline" className="text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 border-rose-500/20" onClick={onDelete}>
+   488→   488→          <Trash2 className="h-3.5 w-3.5" />
+   489→   489→        </Button>
+   490→   490→      </div>
+   491→   491→    </motion.div>
+   492→   492→  )
+   493→   493→}
+   494→   494→
+   495→   495→function AddInstructorDialog({
+   496→   496→  open,
+   497→   497→  onOpenChange,
+   498→   498→  onCreate,
+   499→   499→  isCreating,
+   500→   500→}: {
+   501→   501→  open: boolean
+   502→   502→  onOpenChange: (open: boolean) => void
+   503→   503→  onCreate: (payload: Record<string, unknown>) => void
+   504→   504→  isCreating: boolean
+   505→   505→}) {
+   506→   506→  const [name, setName] = React.useState("")
+   507→   507→  const [email, setEmail] = React.useState("")
+   508→   508→  const [phone, setPhone] = React.useState("")
+   509→   509→  const [title, setTitle] = React.useState("")
+   510→   510→  const [bio, setBio] = React.useState("")
+   511→   511→  const [expertise, setExpertise] = React.useState<string[]>([])
+   512→   512→  const [yearsExperience, setYearsExperience] = React.useState(5)
+   513→   513→  const [certifications, setCertifications] = React.useState("")
+   514→   514→  const [avatar, setAvatar] = React.useState("")
+   515→   515→  const [linkedinUrl, setLinkedinUrl] = React.useState("")
+   516→   516→  const [maxBatches, setMaxBatches] = React.useState(3)
+   517→   517→  const [password, setPassword] = React.useState("")
+   518→   518→
+   519→   519→  function toggleExpertise(id: string) {
+   520→   520→    setExpertise((prev) => (prev.includes(id) ? prev.filter((e) => e !== id) : [...prev, id]))
+   521→   521→  }
+   522→   522→
+   523→   523→  function handleSubmit() {
+   524→   524→    if (!name.trim() || !email.trim()) {
+   525→   525→      toast.error("Name and email are required")
+   526→   526→      return
+   527→   527→    }
+   528→   528→    const certs = certifications
+   529→   529→      .split(",")
+   530→   530→      .map((c) => c.trim())
+   531→   531→      .filter(Boolean)
+   532→   532→    onCreate({
+   533→   533→      name,
+   534→   534→      email,
+   535→   535→      phone,
+   536→   536→      title,
+   537→   537→      bio,
+   538→   538→      expertise,
+   539→   539→      yearsExperience,
+   540→   540→      certifications: certs,
+   541→   541→      avatar,
+   542→   542→      linkedinUrl,
+   543→   543→      maxBatches,
+   544→   544→      password: password || undefined,
+   545→   545→    })
+   546→   546→    // Reset on success (dialog will close via parent on success)
+   547→   547→    setName("")
+   548→   548→    setEmail("")
+   549→   549→    setPhone("")
+   550→   550→    setTitle("")
+   551→   551→    setBio("")
+   552→   552→    setExpertise([])
+   553→   553→    setYearsExperience(5)
+   554→   554→    setCertifications("")
+   555→   555→    setAvatar("")
+   556→   556→    setLinkedinUrl("")
+   557→   557→    setMaxBatches(3)
+   558→   558→    setPassword("")
+   559→   559→  }
+   560→   560→
+   561→   561→  return (
+   562→   562→    <Dialog open={open} onOpenChange={onOpenChange}>
+   563→   563→      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+   564→   564→        <DialogHeader>
+   565→   565→          <DialogTitle className="flex items-center gap-2">
+   566→   566→            <UserPlus className="h-5 w-5 text-violet-400" /> Add New Instructor
+   567→   567→          </DialogTitle>
+   568→   568→        </DialogHeader>
+   569→   569→
+   570→   570→        <div className="space-y-4">
+   571→   571→          {/* Basic info */}
+   572→   572→          <div className="grid sm:grid-cols-2 gap-3">
+   573→   573→            <div>
+   574→   574→              <Label className="text-xs">Name *</Label>
+   575→   575→              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Dr. Jane Smith" />
+   576→   576→            </div>
+   577→   577→            <div>
+   578→   578→              <Label className="text-xs">Email *</Label>
+   579→   579→              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="jane@guardianx.io" />
+   580→   580→            </div>
+   581→   581→            <div>
+   582→   582→              <Label className="text-xs">Phone</Label>
+   583→   583→              <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+91 XXXXX XXXXX" />
+   584→   584→            </div>
+   585→   585→            <div>
+   586→   586→              <Label className="text-xs">Title</Label>
+   587→   587→              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Senior Security Engineer" />
+   588→   588→            </div>
+   589→   589→          </div>
+   590→   590→
+   591→   591→          {/* Bio */}
+   592→   592→          <div>
+   593→   593→            <Label className="text-xs">Bio</Label>
+   594→   594→            <Textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={2} placeholder="Brief professional biography..." className="text-xs" />
+   595→   595→          </div>
+   596→   596→
+   597→   597→          {/* Expertise */}
+   598→   598→          <div>
+   599→   599→            <Label className="text-xs mb-1.5 block">Expertise / Tags</Label>
+   600→   600→            <div className="flex flex-wrap gap-1.5">
+   601→   601→              {EXPERTISE_OPTIONS.map((opt) => {
+   602→   602→                const selected = expertise.includes(opt.id)
+   603→   603→                return (
+   604→   604→                  <button
+   605→   605→                    key={opt.id}
+   606→   606→                    type="button"
+   607→   607→                    onClick={() => toggleExpertise(opt.id)}
+   608→   608→                    className={cn(
+   609→   609→                      "inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[10px] font-medium border transition-colors",
+   610→   610→                      selected
+   611→   611→                        ? "bg-violet-500/20 text-violet-200 border-violet-500/40"
+   612→   612→                        : "bg-muted/40 text-muted-foreground border-transparent hover:bg-muted/70",
+   613→   613→                    )}
+   614→   614→                  >
+   615→   615→                    {selected ? <CheckCircle2 className="h-3 w-3" /> : <opt.icon className="h-3 w-3" />}
+   616→   616→                    {opt.label}
+   617→   617→                  </button>
+   618→   618→                )
+   619→   619→              })}
+   620→   620→            </div>
+   621→   621→          </div>
+   622→   622→
+   623→   623→          {/* Years + max batches */}
+   624→   624→          <div className="grid sm:grid-cols-2 gap-3">
+   625→   625→            <div>
+   626→   626→              <Label className="text-xs">Years of Experience</Label>
+   627→   627→              <Input type="number" min={0} max={50} value={yearsExperience} onChange={(e) => setYearsExperience(Number(e.target.value))} />
+   628→   628→            </div>
+   629→   629→            <div>
+   630→   630→              <Label className="text-xs">Max Batches</Label>
+   631→   631→              <Input type="number" min={1} max={10} value={maxBatches} onChange={(e) => setMaxBatches(Number(e.target.value))} />
+   632→   632→            </div>
+   633→   633→          </div>
+   634→   634→
+   635→   635→          {/* Certifications */}
+   636→   636→          <div>
+   637→   637→            <Label className="text-xs">Certifications (comma-separated)</Label>
+   638→   638→            <Input
+   639→   639→              value={certifications}
+   640→   640→              onChange={(e) => setCertifications(e.target.value)}
+   641→   641→              placeholder="CEH, OSCP, CISSP, CCSP"
+   642→   642→              className="text-xs"
+   643→   643→            />
+   644→   644→          </div>
+   645→   645→
+   646→   646→          {/* Avatar + LinkedIn */}
+   647→   647→          <div className="grid sm:grid-cols-2 gap-3">
+   648→   648→            <div>
+   649→   649→              <Label className="text-xs">Avatar URL (optional)</Label>
+   650→   650→              <Input value={avatar} onChange={(e) => setAvatar(e.target.value)} placeholder="https://..." className="text-xs" />
+   651→   651→            </div>
+   652→   652→            <div>
+   653→   653→              <Label className="text-xs">LinkedIn URL</Label>
+   654→   654→              <Input value={linkedinUrl} onChange={(e) => setLinkedinUrl(e.target.value)} placeholder="https://linkedin.com/in/..." className="text-xs" />
+   655→   655→            </div>
+   656→   656→          </div>
+   657→   657→
+   658→   658→          {/* Password */}
+   659→   659→          <div>
+   660→   660→            <Label className="text-xs">Initial Password (optional - defaults to GuardianX@123)</Label>
+   661→   661→            <Input type="text" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Instructor can reset later" className="text-xs" />
+   662→   662→          </div>
+   663→   663→
+   664→   664→          <div className="rounded-lg border border-violet-500/20 bg-violet-500/5 p-3">
+   665→   665→            <p className="text-[10px] text-muted-foreground flex items-start gap-1.5">
+   666→   666→              <Sparkles className="h-3.5 w-3.5 text-violet-300 shrink-0 mt-0.5" />
+   667→   667→              <span>
+   668→   668→                The instructor will be created with role <code className="text-violet-200">INSTRUCTOR</code> and can immediately
+   669→   669→                log in with their email + password. They will appear in the assignment dropdown, in the homepage
+   670→   670→                &quot;Expert Instructors&quot; section (after refresh), and in the instructor dashboard.
+   671→   671→              </span>
+   672→   672→            </p>
+   673→   673→          </div>
+   674→   674→        </div>
+   675→   675→
+   676→   676→        <DialogFooter>
+   677→   677→          <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
+   678→   678→          <Button onClick={handleSubmit} disabled={isCreating} className="bg-violet-600 hover:bg-violet-500">
+   679→   679→            {isCreating ? (
+   680→   680→              <><Clock className="h-3.5 w-3.5 mr-1.5 animate-spin" /> Creating...</>
+   681→   681→            ) : (
+   682→   682→              <><UserPlus className="h-3.5 w-3.5 mr-1.5" /> Create Instructor</>
+   683→   683→            )}
+   684→   684→          </Button>
+   685→   685→        </DialogFooter>
+   686→   686→      </DialogContent>
+   687→   687→    </Dialog>
+   688→   688→  )
+   689→   689→}
+   690→   690→
+   691→   691→function ViewProfileDialog({
+   692→   692→  instructor: inst,
+   693→   693→  open,
+   694→   694→  onOpenChange,
+   695→   695→}: {
+   696→   696→  instructor: Instructor | null
+   697→   697→  open: boolean
+   698→   698→  onOpenChange: (open: boolean) => void
+   699→   699→}) {
+   700→   700→  if (!inst) return null
+   701→   701→
+   702→   702→  const initials = inst.name
+   703→   703→    .split(" ")
+   704→   704→    .map((p) => p[0])
+   705→   705→    .slice(0, 2)
+   706→   706→    .join("")
+   707→   707→    .toUpperCase()
+   708→   708→
+   709→   709→  return (
+   710→   710→    <Dialog open={open} onOpenChange={onOpenChange}>
+   711→   711→      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+   712→   712→        <DialogHeader>
+   713→   713→          <DialogTitle className="flex items-center gap-3">
+   714→   714→            {inst.avatar ? (
+   715→   715→              <img src={inst.avatar} alt={inst.name} className="size-12 rounded-full object-cover border border-border/60" />
+   716→   716→            ) : (
+   717→   717→              <div className="size-12 rounded-full bg-gradient-to-br from-violet-500/30 to-cyan-500/30 border border-border/60 flex items-center justify-center text-sm font-bold text-violet-100 shrink-0">
+   718→   718→                {initials}
+   719→   719→              </div>
+   720→   720→            )}
+   721→   721→            <div>
+   722→   722→              <div className="flex items-center gap-1.5">
+   723→   723→                {inst.name}
+   724→   724→                <BadgeCheck className="h-4 w-4 text-violet-400" />
+   725→   725→              </div>
+   726→   726→              <p className="text-xs text-muted-foreground font-normal">{inst.title || "Security Instructor"}</p>
+   727→   727→            </div>
+   728→   728→          </DialogTitle>
+   729→   729→        </DialogHeader>
+   730→   730→
+   731→   731→        <div className="space-y-3">
+   732→   732→          {inst.bio && <p className="text-xs text-muted-foreground">{inst.bio}</p>}
+   733→   733→
+   734→   734→          {/* Contact */}
+   735→   735→          <div className="grid sm:grid-cols-2 gap-2">
+   736→   736→            <div className="rounded-lg border border-border/40 bg-card/40 p-2.5">
+   737→   737→              <p className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1 mb-0.5">
+   738→   738→                <Mail className="h-3 w-3" /> Email
+   739→   739→              </p>
+   740→   740→              <p className="text-xs font-medium truncate">{inst.email}</p>
+   741→   741→            </div>
+   742→   742→            {inst.profile?.phone && (
+   743→   743→              <div className="rounded-lg border border-border/40 bg-card/40 p-2.5">
+   744→   744→                <p className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1 mb-0.5">
+   745→   745→                  <Phone className="h-3 w-3" /> Phone
+   746→   746→                </p>
+   747→   747→                <p className="text-xs font-medium">{inst.profile.phone}</p>
+   748→   748→              </div>
+   749→   749→            )}
+   750→   750→          </div>
+   751→   751→
+   752→   752→          {/* Expertise */}
+   753→   753→          {inst.profile?.expertise && inst.profile.expertise.length > 0 && (
+   754→   754→            <div>
+   755→   755→              <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Expertise</p>
+   756→   756→              <div className="flex flex-wrap gap-1">
+   757→   757→                {inst.profile.expertise.map((e) => (
+   758→   758→                  <Badge key={e} variant="outline" className="text-[9px] bg-violet-500/10 text-violet-300 border-violet-500/30">
+   759→   759→                    <ExpertiseIcon id={e} className="h-2.5 w-2.5 mr-1" />
+   760→   760→                    <ExpertiseLabel id={e} />
+   761→   761→                  </Badge>
+   762→   762→                ))}
+   763→   763→              </div>
+   764→   764→            </div>
+   765→   765→          )}
+   766→   766→
+   767→   767→          {/* Stats */}
+   768→   768→          <div className="grid grid-cols-3 gap-2">
+   769→   769→            <div className="rounded-lg border border-border/40 bg-card/40 p-2.5 text-center">
+   770→   770→              <Briefcase className="h-3.5 w-3.5 mx-auto text-amber-300 mb-1" />
+   771→   771→              <div className="text-sm font-bold">{inst.profile?.yearsExperience ?? 0}+</div>
+   772→   772→              <div className="text-[9px] uppercase tracking-wider text-muted-foreground">Years</div>
+   773→   773→            </div>
+   774→   774→            <div className="rounded-lg border border-border/40 bg-card/40 p-2.5 text-center">
+   775→   775→              <Calendar className="h-3.5 w-3.5 mx-auto text-cyan-300 mb-1" />
+   776→   776→              <div className="text-sm font-bold">{inst.currentBatches}/{inst.profile?.maxBatches ?? 3}</div>
+   777→   777→              <div className="text-[9px] uppercase tracking-wider text-muted-foreground">Batches</div>
+   778→   778→            </div>
+   779→   779→            <div className="rounded-lg border border-border/40 bg-card/40 p-2.5 text-center">
+   780→   780→              <BookOpen className="h-3.5 w-3.5 mx-auto text-violet-300 mb-1" />
+   781→   781→              <div className="text-sm font-bold">{inst.taughtCourses}</div>
+   782→   782→              <div className="text-[9px] uppercase tracking-wider text-muted-foreground">Courses</div>
+   783→   783→            </div>
+   784→   784→          </div>
+   785→   785→
+   786→   786→          {/* Certifications */}
+   787→   787→          {inst.profile?.certifications && inst.profile.certifications.length > 0 && (
+   788→   788→            <div>
+   789→   789→              <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Certifications</p>
+   790→   790→              <div className="flex flex-wrap gap-1">
+   791→   791→                {inst.profile.certifications.map((c) => (
+   792→   792→                  <Badge key={c} className="text-[9px] bg-amber-500/10 text-amber-300 border border-amber-500/30">
+   793→   793→                    <Award className="h-2.5 w-2.5 mr-1" /> {c}
+   794→   794→                  </Badge>
+   795→   795→                ))}
+   796→   796→              </div>
+   797→   797→            </div>
+   798→   798→          )}
+   799→   799→
+   800→   800→          {/* LinkedIn */}
+   801→   801→          {inst.profile?.linkedinUrl && (
+   802→   802→            <a href={inst.profile.linkedinUrl} target="_blank" rel="noreferrer" className="block">
+   803→   803→              <Button size="sm" variant="outline" className="w-full">
+   804→   804→                <Linkedin className="h-3.5 w-3.5 mr-1.5" /> View LinkedIn Profile
+   805→   805→              </Button>
+   806→   806→            </a>
+   807→   807→          )}
+   808→   808→        </div>
+   809→   809→
+   810→   810→        <DialogFooter>
+   811→   811→          <DialogClose asChild><Button variant="outline">Close</Button></DialogClose>
+   812→   812→        </DialogFooter>
+   813→   813→      </DialogContent>
+   814→   814→    </Dialog>
+   815→   815→  )
+   816→   816→}
+   817→   817→
+   818→   818→

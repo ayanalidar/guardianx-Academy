@@ -173,6 +173,7 @@ interface ExamDetail {
       attemptsUsed: number
       attemptsRemaining: number
       bestScore: number
+      readinessScore: number | null
       hasPassed: boolean
       hasInProgress: boolean
       recentAttempts: {
@@ -512,6 +513,18 @@ function ExamDetailPhase({
                 label="Best Score"
                 value={uc.bestScore > 0 ? `${uc.bestScore}%` : "-"}
                 ok={uc.bestScore >= exam.passingScore}
+              />
+              <EligRow
+                label="Readiness (last 3)"
+                value={
+                  uc.readinessScore === null
+                    ? "Not attempted yet"
+                    : `${uc.readinessScore}%`
+                }
+                ok={
+                  uc.readinessScore !== null &&
+                  uc.readinessScore >= exam.passingScore
+                }
               />
               <EligRow
                 label="Status"

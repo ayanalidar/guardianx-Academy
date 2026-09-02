@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
 import { db } from "@/lib/db"
-import { getCurrentUser } from "@/lib/session"
+import { requireRole } from "@/lib/session"
 
 // GET /api/admin/instructors — list all instructors with their profiles + workload
 export async function GET() {
-  const currentUser = await getCurrentUser()
-  if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (currentUser.role !== "ADMIN" && currentUser.role !== "INSTRUCTOR") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+  const currentUser = await requireRole(["ADMIN", "INSTRUCTOR"])
+  if (currentUser instanceof NextResponse) return currentUser
 
   const instructors = await db.user.findMany({
     where: { role: "INSTRUCTOR" },
@@ -58,11 +55,8 @@ export async function GET() {
 
 // POST /api/admin/instructors — create a new instructor (User + InstructorProfile)
 export async function POST(req: NextRequest) {
-  const currentUser = await getCurrentUser()
-  if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (currentUser.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+  const currentUser = await requireRole(["ADMIN"])
+  if (currentUser instanceof NextResponse) return currentUser
 
   const body = await req.json().catch(() => null)
   if (!body) return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })

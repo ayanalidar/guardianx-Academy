@@ -6,7 +6,7 @@ import {
   FlaskConical, BookOpen, Route, Trophy, Briefcase, Search, Target,
   FileText, School, Building, Landmark, ShieldCheck, Award,
   TrendingUp, Mail, Menu, ChevronDown, Sun, Moon, LogIn,
-  CalendarCheck, Terminal, Shield, FileBadge,
+  CalendarCheck, Terminal, Shield, FileBadge, Users,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet"
@@ -178,6 +178,18 @@ const MEGA_MENU_GROUPS: MegaMenuGroup[] = [
         title: "Impact",
         description: "Outcomes, learner stats & milestones",
         view: { name: "impact" },
+      },
+      {
+        icon: Users,
+        title: "Instructors",
+        description: "Meet the practitioners teaching our courses",
+        view: { name: "instructors" },
+      },
+      {
+        icon: CalendarCheck,
+        title: "Events",
+        description: "Workshops, webinars, CTFs & bootcamps",
+        view: { name: "events" },
       },
       {
         icon: Mail,

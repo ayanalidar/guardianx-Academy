@@ -21,13 +21,21 @@ export const runtime = "nodejs"
  *
  * Behaviour:
  *   - Looks up the attempt, verifies ownership + exam match.
- *   - Loads the exam's question bank.
- *   - Grades each answer by comparing to `correctAnswer` (JSON-encoded).
- *   - Persists the answers + proctorFlags + score + status.
+ *   - Loads the attempt's `shuffleMap` (persisted on start) so the client's
+ *     displayed option indices can be mapped back to the original option
+ *     indices before comparing to `correctAnswer` from the QuestionBank.
+ *   - Grades each answer server-side (the client never sees correctAnswer).
+ *   - Persists the answers (in ORIGINAL option-index space, so the review
+ *     page can render them against the unshuffled options) + score + status.
  *   - If score >= passingScore: marks attempt "passed" and issues a
  *     GuardianCredential (idempotent — only one credential per attempt).
- *   - Returns the full graded result with per-domain breakdown and the
- *     issued credential (if any).
+ *   - Returns the score, per-question `correct: true/false`, and the per-domain
+ *     breakdown + the issued credential (if any).
+ *
+ * Privacy: For questions the user got WRONG, the response NEVER includes
+ * `correctAnswer` or `explanation` — only `correct: false`. For questions the
+ * user got right, `correctAnswer` + `explanation` are included (the user
+ * already chose correctly, so revealing the answer leaks nothing new).
  */
 export async function POST(
   req: Request,
@@ -86,6 +94,9 @@ export async function POST(
     )
   }
 
+  // Load the shuffle map persisted on start (may be null for legacy attempts).
+  const shuffleMap = safeParse<ShuffleMap | null>(attempt.shuffleMap, null)
+
   // Load all questions for this exam
   const questions = await db.questionBank.findMany({
     where: { examId },
@@ -118,7 +129,17 @@ export async function POST(
   for (const ans of answersRaw) {
     const q = qById.get(ans.questionId)
     if (!q) continue
-    const correct = isAnswerCorrect(q, ans.selected)
+
+    // Convert the client's displayed selection into the original-option-index
+    // space using the shuffleMap (so it can be compared to `correctAnswer`).
+    const selectedInOriginalSpace = mapSelectedToOriginal(
+      q.id,
+      q.type,
+      ans.selected,
+      shuffleMap
+    )
+
+    const correct = isAnswerCorrect(q, selectedInOriginalSpace)
     const earned = correct ? q.points : 0
     totalPossiblePoints += q.points
     totalEarnedPoints += earned
@@ -142,7 +163,7 @@ export async function POST(
 
     gradedAnswers.push({
       questionId: q.id,
-      selected: ans.selected ?? null,
+      selected: selectedInOriginalSpace ?? null,
       correct,
       points: q.points,
       earned,
@@ -152,8 +173,11 @@ export async function POST(
       type: q.type,
       question: q.question,
       options: safeParse(q.options, [] as string[]),
-      correctAnswer: safeParse(q.correctAnswer, null),
-      explanation: q.explanation ?? null,
+      // Privacy: only reveal the correct answer + explanation when the user
+      // got the question right. For wrong answers, the client only learns
+      // `correct: false` (no correctAnswer, no explanation).
+      correctAnswer: correct ? safeParse(q.correctAnswer, null) : null,
+      explanation: correct ? q.explanation ?? null : null,
     })
   }
 
@@ -184,13 +208,61 @@ export async function POST(
         type: q.type,
         question: q.question,
         options: safeParse(q.options, [] as string[]),
-        correctAnswer: safeParse(q.correctAnswer, null),
-        explanation: q.explanation ?? null,
+        // Unanswered = wrong → do not reveal the correct answer.
+        correctAnswer: null,
+        explanation: null,
       })
     }
   }
 
-  const totalQuestions = questions.length
+  // The total questions that count = either the shuffleMap subset size
+  // (new attempts) or the full question bank (legacy attempts without a
+  // shuffleMap). For new attempts, only the questions in the shuffleMap are
+  // presented to the user, so unanswered questions outside that subset should
+  // NOT count against the score.
+  let totalQuestions: number
+  if (shuffleMap && Array.isArray(shuffleMap.questionOrder)) {
+    totalQuestions = shuffleMap.questionOrder.length
+    // Recompute totals restricted to the presented subset.
+    const subsetIds = new Set(shuffleMap.questionOrder)
+    totalPossiblePoints = 0
+    totalEarnedPoints = 0
+    for (const ga of gradedAnswers) {
+      if (!subsetIds.has(ga.questionId)) continue
+      totalPossiblePoints += ga.points
+      totalEarnedPoints += ga.earned
+    }
+    // Re-aggregate domain stats for the subset only
+    const subsetDomainStats: typeof domainStats = {}
+    for (const ga of gradedAnswers) {
+      if (!subsetIds.has(ga.questionId)) continue
+      if (!subsetDomainStats[ga.domain]) {
+        subsetDomainStats[ga.domain] = {
+          correct: 0,
+          total: 0,
+          pointsEarned: 0,
+          pointsPossible: 0,
+        }
+      }
+      subsetDomainStats[ga.domain].total += 1
+      subsetDomainStats[ga.domain].pointsPossible += ga.points
+      if (ga.correct) {
+        subsetDomainStats[ga.domain].correct += 1
+        subsetDomainStats[ga.domain].pointsEarned += ga.earned
+      }
+    }
+    // Replace domainStats with the subset-restricted version.
+    for (const k of Object.keys(domainStats)) delete domainStats[k]
+    for (const k of Object.keys(subsetDomainStats)) domainStats[k] = subsetDomainStats[k]
+    // Drop graded answers for questions outside the subset (they shouldn't
+    // be returned to the client either).
+    const filteredGraded = gradedAnswers.filter((ga) => subsetIds.has(ga.questionId))
+    filteredGraded.forEach((ga, i) => { gradedAnswers[i] = ga })
+    gradedAnswers.length = filteredGraded.length
+  } else {
+    totalQuestions = questions.length
+  }
+
   const percentage =
     totalQuestions > 0
       ? Math.round((totalCorrect / totalQuestions) * 100)
@@ -329,8 +401,13 @@ export async function POST(
 }
 
 /* ------------------------------------------------------------------ */
-/* Helpers                                                            */
+/* Types + helpers                                                    */
 /* ------------------------------------------------------------------ */
+
+interface ShuffleMap {
+  questionOrder: string[]
+  optionOrder: Record<string, number[]>
+}
 
 function safeParse<T>(raw: string | null | undefined, fallback: T): T {
   if (!raw) return fallback
@@ -339,6 +416,54 @@ function safeParse<T>(raw: string | null | undefined, fallback: T): T {
   } catch {
     return fallback
   }
+}
+
+/**
+ * mapSelectedToOriginal — converts the client's `selected` value (which
+ * references DISPLAYED option indices, i.e. positions in the shuffled
+ * options array) to the ORIGINAL option indices used by the QuestionBank's
+ * `correctAnswer` field.
+ *
+ * - For mcq: `selected` is a single displayed index → map to original via
+ *   `shuffleMap.optionOrder[questionId][selected]`.
+ * - For multiple: `selected` is an array of displayed indices → map each.
+ * - For truefalse: `selected` is "true"/"false" (a string) → returned as-is
+ *   (true/false doesn't depend on option order).
+ * - For null/undefined: returns null.
+ * - If `shuffleMap` is null (legacy attempt) OR there's no optionOrder entry
+ *   for this question: returns `selected` unchanged.
+ */
+function mapSelectedToOriginal(
+  questionId: string,
+  questionType: string,
+  selected: any,
+  shuffleMap: ShuffleMap | null
+): any {
+  if (selected === null || selected === undefined) return null
+
+  // truefalse answers are sent as strings ("true"/"false"), not indices —
+  // no mapping needed.
+  if (questionType === "truefalse") {
+    return selected
+  }
+
+  if (!shuffleMap || !shuffleMap.optionOrder) return selected
+  const order = shuffleMap.optionOrder[questionId]
+  if (!Array.isArray(order) || order.length === 0) return selected
+
+  if (questionType === "multiple") {
+    if (!Array.isArray(selected)) return selected
+    const mapped = selected
+      .map((i: any) => (typeof i === "number" && i >= 0 && i < order.length ? order[i] : i))
+      .filter((i: any) => typeof i === "number")
+    return mapped.sort((a: number, b: number) => a - b)
+  }
+
+  // mcq (default)
+  if (typeof selected === "number") {
+    if (selected >= 0 && selected < order.length) return order[selected]
+  }
+  return selected
 }
 
 function isAnswerCorrect(

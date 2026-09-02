@@ -1,9 +1,31 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
+
 export const runtime = "nodejs"
-export async function GET() {
+
+// GET /api/events — public. Returns all published events ordered by `order`
+// then `startIsoDate`. Supports `?type=workshop|webinar|ctf|...` filtering.
+export async function GET(req: NextRequest) {
   try {
-    const events = await db.event.findMany({ where: { published: true }, orderBy: { startDate: "asc" } })
-    return NextResponse.json({ events })
-  } catch { return NextResponse.json({ events: [] }) }
+    const { searchParams } = new URL(req.url)
+    const type = searchParams.get("type") || undefined
+
+    const where: { published: boolean; type?: string } = { published: true }
+    if (type && type !== "all" && type.length > 0) {
+      where.type = type
+    }
+
+    const events = await db.event.findMany({
+      where,
+      orderBy: [{ order: "asc" }, { startIsoDate: "asc" }],
+    })
+
+    return NextResponse.json({ events, count: events.length })
+  } catch (err) {
+    console.error("[api/events] GET failed:", err)
+    return NextResponse.json(
+      { error: "Failed to load events", events: [], count: 0 },
+      { status: 500 },
+    )
+  }
 }

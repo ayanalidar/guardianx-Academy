@@ -85,6 +85,19 @@ export async function GET(
     0
   )
 
+  // Readiness score = average of the user's last 3 completed attempts.
+  // null when the user has never completed an attempt ("Not attempted yet").
+  const lastThree = completed.slice(0, 3)
+  const readinessScore =
+    lastThree.length > 0
+      ? Math.round(
+          lastThree.reduce(
+            (sum, a) => sum + (typeof a.score === "number" ? a.score : 0),
+            0
+          ) / lastThree.length
+        )
+      : null
+
   return NextResponse.json({
     exam: {
       id: exam.id,
@@ -121,6 +134,7 @@ export async function GET(
         attemptsUsed: completed.length,
         attemptsRemaining: Math.max(0, exam.maxAttempts - completed.length),
         bestScore,
+        readinessScore,
         hasPassed: attempts.some((a) => a.status === "passed"),
         hasInProgress: attempts.some((a) => a.status === "in-progress"),
         recentAttempts: attempts.slice(0, 5),

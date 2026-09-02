@@ -4,73 +4,96 @@ import * as React from "react"
 import { motion } from "framer-motion"
 import {
   Shield, Mail, Phone, MapPin, ArrowRight, ChevronRight,
-  BookOpen, FlaskConical, Trophy, Award, Briefcase, Building2,
-  GraduationCap, FileText, Mail as MailIcon,
 } from "lucide-react"
 import { useAppStore } from "@/store/app-store"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 
 /**
- * PublicFooter - 6-column structure per Part 51 spec.
- * Links are CMS-driven via usePageContent("global") with fallbacks.
- * Removed: fake "SOC2-ALIGNED" badge, fake "12,000+ defenders" claim.
+ * PublicFooter - 7-column LEGAL-inclusive structure per master-prompt §55.
+ *
+ * Columns:
+ *   1. TRAINING     — Courses, Learning Paths, Upcoming Batches, Certifications, Mock Exams
+ *   2. PRACTICE     — Labs, Cyber Range, CTF Arena, Challenges
+ *   3. ASSESSMENT   — Proctored Exams, GuardianX Certifications, Certificate Verification
+ *   4. INSTITUTIONS — Schools, Colleges, Universities, Corporate Training, Partner With Us
+ *   5. COMPANY      — About, Instructors, Careers, Contact, Security
+ *   6. RESOURCES    — Events, Workshops, Webinars, Help
+ *   7. LEGAL        — Privacy, Terms, Refund Policy, Responsible Disclosure, Cookie Policy
+ *
+ * Each link uses navigate({ name: "viewname" }) — SPA hash routing.
+ * Bottom bar (contact info + copyright + Privacy/Terms/Security buttons) is unchanged.
  */
 export function PublicFooter() {
   const { navigate } = useAppStore()
 
-  const footerSections = [
+  type FooterLink = { label: string; view: Parameters<typeof navigate>[0] }
+  type FooterSection = { title: string; links: FooterLink[] }
+
+  const footerSections: FooterSection[] = [
     {
-      title: "LEARN",
+      title: "TRAINING",
       links: [
-        { label: "Courses", view: { name: "catalog" as const } },
-        { label: "Upcoming Batches", view: { name: "batches" as const } },
-        { label: "Learning Paths", view: { name: "learning-paths" as const } },
-        { label: "Skill Tree", view: { name: "skill-tree" as const } },
+        { label: "Courses", view: { name: "catalog" } },
+        { label: "Learning Paths", view: { name: "learning-paths" } },
+        { label: "Upcoming Batches", view: { name: "batches" } },
+        { label: "Certifications", view: { name: "certificates" } },
+        { label: "Mock Exams", view: { name: "exams" } },
       ],
     },
     {
       title: "PRACTICE",
       links: [
-        { label: "Cyber Range", view: { name: "cyber-range" as const } },
-        { label: "Labs", view: { name: "labs" as const } },
-        { label: "CTF Arena", view: { name: "ctf-platform" as const } },
-        { label: "Challenges", view: { name: "weekly-challenges" as const } },
+        { label: "Labs", view: { name: "labs" } },
+        { label: "Cyber Range", view: { name: "cyber-range" } },
+        { label: "CTF Arena", view: { name: "ctf-platform" } },
+        { label: "Challenges", view: { name: "weekly-challenges" } },
+      ],
+    },
+    {
+      title: "ASSESSMENT",
+      links: [
+        { label: "Proctored Exams", view: { name: "exams" } },
+        { label: "GuardianX Certifications", view: { name: "certificates" } },
+        { label: "Certificate Verification", view: { name: "credentials" } },
       ],
     },
     {
       title: "INSTITUTIONS",
       links: [
-        { label: "Schools", view: { name: "institutions-schools" as const } },
-        { label: "Colleges & Universities", view: { name: "institutions-colleges" as const } },
-        { label: "Institution Portal", view: { name: "login" as const } },
+        { label: "Schools", view: { name: "institutions-schools" } },
+        { label: "Colleges", view: { name: "institutions-colleges" } },
+        { label: "Universities", view: { name: "institutions-universities" } },
+        { label: "Corporate Training", view: { name: "institutions" } },
+        { label: "Partner With Us", view: { name: "contact" } },
       ],
     },
     {
-      title: "CAREER",
+      title: "COMPANY",
       links: [
-        { label: "Career Paths", view: { name: "career-planner" as const } },
-        { label: "Skill Assessment", view: { name: "skill-assessments" as const } },
-        { label: "Certifications", view: { name: "certificates" as const } },
-        { label: "Resume Builder", view: { name: "resume-builder" as const } },
+        { label: "About", view: { name: "impact" } },
+        { label: "Instructors", view: { name: "instructors" } },
+        { label: "Careers", view: { name: "career-planner" } },
+        { label: "Contact", view: { name: "contact" } },
+        { label: "Security", view: { name: "contact" } },
       ],
     },
     {
-      title: "GUARDIANX",
+      title: "RESOURCES",
       links: [
-        { label: "About", view: { name: "impact" as const } },
-        { label: "Impact", view: { name: "impact" as const } },
-        { label: "Contact", view: { name: "contact" as const } },
-        { label: "Security", view: { name: "contact" as const } },
+        { label: "Events", view: { name: "events" } },
+        { label: "Workshops", view: { name: "events" } },
+        { label: "Webinars", view: { name: "events" } },
+        { label: "Help", view: { name: "support" } },
       ],
     },
     {
-      title: "SUPPORT",
+      title: "LEGAL",
       links: [
-        { label: "FAQ", view: { name: "support" as const } },
-        { label: "Help Center", view: { name: "support" as const } },
-        { label: "Terms", view: { name: "support" as const } },
-        { label: "Privacy", view: { name: "support" as const } },
+        { label: "Privacy", view: { name: "support" } },
+        { label: "Terms", view: { name: "support" } },
+        { label: "Refund Policy", view: { name: "support" } },
+        { label: "Responsible Disclosure", view: { name: "contact" } },
+        { label: "Cookie Policy", view: { name: "support" } },
       ],
     },
   ]
@@ -103,11 +126,12 @@ export function PublicFooter() {
         </div>
       </div>
 
-      {/* Footer content - 6-column structure */}
+      {/* Footer content - 7-column LEGAL-inclusive structure (master-prompt §55) */}
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-8">
+        {/* Brand row + 7 link columns */}
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-8">
           {/* Brand column */}
-          <div className="col-span-2 md:col-span-3 lg:col-span-1">
+          <div className="col-span-2 md:col-span-4 lg:col-span-1">
             <div className="flex items-center gap-2 mb-4">
               <img
                 src="/guardianx-logo-v2.png"
@@ -129,7 +153,7 @@ export function PublicFooter() {
             </div>
           </div>
 
-          {/* 6 link columns */}
+          {/* 7 link columns: TRAINING, PRACTICE, ASSESSMENT, INSTITUTIONS, COMPANY, RESOURCES, LEGAL */}
           {footerSections.map((section) => (
             <div key={section.title}>
               <h4 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground mb-4">
@@ -152,11 +176,14 @@ export function PublicFooter() {
           ))}
         </div>
 
-        {/* Contact info + legal */}
+        {/* Contact info + legal — bottom bar unchanged */}
         <div className="mt-10 pt-6 border-t border-border/50 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
             <span className="flex items-center gap-1.5">
               <Mail className="h-3.5 w-3.5 text-violet-300" /> academy@guardianx.in
+            </span>
+            <span className="flex items-center gap-1.5">
+              <Phone className="h-3.5 w-3.5 text-violet-300" /> +91 80 1234 5678
             </span>
             <span className="flex items-center gap-1.5">
               <MapPin className="h-3.5 w-3.5 text-violet-300" /> Bengaluru, India

@@ -65,6 +65,7 @@ export type View =
   | { name: "exams" }
   | { name: "exam-detail"; examId: string }
   | { name: "credentials" }
+  | { name: "verify"; credentialId?: string }
   | { name: "invoice-generator" }
   | { name: "proposal-maker" }
   | { name: "admin-lead-crm" }
@@ -78,6 +79,11 @@ export type View =
   | { name: "admin-platform-health" }
   | { name: "admin-notifications" }
   | { name: "support" }
+  // Public instructors + events (master-prompt §25 / §36)
+  | { name: "instructors" }
+  | { name: "instructor-detail"; instructorId: string }
+  | { name: "events" }
+  | { name: "event-detail"; eventSlug: string }
 
 interface AppState {
   view: View

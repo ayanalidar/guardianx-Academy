@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getCurrentUser } from "@/lib/session"
+import { requireRole } from "@/lib/session"
 
 export const runtime = "nodejs"
 
@@ -108,11 +108,8 @@ function computeLevelPalette(level: string) {
 // 9 auto-computed color-class columns and the createdAt/updatedAt timestamps (which
 // the calendar never renders). This keeps the JSON payload lean.
 export async function GET() {
-  const currentUser = await getCurrentUser()
-  if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (currentUser.role !== "ADMIN" && currentUser.role !== "INSTRUCTOR") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+  const currentUser = await requireRole(["ADMIN", "INSTRUCTOR"])
+  if (currentUser instanceof NextResponse) return currentUser
 
   const batches = await db.trainingBatch.findMany({
     orderBy: [{ order: "asc" }, { startDate: "asc" }],
@@ -143,11 +140,8 @@ export async function GET() {
 // POST /api/admin/training-batches — create a new training batch.
 // Auto-computes cert / level color classes from the certification name + level.
 export async function POST(req: NextRequest) {
-  const currentUser = await getCurrentUser()
-  if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (currentUser.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+  const currentUser = await requireRole(["ADMIN"])
+  if (currentUser instanceof NextResponse) return currentUser
 
   const body = await req.json().catch(() => null)
   if (!body) return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })

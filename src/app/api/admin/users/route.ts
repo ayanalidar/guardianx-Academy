@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
 import { db } from "@/lib/db"
-import { getCurrentUser } from "@/lib/session"
+import { requireRole } from "@/lib/session"
 
 // GET /api/admin/users — list all users with pagination (50/page), search, role filter
 export async function GET(req: NextRequest) {
-  const currentUser = await getCurrentUser()
-  if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (currentUser.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+  const currentUser = await requireRole(["ADMIN"])
+  if (currentUser instanceof NextResponse) return currentUser
 
   const url = new URL(req.url)
   const q = url.searchParams.get("q")?.trim() || undefined
@@ -84,11 +81,8 @@ export async function GET(req: NextRequest) {
 
 // POST /api/admin/users — create a new user (ADMIN only)
 export async function POST(req: NextRequest) {
-  const currentUser = await getCurrentUser()
-  if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (currentUser.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+  const currentUser = await requireRole(["ADMIN"])
+  if (currentUser instanceof NextResponse) return currentUser
 
   const body = await req.json().catch(() => null)
   if (!body) return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
@@ -105,27 +99,36 @@ export async function POST(req: NextRequest) {
   if (!password || password.length < 6) {
     return NextResponse.json({ error: "Password must be at least 6 characters" }, { status: 400 })
   }
-  const validRoles = ["STUDENT", "INSTRUCTOR", "ADMIN", "SCHOOL_ADMIN"]
+  const validRoles = [
+    "STUDENT",
+    "INSTRUCTOR",
+    "ADMIN",
+    "SUPER_ADMIN",
+    "PROCTOR",
+    "SCHOOL_ADMIN",
+    "INSTITUTION_ADMIN",
+  ]
   const finalRole = validRoles.includes(role ?? "") ? (role as string) : "STUDENT"
 
   const existing = await db.user.findUnique({ where: { email: email.trim() } })
   if (existing) return NextResponse.json({ error: "Email already in use" }, { status: 409 })
 
   const passwordHash = bcrypt.hashSync(password, 10)
+  const roleTitles: Record<string, string> = {
+    INSTRUCTOR: "Security Instructor",
+    ADMIN: "Platform Administrator",
+    SUPER_ADMIN: "Super Administrator",
+    PROCTOR: "Exam Proctor",
+    SCHOOL_ADMIN: "School Administrator",
+    INSTITUTION_ADMIN: "Institution Administrator",
+  }
   const user = await db.user.create({
     data: {
       name: name.trim(),
       email: email.trim(),
       passwordHash,
       role: finalRole,
-      title:
-        finalRole === "INSTRUCTOR"
-          ? "Security Instructor"
-          : finalRole === "ADMIN"
-          ? "Platform Administrator"
-          : finalRole === "SCHOOL_ADMIN"
-          ? "School Administrator"
-          : "Student",
+      title: roleTitles[finalRole] ?? "Student",
     },
     select: {
       id: true,

@@ -14,7 +14,7 @@ model User {
   email         String   @unique
   name          String
   passwordHash  String
-  role          String   @default("STUDENT") // STUDENT | INSTRUCTOR | ADMIN | SCHOOL_ADMIN
+  role          String   @default("STUDENT") // STUDENT | INSTRUCTOR | ADMIN | SUPER_ADMIN | PROCTOR | SCHOOL_ADMIN | INSTITUTION_ADMIN
   avatar        String?
   bio           String?
   title         String? // e.g. "Senior Security Engineer"
@@ -1347,7 +1347,7 @@ model GuardianCertification {
   level       String   @default("Intermediate") // Beginner | Intermediate | Advanced | Expert
   domains     String   @default("[]") // JSON array of domain names
   skills      String   @default("[]") // JSON array of skills assessed
-  examId      String?  // linked exam
+  examId      String?  // linked exam (legacy reference — Exam.certificationId is the canonical FK)
   passingScore Int     @default(70)
   validityPeriod Int   @default(36) // months
   icon        String   @default("Award")
@@ -1356,6 +1356,7 @@ model GuardianCertification {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   credentials GuardianCredential[]
+  exams       Exam[]
 }
 
 /// Exam blueprint — configurable exam template
@@ -1365,6 +1366,7 @@ model Exam {
   title         String
   description   String?
   certificationId String? // linked GuardianCertification
+  certification GuardianCertification? @relation(fields: [certificationId], references: [id])
   duration      Int      @default(120) // minutes
   passingScore  Int      @default(70)
   maxAttempts   Int      @default(3)
@@ -1414,6 +1416,7 @@ model ExamAttempt {
   correctAnswers Int?
   answers       String   @default("[]") // JSON: [{questionId, selected, correct}]
   proctorFlags  String   @default("[]") // JSON: [{type, timestamp, detail}]
+  shuffleMap    String?  // JSON: { questionOrder: string[], optionOrder: { [questionId]: number[] } } — persisted on start so the submit route can map client-selected indices back to original option positions
   timeSpent     Int?     // seconds
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -1549,4 +1552,54 @@ model TrainingBatch {
   published       Boolean  @default(true)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+}
+
+// ============================================================
+// EVENTS — public workshops/webinars/CTFs/campus programs (master-prompt §36)
+// ============================================================
+model Event {
+  id              String   @id @default(cuid())
+  slug            String   @unique
+  title           String
+  description     String   @default("")
+  longDescription String   @default("")
+  type            String   @default("workshop")  // workshop | webinar | ctf | campus | awareness | corporate | bootcamp
+  category        String   @default("General")
+  startDate       String   @default("")          // display string e.g. "October 15, 2026"
+  startIsoDate    String?                         // ISO date for sorting
+  endDate         String   @default("")
+  time            String   @default("")          // e.g. "7:00 PM - 9:00 PM IST"
+  venue           String   @default("Online")   // venue or "Online"
+  mode            String   @default("Live Online") // Live Online | On-Campus | Hybrid
+  organizer       String   @default("GuardianX")
+  instructor      String?                          // optional instructor name
+  capacity        Int      @default(100)
+  registered      Int      @default(0)
+  fee             String   @default("Free")       // "Free" | "₹500" | "$50" etc.
+  status          String   @default("Open")      // Open | Full | Completed | Cancelled
+  imageUrl        String?                          // optional event banner
+  tags            String   @default("")          // pipe-separated tags
+  featured        Boolean  @default(false)
+  order           Int      @default(0)
+  published       Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// ============================================================
+// RBAC — fine-grained role/action/resource permissions (master-prompt §50)
+// Roles reference the User.role string (STUDENT | INSTRUCTOR | ADMIN |
+// SUPER_ADMIN | PROCTOR | SCHOOL_ADMIN | INSTITUTION_ADMIN).
+// Action examples: "course.create", "exam.grade", "cert.issue", "user.manage".
+// Resource defaults to "*" (all resources) but can be scoped to a specific
+// resource id/slug when finer scoping is needed.
+// ============================================================
+model Permission {
+  id        String   @id @default(cuid())
+  role      String   // STUDENT | INSTRUCTOR | ADMIN | SUPER_ADMIN | PROCTOR | SCHOOL_ADMIN | INSTITUTION_ADMIN
+  action    String   // e.g. "course.create", "exam.grade", "cert.issue"
+  resource  String   @default("*") // resource name or "*" for all
+  createdAt DateTime @default(now())
+
+  @@unique([role, action, resource])
 }

@@ -104,7 +104,6 @@ function ViewRouter() {
       {view.name === "institutions-universities" && <InstitutionsUniversitiesView />}
       {view.name === "dashboard" && <DashboardView />}
       {view.name === "catalog" && <CourseCatalogView />}
-      {view.name === "vertical" && <CourseCatalogView initialVertical={view.vertical} />}
       {view.name === "batches" && <BatchesView />}
       {view.name === "exams" && <ExamsView />}
       {view.name === "credentials" && <CredentialsView />}
@@ -170,7 +169,6 @@ function ViewRouter() {
       {view.name === "cms" && <CMSDashboardView />}
       {/* Exam platform */}
       {view.name === "exam-detail" && <ExamDetailView />}
-      {/* Training verticals */}
     </div>
   )
 }

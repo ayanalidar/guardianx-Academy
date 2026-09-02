@@ -80,7 +80,6 @@ export type View =
   | { name: "admin-platform-health" }
   | { name: "admin-notifications" }
   | { name: "support" }
-  | { name: "vertical"; vertical: "ai" | "cloud" }
   // Public instructors + events (master-prompt §25 / §36)
   | { name: "instructors" }
   | { name: "instructor-detail"; instructorId: string }

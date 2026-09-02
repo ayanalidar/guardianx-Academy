@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import {
-  ArrowLeft, ArrowRight, Linkedin, Award, BookOpen, Calendar,
+  ArrowLeft, ArrowRight, Award, BookOpen, Calendar,
   Users, Briefcase, GraduationCap, Mail, ShieldCheck, Clock,
   MapPin, Layers, Sparkles,
 } from "lucide-react"
@@ -51,7 +51,6 @@ interface InstructorDetail {
   expertise: string[]
   yearsExperience: number
   certifications: string[]
-  linkedinUrl: string | null
   maxBatches: number
   stats: {
     coursesCount: number
@@ -159,17 +158,6 @@ export function InstructorDetailView() {
 
                   {/* Inline meta */}
                   <div className="flex flex-col gap-2 mb-5 text-xs text-muted-foreground">
-                    {instructor.linkedinUrl && (
-                      <a
-                        href={instructor.linkedinUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center gap-1.5 hover:text-[#0a66c2] transition-colors"
-                      >
-                        <Linkedin className="h-3.5 w-3.5" />
-                        <span className="truncate">LinkedIn profile</span>
-                      </a>
-                    )}
                     <div className="inline-flex items-center justify-center gap-1.5">
                       <Mail className="h-3.5 w-3.5" />
                       <span className="truncate">{instructor.email}</span>

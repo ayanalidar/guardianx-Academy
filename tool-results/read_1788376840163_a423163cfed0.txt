@@ -1,0 +1,2002 @@
+     1→"use client"
+     2→
+     3→import * as React from "react"
+     4→import { useQuery } from "@tanstack/react-query"
+     5→import { motion } from "framer-motion"
+     6→import { useAppStore, type View } from "@/store/app-store"
+     7→import { Button } from "@/components/ui/button"
+     8→import { Badge } from "@/components/ui/badge"
+     9→import {
+    10→  ArrowRight,
+    11→  Award,
+    12→  BadgeCheck,
+    13→  Building2,
+    14→  Calendar,
+    15→  CheckCircle2,
+    16→  ChevronRight,
+    17→  Clock,
+    18→  Crosshair,
+    19→  Crown,
+    20→  Eye,
+    21→  Layers,
+    22→  Lock,
+    23→  Network,
+    24→  Rocket,
+    25→  Server,
+    26→  Sparkles,
+    27→  Target,
+    28→  TrendingUp,
+    29→  Trophy,
+    30→  Users,
+    31→  Video,
+    32→  Zap,
+    33→} from "lucide-react"
+    34→import { cn } from "@/lib/utils"
+    35→import { getCmsIcon } from "@/lib/cms-icons"
+    36→import { ParticleLogo } from "@/components/platform/particle-logo"
+    37→import { CertificateVerifyCard } from "@/components/platform/certificate-verify-card"
+    38→import { usePageContent, getContent } from "@/lib/use-content"
+    39→import {
+    40→  CyberTerminal,
+    41→  MissionCard,
+    42→  XPBar,
+    43→  RankBadge,
+    44→  SkillNode,
+    45→  StatTile,
+    46→  StatusDot,
+    47→} from "@/components/cyber"
+    48→import type { TerminalLine } from "@/components/cyber"
+    49→import { AdvancedSkillMap } from "@/components/home/advanced-skill-map"
+    50→import {
+    51→  PILLARS,
+    52→  RANGE_SERVICES,
+    53→  LEARNING_PATHS,
+    54→  BRANCH_ANGLES,
+    55→  BRANCHES,
+    56→  SKILL_DOMAINS,
+    57→  SKILL_MAP_DATA,
+    58→  DAILY_OBJECTIVES,
+    59→  RANK_LADDER,
+    60→  CAREER_SKILLS,
+    61→  CAREER_ROLES,
+    62→  INSTITUTION_TYPES,
+    63→  STORY_STAGES,
+    64→  STORIES,
+    65→  TRUST_STATS,
+    66→  FALLBACK_PARTNERS,
+    67→  AUDIENCES,
+    68→  UPCOMING_BATCHES,
+    69→  SCHEDULES,
+    70→  METHODOLOGY_STEPS,
+    71→  INSTRUCTORS,
+    72→  type TechnologyPartner,
+    73→  type PlatformStat,
+    74→  type LearningPathRow,
+    75→  type RankRow,
+    76→} from "@/views/home-data"
+    77→
+    78→/* ---------------------------------------------------------------- *
+    79→ *  HomeView - GuardianX Academy cinematic 13-section homepage      *
+    80→ *  Tells the full story: hero → products → range → paths →         *
+    81→ *  skills → missions → gamification → careers → institutions →     *
+    82→ *  certifications → stories → trust → final CTA.                   *
+    83→ *  Static data + types live in `@/views/home-data`.               *
+    84→ *  AdvancedSkillMap lives in `@/components/home/advanced-skill-map`.*
+    85→ * ---------------------------------------------------------------- */
+    86→
+    87→// Shared animation variants - no scroll triggers, just simple fades.
+    88→const FADE_UP = {
+    89→  initial: { opacity: 0, y: 10 },
+    90→  animate: { opacity: 1, y: 0 },
+    91→  transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] as const },
+    92→}
+    93→
+    94→const FADE_IN = {
+    95→  initial: { opacity: 0 },
+    96→  animate: { opacity: 1 },
+    97→  transition: { duration: 0.35, ease: "easeOut" },
+    98→}
+    99→
+   100→export function HomeView() {
+   101→  const { navigate } = useAppStore()
+   102→
+   103→  /* ------------------------------------------------------------- *
+   104→   *  CMS content with fallbacks                                   *
+   105→   * ------------------------------------------------------------- */
+   106→  const cms = usePageContent("home")
+   107→  const cmsData = cms.data
+   108→
+   109→  const heroBadge = getContent(
+   110→    cmsData,
+   111→    "hero",
+   112→    "badge",
+   113→    "WORLD-CLASS CYBER SECURITY EDUCATION"
+   114→  )
+   115→  // Title is split into prefix + accent so the accent can receive the
+   116→  // premium gradient treatment.
+   117→  const heroTitlePrefix = getContent(
+   118→    cmsData,
+   119→    "hero",
+   120→    "title",
+   121→    "Master cybersecurity with"
+   122→  )
+   123→  const heroTitleAccent = getContent(
+   124→    cmsData,
+   125→    "hero",
+   126→    "titleAccent",
+   127→    "expert instructors."
+   128→  )
+   129→  const heroDescription = getContent(
+   130→    cmsData,
+   131→    "hero",
+   132→    "description",
+   133→    "Learn cybersecurity through live instructor-led training, hands-on labs, structured certification batches, expert study materials and real-world practice."
+   134→  )
+   135→  const heroCtaPrimary = getContent(cmsData, "hero", "ctaPrimary", "EXPLORE TRAINING")
+   136→  const heroCtaSecondary = getContent(cmsData, "hero", "ctaSecondary", "VIEW UPCOMING BATCHES")
+   137→  const heroCtaTertiary = getContent(cmsData, "hero", "ctaTertiary", "FOR INSTITUTIONS")
+   138→
+   139→  const platformEyebrow = getContent(cmsData, "platform", "eyebrow", "THE PLATFORM")
+   140→  const platformTitle = getContent(
+   141→    cmsData,
+   142→    "platform",
+   143→    "title",
+   144→    "One platform. Every angle of cyber security."
+   145→  )
+   146→  const platformDesc = getContent(
+   147→    cmsData,
+   148→    "platform",
+   149→    "description",
+   150→    "GuardianX is an end-to-end cyber security training platform - from beginner foundations through advanced certifications and real-world practice labs."
+   151→  )
+   152→
+   153→  const rangeTitle = getContent(
+   154→    cmsData,
+   155→    "range",
+   156→    "title",
+   157→    "Don't watch someone hack. Hack it yourself."
+   158→  )
+   159→  const rangeDesc = getContent(
+   160→    cmsData,
+   161→    "range",
+   162→    "description",
+   163→    "Spin up a real isolated target in seconds. Probe it, break it, capture the flag - all from your browser."
+   164→  )
+   165→
+   166→  const pathsTitle = getContent(cmsData, "paths", "title", "Choose your mission.")
+   167→  const pathsDesc = getContent(
+   168→    cmsData,
+   169→    "paths",
+   170→    "description",
+   171→    "Structured learning paths that take you from zero to certified - each with a clear outcome and timeline."
+   172→  )
+   173→
+   174→  const skillsTitle = getContent(cmsData, "skills", "title", "Map your skills.")
+   175→  const skillsDesc = getContent(
+   176→    cmsData,
+   177→    "skills",
+   178→    "description",
+   179→    "Visualize every skill you'll earn across the offensive, defensive, and forensic spectrum."
+   180→  )
+   181→
+   182→  const missionTitle = getContent(cmsData, "mission", "title", "Your command center.")
+   183→  const missionDesc = getContent(
+   184→    cmsData,
+   185→    "mission",
+   186→    "description",
+   187→    "Track XP, missions, ranks, and daily objectives from one unified dashboard."
+   188→  )
+   189→
+   190→  const gamifyTitle = getContent(cmsData, "gamify", "title", "Level up your defense.")
+   191→  const gamifyDesc = getContent(
+   192→    cmsData,
+   193→    "gamify",
+   194→    "description",
+   195→    "Every action earns XP. Climb the ranks from RECRUIT to ELITE GUARDIAN."
+   196→  )
+   197→
+   198→  const careerTitle = getContent(cmsData, "career", "title", "Turn skills into careers.")
+   199→  const careerDesc = getContent(
+   200→    cmsData,
+   201→    "career",
+   202→    "description",
+   203→    "We map your progress against real job roles and tell you exactly what's left."
+   204→  )
+   205→
+   206→  const institutionsTitle = getContent(
+   207→    cmsData,
+   208→    "institutions",
+   209→    "title",
+   210→    "GuardianX for Institutions."
+   211→  )
+   212→  const institutionsSub = getContent(
+   213→    cmsData,
+   214→    "institutions",
+   215→    "subtitle",
+   216→    "Teach. Practice. Track. Certify."
+   217→  )
+   218→
+   219→  const certTitle = getContent(cmsData, "cert", "title", "Prove what you know.")
+   220→  const certDesc = getContent(
+   221→    cmsData,
+   222→    "cert",
+   223→    "description",
+   224→    "Every certificate is cryptographically signed and publicly verifiable."
+   225→  )
+   226→
+   227→  const storiesTitle = getContent(cmsData, "stories", "title", "From learning to career.")
+   228→  const storiesDesc = getContent(
+   229→    cmsData,
+   230→    "stories",
+   231→    "description",
+   232→    "A typical GuardianX learner journey - from day one to the offer letter."
+   233→  )
+   234→
+   235→  const trustLabel = getContent(
+   236→    cmsData,
+   237→    "trust",
+   238→    "label",
+   239→    "Built around technologies used across modern cybersecurity teams"
+   240→  )
+   241→
+   242→  const finalCtaTitle = getContent(cmsData, "finalCta", "title", "Become unstoppable.")
+   243→  const finalCtaSubtitle = getContent(
+   244→    cmsData,
+   245→    "finalCta",
+   246→    "subtitle",
+   247→    "Join 12,000+ defenders advancing their careers."
+   248→  )
+   249→  const finalCtaPrimary = getContent(cmsData, "finalCta", "ctaPrimary", "START FREE TODAY")
+   250→  const finalCtaSecondary = getContent(cmsData, "finalCta", "ctaSecondary", "TALK TO US")
+   251→
+   252→  /* ------------------------------------------------------------- *
+   253→   *  Static demo content for the cyber range showcase terminal     *
+   254→   * ------------------------------------------------------------- */
+   255→  const nmapLines: TerminalLine[] = React.useMemo(
+   256→    () => [
+   257→      { type: "command", text: "nmap -sV -p 22,80,3306 10.10.24.14" },
+   258→      { type: "output", text: "Starting Nmap 7.94 ( https://nmap.org )" },
+   259→      { type: "output", text: "Nmap scan report for 10.10.24.14" },
+   260→      { type: "output", text: "Host is up (0.0031s latency)." },
+   261→      { type: "output", text: "PORT     STATE SERVICE  VERSION" },
+   262→      { type: "output", text: "22/tcp   open  ssh      OpenSSH 8.2p1 Ubuntu" },
+   263→      { type: "output", text: "80/tcp   open  http     Apache httpd 2.4.41 ((DVWA))" },
+   264→      { type: "output", text: "3306/tcp open  mysql    MySQL 5.7.31" },
+   265→      { type: "success", text: "3 services discovered - DVWA target mapped" },
+   266→    ],
+   267→    []
+   268→  )
+   269→
+   270→  /* ------------------------------------------------------------- *
+   271→   *  Real DB-backed content via public APIs                       *
+   272→   *  Each query falls back to a hardcoded array when the API      *
+   273→   *  fails so the homepage never goes blank.                      *
+   274→   * ------------------------------------------------------------- */
+   275→  const { data: partnersData } = useQuery<{ partners: TechnologyPartner[]; count: number } | null>({
+   276→    queryKey: ["home-technology-partners"],
+   277→    queryFn: async () => {
+   278→      try {
+   279→        const res = await fetch("/api/technology-partners")
+   280→        if (!res.ok) return null
+   281→        return res.json()
+   282→      } catch {
+   283→        return null
+   284→      }
+   285→    },
+   286→    staleTime: 60_000,
+   287→  })
+   288→  const techPartners = partnersData?.partners ?? FALLBACK_PARTNERS
+   289→
+   290→  const { data: statsData } = useQuery<{ stats: PlatformStat[]; count: number } | null>({
+   291→    queryKey: ["home-platform-stats"],
+   292→    queryFn: async () => {
+   293→      try {
+   294→        const res = await fetch("/api/platform-stats")
+   295→        if (!res.ok) return null
+   296→        return res.json()
+   297→      } catch {
+   298→        return null
+   299→      }
+   300→    },
+   301→    staleTime: 60_000,
+   302→  })
+   303→  const platformStats = (statsData?.stats ?? []).slice(0, 4)
+   304→
+   305→  const { data: pathsData } = useQuery<{ learningPaths: LearningPathRow[]; count: number } | null>({
+   306→    queryKey: ["home-learning-paths"],
+   307→    queryFn: async () => {
+   308→      try {
+   309→        const res = await fetch("/api/learning-paths")
+   310→        if (!res.ok) return null
+   311→        return res.json()
+   312→      } catch {
+   313→        return null
+   314→      }
+   315→    },
+   316→    staleTime: 60_000,
+   317→  })
+   318→  const learningPathRows = pathsData?.learningPaths ?? []
+   319→
+   320→  const { data: ranksData } = useQuery<{ ranks: RankRow[]; count: number } | null>({
+   321→    queryKey: ["home-ranks"],
+   322→    queryFn: async () => {
+   323→      try {
+   324→        const res = await fetch("/api/ranks")
+   325→        if (!res.ok) return null
+   326→        return res.json()
+   327→      } catch {
+   328→        return null
+   329→      }
+   330→    },
+   331→    staleTime: 60_000,
+   332→  })
+   333→  const rankRows = ranksData?.ranks ?? []
+   334→
+   335→  /* ---------------------- UPCOMING BATCHES (DB-backed) --------------------- *
+   336→   *  Public list of live instructor-led certification batches.             *
+   337→   *  Falls back to the static `UPCOMING_BATCHES` array when the API fails *
+   338→   *  so the homepage never goes blank.                                    *
+   339→   * ---------------------------------------------------------------------- */
+   340→  type TrainingBatchRow = {
+   341→    id?: string
+   342→    certification: string
+   343→    name: string
+   344→    schedule: string
+   345→    startDate: string
+   346→    mode: string
+   347→    instructor: string
+   348→    seats: number
+   349→    enrolled?: number
+   350→    status?: string
+   351→    level: string
+   352→    certColor: string
+   353→    certTint: string
+   354→    certBorder: string
+   355→    levelColor: string
+   356→    levelTint: string
+   357→    levelBorder: string
+   358→    borderColor: string
+   359→    btnClass: string
+   360→    almostFull?: boolean
+   361→  }
+   362→  const { data: batchesData } = useQuery<{ batches: TrainingBatchRow[]; count: number } | null>({
+   363→    queryKey: ["home-training-batches"],
+   364→    queryFn: async () => {
+   365→      try {
+   366→        const res = await fetch("/api/training-batches")
+   367→        if (!res.ok) return null
+   368→        return res.json()
+   369→      } catch {
+   370→        return null
+   371→      }
+   372→    },
+   373→    staleTime: 60_000,
+   374→  })
+   375→  const displayBatches: TrainingBatchRow[] = React.useMemo(() => {
+   376→    const api = batchesData?.batches
+   377→    if (api && api.length > 0) {
+   378→      return api.map((b) => ({
+   379→        ...b,
+   380→        almostFull: (b.seats - (b.enrolled ?? 0)) <= 2 || b.status === "Almost Full",
+   381→      }))
+   382→    }
+   383→    // Static fallback — already has `almostFull`.
+   384→    return UPCOMING_BATCHES as unknown as TrainingBatchRow[]
+   385→  }, [batchesData])
+   386→
+   387→  // Normalize platform stats into the same shape as the fallback TRUST_STATS
+   388→  // so the JSX below doesn't need runtime `"x" in s` checks.
+   389→  type StatTile = {
+   390→    key: string
+   391→    icon: React.ComponentType<{ className?: string }>
+   392→    value: string
+   393→    suffix: string
+   394→    label: string
+   395→    color: string
+   396→    tint: string
+   397→    isLive: boolean
+   398→  }
+   399→  const statTiles: StatTile[] = React.useMemo(() => {
+   400→    if (platformStats.length > 0) {
+   401→      return platformStats.map((s) => ({
+   402→        key: s.key,
+   403→        icon: getCmsIcon(s.icon),
+   404→        value: s.value,
+   405→        suffix: s.suffix ?? "",
+   406→        label: s.label,
+   407→        color: s.color,
+   408→        tint: "bg-violet-500/10",
+   409→        isLive: s.source === "calculated",
+   410→      }))
+   411→    }
+   412→    return TRUST_STATS.map((s) => ({
+   413→      key: s.label,
+   414→      icon: s.icon,
+   415→      value: s.value,
+   416→      suffix: "",
+   417→      label: s.label,
+   418→      color: s.color,
+   419→      tint: s.tint,
+   420→      isLive: true,
+   421→    }))
+   422→  }, [platformStats])
+   423→
+   424→  // Hero CTAs are fixed to discovery flows - Explore Training (catalog),
+   425→  // View Upcoming Batches (batches), and For Institutions.
+   426→  // The CMS can override the labels via the home.hero.ctaPrimary /
+   427→  // ctaSecondary content rows; targets remain fixed.
+   428→  const heroPrimaryTarget: View = { name: "catalog" }
+   429→  const heroSecondaryTarget: View = { name: "batches" }
+   430→  const heroTertiaryTarget: View = { name: "institutions-schools" }
+   431→
+   432→  return (
+   433→    <main className="relative">
+   434→      {/* =====================================================
+   435→          SECTION 1 - HERO
+   436→          ===================================================== */}
+   437→      <section
+   438→        aria-labelledby="hero-heading"
+   439→        className="relative overflow-hidden"
+   440→      >
+   441→        <div className="absolute inset-0 bg-mesh" aria-hidden />
+   442→        <div className="absolute inset-0 bg-grid opacity-10" aria-hidden />
+   443→        <div
+   444→          className="absolute left-1/3 top-1/4 size-[500px] rounded-full bg-violet-600/8 blur-[120px] pointer-events-none"
+   445→          aria-hidden
+   446→        />
+   447→        <div
+   448→          className="absolute bottom-1/4 right-1/3 size-[400px] rounded-full bg-cyan-500/6 blur-[100px] pointer-events-none"
+   449→          aria-hidden
+   450→        />
+   451→
+   452→        {/* Desktop: large interactive particle logo on the right */}
+   453→        <div className="hidden lg:block absolute right-[6%] top-1/2 -translate-y-1/2 pointer-events-auto">
+   454→          <motion.div
+   455→            initial={{ opacity: 0, scale: 0.7 }}
+   456→            animate={{ opacity: 1, scale: 1 }}
+   457→            transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+   458→          >
+   459→            <ParticleLogo size={680} interactive showGlow />
+   460→          </motion.div>
+   461→        </div>
+   462→
+   463→        {/* Mobile: smaller particle logo inline */}
+   464→        <div className="lg:hidden absolute inset-x-0 top-0 h-[44vh] flex items-center justify-center pointer-events-none">
+   465→          <ParticleLogo size={340} interactive={false} showGlow />
+   466→        </div>
+   467→
+   468→        <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full py-12 lg:py-16 pt-[48vh] lg:pt-16">
+   469→          <div className="max-w-3xl">
+   470→            <motion.div
+   471→              {...FADE_UP}
+   472→              className="inline-flex items-center gap-2 mb-4 rounded-full border border-violet-500/30 bg-violet-500/10 px-3 py-1.5"
+   473→            >
+   474→              <span className="h-1.5 w-1.5 rounded-full bg-violet-400 pulse-dot" aria-hidden />
+   475→              <span className="text-[10px] font-mono text-violet-300/90 tracking-[0.25em]">
+   476→                {heroBadge}
+   477→              </span>
+   478→            </motion.div>
+   479→
+   480→            <motion.h1
+   481→              id="hero-heading"
+   482→              {...FADE_UP}
+   483→              transition={{ duration: 0.45, delay: 0.05 }}
+   484→              className="text-[clamp(2.25rem,5.5vw,4rem)] font-bold leading-[1.02] tracking-[-0.03em] mb-5 text-balance"
+   485→            >
+   486→              {heroTitlePrefix}{" "}
+   487→              <span className="text-gradient-premium">{heroTitleAccent}</span>
+   488→            </motion.h1>
+   489→
+   490→            <motion.p
+   491→              {...FADE_UP}
+   492→              transition={{ duration: 0.4, delay: 0.15 }}
+   493→              className="text-base lg:text-lg text-muted-foreground max-w-xl mb-6 leading-relaxed"
+   494→            >
+   495→              {heroDescription}
+   496→            </motion.p>
+   497→
+   498→            <motion.div
+   499→              {...FADE_UP}
+   500→              transition={{ duration: 0.4, delay: 0.25 }}
+   501→              className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-6"
+   502→            >
+   503→              <Button
+   504→                size="lg"
+   505→                onClick={() => navigate(heroPrimaryTarget)}
+   506→                className="bg-violet-600 hover:bg-violet-500 btn-premium px-7 py-6 text-sm"
+   507→                aria-label={heroCtaPrimary}
+   508→              >
+   509→                {heroCtaPrimary}
+   510→                <ArrowRight className="h-4 w-4 ml-2" aria-hidden />
+   511→              </Button>
+   512→              <Button
+   513→                size="lg"
+   514→                variant="outline"
+   515→                onClick={() => navigate(heroSecondaryTarget)}
+   516→                className="px-6 py-6 text-sm"
+   517→                aria-label={heroCtaSecondary}
+   518→              >
+   519→                <Calendar className="h-4 w-4 mr-2" aria-hidden />
+   520→                {heroCtaSecondary}
+   521→              </Button>
+   522→              <Button
+   523→                size="lg"
+   524→                variant="ghost"
+   525→                onClick={() => navigate(heroTertiaryTarget)}
+   526→                className="px-5 py-6 text-sm text-muted-foreground hover:text-foreground"
+   527→                aria-label={heroCtaTertiary}
+   528→              >
+   529→                <Building2 className="h-4 w-4 mr-2" aria-hidden />
+   530→                {heroCtaTertiary}
+   531→              </Button>
+   532→            </motion.div>
+   533→
+   534→            {/* Live platform indicators */}
+   535→            <motion.div
+   536→              {...FADE_UP}
+   537→              transition={{ duration: 0.4, delay: 0.35 }}
+   538→              className="flex flex-wrap items-center gap-x-5 gap-y-2 pt-4 border-t border-border/40"
+   539→            >
+   540→              <StatusDot status="online" pulse size="sm" label="BATCHES OPEN" />
+   541→              <StatusDot status="online" pulse size="sm" label="LIVE SESSIONS" />
+   542→              <StatusDot status="online" pulse size="sm" label="12 EXPERT INSTRUCTORS" />
+   543→            </motion.div>
+   544→          </div>
+   545→        </div>
+   546→      </section>
+   547→
+   548→      {/* =====================================================
+   549→          NEW SECTION - WHO WE TRAIN
+   550→          4 audience cards: Aspirants, Freshers, Working Pros, Institutions
+   551→          ===================================================== */}
+   552→      <section
+   553→        aria-labelledby="who-we-train-heading"
+   554→        className="relative py-8 lg:py-12"
+   555→      >
+   556→        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+   557→          <motion.div {...FADE_UP} className="max-w-2xl mb-6">
+   558→            <p className="text-[10px] font-mono text-violet-300/80 tracking-[0.25em] mb-2">
+   559→              WHO WE TRAIN
+   560→            </p>
+   561→            <h2
+   562→              id="who-we-train-heading"
+   563→              className="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-[-0.02em] mb-3 text-balance"
+   564→            >
+   565→              Built for every kind of{" "}
+   566→              <span className="text-gradient-premium">cyber learner.</span>
+   567→            </h2>
+   568→            <p className="text-sm text-muted-foreground leading-relaxed">
+   569→              GuardianX trains the full spectrum of cyber security learners - from
+   570→              absolute beginners entering the field to working professionals
+   571→              upskilling around their day jobs, and institutions running cohorts at
+   572→              scale.
+   573→            </p>
+   574→          </motion.div>
+   575→
+   576→          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+   577→            {AUDIENCES.map((a, i) => (
+   578→              <motion.div
+   579→                key={a.title}
+   580→                initial={{ opacity: 0, y: 10 }}
+   581→                animate={{ opacity: 1, y: 0 }}
+   582→                transition={{ duration: 0.35, delay: 0.05 * i, ease: "easeOut" }}
+   583→                className="card-premium rounded-xl p-5 lg:p-6 h-full"
+   584→              >
+   585→                <div
+   586→                  className={cn(
+   587→                    "mb-4 flex size-12 items-center justify-center rounded-lg border border-border/50",
+   588→                    a.tint,
+   589→                    a.color
+   590→                  )}
+   591→                  aria-hidden
+   592→                >
+   593→                  <a.icon className="size-6" />
+   594→                </div>
+   595→                <h3 className="text-base font-semibold mb-2">{a.title}</h3>
+   596→                <p className="text-xs text-muted-foreground leading-relaxed">
+   597→                  {a.desc}
+   598→                </p>
+   599→              </motion.div>
+   600→            ))}
+   601→          </div>
+   602→        </div>
+   603→      </section>
+   604→
+   605→      {/* =====================================================
+   606→          NEW SECTION - UPCOMING BATCHES
+   607→          4 hardcoded live-instructor-led certification batch cards.
+   608→          Premium card design with difficulty color coding.
+   609→          ===================================================== */}
+   610→      <section
+   611→        aria-labelledby="upcoming-batches-heading"
+   612→        className="relative py-8 lg:py-12 overflow-hidden"
+   613→      >
+   614→        <div className="absolute inset-0 bg-grid opacity-[0.04] pointer-events-none" aria-hidden />
+   615→        <div
+   616→          className="absolute left-1/2 top-0 -translate-x-1/2 size-[500px] rounded-full bg-violet-600/5 blur-[120px] pointer-events-none"
+   617→          aria-hidden
+   618→        />
+   619→        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+   620→          <motion.div {...FADE_UP} className="max-w-2xl mb-6">
+   621→            <p className="text-[10px] font-mono text-violet-300/80 tracking-[0.25em] mb-2">
+   622→              LIVE INSTRUCTOR-LED BATCHES
+   623→            </p>
+   624→            <h2
+   625→              id="upcoming-batches-heading"
+   626→              className="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-[-0.02em] mb-3 text-balance"
+   627→            >
+   628→              Upcoming Live Batches
+   629→            </h2>
+   630→            <p className="text-sm text-muted-foreground leading-relaxed">
+   631→              Structured certification batches with fixed schedules, dedicated
+   632→              instructors, and live online sessions. Enroll early to secure your
+   633→              seat - batches fill up fast.
+   634→            </p>
+   635→          </motion.div>
+   636→
+   637→          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-5">
+   638→            {displayBatches.slice(0, 4).map((b, i) => (
+   639→              <motion.div
+   640→                key={b.name}
+   641→                initial={{ opacity: 0, y: 12 }}
+   642→                animate={{ opacity: 1, y: 0 }}
+   643→                transition={{ duration: 0.4, delay: 0.05 * i, ease: "easeOut" }}
+   644→                className={cn(
+   645→                  "group relative rounded-2xl border bg-card p-5 lg:p-6 transition-all duration-300 hover:-translate-y-1",
+   646→                  b.borderColor
+   647→                )}
+   648→              >
+   649→                {/* Header row: certification badge + level pill */}
+   650→                <div className="flex items-start justify-between gap-3 mb-4">
+   651→                  <div className="min-w-0">
+   652→                    <Badge
+   653→                      className={cn(
+   654→                        "mb-2 font-mono text-[10px] uppercase tracking-wider",
+   655→                        b.certTint,
+   656→                        b.certColor,
+   657→                        b.certBorder
+   658→                      )}
+   659→                    >
+   660→                      {b.certification}
+   661→                    </Badge>
+   662→                    <h3 className="text-lg font-semibold leading-tight">
+   663→                      {b.name}
+   664→                    </h3>
+   665→                  </div>
+   666→                  <Badge
+   667→                    variant="outline"
+   668→                    className={cn(
+   669→                      "font-mono text-[10px] uppercase tracking-wider shrink-0",
+   670→                      b.levelTint,
+   671→                      b.levelColor,
+   672→                      b.levelBorder
+   673→                    )}
+   674→                  >
+   675→                    {b.level}
+   676→                  </Badge>
+   677→                </div>
+   678→
+   679→                {/* Meta rows */}
+   680→                <dl className="space-y-2 text-sm mb-5">
+   681→                  <div className="flex items-center gap-2">
+   682→                    <Calendar className="size-3.5 text-muted-foreground shrink-0" aria-hidden />
+   683→                    <span className="text-muted-foreground">{b.schedule}</span>
+   684→                  </div>
+   685→                  <div className="flex items-center gap-2">
+   686→                    <Clock className="size-3.5 text-muted-foreground shrink-0" aria-hidden />
+   687→                    <span className="text-muted-foreground">Starts {b.startDate}</span>
+   688→                  </div>
+   689→                  <div className="flex items-center gap-2">
+   690→                    <Video className="size-3.5 text-muted-foreground shrink-0" aria-hidden />
+   691→                    <span className="text-muted-foreground">{b.mode}</span>
+   692→                  </div>
+   693→                  <div className="flex items-center gap-2">
+   694→                    <Users className="size-3.5 text-muted-foreground shrink-0" aria-hidden />
+   695→                    <span className="text-muted-foreground">{b.instructor}</span>
+   696→                  </div>
+   697→                  <div className="space-y-1.5">
+   698→                    <div className="flex items-center gap-2">
+   699→                      <Target className="size-3.5 text-muted-foreground shrink-0" aria-hidden />
+   700→                      <span
+   701→                        className={cn(
+   702→                          "text-xs font-medium tabular-nums",
+   703→                          b.almostFull ? "text-amber-300" : "text-emerald-300"
+   704→                        )}
+   705→                      >
+   706→                        {b.seats - (b.enrolled ?? 0)} seats left
+   707→                        {b.almostFull ? " · Almost Full" : ""}
+   708→                      </span>
+   709→                      <span className="ml-auto text-[10px] font-mono text-muted-foreground tabular-nums">
+   710→                        {b.enrolled ?? 0}/{b.seats}
+   711→                      </span>
+   712→                    </div>
+   713→                    {/* Capacity progress bar */}
+   714→                    <div className="h-1.5 rounded-full bg-muted/60 overflow-hidden" aria-hidden>
+   715→                      <div
+   716→                        className={cn(
+   717→                          "h-full rounded-full transition-all duration-500",
+   718→                          b.almostFull
+   719→                            ? "bg-gradient-to-r from-amber-500 to-amber-400"
+   720→                            : "bg-gradient-to-r from-emerald-500 to-emerald-400"
+   721→                        )}
+   722→                        style={{ width: `${Math.min(100, ((b.enrolled ?? 0) / b.seats) * 100)}%` }}
+   723→                      />
+   724→                    </div>
+   725→                  </div>
+   726→                </dl>
+   727→
+   728→                <Button
+   729→                  onClick={() => navigate({ name: "batches" })}
+   730→                  className={cn("w-full btn-premium", b.btnClass)}
+   731→                  size="sm"
+   732→                  aria-label={`View ${b.name}`}
+   733→                >
+   734→                  VIEW BATCH
+   735→                  <ArrowRight className="size-4 ml-2" aria-hidden />
+   736→                </Button>
+   737→              </motion.div>
+   738→            ))}
+   739→          </div>
+   740→
+   741→          <motion.div
+   742→            {...FADE_IN}
+   743→            transition={{ duration: 0.35, delay: 0.25 }}
+   744→            className="mt-6 text-center"
+   745→          >
+   746→            <Button
+   747→              variant="outline"
+   748→              onClick={() => navigate({ name: "batches" })}
+   749→              aria-label="See all upcoming batches"
+   750→            >
+   751→              See all upcoming batches
+   752→              <ArrowRight className="size-4 ml-2" aria-hidden />
+   753→            </Button>
+   754→          </motion.div>
+   755→        </div>
+   756→      </section>
+   757→
+   758→      {/* =====================================================
+   759→          NEW SECTION - FLEXIBLE SCHEDULES
+   760→          6 schedule-option cards: Weekday, Weekend, Morning, Afternoon, Evening, Late Night
+   761→          ===================================================== */}
+   762→      <section
+   763→        aria-labelledby="schedules-heading"
+   764→        className="relative py-8 lg:py-12"
+   765→      >
+   766→        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+   767→          <motion.div {...FADE_UP} className="max-w-2xl mb-6">
+   768→            <p className="text-[10px] font-mono text-violet-300/80 tracking-[0.25em] mb-2">
+   769→              FLEXIBLE SCHEDULES
+   770→            </p>
+   771→            <h2
+   772→              id="schedules-heading"
+   773→              className="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-[-0.02em] mb-3 text-balance"
+   774→            >
+   775→              Train around your life.
+   776→            </h2>
+   777→            <p className="text-sm text-muted-foreground leading-relaxed">
+   778→              Choose a schedule that fits your work, studies and personal
+   779→              commitments. New batches open across every slot, every month.
+   780→            </p>
+   781→          </motion.div>
+   782→
+   783→          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 lg:gap-4">
+   784→            {SCHEDULES.map((s, i) => (
+   785→              <motion.div
+   786→                key={s.type}
+   787→                initial={{ opacity: 0, y: 10 }}
+   788→                animate={{ opacity: 1, y: 0 }}
+   789→                transition={{ duration: 0.3, delay: 0.04 * i, ease: "easeOut" }}
+   790→                className="card-premium rounded-xl p-4 lg:p-5 h-full"
+   791→              >
+   792→                <div
+   793→                  className={cn(
+   794→                    "mb-3 flex size-10 items-center justify-center rounded-lg border border-border/50",
+   795→                    s.tint,
+   796→                    s.color
+   797→                  )}
+   798→                  aria-hidden
+   799→                >
+   800→                  <s.icon className="size-5" />
+   801→                </div>
+   802→                <h3 className="text-sm font-semibold mb-1 font-mono tracking-wider">
+   803→                  {s.type}
+   804→                </h3>
+   805→                <p className="text-xs text-muted-foreground">{s.example}</p>
+   806→              </motion.div>
+   807→            ))}
+   808→          </div>
+   809→        </div>
+   810→      </section>
+   811→
+   812→      {/* =====================================================
+   813→          NEW SECTION - TRAINING METHODOLOGY
+   814→          7-step visual timeline: live lecture → analysis → study → lab →
+   815→          assignment → mock test → exam prep.
+   816→          Horizontal on desktop, vertical on mobile.
+   817→          ===================================================== */}
+   818→      <section
+   819→        aria-labelledby="methodology-heading"
+   820→        className="relative py-8 lg:py-12 overflow-hidden"
+   821→      >
+   822→        <div className="absolute inset-0 bg-grid opacity-[0.04] pointer-events-none" aria-hidden />
+   823→        <div
+   824→          className="absolute right-1/3 top-1/4 size-[400px] rounded-full bg-cyan-500/5 blur-[120px] pointer-events-none"
+   825→          aria-hidden
+   826→        />
+   827→        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+   828→          <motion.div {...FADE_UP} className="max-w-2xl mb-8">
+   829→            <p className="text-[10px] font-mono text-violet-300/80 tracking-[0.25em] mb-2">
+   830→              TRAINING METHODOLOGY
+   831→            </p>
+   832→            <h2
+   833→              id="methodology-heading"
+   834→              className="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-[-0.02em] mb-3 text-balance"
+   835→            >
+   836→              How GuardianX trains you.
+   837→            </h2>
+   838→            <p className="text-sm text-muted-foreground leading-relaxed">
+   839→              Every batch follows the same 7-step framework - from live lecture
+   840→              to exam day. No fluff, no padding - just structured progression
+   841→              that gets you certified.
+   842→            </p>
+   843→          </motion.div>
+   844→
+   845→          {/* Desktop: horizontal timeline */}
+   846→          <div className="hidden lg:block relative">
+   847→            <div
+   848→              className="absolute top-[34px] left-[8%] right-[8%] h-px bg-gradient-to-r from-violet-500/0 via-violet-500/40 to-violet-500/0"
+   849→              aria-hidden
+   850→            />
+   851→            <div className="grid grid-cols-7 gap-3">
+   852→              {METHODOLOGY_STEPS.map((step, i) => (
+   853→                <motion.div
+   854→                  key={step.num}
+   855→                  initial={{ opacity: 0, y: 12 }}
+   856→                  animate={{ opacity: 1, y: 0 }}
+   857→                  transition={{ duration: 0.35, delay: 0.05 * i, ease: "easeOut" }}
+   858→                  className="relative text-center"
+   859→                >
+   860→                  <div className="mx-auto mb-3 flex size-[68px] items-center justify-center rounded-full border border-violet-500/30 bg-card relative z-10">
+   861→                    <step.icon className="size-6 text-violet-300" aria-hidden />
+   862→                  </div>
+   863→                  <div className="font-mono text-[10px] text-violet-300/80 tracking-wider mb-1">
+   864→                    STEP {step.num}
+   865→                  </div>
+   866→                  <h3 className="text-xs font-semibold mb-1">{step.title}</h3>
+   867→                  <p className="text-[10px] text-muted-foreground leading-relaxed">
+   868→                    {step.desc}
+   869→                  </p>
+   870→                </motion.div>
+   871→              ))}
+   872→            </div>
+   873→          </div>
+   874→
+   875→          {/* Mobile / tablet: vertical timeline */}
+   876→          <div className="lg:hidden space-y-2">
+   877→            {METHODOLOGY_STEPS.map((step, i) => (
+   878→              <motion.div
+   879→                key={step.num}
+   880→                initial={{ opacity: 0, y: 10 }}
+   881→                animate={{ opacity: 1, y: 0 }}
+   882→                transition={{ duration: 0.3, delay: 0.04 * i, ease: "easeOut" }}
+   883→                className="flex gap-4"
+   884→              >
+   885→                <div className="flex flex-col items-center">
+   886→                  <div className="flex size-12 items-center justify-center rounded-full border border-violet-500/30 bg-card shrink-0">
+   887→                    <step.icon className="size-5 text-violet-300" aria-hidden />
+   888→                  </div>
+   889→                  {i < METHODOLOGY_STEPS.length - 1 && (
+   890→                    <div className="w-px flex-1 bg-violet-500/20 mt-2 mb-2" aria-hidden />
+   891→                  )}
+   892→                </div>
+   893→                <div className="pt-1 pb-3">
+   894→                  <div className="font-mono text-[10px] text-violet-300/80 tracking-wider mb-1">
+   895→                    STEP {step.num}
+   896→                  </div>
+   897→                  <h3 className="text-sm font-semibold mb-1">{step.title}</h3>
+   898→                  <p className="text-xs text-muted-foreground leading-relaxed">
+   899→                    {step.desc}
+   900→                  </p>
+   901→                </div>
+   902→              </motion.div>
+   903→            ))}
+   904→          </div>
+   905→        </div>
+   906→      </section>
+   907→
+   908→      {/* =====================================================
+   909→          NEW SECTION - EXPERT INSTRUCTORS
+   910→          3 verified instructor profile cards.
+   911→          ===================================================== */}
+   912→      <section
+   913→        aria-labelledby="instructors-heading"
+   914→        className="relative py-8 lg:py-12"
+   915→      >
+   916→        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+   917→          <motion.div {...FADE_UP} className="max-w-2xl mb-6">
+   918→            <p className="text-[10px] font-mono text-violet-300/80 tracking-[0.25em] mb-2">
+   919→              EXPERT INSTRUCTORS
+   920→            </p>
+   921→            <h2
+   922→              id="instructors-heading"
+   923→              className="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-[-0.02em] mb-3 text-balance"
+   924→            >
+   925→              Learn from people who have{" "}
+   926→              <span className="text-gradient-premium">done the work.</span>
+   927→            </h2>
+   928→            <p className="text-sm text-muted-foreground leading-relaxed">
+   929→              Our instructors are working security professionals with real-world
+   930→              experience - not just certifications. Every profile is verified by
+   931→              the GuardianX team.
+   932→            </p>
+   933→          </motion.div>
+   934→
+   935→          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-5">
+   936→            {INSTRUCTORS.map((ins, i) => (
+   937→              <motion.div
+   938→                key={ins.name}
+   939→                initial={{ opacity: 0, y: 12 }}
+   940→                animate={{ opacity: 1, y: 0 }}
+   941→                transition={{ duration: 0.4, delay: 0.05 * i, ease: "easeOut" }}
+   942→                className="card-premium rounded-2xl p-5 lg:p-6 h-full flex flex-col"
+   943→              >
+   944→                {/* Avatar + name */}
+   945→                <div className="flex items-start gap-4 mb-4">
+   946→                  <div
+   947→                    className={cn(
+   948→                      "flex size-14 items-center justify-center rounded-full font-semibold text-base shrink-0",
+   949→                      ins.avatarBg,
+   950→                      ins.avatarColor
+   951→                    )}
+   952→                    aria-hidden
+   953→                  >
+   954→                    {ins.initials}
+   955→                  </div>
+   956→                  <div className="flex-1 min-w-0">
+   957→                    <div className="flex items-center gap-1.5 mb-1">
+   958→                      <h3 className="text-base font-semibold truncate">{ins.name}</h3>
+   959→                      <BadgeCheck
+   960→                        className="size-4 text-emerald-400 shrink-0"
+   961→                        aria-label="Verified instructor"
+   962→                      />
+   963→                    </div>
+   964→                    <p className="text-xs text-muted-foreground">{ins.expertise}</p>
+   965→                  </div>
+   966→                </div>
+   967→
+   968→                {/* Meta rows */}
+   969→                <dl className="space-y-2 mb-4">
+   970→                  <div className="flex items-center justify-between text-xs">
+   971→                    <dt className="text-muted-foreground">Experience</dt>
+   972→                    <dd className="font-medium">{ins.experience}</dd>
+   973→                  </div>
+   974→                  <div className="flex items-center justify-between text-xs gap-3">
+   975→                    <dt className="text-muted-foreground shrink-0">Certifications</dt>
+   976→                    <dd className="font-mono text-[10px] text-right text-foreground/90">
+   977→                      {ins.certs}
+   978→                    </dd>
+   979→                  </div>
+   980→                </dl>
+   981→
+   982→                {/* VERIFIED badge */}
+   983→                <div className="mb-4 flex items-center gap-1.5 text-[10px] font-mono text-emerald-400 tracking-wider">
+   984→                  <BadgeCheck className="size-3" aria-hidden />
+   985→                  VERIFIED INSTRUCTOR PROFILE
+   986→                </div>
+   987→
+   988→                <Button
+   989→                  variant="outline"
+   990→                  size="sm"
+   991→                  className="w-full mt-auto"
+   992→                  aria-label={`View ${ins.name} instructor profile`}
+   993→                >
+   994→                  VIEW INSTRUCTOR
+   995→                  <ArrowRight className="size-4 ml-2" aria-hidden />
+   996→                </Button>
+   997→              </motion.div>
+   998→            ))}
+   999→          </div>
+  1000→        </div>
+  1001→      </section>
+  1002→
+  1003→      {/* =====================================================
+  1004→          SECTION 2 - PLATFORM INTRODUCTION (6 pillars)
+  1005→          ===================================================== */}
+  1006→      <section
+  1007→        aria-labelledby="platform-heading"
+  1008→        className="relative py-8 lg:py-12"
+  1009→      >
+  1010→        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+  1011→          <motion.div {...FADE_UP} className="max-w-2xl mb-6">
+  1012→            <p className="text-[10px] font-mono text-violet-300/80 tracking-[0.25em] mb-2">
+  1013→              {platformEyebrow}
+  1014→            </p>
+  1015→            <h2
+  1016→              id="platform-heading"
+  1017→              className="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-[-0.02em] mb-3"
+  1018→            >
+  1019→              {platformTitle}
+  1020→            </h2>
+  1021→            <p className="text-sm text-muted-foreground leading-relaxed">
+  1022→              {platformDesc}
+  1023→            </p>
+  1024→          </motion.div>
+  1025→
+  1026→          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 lg:gap-4">
+  1027→            {PILLARS.map((p, i) => (
+  1028→              <motion.div
+  1029→                key={p.title}
+  1030→                initial={{ opacity: 0, y: 10 }}
+  1031→                animate={{ opacity: 1, y: 0 }}
+  1032→                transition={{ duration: 0.35, delay: 0.05 * i, ease: "easeOut" }}
+  1033→                className="card-premium rounded-xl p-4 lg:p-5"
+  1034→              >
+  1035→                <div
+  1036→                  className={cn(
+  1037→                    "mb-3 flex size-10 items-center justify-center rounded-lg border border-border/50",
+  1038→                    p.tint,
+  1039→                    p.color
+  1040→                  )}
+  1041→                  aria-hidden
+  1042→                >
+  1043→                  <p.icon className="size-5" />
+  1044→                </div>
+  1045→                <h3 className="text-sm font-semibold mb-1">{p.title}</h3>
+  1046→                <p className="text-xs text-muted-foreground leading-relaxed">
+  1047→                  {p.desc}
+  1048→                </p>
+  1049→              </motion.div>
+  1050→            ))}
+  1051→          </div>
+  1052→        </div>
+  1053→      </section>
+  1054→
+  1055→      {/* =====================================================
+  1056→          SECTION 3 - CYBER RANGE SHOWCASE
+  1057→          ===================================================== */}
+  1058→      <section
+  1059→        aria-labelledby="range-heading"
+  1060→        className="relative py-8 lg:py-12"
+  1061→      >
+  1062→        <div className="absolute inset-0 bg-grid opacity-[0.04] pointer-events-none" aria-hidden />
+  1063→        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
+  1064→          <motion.div {...FADE_UP} className="max-w-2xl mb-6">
+  1065→            <h2
+  1066→              id="range-heading"
+  1067→              className="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-[-0.02em] mb-3 text-balance"
+  1068→            >
+  1069→              {rangeTitle}
+  1070→            </h2>
+  1071→            <p className="text-sm text-muted-foreground leading-relaxed">
+  1072→              {rangeDesc}
+  1073→            </p>
+  1074→          </motion.div>
+  1075→
+  1076→          <div className="grid lg:grid-cols-2 gap-4 lg:gap-6 items-stretch">
+  1077→            {/* Target info card */}
+  1078→            <motion.div
+  1079→              {...FADE_UP}
+  1080→              transition={{ duration: 0.4, delay: 0.05 }}
+  1081→              className="card-premium rounded-2xl p-5 lg:p-6 scanlines"
+  1082→            >
+  1083→              <div className="flex items-center justify-between mb-4">
+  1084→                <div className="flex items-center gap-2">
+  1085→                  <StatusDot status="online" pulse size="sm" label="TARGET ONLINE" />
+  1086→                </div>
+  1087→                <div className="flex items-center gap-2">
+  1088→                  <span className="inline-flex items-center gap-1.5 rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-wider text-amber-300">
+  1089→                    <Sparkles className="size-3" aria-hidden />
+  1090→                    DEMONSTRATION
+  1091→                  </span>
+  1092→                  <Badge className="bg-violet-500/15 text-violet-300 border-violet-500/30 font-mono text-[10px]">
+  1093→                    DVWA
+  1094→                  </Badge>
+  1095→                </div>
+  1096→              </div>
+  1097→
+  1098→              <p className="text-[10px] font-mono text-amber-300/80 mb-4 tracking-wider">
+  1099→                Interactive demo - sign up to access live labs
+  1100→              </p>
+  1101→
+  1102→              <h3 className="text-base font-semibold mb-4 flex items-center gap-2">
+  1103→                <Server className="size-4 text-cyan-300" aria-hidden />
+  1104→                Target Machine
+  1105→              </h3>
+  1106→
+  1107→              <dl className="space-y-3 font-mono text-sm">
+  1108→                <div className="flex justify-between border-b border-border/40 pb-2">
+  1109→                  <dt className="text-muted-foreground">TARGET</dt>
+  1110→                  <dd className="text-foreground">DVWA</dd>
+  1111→                </div>
+  1112→                <div className="flex justify-between border-b border-border/40 pb-2">
+  1113→                  <dt className="text-muted-foreground">STATUS</dt>
+  1114→                  <dd className="text-emerald-300">ONLINE</dd>
+  1115→                </div>
+  1116→                <div className="flex justify-between border-b border-border/40 pb-2">
+  1117→                  <dt className="text-muted-foreground">IP</dt>
+  1118→                  <dd className="text-cyan-200">10.10.24.14</dd>
+  1119→                </div>
+  1120→              </dl>
+  1121→
+  1122→              <div className="mt-4">
+  1123→                <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider mb-2">
+  1124→                  Open Services
+  1125→                </p>
+  1126→                <div className="flex flex-wrap gap-2">
+  1127→                  {RANGE_SERVICES.map((s) => (
+  1128→                    <span
+  1129→                      key={s.port}
+  1130→                      className="inline-flex items-center gap-1.5 rounded-md border border-border/50 bg-[oklch(0.1_0.008_270)] px-2 py-1 font-mono text-xs"
+  1131→                    >
+  1132→                      <s.icon className={cn("size-3.5", s.color)} aria-hidden />
+  1133→                      <span className="text-cyan-200">{s.port}</span>
+  1134→                      <span className="text-muted-foreground">{s.name}</span>
+  1135→                    </span>
+  1136→                  ))}
+  1137→                </div>
+  1138→              </div>
+  1139→
+  1140→              <Button
+  1141→                className="mt-5 w-full bg-violet-600 hover:bg-violet-500 btn-premium"
+  1142→                onClick={() => navigate({ name: "labs" })}
+  1143→                aria-label="Launch lab"
+  1144→              >
+  1145→                <Crosshair className="size-4 mr-2" aria-hidden />
+  1146→                LAUNCH LAB
+  1147→              </Button>
+  1148→            </motion.div>
+  1149→
+  1150→            {/* Cyber terminal - nmap scan */}
+  1151→            <motion.div
+  1152→              {...FADE_UP}
+  1153→              transition={{ duration: 0.4, delay: 0.15 }}
+  1154→              className="flex"
+  1155→            >
+  1156→              <CyberTerminal
+  1157→                lines={nmapLines}
+  1158→                speed={18}
+  1159→                className="w-full"
+  1160→                prompt="guardian@kali:~$"
+  1161→              />
+  1162→            </motion.div>
+  1163→          </div>
+  1164→        </div>
+  1165→      </section>
+  1166→
+  1167→      {/* =====================================================
+  1168→          SECTION 4 - LEARNING PATHS
+  1169→          ===================================================== */}
+  1170→      <section
+  1171→        aria-labelledby="paths-heading"
+  1172→        className="relative py-8 lg:py-12"
+  1173→      >
+  1174→        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+  1175→          <motion.div {...FADE_UP} className="max-w-2xl mb-6">
+  1176→            <h2
+  1177→              id="paths-heading"
+  1178→              className="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-[-0.02em] mb-3"
+  1179→            >
+  1180→              {pathsTitle}
+  1181→            </h2>
+  1182→            <p className="text-sm text-muted-foreground leading-relaxed">
+  1183→              {pathsDesc}
+  1184→            </p>
+  1185→          </motion.div>
+  1186→
+  1187→          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
+  1188→            {(() => {
+  1189→              type PathCard = {
+  1190→                key: string
+  1191→                title: string
+  1192→                desc: string
+  1193→                icon: React.ComponentType<{ className?: string }>
+  1194→                difficulty: string
+  1195→                duration: string
+  1196→                skills: string
+  1197→                color: string
+  1198→                tint: string
+  1199→              }
+  1200→              const items: PathCard[] =
+  1201→                learningPathRows.length > 0
+  1202→                  ? learningPathRows.map((p) => ({
+  1203→                      key: p.id,
+  1204→                      title: p.title,
+  1205→                      desc: p.subtitle || p.description,
+  1206→                      icon: getCmsIcon(p.icon),
+  1207→                      difficulty: p.difficulty.toUpperCase(),
+  1208→                      duration: p.duration,
+  1209→                      skills: `${p.skillsCount} skills`,
+  1210→                      color: p.color,
+  1211→                      tint: p.tint,
+  1212→                    }))
+  1213→                  : LEARNING_PATHS.map((p) => ({
+  1214→                      key: p.title,
+  1215→                      title: p.title,
+  1216→                      desc: p.desc,
+  1217→                      icon: p.icon,
+  1218→                      difficulty: p.difficulty,
+  1219→                      duration: p.duration,
+  1220→                      skills: p.skills,
+  1221→                      color: p.color,
+  1222→                      tint: p.tint,
+  1223→                    }))
+  1224→              return items.map((p, i) => (
+  1225→                <motion.div
+  1226→                  key={p.key}
+  1227→                  initial={{ opacity: 0, y: 10 }}
+  1228→                  animate={{ opacity: 1, y: 0 }}
+  1229→                  transition={{ duration: 0.35, delay: 0.04 * i, ease: "easeOut" }}
+  1230→                  className="card-premium rounded-2xl p-5 flex flex-col"
+  1231→                >
+  1232→                  <div className="flex items-start justify-between mb-3">
+  1233→                    <div
+  1234→                      className={cn(
+  1235→                        "flex size-10 items-center justify-center rounded-lg border border-border/50",
+  1236→                        p.tint,
+  1237→                        p.color
+  1238→                      )}
+  1239→                      aria-hidden
+  1240→                    >
+  1241→                      <p.icon className="size-5" />
+  1242→                    </div>
+  1243→                    <Badge
+  1244→                      variant="outline"
+  1245→                      className={cn("font-mono text-[10px] border-border/60", p.color)}
+  1246→                    >
+  1247→                      {p.difficulty}
+  1248→                    </Badge>
+  1249→                  </div>
+  1250→
+  1251→                  <h3 className="text-base font-semibold mb-1">{p.title}</h3>
+  1252→                  <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
+  1253→                    {p.desc}
+  1254→                  </p>
+  1255→
+  1256→                  <div className="mt-auto grid grid-cols-2 gap-2 mb-4 text-[11px] font-mono">
+  1257→                    <div className="rounded-md border border-border/40 bg-[oklch(0.1_0.008_270)] px-2 py-1.5">
+  1258→                      <p className="text-muted-foreground uppercase">Duration</p>
+  1259→                      <p className="text-foreground">{p.duration}</p>
+  1260→                    </div>
+  1261→                    <div className="rounded-md border border-border/40 bg-[oklch(0.1_0.008_270)] px-2 py-1.5">
+  1262→                      <p className="text-muted-foreground uppercase">Skills</p>
+  1263→                      <p className="text-foreground">{p.skills}</p>
+  1264→                    </div>
+  1265→                  </div>
+  1266→
+  1267→                  <Button
+  1268→                    variant="outline"
+  1269→                    size="sm"
+  1270→                    className="w-full"
+  1271→                    onClick={() => navigate({ name: "catalog" })}
+  1272→                    aria-label={`Explore ${p.title} path`}
+  1273→                  >
+  1274→                    EXPLORE PATH
+  1275→                    <ArrowRight className="size-3.5 ml-1.5" aria-hidden />
+  1276→                  </Button>
+  1277→                </motion.div>
+  1278→              ))
+  1279→            })()}
+  1280→          </div>
+  1281→        </div>
+  1282→      </section>
+  1283→
+  1284→      {/* =====================================================
+  1285→          SECTION 5 - ADVANCED SKILL TREE PREVIEW
+  1286→          ===================================================== */}
+  1287→      <section
+  1288→        aria-labelledby="skills-heading"
+  1289→        className="relative py-8 lg:py-12 overflow-hidden"
+  1290→      >
+  1291→        <div className="absolute inset-0 bg-grid opacity-[0.04] pointer-events-none" aria-hidden />
+  1292→        <div className="absolute left-1/4 top-1/3 w-[400px] h-[300px] bg-violet-600/8 blur-[100px] rounded-full pointer-events-none" aria-hidden />
+  1293→        <div className="absolute right-1/4 bottom-1/3 w-[300px] h-[300px] bg-cyan-500/6 blur-[100px] rounded-full pointer-events-none" aria-hidden />
+  1294→
+  1295→        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
+  1296→          <motion.div {...FADE_UP} className="max-w-2xl mb-6">
+  1297→            <div className="flex items-center gap-2 mb-3">
+  1298→              <span className="inline-flex items-center gap-1.5 rounded-md border border-violet-500/40 bg-violet-500/10 px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-wider text-violet-300">
+  1299→                <Network className="size-3" aria-hidden />
+  1300→                SKILL MAP
+  1301→              </span>
+  1302→            </div>
+  1303→            <h2
+  1304→              id="skills-heading"
+  1305→              className="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-[-0.02em] mb-3"
+  1306→            >
+  1307→              {skillsTitle}
+  1308→            </h2>
+  1309→            <p className="text-sm text-muted-foreground leading-relaxed">
+  1310→              {skillsDesc}
+  1311→            </p>
+  1312→          </motion.div>
+  1313→
+  1314→          {/* Interactive Skill Map */}
+  1315→          <motion.div
+  1316→            {...FADE_UP}
+  1317→            transition={{ duration: 0.4, delay: 0.1 }}
+  1318→            className="card-premium rounded-2xl p-4 lg:p-6"
+  1319→          >
+  1320→            <AdvancedSkillMap />
+  1321→          </motion.div>
+  1322→
+  1323→          {/* Skill domain cards below the map */}
+  1324→          <motion.div
+  1325→            {...FADE_UP}
+  1326→            transition={{ duration: 0.4, delay: 0.2 }}
+  1327→            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2 lg:gap-3 mt-4"
+  1328→          >
+  1329→            {SKILL_DOMAINS.map((d, i) => (
+  1330→              <motion.div
+  1331→                key={d.name}
+  1332→                initial={{ opacity: 0, y: 8 }}
+  1333→                animate={{ opacity: 1, y: 0 }}
+  1334→                transition={{ duration: 0.3, delay: 0.05 * i }}
+  1335→                className={cn("rounded-lg border p-3 transition-all hover:-translate-y-1", d.border, d.bg)}
+  1336→              >
+  1337→                <d.icon className={cn("h-4 w-4 mb-2", d.color)} />
+  1338→                <h3 className="text-[10px] font-bold uppercase tracking-wider mb-1">{d.name}</h3>
+  1339→                <div className="flex items-center gap-1">
+  1340→                  <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
+  1341→                    <div className={cn("h-full rounded-full", d.barColor)} style={{ width: `${d.progress}%` }} />
+  1342→                  </div>
+  1343→                  <span className="text-[9px] font-mono text-muted-foreground">{d.skills} skills</span>
+  1344→                </div>
+  1345→              </motion.div>
+  1346→            ))}
+  1347→          </motion.div>
+  1348→
+  1349→          <div className="mt-6 flex items-center justify-center gap-3 flex-wrap">
+  1350→            <Button
+  1351→              variant="outline"
+  1352→              onClick={() => navigate({ name: "skill-tree" })}
+  1353→              aria-label="Explore full skill tree"
+  1354→            >
+  1355→              EXPLORE FULL SKILL TREE
+  1356→              <ArrowRight className="size-4 ml-2" aria-hidden />
+  1357→            </Button>
+  1358→            <Button
+  1359→              variant="ghost"
+  1360→              onClick={() => navigate({ name: "skill-assessments" })}
+  1361→            >
+  1362→              TAKE SKILL ASSESSMENT
+  1363→            </Button>
+  1364→          </div>
+  1365→        </div>
+  1366→      </section>
+  1367→
+  1368→      {/* =====================================================
+  1369→          SECTION 6 - MISSION CONTROL PREVIEW
+  1370→          ===================================================== */}
+  1371→      <section
+  1372→        aria-labelledby="mission-heading"
+  1373→        className="relative py-8 lg:py-12"
+  1374→      >
+  1375→        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+  1376→          <motion.div {...FADE_UP} className="max-w-2xl mb-6">
+  1377→            <div className="flex items-center gap-2 mb-3">
+  1378→              <span className="inline-flex items-center gap-1.5 rounded-md border border-cyan-500/40 bg-cyan-500/10 px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-wider text-cyan-300">
+  1379→                <Eye className="size-3" aria-hidden />
+  1380→                PREVIEW
+  1381→              </span>
+  1382→              <span className="text-[10px] font-mono text-cyan-300/70 tracking-wider">
+  1383→                Illustrative preview - your stats appear here when you log in
+  1384→              </span>
+  1385→            </div>
+  1386→            <h2
+  1387→              id="mission-heading"
+  1388→              className="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-[-0.02em] mb-3"
+  1389→            >
+  1390→              {missionTitle}
+  1391→            </h2>
+  1392→            <p className="text-sm text-muted-foreground leading-relaxed">
+  1393→              {missionDesc}
+  1394→            </p>
+  1395→          </motion.div>
+  1396→
+  1397→          <div className="grid lg:grid-cols-3 gap-4 lg:gap-6">
+  1398→            {/* Left column - stat tiles + XP + rank */}
+  1399→            <motion.div
+  1400→              {...FADE_UP}
+  1401→              transition={{ duration: 0.4, delay: 0.05 }}
+  1402→              className="space-y-4"
+  1403→            >
+  1404→              <div className="grid grid-cols-2 gap-3">
+  1405→                <StatTile
+  1406→                  icon={Zap}
+  1407→                  label="TOTAL XP"
+  1408→                  value="8,420"
+  1409→                  color="text-amber-300"
+  1410→                  tint="bg-amber-500/10"
+  1411→                />
+  1412→                <StatTile
+  1413→                  icon={Trophy}
+  1414→                  label="RANK"
+  1415→                  value="OPERATOR"
+  1416→                  color="text-violet-300"
+  1417→                  tint="bg-violet-500/10"
+  1418→                />
+  1419→                <StatTile
+  1420→                  icon={Target}
+  1421→                  label="MISSIONS"
+  1422→                  value="47"
+  1423→                  suffix="/120"
+  1424→                  color="text-cyan-300"
+  1425→                  tint="bg-cyan-500/10"
+  1426→                />
+  1427→                <StatTile
+  1428→                  icon={TrendingUp}
+  1429→                  label="STREAK"
+  1430→                  value="14"
+  1431→                  suffix="days"
+  1432→                  color="text-emerald-300"
+  1433→                  tint="bg-emerald-500/10"
+  1434→                  trend={{ value: 22, direction: "up" }}
+  1435→                />
+  1436→              </div>
+  1437→
+  1438→              <div className="card-premium rounded-xl p-4">
+  1439→                <div className="flex items-center justify-between mb-3">
+  1440→                  <RankBadge rank="OPERATOR" level={7} size="md" />
+  1441→                  <span className="font-mono text-[10px] text-muted-foreground uppercase">
+  1442→                    Level 7
+  1443→                  </span>
+  1444→                </div>
+  1445→                <XPBar current={1842} max={2400} level={7} showLabel />
+  1446→              </div>
+  1447→            </motion.div>
+  1448→
+  1449→            {/* Middle column - current mission */}
+  1450→            <motion.div
+  1451→              {...FADE_UP}
+  1452→              transition={{ duration: 0.4, delay: 0.12 }}
+  1453→            >
+  1454→              <MissionCard
+  1455→                title="SQL Injection - Login Bypass"
+  1456→                objective="Exploit the DVWA login form to bypass authentication. Capture the flag stored in the admin panel."
+  1457→                difficulty="MEDIUM"
+  1458→                xp={450}
+  1459→                timeElapsed="00:12:34"
+  1460→                onSubmit={() => {}}
+  1461→                onLaunch={() => navigate({ name: "labs" })}
+  1462→              />
+  1463→            </motion.div>
+  1464→
+  1465→            {/* Right column - daily objective */}
+  1466→            <motion.div
+  1467→              {...FADE_UP}
+  1468→              transition={{ duration: 0.4, delay: 0.2 }}
+  1469→              className="card-premium rounded-2xl p-5 flex flex-col"
+  1470→            >
+  1471→              <div className="flex items-center gap-2 mb-4">
+  1472→                <span className="flex size-8 items-center justify-center rounded-lg bg-amber-500/10 text-amber-300 border border-amber-500/30">
+  1473→                  <Target className="size-4" aria-hidden />
+  1474→                </span>
+  1475→                <h3 className="text-sm font-semibold">Daily Objective</h3>
+  1476→              </div>
+  1477→
+  1478→              <ul className="space-y-3 mb-5 flex-1">
+  1479→                {DAILY_OBJECTIVES.map((o, i) => (
+  1480→                  <li key={i} className="flex items-start gap-2.5">
+  1481→                    <CheckCircle2
+  1482→                      className={cn(
+  1483→                        "size-4 mt-0.5 shrink-0",
+  1484→                        o.done ? "text-emerald-400" : "text-muted-foreground/40"
+  1485→                      )}
+  1486→                      aria-hidden
+  1487→                    />
+  1488→                    <div className="flex-1">
+  1489→                      <p
+  1490→                        className={cn(
+  1491→                          "text-xs leading-relaxed",
+  1492→                          o.done ? "text-muted-foreground line-through" : "text-foreground"
+  1493→                        )}
+  1494→                      >
+  1495→                        {o.label}
+  1496→                      </p>
+  1497→                      <p className="font-mono text-[10px] text-amber-300/80 mt-0.5">
+  1498→                        +{o.xp} XP
+  1499→                      </p>
+  1500→                    </div>
+  1501→                  </li>
+  1502→                ))}
+  1503→              </ul>
+  1504→
+  1505→              <Button
+  1506→                className="w-full bg-violet-600 hover:bg-violet-500 btn-premium"
+  1507→                onClick={() => navigate({ name: "dashboard" })}
+  1508→                aria-label="Enter mission control"
+  1509→              >
+  1510→                ENTER MISSION CONTROL
+  1511→                <ArrowRight className="size-4 ml-2" aria-hidden />
+  1512→              </Button>
+  1513→            </motion.div>
+  1514→          </div>
+  1515→        </div>
+  1516→      </section>
+  1517→
+  1518→      {/* =====================================================
+  1519→          SECTION 7 - GAMIFICATION
+  1520→          ===================================================== */}
+  1521→      <section
+  1522→        aria-labelledby="gamify-heading"
+  1523→        className="relative py-8 lg:py-12 overflow-hidden"
+  1524→      >
+  1525→        <div className="absolute inset-0 bg-mesh opacity-50 pointer-events-none" aria-hidden />
+  1526→        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
+  1527→          <motion.div {...FADE_UP} className="max-w-2xl mb-6">
+  1528→            <h2
+  1529→              id="gamify-heading"
+  1530→              className="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-[-0.02em] mb-3"
+  1531→            >
+  1532→              {gamifyTitle}
+  1533→            </h2>
+  1534→            <p className="text-sm text-muted-foreground leading-relaxed">
+  1535→              {gamifyDesc}
+  1536→            </p>
+  1537→          </motion.div>
+  1538→
+  1539→          {/* Rank hierarchy ladder */}
+  1540→          <motion.div
+  1541→            {...FADE_UP}
+  1542→            transition={{ duration: 0.4, delay: 0.05 }}
+  1543→            className="card-premium rounded-2xl p-5 lg:p-6 mb-4"
+  1544→          >
+  1545→            <div className="flex items-center justify-between mb-4">
+  1546→              <h3 className="text-sm font-semibold flex items-center gap-2">
+  1547→                <Crown className="size-4 text-amber-300" aria-hidden />
+  1548→                Rank Hierarchy
+  1549→              </h3>
+  1550→              <span className="font-mono text-[10px] text-muted-foreground uppercase">
+  1551→                {rankRows.length || 8} TIERS ·{" "}
+  1552→                {(() => {
+  1553→                  const lo = rankRows[0]?.xpThreshold ?? 0
+  1554→                  const hi = rankRows[rankRows.length - 1]?.xpThreshold ?? 100000
+  1555→                  return `${lo.toLocaleString()}–${hi.toLocaleString()} XP`
+  1556→                })()}{" "}
+  1557→                EACH
+  1558→              </span>
+  1559→            </div>
+  1560→
+  1561→            <div className="flex flex-wrap items-center gap-2">
+  1562→              {(rankRows.length > 0
+  1563→                ? rankRows
+  1564→                : RANK_LADDER
+  1565→              ).map((r, i, arr) => (
+  1566→                <React.Fragment key={r.name}>
+  1567→                  <div className="flex flex-col items-center gap-1">
+  1568→                    <RankBadge rank={r.name} level={r.level} size="sm" />
+  1569→                  </div>
+  1570→                  {i < arr.length - 1 && (
+  1571→                    <ChevronRight
+  1572→                      className="size-3 text-muted-foreground/50"
+  1573→                      aria-hidden
+  1574→                    />
+  1575→                  )}
+  1576→                </React.Fragment>
+  1577→              ))}
+  1578→            </div>
+  1579→          </motion.div>
+  1580→
+  1581→          <div className="grid sm:grid-cols-3 gap-3 lg:gap-4 mb-4">
+  1582→            <StatTile
+  1583→              icon={Zap}
+  1584→              label="XP EARNED"
+  1585→              value="8,420"
+  1586→              color="text-amber-300"
+  1587→              tint="bg-amber-500/10"
+  1588→              trend={{ value: 18, direction: "up" }}
+  1589→            />
+  1590→            <StatTile
+  1591→              icon={Award}
+  1592→              label="BADGES UNLOCKED"
+  1593→              value="14"
+  1594→              suffix="/32"
+  1595→              color="text-violet-300"
+  1596→              tint="bg-violet-500/10"
+  1597→              trend={{ value: 8, direction: "up" }}
+  1598→            />
+  1599→            <StatTile
+  1600→              icon={Trophy}
+  1601→              label="CTF SCORE"
+  1602→              value="2,180"
+  1603→              color="text-cyan-300"
+  1604→              tint="bg-cyan-500/10"
+  1605→              trend={{ value: 32, direction: "up" }}
+  1606→            />
+  1607→          </div>
+  1608→
+  1609→          <div className="flex justify-center">
+  1610→            <Button
+  1611→              variant="outline"
+  1612→              onClick={() => navigate({ name: "leaderboard" })}
+  1613→              aria-label="View leaderboard"
+  1614→            >
+  1615→              VIEW LEADERBOARD
+  1616→              <ArrowRight className="size-4 ml-2" aria-hidden />
+  1617→            </Button>
+  1618→          </div>
+  1619→        </div>
+  1620→      </section>
+  1621→
+  1622→      {/* =====================================================
+  1623→          SECTION 8 - CAREER CENTER
+  1624→          ===================================================== */}
+  1625→      <section
+  1626→        aria-labelledby="career-heading"
+  1627→        className="relative py-8 lg:py-12"
+  1628→      >
+  1629→        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+  1630→          <motion.div {...FADE_UP} className="max-w-2xl mb-6">
+  1631→            <h2
+  1632→              id="career-heading"
+  1633→              className="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-[-0.02em] mb-3"
+  1634→            >
+  1635→              {careerTitle}
+  1636→            </h2>
+  1637→            <p className="text-sm text-muted-foreground leading-relaxed">
+  1638→              {careerDesc}
+  1639→            </p>
+  1640→          </motion.div>
+  1641→
+  1642→          <div className="grid lg:grid-cols-2 gap-4 lg:gap-6">
+  1643→            {/* Skill percentages */}
+  1644→            <motion.div
+  1645→              {...FADE_UP}
+  1646→              transition={{ duration: 0.4, delay: 0.05 }}
+  1647→              className="card-premium rounded-2xl p-5 lg:p-6"
+  1648→            >
+  1649→              <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
+  1650→                <Layers className="size-4 text-cyan-300" aria-hidden />
+  1651→                Your Skill Profile
+  1652→              </h3>
+  1653→              <div className="space-y-3">
+  1654→                {CAREER_SKILLS.map((s) => (
+  1655→                  <div key={s.label}>
+  1656→                    <div className="flex items-center justify-between mb-1">
+  1657→                      <span className="text-xs text-foreground">{s.label}</span>
+  1658→                      <span className="font-mono text-xs text-muted-foreground">
+  1659→                        {s.value}%
+  1660→                      </span>
+  1661→                    </div>
+  1662→                    <div className="h-2 rounded-full border border-border/40 bg-[oklch(0.1_0.008_270)] overflow-hidden">
+  1663→                      <motion.div
+  1664→                        initial={{ width: 0 }}
+  1665→                        animate={{ width: `${s.value}%` }}
+  1666→                        transition={{ duration: 0.8, ease: "easeOut" }}
+  1667→                        className={cn("h-full rounded-full", s.barClass)}
+  1668→                      />
+  1669→                    </div>
+  1670→                  </div>
+  1671→                ))}
+  1672→              </div>
+  1673→            </motion.div>
+  1674→
+  1675→            {/* You are ready for */}
+  1676→            <motion.div
+  1677→              {...FADE_UP}
+  1678→              transition={{ duration: 0.4, delay: 0.12 }}
+  1679→              className="card-premium rounded-2xl p-5 lg:p-6 glow-soft"
+  1680→            >
+  1681→              <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
+  1682→                <CheckCircle2 className="size-4 text-emerald-300" aria-hidden />
+  1683→                You Are Ready For
+  1684→              </h3>
+  1685→              <div className="space-y-4">
+  1686→                {CAREER_ROLES.map((r) => (
+  1687→                  <div
+  1688→                    key={r.role}
+  1689→                    className="rounded-xl border border-border/40 bg-[oklch(0.1_0.008_270)] p-4"
+  1690→                  >
+  1691→                    <div className="flex items-center justify-between mb-2">
+  1692→                      <div>
+  1693→                        <p className="text-sm font-semibold">{r.role}</p>
+  1694→                        <p className="font-mono text-[10px] text-muted-foreground uppercase">
+  1695→                          {r.match}% match
+  1696→                        </p>
+  1697→                      </div>
+  1698→                      <Badge
+  1699→                        variant="outline"
+  1700→                        className={cn(
+  1701→                          "font-mono text-[10px]",
+  1702→                          r.match >= 75
+  1703→                            ? "border-emerald-500/40 text-emerald-300"
+  1704→                            : "border-amber-500/40 text-amber-300"
+  1705→                        )}
+  1706→                      >
+  1707→                        {r.match >= 75 ? "READY" : "ALMOST"}
+  1708→                      </Badge>
+  1709→                    </div>
+  1710→                    <div className="h-1.5 rounded-full border border-border/40 bg-[oklch(0.08_0.005_270)] overflow-hidden">
+  1711→                      <motion.div
+  1712→                        initial={{ width: 0 }}
+  1713→                        animate={{ width: `${r.match}%` }}
+  1714→                        transition={{ duration: 0.8, ease: "easeOut" }}
+  1715→                        className={cn(
+  1716→                          "h-full rounded-full",
+  1717→                          r.match >= 75
+  1718→                            ? "bg-gradient-to-r from-emerald-500 to-emerald-400"
+  1719→                            : "bg-gradient-to-r from-amber-500 to-amber-400"
+  1720→                        )}
+  1721→                      />
+  1722→                    </div>
+  1723→                  </div>
+  1724→                ))}
+  1725→              </div>
+  1726→
+  1727→              <Button
+  1728→                className="mt-5 w-full bg-violet-600 hover:bg-violet-500 btn-premium"
+  1729→                onClick={() => navigate({ name: "career-planner" })}
+  1730→                aria-label="Explore careers"
+  1731→              >
+  1732→                EXPLORE CAREERS
+  1733→                <ArrowRight className="size-4 ml-2" aria-hidden />
+  1734→              </Button>
+  1735→            </motion.div>
+  1736→          </div>
+  1737→        </div>
+  1738→      </section>
+  1739→
+  1740→      {/* =====================================================
+  1741→          SECTION 9 - INSTITUTIONS
+  1742→          ===================================================== */}
+  1743→      <section
+  1744→        aria-labelledby="institutions-heading"
+  1745→        className="relative py-8 lg:py-12 overflow-hidden"
+  1746→      >
+  1747→        <div className="absolute inset-0 bg-grid opacity-[0.04] pointer-events-none" aria-hidden />
+  1748→        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
+  1749→          <motion.div {...FADE_UP} className="max-w-2xl mb-6 text-center mx-auto">
+  1750→            <h2
+  1751→              id="institutions-heading"
+  1752→              className="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-[-0.02em] mb-2"
+  1753→            >
+  1754→              {institutionsTitle}
+  1755→            </h2>
+  1756→            <p className="text-base text-gradient-premium font-semibold tracking-wide">
+  1757→              {institutionsSub}
+  1758→            </p>
+  1759→          </motion.div>
+  1760→
+  1761→          <div className="grid md:grid-cols-3 gap-3 lg:gap-4">
+  1762→            {INSTITUTION_TYPES.map((inst, i) => (
+  1763→              <motion.div
+  1764→                key={inst.type}
+  1765→                initial={{ opacity: 0, y: 10 }}
+  1766→                animate={{ opacity: 1, y: 0 }}
+  1767→                transition={{ duration: 0.35, delay: 0.05 * i, ease: "easeOut" }}
+  1768→                className="card-premium rounded-2xl p-5 flex flex-col"
+  1769→              >
+  1770→                <div
+  1771→                  className={cn(
+  1772→                    "mb-4 flex size-12 items-center justify-center rounded-xl border border-border/50",
+  1773→                    inst.tint,
+  1774→                    inst.color
+  1775→                  )}
+  1776→                  aria-hidden
+  1777→                >
+  1778→                  <inst.icon className="size-6" />
+  1779→                </div>
+  1780→                <h3 className="text-base font-semibold mb-2">{inst.type}</h3>
+  1781→                <p className="text-xs text-muted-foreground mb-4 leading-relaxed flex-1">
+  1782→                  {inst.desc}
+  1783→                </p>
+  1784→                <Button
+  1785→                  variant="outline"
+  1786→                  size="sm"
+  1787→                  className="w-full"
+  1788→                  onClick={() => navigate(inst.view)}
+  1789→                  aria-label={`${inst.type} portal login`}
+  1790→                >
+  1791→                  <Lock className="size-3.5 mr-1.5" aria-hidden />
+  1792→                  PORTAL LOGIN
+  1793→                </Button>
+  1794→              </motion.div>
+  1795→            ))}
+  1796→          </div>
+  1797→
+  1798→          <div className="mt-6 flex justify-center">
+  1799→            <Button
+  1800→              variant="ghost"
+  1801→              onClick={() => navigate({ name: "institutions-schools" })}
+  1802→              aria-label="Explore institutions"
+  1803→            >
+  1804→              EXPLORE INSTITUTIONS
+  1805→              <ArrowRight className="size-4 ml-2" aria-hidden />
+  1806→            </Button>
+  1807→          </div>
+  1808→        </div>
+  1809→      </section>
+  1810→
+  1811→      {/* =====================================================
+  1812→          SECTION 10 - CERTIFICATIONS
+  1813→          ===================================================== */}
+  1814→      <section
+  1815→        aria-labelledby="cert-heading"
+  1816→        className="relative py-8 lg:py-12"
+  1817→      >
+  1818→        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+  1819→          <motion.div {...FADE_UP} className="max-w-2xl mb-6">
+  1820→            <h2
+  1821→              id="cert-heading"
+  1822→              className="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-[-0.02em] mb-3"
+  1823→            >
+  1824→              {certTitle}
+  1825→            </h2>
+  1826→            <p className="text-sm text-muted-foreground leading-relaxed">
+  1827→              {certDesc}
+  1828→            </p>
+  1829→          </motion.div>
+  1830→
+  1831→          <div className="grid lg:grid-cols-2 gap-4 lg:gap-6 items-stretch">
+  1832→            {/* Certificate preview card */}
+  1833→            <motion.div
+  1834→              {...FADE_UP}
+  1835→              transition={{ duration: 0.4, delay: 0.05 }}
+  1836→              className="relative"
+  1837→            >
+  1838→              <div className="card-premium relative rounded-2xl p-6 lg:p-8 scanlines overflow-hidden h-full">
+  1839→                {/* Decorative corner */}
+  1840→                <div
+  1841→                  aria-hidden
+  1842→                  className="pointer-events-none absolute -right-12 -top-12 size-40 rounded-full opacity-40 blur-3xl"
+  1843→                  style={{
+  1844→                    background:
+  1845→                      "radial-gradient(circle, oklch(0.7 0.15 155 / 0.4), transparent 70%)",
+  1846→                  }}
+  1847→                />
+  1848→
+  1849→                <div className="relative flex items-start justify-between mb-5">
+  1850→                  <div>
+  1851→                    <p className="font-mono text-[10px] text-emerald-300 uppercase tracking-[0.25em] mb-1">
+  1852→                      GUARDIANX ACADEMY
+  1853→                    </p>
+  1854→                    <p className="text-xs text-muted-foreground">
+  1855→                      Verified Credential
+  1856→                    </p>
+  1857→                  </div>
+  1858→                  <span className="inline-flex items-center gap-1.5 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-wider text-emerald-300 shadow-[0_0_18px_-6px_oklch(0.7_0.15_155_/_0.6)]">
+  1859→                    <BadgeCheck className="size-3.5" aria-hidden />
+  1860→                    VERIFIED
+  1861→                  </span>
+  1862→                </div>
+  1863→
+  1864→                <div className="relative mb-5">
+  1865→                  <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+  1866→                    This certifies that
+  1867→                  </p>
+  1868→                  <p className="text-xl lg:text-2xl font-semibold text-foreground">
+  1869→                    Jane Doe
+  1870→                  </p>
+  1871→                </div>
+  1872→
+  1873→                <div className="relative mb-5">
+  1874→                  <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+  1875→                    Has successfully completed
+  1876→                  </p>
+  1877→                  <p className="text-base font-semibold text-gradient-premium">
+  1878→                    Certified Ethical Hacker (CEH) - Practical
+  1879→                  </p>
+  1880→                </div>
+  1881→
+  1882→                <div className="relative grid grid-cols-2 gap-3 mb-5">
+  1883→                  <div className="rounded-lg border border-border/40 bg-[oklch(0.1_0.008_270)] px-3 py-2">
+  1884→                    <p className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
+  1885→                      Credential ID
+  1886→                    </p>
+  1887→                    <p className="font-mono text-xs text-cyan-200 truncate">
+  1888→                      GX-CEH2024P-08842
+  1889→                    </p>
+  1890→                  </div>
+  1891→                  <div className="rounded-lg border border-border/40 bg-[oklch(0.1_0.008_270)] px-3 py-2">
+  1892→                    <p className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
+  1893→                      Issued
+  1894→                    </p>
+  1895→                    <p className="font-mono text-xs text-foreground">2024-09-14</p>
+  1896→                  </div>
+  1897→                </div>
+  1898→
+  1899→                <div className="relative flex items-center justify-between border-t border-border/40 pt-4">
+  1900→                  <span className="font-mono text-[10px] text-muted-foreground">
+  1901→                    GuardianX Academy
+  1902→                  </span>
+  1903→                  <span className="font-mono text-[10px] text-muted-foreground">
+  1904→                    Score: 94%
+  1905→                  </span>
+  1906→                </div>
+  1907→              </div>
+  1908→            </motion.div>
+  1909→
+  1910→            {/* Verification widget (full card) */}
+  1911→            <motion.div
+  1912→              {...FADE_UP}
+  1913→              transition={{ duration: 0.4, delay: 0.12 }}
+  1914→              className="card-premium rounded-2xl p-5 lg:p-6"
+  1915→            >
+  1916→              <CertificateVerifyCard />
+  1917→            </motion.div>
+  1918→          </div>
+  1919→        </div>
+  1920→      </section>
+  1921→
+  1922→      {/* =====================================================
+  1923→          SECTION 11 - SUCCESS STORIES
+  1924→          ===================================================== */}
+  1925→      <section
+  1926→        aria-labelledby="stories-heading"
+  1927→        className="relative py-8 lg:py-12"
+  1928→      >
+  1929→        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+  1930→          <motion.div {...FADE_UP} className="max-w-2xl mb-6">
+  1931→            <div className="flex items-center gap-2 mb-3">
+  1932→              <span className="inline-flex items-center gap-1.5 rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-wider text-amber-300">
+  1933→                <Sparkles className="size-3" aria-hidden />
+  1934→                ILLUSTRATIVE LEARNER JOURNEY
+  1935→              </span>
+  1936→              <span className="text-[10px] font-mono text-amber-300/70 tracking-wider">
+  1937→                Composite profiles - not real learners
+  1938→              </span>
+  1939→            </div>
+  1940→            <h2
+  1941→              id="stories-heading"
+  1942→              className="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-[-0.02em] mb-3"
+  1943→            >
+  1944→              {storiesTitle}
+  1945→            </h2>
+  1946→            <p className="text-sm text-muted-foreground leading-relaxed">
+  1947→              {storiesDesc}
+  1948→            </p>
+  1949→          </motion.div>
+  1950→
+  1951→          {/* Progression timeline */}
+  1952→          <motion.div
+  1953→            {...FADE_UP}
+  1954→            transition={{ duration: 0.4, delay: 0.05 }}
+  1955→            className="card-premium rounded-2xl p-5 mb-4"
+  1956→          >
+  1957→            <div className="flex flex-wrap items-center justify-center gap-2 lg:gap-3">
+  1958→              {STORY_STAGES.map((s, i) => (
+  1959→                <React.Fragment key={s.label}>
+  1960→                  <div className="flex flex-col items-center gap-1 px-2">
+  1961→                    <span
+  1962→                      className={cn(
+  1963→                        "flex size-9 items-center justify-center rounded-lg border",
+  1964→                        s.color,
+  1965→                        s.tint,
+  1966→                        s.border
+  1967→                      )}
+  1968→                      aria-hidden
+  1969→                    >
+  1970→                      <s.icon className="size-4" />
+  1971→                    </span>
+  1972→                    <span className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
+  1973→                      {s.label}
+  1974→                    </span>
+  1975→                  </div>
+  1976→                  {i < STORY_STAGES.length - 1 && (
+  1977→                    <ArrowRight
+  1978→                      className="size-3 text-muted-foreground/50"
+  1979→                      aria-hidden
+  1980→                    />
+  1981→                  )}
+  1982→                </React.Fragment>
+  1983→              ))}
+  1984→            </div>
+  1985→          </motion.div>
+  1986→
+  1987→          {/* Story cards - placeholder data, clearly marked */}
+  1988→          <div className="grid md:grid-cols-3 gap-3 lg:gap-4">
+  1989→            {STORIES.map((s, i) => (
+  1990→              <motion.div
+  1991→                key={s.name}
+  1992→                initial={{ opacity: 0, y: 10 }}
+  1993→                animate={{ opacity: 1, y: 0 }}
+  1994→                transition={{ duration: 0.35, delay: 0.05 * i, ease: "easeOut" }}
+  1995→                className="card-premium rounded-2xl p-5 flex flex-col"
+  1996→              >
+  1997→                <div className="flex items-center gap-3 mb-3">
+  1998→                  <div
+  1999→                    className="flex size-10 items-center justify-center rounded-full border border-violet-500/40 bg-violet-500/10 font-mono text-sm font-bold text-violet-200"
+  2000→                    aria-hidden
+
+[showing lines 1-2000 of 2211; use offset=2001 with limit to continue reading]

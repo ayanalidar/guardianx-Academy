@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { QRCodeSVG } from "qrcode.react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useAppStore } from "@/store/app-store"
 import { Button } from "@/components/ui/button"
@@ -125,12 +126,12 @@ export function InvoiceGeneratorView() {
   const [currency, setCurrency] = React.useState("INR")
   const [gstSplit, setGstSplit] = React.useState(true) // CGST + SGST split for India
 
-  // Bank details
-  const [bankName, setBankName] = React.useState("HDFC Bank")
-  const [accountName, setAccountName] = React.useState("GuardianX Academy")
-  const [accountNumber, setAccountNumber] = React.useState("50100123456789")
-  const [ifscCode, setIfscCode] = React.useState("HDFC0001234")
-  const [upiId, setUpiId] = React.useState("guardianx@hdfcbank")
+  // Bank details — GuardianX official banking
+  const [bankName, setBankName] = React.useState("Jammu & Kashmir Bank")
+  const [accountName, setAccountName] = React.useState("GuardianX")
+  const [accountNumber, setAccountNumber] = React.useState("0778040100005715")
+  const [ifscCode, setIfscCode] = React.useState("JAKA0SATARA") // J&K Bank IFSC — update if different
+  const [upiId, setUpiId] = React.useState("ayanalidar@okaxis")
 
   // Notes & Terms
   const [notes, setNotes] = React.useState(
@@ -660,18 +661,28 @@ export function InvoiceGeneratorView() {
 
                 {/* Totals + QR */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
-                  {/* Payment QR placeholder */}
+                  {/* Payment QR — real UPI QR code with invoice amount */}
                   <div className="order-2 sm:order-1">
                     <div className="rounded-xl border border-border/60 bg-card/40 p-4">
                       <div className="flex items-start gap-3">
                         <div className="size-20 sm:size-24 rounded-lg bg-white p-2 flex items-center justify-center shrink-0">
-                          <QrCode className="size-full text-zinc-900" />
+                          {total > 0 && upiId ? (
+                            <QRCodeSVG
+                              value={`upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(accountName || "GuardianX")}&am=${total.toFixed(2)}&cu=${currency === "INR" ? "INR" : "USD"}&tn=${encodeURIComponent(invoiceNumber)}`}
+                              size={88}
+                              level="M"
+                              className="size-full"
+                            />
+                          ) : (
+                            <QrCode className="size-full text-zinc-900" />
+                          )}
                         </div>
                         <div className="text-xs space-y-1">
                           <p className="font-semibold text-foreground flex items-center gap-1.5">
                             <QrCode className="h-3.5 w-3.5 text-violet-300" /> Scan to Pay (UPI)
                           </p>
                           <p className="text-muted-foreground">UPI ID: <span className="font-mono text-foreground">{upiId}</span></p>
+                          <p className="text-muted-foreground">Amount: <span className="font-mono text-foreground">{formatMoney(total)}</span></p>
                           <p className="text-muted-foreground">Account: <span className="font-mono text-foreground">{accountNumber}</span></p>
                           <p className="text-muted-foreground">IFSC: <span className="font-mono text-foreground">{ifscCode}</span></p>
                         </div>

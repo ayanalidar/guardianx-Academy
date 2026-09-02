@@ -51,6 +51,8 @@ export function viewToHash(view: View): string {
       return `/instructor/${encodeURIComponent(view.instructorId)}`
     case "event-detail":
       return `/event/${encodeURIComponent(view.eventSlug)}`
+    case "vertical":
+      return `/vertical/${view.vertical}`
     default:
       return `/${view.name}`
   }
@@ -103,6 +105,14 @@ export function hashToView(hash: string): View {
     // Format C: /verify (no id)
     return { name: "verify" }
   }
+  // /vertical/<ai|cloud>
+  if (parts[0] === "vertical" && parts[1]) {
+    const v = parts[1] as "ai" | "cloud"
+    if (v === "ai" || v === "cloud") {
+      return { name: "vertical", vertical: v }
+    }
+  }
+
   // /instructor/<id>
   if (parts[0] === "instructor" && parts[1]) {
     return { name: "instructor-detail", instructorId: parts[1] }
@@ -132,6 +142,7 @@ export function hashToView(hash: string): View {
     "admin-audit-log", "admin-platform-health", "admin-notifications",
     "support", "verify",
     "instructors", "events",
+    "vertical",
   ]
   if (knownViews.includes(parts[0] as View["name"])) {
     return { name: parts[0] as View["name"] }

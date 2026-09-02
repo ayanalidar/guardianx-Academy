@@ -7,6 +7,7 @@ export async function GET(req: NextRequest) {
   const category = searchParams.get("category")
   const level = searchParams.get("level")
   const q = searchParams.get("q")
+  const vertical = searchParams.get("vertical")
   const enrolledOnly = searchParams.get("enrolled") === "true"
   const status = searchParams.get("status") || "all" // all | not-started | in-progress | completed
   const userIdParam = searchParams.get("userId")
@@ -17,6 +18,7 @@ export async function GET(req: NextRequest) {
   const where: any = { published: true }
   if (category && category !== "All") where.category = category
   if (level && level !== "All") where.level = level
+  if (vertical && vertical !== "all") where.vertical = vertical
   if (q) {
     where.OR = [
       { title: { contains: q } },

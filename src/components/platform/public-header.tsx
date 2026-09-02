@@ -6,7 +6,7 @@ import {
   FlaskConical, BookOpen, Route, Trophy, Briefcase, Search, Target,
   FileText, School, Building, Landmark, ShieldCheck, Award,
   TrendingUp, Mail, Menu, ChevronDown, Sun, Moon, LogIn,
-  CalendarCheck, Terminal, Shield, FileBadge, Users,
+  CalendarCheck, Terminal, Shield, FileBadge, Users, Brain, Cloud,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet"
@@ -76,6 +76,18 @@ const MEGA_MENU_GROUPS: MegaMenuGroup[] = [
         title: "Proctored Exams",
         description: "Identity-verified certification exams",
         view: { name: "exams" },
+      },
+      {
+        icon: Brain,
+        title: "AI & Machine Learning",
+        description: "AI fundamentals, LLM security, MLOps",
+        view: { name: "vertical", vertical: "ai" },
+      },
+      {
+        icon: Cloud,
+        title: "Cloud Computing",
+        description: "AWS, Azure, GCP, Kubernetes, DevSecOps",
+        view: { name: "vertical", vertical: "cloud" },
       },
     ],
   },

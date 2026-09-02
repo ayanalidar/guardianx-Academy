@@ -10,11 +10,13 @@ import {
   ArrowRight,
   Award,
   BadgeCheck,
+  Brain,
   Building2,
   Calendar,
   CheckCircle2,
   ChevronRight,
   Clock,
+  Cloud,
   Crosshair,
   Crown,
   Eye,
@@ -23,6 +25,7 @@ import {
   Network,
   Rocket,
   Server,
+  Shield,
   Sparkles,
   Target,
   TrendingUp,
@@ -598,6 +601,104 @@ export function HomeView() {
                 </p>
               </motion.div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* =====================================================
+          NEW SECTION - TRAINING VERTICALS
+          3 vertical cards: Cybersecurity, AI & ML, Cloud Computing
+          ===================================================== */}
+      <section className="relative py-8 lg:py-12 border-t border-border/40">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="mb-6"
+          >
+            <p className="text-[10px] font-mono text-violet-300/80 tracking-[0.25em] mb-2">
+              TRAINING VERTICALS
+            </p>
+            <h2 className="text-[clamp(1.5rem,3vw,2rem)] font-bold tracking-[-0.02em]">
+              One platform.{" "}
+              <span className="text-gradient-premium">Three worlds of tech.</span>
+            </h2>
+            <p className="text-sm text-muted-foreground mt-2 max-w-2xl">
+              GuardianX Academy goes beyond cybersecurity. Explore AI & Machine Learning and Cloud Computing —
+              with the same expert-led training, hands-on labs, and certification prep.
+            </p>
+          </motion.div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 lg:gap-5">
+            {/* Cybersecurity */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.05 }}
+              className="group relative rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-950/40 to-card p-5 lg:p-6 transition-all hover:-translate-y-1 hover:shadow-[0_20px_60px_-20px_oklch(0.65_0.15_155_/_0.25)] cursor-pointer"
+              onClick={() => navigate({ name: "catalog" })}
+            >
+              <div className="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-emerald-500/10 text-emerald-300 mb-4">
+                <Shield className="h-6 w-6" />
+              </div>
+              <h3 className="text-lg font-bold mb-2">Cybersecurity</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+                Offensive + defensive security, GRC, labs, CTFs, proctored exams, and certification prep for CEH, CISSP, CCNA, and more.
+              </p>
+              <div className="flex items-center gap-2 text-xs font-mono text-emerald-300">
+                <span>29+ courses</span>
+                <span className="opacity-30">·</span>
+                <span>31 labs</span>
+                <span className="opacity-30">·</span>
+                <span>20+ certs</span>
+              </div>
+            </motion.div>
+            {/* AI & Machine Learning */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.1 }}
+              className="group relative rounded-2xl border border-violet-500/30 bg-gradient-to-br from-violet-950/40 to-card p-5 lg:p-6 transition-all hover:-translate-y-1 hover:shadow-[0_20px_60px_-20px_oklch(0.65_0.15_295_/_0.25)] cursor-pointer"
+              onClick={() => navigate({ name: "vertical", vertical: "ai" })}
+            >
+              <div className="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-violet-500/10 text-violet-300 mb-4">
+                <Brain className="h-6 w-6" />
+              </div>
+              <h3 className="text-lg font-bold mb-2">AI & Machine Learning</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+                AI fundamentals, LLM security, MLOps, NLP — plus AI red teaming and governance. The only platform teaching AI AND how to secure it.
+              </p>
+              <div className="flex items-center gap-2 text-xs font-mono text-violet-300">
+                <span>$17B market</span>
+                <span className="opacity-30">·</span>
+                <span>300% growth</span>
+                <span className="opacity-30">·</span>
+                <span>NEW</span>
+              </div>
+            </motion.div>
+            {/* Cloud Computing */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.15 }}
+              className="group relative rounded-2xl border border-cyan-500/30 bg-gradient-to-br from-cyan-950/40 to-card p-5 lg:p-6 transition-all hover:-translate-y-1 hover:shadow-[0_20px_60px_-20px_oklch(0.7_0.15_220_/_0.25)] cursor-pointer"
+              onClick={() => navigate({ name: "vertical", vertical: "cloud" })}
+            >
+              <div className="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-cyan-500/10 text-cyan-300 mb-4">
+                <Cloud className="h-6 w-6" />
+              </div>
+              <h3 className="text-lg font-bold mb-2">Cloud Computing</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+                AWS, Azure, GCP — from fundamentals to architecture to security. Kubernetes, Docker, Terraform, DevSecOps.
+              </p>
+              <div className="flex items-center gap-2 text-xs font-mono text-cyan-300">
+                <span>$800B+ market</span>
+                <span className="opacity-30">·</span>
+                <span>25%/yr growth</span>
+                <span className="opacity-30">·</span>
+                <span>NEW</span>
+              </div>
+            </motion.div>
           </div>
         </div>
       </section>

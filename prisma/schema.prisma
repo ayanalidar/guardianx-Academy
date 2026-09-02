@@ -191,6 +191,7 @@ model Course {
   description   String
   longDescription String
   category      String // Certification / Networking / Cloud Security / etc.
+  vertical     String   @default("cyber") // cyber | ai | cloud
   level         String // Beginner | Intermediate | Advanced
   durationHours Int      @default(40)
   price         Float    @default(0)
@@ -1216,6 +1217,7 @@ model LearningPath {
   title       String
   subtitle    String?
   description String
+  vertical   String   @default("cyber") // cyber | ai | cloud
   icon        String   @default("Route") // Lucide icon name
   color       String   @default("text-violet-300")
   tint        String   @default("bg-violet-500/10")

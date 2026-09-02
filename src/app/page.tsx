@@ -80,7 +80,6 @@ const SkillTreeView = dynamic(() => import("@/views/skill-tree").then(m => ({ de
 const BugBountyView = dynamic(() => import("@/views/bug-bounty").then(m => ({ default: m.BugBountyView })), { ssr: false })
 const CourseStudioView = dynamic(() => import("@/views/course-studio").then(m => ({ default: m.CourseStudioView })), { ssr: false })
 const ExamDetailView = dynamic(() => import("@/views/exam-detail").then(m => ({ default: m.ExamDetailView })), { ssr: false })
-const VerticalView = dynamic(() => import("@/views/vertical").then(m => ({ default: m.VerticalView })), { ssr: false })
 
 // Public views that show the header + footer (accessible without login)
 const PUBLIC_VIEWS = new Set([
@@ -88,7 +87,7 @@ const PUBLIC_VIEWS = new Set([
   "institutions-colleges", "institutions-universities",
   "catalog", "batches", "course", "cyber-range", "learning-paths", "skill-tree",
   "exams", "credentials", "support", "verify",
-  "instructors", "instructor-detail", "events", "event-detail", "vertical",
+  "instructors", "instructor-detail", "events", "event-detail" ,
 ])
 
 function ViewRouter() {
@@ -105,6 +104,7 @@ function ViewRouter() {
       {view.name === "institutions-universities" && <InstitutionsUniversitiesView />}
       {view.name === "dashboard" && <DashboardView />}
       {view.name === "catalog" && <CourseCatalogView />}
+      {view.name === "vertical" && <CourseCatalogView initialVertical={view.vertical} />}
       {view.name === "batches" && <BatchesView />}
       {view.name === "exams" && <ExamsView />}
       {view.name === "credentials" && <CredentialsView />}
@@ -171,7 +171,6 @@ function ViewRouter() {
       {/* Exam platform */}
       {view.name === "exam-detail" && <ExamDetailView />}
       {/* Training verticals */}
-      {view.name === "vertical" && <VerticalView vertical={view.vertical} />}
     </div>
   )
 }

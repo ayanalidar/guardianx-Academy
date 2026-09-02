@@ -99,13 +99,13 @@ const CERT_TICKER = [
   "Security+", "CyberArk PAM", "CISA", "CCSP", "PNPT", "CRTP",
 ]
 
-export function CourseCatalogView() {
+export function CourseCatalogView({ initialVertical }: { initialVertical?: "ai" | "cloud" }) {
   const { navigate } = useAppStore()
   const [q, setQ] = React.useState("")
   const [category, setCategory] = React.useState("All")
   const [level, setLevel] = React.useState("All")
   const [status, setStatus] = React.useState("all")
-  const [vertical, setVertical] = React.useState<"all" | "cyber" | "ai" | "cloud">("all")
+  const [vertical, setVertical] = React.useState<"all" | "cyber" | "ai" | "cloud">(initialVertical || "all")
 
   // CMS-driven hero copy - falls back to defaults.
   const cms = usePageContent("catalog")
@@ -174,36 +174,45 @@ export function CourseCatalogView() {
             </p>
           </motion.div>
 
-          {/* Vertical Selector — 3 tabs: All / Cybersecurity / AI & ML / Cloud */}
+          {/* Vertical Selector — 3 large cards matching the homepage style */}
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.15 }}
-            className="mb-4"
+            className="mb-6"
           >
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[10px] font-mono text-muted-foreground tracking-[0.25em] mr-1">VERTICAL:</span>
+            <p className="text-[10px] font-mono text-muted-foreground tracking-[0.25em] mb-3">TRAINING VERTICALS</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {[
-                { label: "All", value: "all" as const, icon: Layers, color: "text-muted-foreground", tint: "bg-muted/50", border: "border-border/60" },
-                { label: "Cybersecurity", value: "cyber" as const, icon: Shield, color: "text-emerald-300", tint: "bg-emerald-500/10", border: "border-emerald-500/30" },
-                { label: "AI & ML", value: "ai" as const, icon: Brain, color: "text-violet-300", tint: "bg-violet-500/10", border: "border-violet-500/30" },
-                { label: "Cloud", value: "cloud" as const, icon: Cloud, color: "text-cyan-300", tint: "bg-cyan-500/10", border: "border-cyan-500/30" },
-              ].map((v) => {
-                const isActive = vertical === v.value
+                { label: "Cybersecurity", value: "all" as const, icon: Shield, color: "text-emerald-300", tint: "bg-emerald-500/10", border: "border-emerald-500/30", desc: "Ethical hacking, SOC, GRC, labs, CTFs, proctored exams", stats: "29+ courses · 31 labs · 20+ certs", gradient: "from-emerald-950/40" },
+                { label: "AI & Machine Learning", value: "ai" as const, icon: Brain, color: "text-violet-300", tint: "bg-violet-500/10", border: "border-violet-500/30", desc: "AI fundamentals, LLM security, MLOps, AI red teaming", stats: "$17B market · 300% growth · NEW", gradient: "from-violet-950/40" },
+                { label: "Cloud Computing", value: "cloud" as const, icon: Cloud, color: "text-cyan-300", tint: "bg-cyan-500/10", border: "border-cyan-500/30", desc: "AWS, Azure, GCP, Kubernetes, Terraform, DevSecOps", stats: "$800B+ market · 25%/yr growth · NEW", gradient: "from-cyan-950/40" },
+              ].map((v, i) => {
+                const isActive = vertical === v.value || (v.value === "all" && vertical === "all")
                 return (
-                  <button
+                  <motion.button
                     key={v.value}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.05 * i }}
                     onClick={() => setVertical(v.value)}
                     className={cn(
-                      "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all",
+                      "group relative rounded-2xl border p-5 transition-all text-left overflow-hidden",
                       isActive
-                        ? cn(v.tint, v.border, v.color, "shadow-lg")
-                        : "border-border/40 bg-card/40 text-muted-foreground hover:bg-card hover:border-border/60"
+                        ? cn("border-transparent bg-gradient-to-br to-card shadow-lg", v.gradient, v.border)
+                        : cn("border-border/60 bg-card/60 hover:bg-card hover:border-violet-500/30")
                     )}
                   >
-                    <v.icon className="h-3.5 w-3.5" />
-                    {v.label}
-                  </button>
+                    {isActive && <div className={cn("absolute top-0 left-0 right-0 h-0.5", v.color.replace("text-", "bg-"))} />}
+                    <div className={cn("inline-flex items-center justify-center h-10 w-10 rounded-xl mb-3", v.tint)}>
+                      <v.icon className={cn("h-5 w-5", v.color)} />
+                    </div>
+                    <h3 className="font-bold text-base mb-1">{v.label}</h3>
+                    <p className="text-xs text-muted-foreground leading-relaxed mb-3">{v.desc}</p>
+                    <div className={cn("flex items-center gap-1.5 text-[10px] font-mono", v.color)}>
+                      {v.stats}
+                    </div>
+                  </motion.button>
                 )
               })}
             </div>

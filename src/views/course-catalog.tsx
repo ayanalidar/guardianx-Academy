@@ -16,7 +16,7 @@ import {
   Search, Star, Clock, BookOpen, Users, Shield, Bookmark, BookmarkCheck,
   ArrowRight, Layers, Sparkles, FlaskConical, GraduationCap, Tag,
   Gauge, PlayCircle, CheckCircle2, Award,
-  Swords, ShieldCheck, Cloud, Scale,
+  Swords, ShieldCheck, Cloud, Scale, Brain,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
@@ -105,6 +105,7 @@ export function CourseCatalogView() {
   const [category, setCategory] = React.useState("All")
   const [level, setLevel] = React.useState("All")
   const [status, setStatus] = React.useState("all")
+  const [vertical, setVertical] = React.useState<"all" | "cyber" | "ai" | "cloud">("all")
 
   // CMS-driven hero copy - falls back to defaults.
   const cms = usePageContent("catalog")
@@ -114,13 +115,14 @@ export function CourseCatalogView() {
   const heroTitleAccent = getContent(cmsData, "hero", "titleAccent", "path.")
 
   const { data, isLoading } = useQuery<{ courses: CourseItem[] }>({
-    queryKey: ["courses", q, category, level, status],
+    queryKey: ["courses", q, category, level, status, vertical],
     queryFn: () => {
       const params = new URLSearchParams()
       if (q) params.set("q", q)
       if (category !== "All") params.set("category", category)
       if (level !== "All") params.set("level", level)
       if (status !== "all") params.set("status", status)
+      if (vertical !== "all") params.set("vertical", vertical)
       return api(`/api/courses?${params.toString()}`)
     },
   })
@@ -156,7 +158,7 @@ export function CourseCatalogView() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="relative mb-6"
+            className="relative mb-4"
           >
             <div className="flex items-center gap-2 mb-3">
               <span className="h-1.5 w-1.5 rounded-full bg-violet-400 pulse-dot" />
@@ -172,7 +174,43 @@ export function CourseCatalogView() {
             </p>
           </motion.div>
 
-          {/* Career Path Selector - interactive, clickable cards */}
+          {/* Vertical Selector — 3 tabs: All / Cybersecurity / AI & ML / Cloud */}
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.15 }}
+            className="mb-4"
+          >
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[10px] font-mono text-muted-foreground tracking-[0.25em] mr-1">VERTICAL:</span>
+              {[
+                { label: "All", value: "all" as const, icon: Layers, color: "text-muted-foreground", tint: "bg-muted/50", border: "border-border/60" },
+                { label: "Cybersecurity", value: "cyber" as const, icon: Shield, color: "text-emerald-300", tint: "bg-emerald-500/10", border: "border-emerald-500/30" },
+                { label: "AI & ML", value: "ai" as const, icon: Brain, color: "text-violet-300", tint: "bg-violet-500/10", border: "border-violet-500/30" },
+                { label: "Cloud", value: "cloud" as const, icon: Cloud, color: "text-cyan-300", tint: "bg-cyan-500/10", border: "border-cyan-500/30" },
+              ].map((v) => {
+                const isActive = vertical === v.value
+                return (
+                  <button
+                    key={v.value}
+                    onClick={() => setVertical(v.value)}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all",
+                      isActive
+                        ? cn(v.tint, v.border, v.color, "shadow-lg")
+                        : "border-border/40 bg-card/40 text-muted-foreground hover:bg-card hover:border-border/60"
+                    )}
+                  >
+                    <v.icon className="h-3.5 w-3.5" />
+                    {v.label}
+                  </button>
+                )
+              })}
+            </div>
+          </motion.div>
+
+          {/* Career Path Selector - interactive, clickable cards (only show for cyber/all) */}
+          {(vertical === "all" || vertical === "cyber") && (
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -224,6 +262,7 @@ export function CourseCatalogView() {
               })}
             </div>
           </motion.div>
+          )}
 
           {/* Stats strip - compact, inline */}
           <motion.div

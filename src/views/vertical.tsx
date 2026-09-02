@@ -6,91 +6,89 @@ import { useQuery } from "@tanstack/react-query"
 import { useAppStore } from "@/store/app-store"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import {
   ArrowRight, ArrowLeft, Brain, Cloud, Shield, Cpu, Database,
   Sparkles, Server, Network, Zap, TrendingUp, Users, Award,
   GraduationCap, Briefcase, Target, Lock, Code2, Layers,
+  Search, BookOpen, Star, FlaskConical, Clock,
 } from "lucide-react"
-import { ParticleLogo } from "@/components/platform/particle-logo"
+import { getCourseImage } from "@/lib/course-images"
 
 /* ============================================================
-   VERTICAL CONFIG — defines the content for each vertical
+   VERTICAL CONFIG
    ============================================================ */
 const VERTICALS = {
   ai: {
     eyebrow: "AI & MACHINE LEARNING",
-    title: "Master AI before it masters you.",
-    titleAccent: "AI before it masters you.",
+    title: "Master AI",
+    titleAccent: "before it masters you.",
     description:
       "From AI fundamentals to LLM security and MLOps — learn how to build, deploy, and secure AI systems. The only platform that teaches AI AND how to attack + defend it.",
     color: "text-violet-300",
     tint: "bg-violet-500/10",
-    accent: "from-violet-600 to-fuchsia-600",
+    barColor: "bg-violet-500",
+    glow: "shadow-[0_0_30px_-8px] shadow-violet-500/30",
     icon: Brain,
-    stats: [
-      { label: "AI Market by 2027", value: "$17B", icon: TrendingUp, color: "text-violet-300" },
-      { label: "Avg Salary", value: "₹14L/yr", icon: Briefcase, color: "text-fuchsia-300" },
-      { label: "Job Growth", value: "300%", icon: TrendingUp, color: "text-violet-300" },
-      { label: "Courses", value: "12+", icon: GraduationCap, color: "text-fuchsia-300" },
-    ],
+    bgGradient: "bg-violet-600/8",
+    bgGradient2: "bg-fuchsia-500/6",
     domains: [
-      { icon: Brain, title: "AI Fundamentals", desc: "Machine learning basics, neural networks, supervised/unsupervised learning.", level: "Beginner" },
-      { icon: Sparkles, title: "LLM & GenAI", desc: "Large language models, prompt engineering, RAG, fine-tuning, deployment.", level: "Intermediate" },
-      { icon: Lock, title: "AI Security & Red Teaming", desc: "Adversarial attacks, model poisoning, prompt injection, AI red teaming.", level: "Advanced" },
-      { icon: Cpu, title: "MLOps for Production", desc: "Model deployment, monitoring, CI/CD for ML, Kubernetes for AI workloads.", level: "Intermediate" },
-      { icon: Database, title: "NLP & Computer Vision", desc: "Natural language processing, transformers, CNNs, image recognition.", level: "Intermediate" },
-      { icon: Shield, title: "AI Governance & Ethics", desc: "AI policy, compliance, bias detection, responsible AI frameworks.", level: "Beginner" },
+      { icon: Brain, title: "AI Fundamentals", desc: "Machine learning basics, neural networks, supervised/unsupervised learning.", level: "Beginner", color: "text-violet-300", tint: "bg-violet-500/10", barColor: "bg-violet-500", glow: "shadow-[0_0_30px_-8px] shadow-violet-500/30" },
+      { icon: Sparkles, title: "LLM & GenAI", desc: "Large language models, prompt engineering, RAG, fine-tuning, deployment.", level: "Intermediate", color: "text-fuchsia-300", tint: "bg-fuchsia-500/10", barColor: "bg-fuchsia-500", glow: "shadow-[0_0_30px_-8px] shadow-fuchsia-500/30" },
+      { icon: Lock, title: "AI Security & Red Teaming", desc: "Adversarial attacks, model poisoning, prompt injection, AI red teaming.", level: "Advanced", color: "text-rose-300", tint: "bg-rose-500/10", barColor: "bg-rose-500", glow: "shadow-[0_0_30px_-8px] shadow-rose-500/30" },
+      { icon: Cpu, title: "MLOps for Production", desc: "Model deployment, monitoring, CI/CD for ML, Kubernetes for AI workloads.", level: "Intermediate", color: "text-cyan-300", tint: "bg-cyan-500/10", barColor: "bg-cyan-500", glow: "shadow-[0_0_30px_-8px] shadow-cyan-500/30" },
+      { icon: Database, title: "NLP & Computer Vision", desc: "Natural language processing, transformers, CNNs, image recognition.", level: "Intermediate", color: "text-amber-300", tint: "bg-amber-500/10", barColor: "bg-amber-500", glow: "shadow-[0_0_30px_-8px] shadow-amber-500/30" },
+      { icon: Shield, title: "AI Governance & Ethics", desc: "AI policy, compliance, bias detection, responsible AI frameworks.", level: "Beginner", color: "text-emerald-300", tint: "bg-emerald-500/10", barColor: "bg-emerald-500", glow: "shadow-[0_0_30px_-8px] shadow-emerald-500/30" },
     ],
-    certifications: [
-      { code: "AI-900", name: "Microsoft Azure AI Fundamentals", bg: "bg-violet-500/10", color: "text-violet-300" },
-      { code: "ML Engineer", name: "Google ML Engineer Professional", bg: "bg-fuchsia-500/10", color: "text-fuchsia-300" },
-      { code: "AWS ML", name: "AWS Certified ML Specialty", bg: "bg-cyan-500/10", color: "text-cyan-300" },
-      { code: "AI Red Team", name: "GuardianX AI Red Team Certification", bg: "bg-rose-500/10", color: "text-rose-300" },
+    certs: ["AI-900", "ML Engineer", "AWS ML", "AI Red Team", "TensorFlow Dev", "Azure AI"],
+    stats: [
+      { icon: BookOpen, label: "Courses", value: "12+", color: "text-violet-300", tint: "bg-violet-500/10" },
+      { icon: Briefcase, label: "Avg Salary", value: "₹14L/yr", color: "text-fuchsia-300", tint: "bg-fuchsia-500/10" },
+      { icon: TrendingUp, label: "Job Growth", value: "300%", color: "text-violet-300", tint: "bg-violet-500/10" },
+      { icon: Star, label: "Market by 2027", value: "$17B", color: "text-fuchsia-300", tint: "bg-fuchsia-500/10" },
     ],
     crossovers: [
-      { icon: Shield, title: "AI Security Engineer", desc: "AI + Cybersecurity — secure AI systems against adversarial attacks." },
-      { icon: Server, title: "DevSecOps for AI", desc: "AI + DevOps + Security — secure ML pipelines and deployments." },
-      { icon: Database, title: "Data Privacy Engineer", desc: "AI + GRC — ensure AI systems comply with data protection laws." },
+      { icon: Shield, title: "AI Security Engineer", desc: "AI + Cybersecurity — secure AI systems against adversarial attacks.", color: "text-rose-300", tint: "bg-rose-500/10" },
+      { icon: Server, title: "DevSecOps for AI", desc: "AI + DevOps + Security — secure ML pipelines and deployments.", color: "text-cyan-300", tint: "bg-cyan-500/10" },
+      { icon: Database, title: "Data Privacy Engineer", desc: "AI + GRC — ensure AI systems comply with data protection laws.", color: "text-emerald-300", tint: "bg-emerald-500/10" },
     ],
-    gradient: "from-violet-600/20 via-fuchsia-600/10 to-transparent",
   },
   cloud: {
     eyebrow: "CLOUD COMPUTING",
-    title: "The cloud is where the world runs now.",
+    title: "The cloud is",
     titleAccent: "where the world runs now.",
     description:
       "Master AWS, Azure, and GCP — from fundamentals to architecture to security. Build, deploy, and secure cloud infrastructure at scale with hands-on labs.",
     color: "text-cyan-300",
     tint: "bg-cyan-500/10",
-    accent: "from-cyan-600 to-blue-600",
+    barColor: "bg-cyan-500",
+    glow: "shadow-[0_0_30px_-8px] shadow-cyan-500/30",
     icon: Cloud,
-    stats: [
-      { label: "Cloud Market", value: "$800B+", icon: TrendingUp, color: "text-cyan-300" },
-      { label: "Avg Salary", value: "₹12L/yr", icon: Briefcase, color: "text-blue-300" },
-      { label: "Job Growth", value: "25%/yr", icon: TrendingUp, color: "text-cyan-300" },
-      { label: "Courses", value: "15+", icon: GraduationCap, color: "text-blue-300" },
-    ],
+    bgGradient: "bg-cyan-600/8",
+    bgGradient2: "bg-blue-500/6",
     domains: [
-      { icon: Cloud, title: "AWS Architecture", desc: "EC2, S3, RDS, Lambda, VPC, IAM — build scalable AWS infrastructure.", level: "Beginner" },
-      { icon: Server, title: "Azure Administration", desc: "Azure AD, VMs, App Services, Azure Storage, networking, security.", level: "Beginner" },
-      { icon: Network, title: "GCP Fundamentals", desc: "Compute Engine, Cloud Storage, BigQuery, GKE — Google Cloud basics.", level: "Beginner" },
-      { icon: Layers, title: "Kubernetes & Docker", desc: "Container orchestration, pod management, Helm, service mesh.", level: "Intermediate" },
-      { icon: Lock, title: "Cloud Security", desc: "Cloud IAM, network security, data encryption, compliance in the cloud.", level: "Advanced" },
-      { icon: Code2, title: "Infrastructure as Code", desc: "Terraform, Ansible, CloudFormation — automate everything.", level: "Intermediate" },
+      { icon: Cloud, title: "AWS Architecture", desc: "EC2, S3, RDS, Lambda, VPC, IAM — build scalable AWS infrastructure.", level: "Beginner", color: "text-cyan-300", tint: "bg-cyan-500/10", barColor: "bg-cyan-500", glow: "shadow-[0_0_30px_-8px] shadow-cyan-500/30" },
+      { icon: Server, title: "Azure Administration", desc: "Azure AD, VMs, App Services, Azure Storage, networking, security.", level: "Beginner", color: "text-blue-300", tint: "bg-blue-500/10", barColor: "bg-blue-500", glow: "shadow-[0_0_30px_-8px] shadow-blue-500/30" },
+      { icon: Network, title: "GCP Fundamentals", desc: "Compute Engine, Cloud Storage, BigQuery, GKE — Google Cloud basics.", level: "Beginner", color: "text-emerald-300", tint: "bg-emerald-500/10", barColor: "bg-emerald-500", glow: "shadow-[0_0_30px_-8px] shadow-emerald-500/30" },
+      { icon: Layers, title: "Kubernetes & Docker", desc: "Container orchestration, pod management, Helm, service mesh.", level: "Intermediate", color: "text-violet-300", tint: "bg-violet-500/10", barColor: "bg-violet-500", glow: "shadow-[0_0_30px_-8px] shadow-violet-500/30" },
+      { icon: Lock, title: "Cloud Security", desc: "Cloud IAM, network security, data encryption, compliance in the cloud.", level: "Advanced", color: "text-rose-300", tint: "bg-rose-500/10", barColor: "bg-rose-500", glow: "shadow-[0_0_30px_-8px] shadow-rose-500/30" },
+      { icon: Code2, title: "Infrastructure as Code", desc: "Terraform, Ansible, CloudFormation — automate everything.", level: "Intermediate", color: "text-amber-300", tint: "bg-amber-500/10", barColor: "bg-amber-500", glow: "shadow-[0_0_30px_-8px] shadow-amber-500/30" },
     ],
-    certifications: [
-      { code: "SAA-C03", name: "AWS Solutions Architect Associate", bg: "bg-cyan-500/10", color: "text-cyan-300" },
-      { code: "AZ-104", name: "Microsoft Azure Administrator", bg: "bg-blue-500/10", color: "text-blue-300" },
-      { code: "CKA", name: "Certified Kubernetes Administrator", bg: "bg-violet-500/10", color: "text-violet-300" },
-      { code: "Cloud Sec", name: "GuardianX Cloud Security Certification", bg: "bg-rose-500/10", color: "text-rose-300" },
+    certs: ["AWS SAA", "AZ-104", "CKA", "Cloud Sec", "Terraform", "GCP ACE"],
+    stats: [
+      { icon: BookOpen, label: "Courses", value: "15+", color: "text-cyan-300", tint: "bg-cyan-500/10" },
+      { icon: Briefcase, label: "Avg Salary", value: "₹12L/yr", color: "text-blue-300", tint: "bg-blue-500/10" },
+      { icon: TrendingUp, label: "Job Growth", value: "25%/yr", color: "text-cyan-300", tint: "bg-cyan-500/10" },
+      { icon: Star, label: "Market Size", value: "$800B+", color: "text-blue-300", tint: "bg-blue-500/10" },
     ],
     crossovers: [
-      { icon: Shield, title: "Cloud Security Engineer", desc: "Cloud + Cybersecurity — secure cloud infrastructure from attacks." },
-      { icon: Server, title: "DevSecOps Engineer", desc: "Cloud + DevOps + Security — secure CI/CD pipelines in the cloud." },
-      { icon: Network, title: "Cloud Network Architect", desc: "Cloud + Networking — design secure, scalable cloud networks." },
+      { icon: Shield, title: "Cloud Security Engineer", desc: "Cloud + Cybersecurity — secure cloud infrastructure from attacks.", color: "text-rose-300", tint: "bg-rose-500/10" },
+      { icon: Server, title: "DevSecOps Engineer", desc: "Cloud + DevOps + Security — secure CI/CD pipelines in the cloud.", color: "text-cyan-300", tint: "bg-cyan-500/10" },
+      { icon: Network, title: "Cloud Network Architect", desc: "Cloud + Networking — design secure, scalable cloud networks.", color: "text-emerald-300", tint: "bg-emerald-500/10" },
     ],
-    gradient: "from-cyan-600/20 via-blue-600/10 to-transparent",
   },
 } as const
 
@@ -100,16 +98,27 @@ const LEVEL_COLORS: Record<string, string> = {
   Advanced: "text-rose-300 bg-rose-500/10 border-rose-500/30",
 }
 
+interface CourseItem {
+  id: string; slug: string; title: string; shortName: string; description: string
+  category: string; level: string; durationHours: number; rating: number
+  studentsCount: number; color: string; thumbnail: string | null; instructor: { name: string; title: string; avatar: string | null } | null
+}
+
 export function VerticalView({ vertical }: { vertical: "ai" | "cloud" }) {
   const { navigate } = useAppStore()
   const cfg = VERTICALS[vertical]
+  const [q, setQ] = React.useState("")
+  const [level, setLevel] = React.useState("All")
+  const [selectedDomain, setSelectedDomain] = React.useState<string | null>(null)
 
-  // Fetch courses for this vertical (gracefully falls back to static data)
-  const { data: coursesData } = useQuery<{ courses: any[]; count: number } | null>({
-    queryKey: ["vertical-courses", vertical],
+  const { data, isLoading } = useQuery<{ courses: CourseItem[]; count: number } | null>({
+    queryKey: ["vertical-courses", vertical, q, level],
     queryFn: async () => {
       try {
-        const res = await fetch(`/api/courses?vertical=${vertical}`)
+        const params = new URLSearchParams({ vertical })
+        if (q) params.set("q", q)
+        if (level && level !== "All") params.set("level", level)
+        const res = await fetch(`/api/courses?${params}`)
         if (!res.ok) return null
         return res.json()
       } catch {
@@ -118,331 +127,293 @@ export function VerticalView({ vertical }: { vertical: "ai" | "cloud" }) {
     },
     staleTime: 60_000,
   })
-  const courses = coursesData?.courses ?? []
+  const courses = data?.courses ?? []
+
+  const filtered = selectedDomain
+    ? courses.filter(c => c.category?.toLowerCase().includes(selectedDomain.split(" ")[0].toLowerCase()))
+    : courses
 
   return (
-    <main className="relative">
-      {/* =====================================================
-          SECTION 1: HERO
-          ===================================================== */}
-      <section className="relative overflow-hidden" aria-labelledby="vertical-hero-heading">
-        {/* Atmospheric background */}
-        <div className={cn("absolute inset-0 bg-gradient-to-br", cfg.gradient)} aria-hidden />
-        <div className="absolute inset-0 bg-grid opacity-10" aria-hidden />
-        <div
-          className={cn("absolute left-1/3 top-1/4 size-[500px] rounded-full blur-[120px] pointer-events-none", cfg.tint)}
-          aria-hidden
-        />
+    <div className="relative min-h-screen pt-2 lg:pt-4">
+      {/* Atmospheric background — matching the catalog style */}
+      <div className="absolute inset-0 bg-mesh opacity-50 pointer-events-none" />
+      <div className={cn("absolute top-0 right-0 w-[600px] h-[400px] blur-[120px] rounded-full pointer-events-none", cfg.bgGradient)} />
+      <div className={cn("absolute top-20 left-1/4 w-[400px] h-[300px] blur-[100px] rounded-full pointer-events-none", cfg.bgGradient2)} />
 
-        {/* Desktop particle logo on the right */}
-        <div className="hidden lg:block absolute right-[6%] top-1/2 -translate-y-1/2 pointer-events-auto">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.7 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
+        {/* ====================================================
+            HERO — matching the catalog style (single-column text, no particle logo)
+            ==================================================== */}
+        <section className="relative mb-6 lg:mb-12">
+          {/* Back button */}
+          <motion.button
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            onClick={() => navigate({ name: "home" })}
+            className="inline-flex items-center gap-1.5 text-[10px] font-mono text-muted-foreground hover:text-violet-300 transition-colors tracking-[0.2em] mb-4"
           >
-            <ParticleLogo size={680} interactive showGlow />
-          </motion.div>
-        </div>
+            <ArrowLeft className="h-3 w-3" />
+            BACK TO HOME
+          </motion.button>
 
-        {/* Mobile particle logo at top */}
-        <div className="lg:hidden absolute inset-x-0 top-0 h-[44vh] flex items-center justify-center pointer-events-none">
-          <ParticleLogo size={340} interactive={false} showGlow />
-        </div>
-
-        <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full py-12 lg:py-16 pt-[48vh] lg:pt-16">
-          <div className="max-w-3xl">
-            {/* Back button */}
-            <motion.button
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              onClick={() => navigate({ name: "home" })}
-              className="inline-flex items-center gap-1.5 text-[10px] font-mono text-muted-foreground hover:text-violet-300 transition-colors tracking-[0.2em] mb-4"
-            >
-              <ArrowLeft className="h-3 w-3" />
-              BACK TO HOME
-            </motion.button>
-
-            {/* Eyebrow */}
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.05 }}
-              className="flex items-center gap-2 mb-4"
-            >
-              <cfg.icon className={cn("h-5 w-5", cfg.color)} aria-hidden />
-              <span className={cn("text-[10px] font-mono tracking-[0.25em]", cfg.color)}>
-                {cfg.eyebrow}
-              </span>
-            </motion.div>
-
-            {/* Title */}
-            <motion.h1
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.1 }}
-              className="text-[clamp(2.25rem,5vw,4rem)] font-bold leading-[1.05] tracking-[-0.03em] mb-4 text-balance"
-              id="vertical-hero-heading"
-            >
-              Master{" "}
+          {/* Eyebrow + headline — matching catalog exactly */}
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="relative mb-6"
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <span className={cn("h-1.5 w-1.5 rounded-full pulse-dot", cfg.barColor)} />
+              <span className={cn("text-[10px] font-mono tracking-[0.3em]", cfg.color)}>{cfg.eyebrow}</span>
+            </div>
+            <h1 className="text-[clamp(2.5rem,7vw,5rem)] font-bold leading-[0.9] tracking-[-0.04em] mb-4 text-balance">
+              {cfg.title}{" "}
               <span className="text-gradient-premium">{cfg.titleAccent}</span>
-            </motion.h1>
-
-            {/* Description */}
-            <motion.p
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.2 }}
-              className="text-base lg:text-lg text-muted-foreground max-w-2xl mb-6 leading-relaxed"
-            >
+            </h1>
+            <p className="text-base lg:text-lg text-muted-foreground max-w-2xl leading-relaxed">
               {cfg.description}
-            </motion.p>
+            </p>
+          </motion.div>
 
-            {/* CTAs */}
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.3 }}
-              className="flex items-center gap-3 flex-wrap"
-            >
-              <Button
-                size="lg"
-                onClick={() => navigate({ name: "catalog" })}
-                className={cn("btn-premium px-8 py-6 text-sm bg-gradient-to-r", cfg.accent)}
-              >
-                EXPLORE COURSES
-                <ArrowRight className="h-4 w-4 ml-2" />
+          {/* Domain Selector — matching the catalog's Career Path Selector style */}
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.2 }}
+            className="mb-6"
+          >
+            <p className={cn("text-[10px] font-mono tracking-[0.25em] mb-3", cfg.color)}>CHOOSE YOUR DOMAIN</p>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {cfg.domains.map((d, i) => {
+                const isActive = selectedDomain === d.title
+                const Icon = d.icon
+                return (
+                  <button
+                    key={d.title}
+                    onClick={() => setSelectedDomain(isActive ? null : d.title)}
+                    className={cn(
+                      "group relative text-left rounded-xl border p-4 transition-all duration-300 overflow-hidden",
+                      isActive
+                        ? cn("border-transparent bg-card shadow-lg", d.glow)
+                        : "border-border/60 bg-card/60 hover:bg-card hover:border-violet-500/30"
+                    )}
+                  >
+                    {isActive && <div className={cn("absolute top-0 left-0 right-0 h-0.5", d.barColor)} />}
+                    <div className="flex items-start justify-between mb-3">
+                      <div className={cn("inline-flex p-2.5 rounded-lg transition-transform group-hover:scale-110", d.tint)}>
+                        <Icon className={cn("h-5 w-5", d.color)} />
+                      </div>
+                      <Badge variant="outline" className={cn("text-[10px] font-mono", LEVEL_COLORS[d.level])}>
+                        {d.level}
+                      </Badge>
+                    </div>
+                    <h3 className="font-semibold text-sm mb-1">{d.title}</h3>
+                    <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-2">{d.desc}</p>
+                    <div className="flex items-center gap-1 mt-3">
+                      <span className={cn("text-[10px] font-mono tracking-wider", isActive ? d.color : "text-muted-foreground")}>
+                        {isActive ? "ACTIVE" : "EXPLORE"}
+                      </span>
+                      <ArrowRight className={cn("h-3 w-3 transition-transform", isActive ? d.color : "text-muted-foreground", "group-hover:translate-x-0.5")} />
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          </motion.div>
+
+          {/* Stats strip — matching catalog's StatCard style */}
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.3 }}
+            className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6"
+          >
+            {cfg.stats.map((s) => {
+              const Icon = s.icon
+              return (
+                <div key={s.label} className="rounded-xl border border-border/60 bg-card/60 p-4 flex items-center gap-3">
+                  <div className={cn("inline-flex p-2.5 rounded-lg", s.tint)}>
+                    <Icon className={cn("h-5 w-5", s.color)} />
+                  </div>
+                  <div>
+                    <div className="text-lg font-bold tabular-nums">{s.value}</div>
+                    <div className="text-[10px] text-muted-foreground">{s.label}</div>
+                  </div>
+                </div>
+              )
+            })}
+          </motion.div>
+
+          {/* Certification ticker — matching catalog's scrolling marquee */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.4, delay: 0.4 }}
+            className="relative overflow-hidden py-3 border-y border-border/40"
+          >
+            <div className="flex items-center gap-6 animate-[scroll_30s_linear_infinite] whitespace-nowrap">
+              {[...cfg.certs, ...cfg.certs].map((cert, i) => (
+                <span key={i} className="text-xs font-mono text-muted-foreground/60 tracking-wider flex items-center gap-2">
+                  <span className={cn("h-1 w-1 rounded-full", cfg.barColor, "opacity-40")} />
+                  {cert}
+                </span>
+              ))}
+            </div>
+          </motion.div>
+        </section>
+
+        {/* ====================================================
+            FILTER BAR — matching catalog's filter bar
+            ==================================================== */}
+        <div className="rounded-2xl border border-border/60 bg-card shadow-lg p-4 sm:p-5 mb-6">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative flex-1 min-w-[220px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder={`Search ${vertical === "ai" ? "AI" : "cloud"} courses...`}
+                className="pl-9"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+              />
+            </div>
+            <Select value={level} onValueChange={setLevel}>
+              <SelectTrigger className="w-full sm:w-[150px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="All">All Levels</SelectItem>
+                <SelectItem value="Beginner">Beginner</SelectItem>
+                <SelectItem value="Intermediate">Intermediate</SelectItem>
+                <SelectItem value="Advanced">Advanced</SelectItem>
+              </SelectContent>
+            </Select>
+            {selectedDomain && (
+              <Button variant="outline" size="sm" onClick={() => setSelectedDomain(null)} className="text-xs">
+                Clear domain filter
               </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                onClick={() => navigate({ name: "batches" })}
-                className="px-6 py-6 text-sm"
-              >
-                VIEW BATCHES
-              </Button>
-            </motion.div>
+            )}
           </div>
         </div>
-      </section>
 
-      {/* =====================================================
-          SECTION 2: STATS
-          ===================================================== */}
-      <section className="py-6 lg:py-8 border-t border-border/40">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {cfg.stats.map((s, i) => (
-              <motion.div
-                key={s.label}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.05 * i }}
-                className="card-premium rounded-xl p-4 lg:p-5"
-              >
-                <s.icon className={cn("h-5 w-5 mb-2", s.color)} aria-hidden />
-                <div className="text-2xl font-bold tabular-nums">{s.value}</div>
-                <div className="text-xs text-muted-foreground">{s.label}</div>
-              </motion.div>
+        {/* ====================================================
+            COURSE GRID — matching catalog's course cards
+            ==================================================== */}
+        {isLoading ? (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="h-64" />
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* =====================================================
-          SECTION 3: DOMAINS / WHAT YOU'LL LEARN
-          ===================================================== */}
-      <section className="py-8 lg:py-12 border-t border-border/40">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mb-6">
-            <p className={cn("text-[10px] font-mono tracking-[0.25em] mb-2", cfg.color)}>
-              WHAT YOU'LL LEARN
-            </p>
-            <h2 className="text-[clamp(1.5rem,3vw,2rem)] font-bold tracking-[-0.02em]">
-              {vertical === "ai" ? "AI domains we cover." : "Cloud domains we cover."}
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {cfg.domains.map((d, i) => (
+        ) : filtered.length > 0 ? (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filtered.map((course, i) => (
               <motion.div
-                key={d.title}
+                key={course.id}
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.05 * i }}
-                className="card-premium rounded-xl p-5 lg:p-6 hover:-translate-y-1 transition-transform"
+                onClick={() => navigate({ name: "course", courseId: course.id })}
+                className="group relative rounded-2xl border border-border/60 bg-card overflow-hidden cursor-pointer transition-all hover:border-violet-500/30 hover:-translate-y-1 hover:shadow-xl"
               >
-                <div className="flex items-start justify-between mb-3">
-                  <div className={cn("inline-flex items-center justify-center h-10 w-10 rounded-lg", cfg.tint, cfg.color)}>
-                    <d.icon className="h-5 w-5" />
+                {/* Thumbnail */}
+                <div className="relative h-32 overflow-hidden bg-gradient-to-br from-violet-950/40 to-card">
+                  {course.thumbnail ? (
+                    <img src={course.thumbnail} alt={course.title} className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="h-full w-full flex items-center justify-center">
+                      <Brain className={cn("h-10 w-10 opacity-20", cfg.color)} />
+                    </div>
+                  )}
+                  <div className="absolute top-2 left-2">
+                    <Badge variant="outline" className={cn("text-[10px] font-mono", LEVEL_COLORS[course.level])}>
+                      {course.level}
+                    </Badge>
                   </div>
-                  <Badge variant="outline" className={cn("text-[10px] font-mono", LEVEL_COLORS[d.level])}>
-                    {d.level}
-                  </Badge>
                 </div>
-                <h3 className="font-semibold text-lg leading-tight mb-1.5">{d.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{d.desc}</p>
+                {/* Content */}
+                <div className="p-4">
+                  <h3 className="font-semibold text-sm mb-1 line-clamp-1">{course.title}</h3>
+                  <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{course.description}</p>
+                  <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+                    <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{course.durationHours}h</span>
+                    <span className="flex items-center gap-1"><Star className="h-3 w-3" />{course.rating || 4.5}</span>
+                    <span className="flex items-center gap-1"><Users className="h-3 w-3" />{course.studentsCount || 0}</span>
+                  </div>
+                </div>
               </motion.div>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* =====================================================
-          SECTION 4: CERTIFICATIONS
-          ===================================================== */}
-      <section className="py-8 lg:py-12 border-t border-border/40">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mb-6">
-            <p className={cn("text-[10px] font-mono tracking-[0.25em] mb-2", cfg.color)}>
-              CERTIFICATION PREP
+        ) : (
+          <div className="rounded-2xl border border-border/60 bg-card p-12 text-center">
+            <BookOpen className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
+            <h3 className="font-semibold mb-1">No courses yet in this domain</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              We're building {vertical === "ai" ? "AI & Machine Learning" : "Cloud Computing"} courses right now. Check back soon or contact us for early access.
             </p>
-            <h2 className="text-[clamp(1.5rem,3vw,2rem)] font-bold tracking-[-0.02em]">
-              {vertical === "ai" ? "Certifications we prepare you for." : "Cloud certifications we prepare you for."}
-            </h2>
+            <Button onClick={() => navigate({ name: "contact" })} variant="outline">
+              Get Early Access <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
+            </Button>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {cfg.certifications.map((c, i) => (
-              <motion.div
-                key={c.code}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.05 * i }}
-                className="rounded-xl border border-border/60 bg-card p-5 hover:border-violet-500/30 transition-all"
-              >
-                <div className={cn("inline-flex px-2.5 py-1 rounded-md text-[10px] font-mono font-bold mb-3", c.bg, c.color)}>
-                  {c.code}
-                </div>
-                <h3 className="font-semibold text-sm leading-tight">{c.name}</h3>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+        )}
 
-      {/* =====================================================
-          SECTION 5: CROSSOVER WITH CYBERSECURITY
-          ===================================================== */}
-      <section className="py-8 lg:py-12 border-t border-border/40">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        {/* ====================================================
+            CROSSOVER WITH CYBERSECURITY
+            ==================================================== */}
+        <section className="mt-12 py-8 lg:py-12 border-t border-border/40">
           <div className="mb-6">
-            <p className={cn("text-[10px] font-mono tracking-[0.25em] mb-2", cfg.color)}>
-              CROSSOVER PATHS
-            </p>
+            <p className={cn("text-[10px] font-mono tracking-[0.25em] mb-2", cfg.color)}>CROSSOVER PATHS</p>
             <h2 className="text-[clamp(1.5rem,3vw,2rem)] font-bold tracking-[-0.02em]">
-              {vertical === "ai"
-                ? "Where AI meets cybersecurity."
-                : "Where cloud meets cybersecurity."}
+              {vertical === "ai" ? "Where AI meets cybersecurity." : "Where cloud meets cybersecurity."}
             </h2>
             <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
-              The only platform that teaches both — combine your {vertical === "ai" ? "AI" : "cloud"} skills
-              with cybersecurity expertise for high-demand crossover roles.
+              The only platform that teaches both — combine your {vertical === "ai" ? "AI" : "cloud"} skills with cybersecurity expertise for high-demand crossover roles.
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {cfg.crossovers.map((c, i) => (
-              <motion.div
-                key={c.title}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.05 * i }}
-                className="card-premium rounded-xl p-5"
-              >
-                <div className={cn("inline-flex items-center justify-center h-9 w-9 rounded-lg mb-3", cfg.tint, cfg.color)}>
-                  <c.icon className="h-4 w-4" />
-                </div>
-                <h3 className="font-semibold mb-1">{c.title}</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">{c.desc}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* =====================================================
-          SECTION 6: FEATURED COURSES (if available from DB)
-          ===================================================== */}
-      {courses.length > 0 && (
-        <section className="py-8 lg:py-12 border-t border-border/40">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="mb-6 flex items-center justify-between">
-              <div>
-                <p className={cn("text-[10px] font-mono tracking-[0.25em] mb-2", cfg.color)}>
-                  FEATURED COURSES
-                </p>
-                <h2 className="text-[clamp(1.5rem,3vw,2rem)] font-bold tracking-[-0.02em]">
-                  {courses.length} courses available
-                </h2>
-              </div>
-              <Button variant="outline" size="sm" onClick={() => navigate({ name: "catalog" })}>
-                View All <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
-              </Button>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {courses.slice(0, 6).map((course: any, i: number) => (
+            {cfg.crossovers.map((c, i) => {
+              const Icon = c.icon
+              return (
                 <motion.div
-                  key={course.id}
+                  key={c.title}
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3, delay: 0.05 * i }}
-                  className="card-premium rounded-xl p-5 cursor-pointer hover:-translate-y-1 transition-transform"
-                  onClick={() => navigate({ name: "course", courseId: course.id })}
+                  className="rounded-xl border border-border/60 bg-card p-5 hover:border-violet-500/30 transition-all"
                 >
-                  <Badge variant="outline" className={cn("text-[10px] font-mono mb-2", LEVEL_COLORS[course.level] || "")}>
-                    {course.level}
-                  </Badge>
-                  <h3 className="font-semibold mb-1">{course.title}</h3>
-                  <p className="text-xs text-muted-foreground line-clamp-2">{course.description}</p>
+                  <div className={cn("inline-flex items-center justify-center h-9 w-9 rounded-lg mb-3", c.tint)}>
+                    <Icon className={cn("h-4 w-4", c.color)} />
+                  </div>
+                  <h3 className="font-semibold mb-1">{c.title}</h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{c.desc}</p>
                 </motion.div>
-              ))}
-            </div>
+              )
+            })}
           </div>
         </section>
-      )}
 
-      {/* =====================================================
-          SECTION 7: FINAL CTA
-          ===================================================== */}
-      <section className="py-12 lg:py-16 border-t border-border/40 relative overflow-hidden">
-        <div className={cn("absolute inset-0 bg-gradient-to-br", cfg.gradient)} aria-hidden />
-        <div className="relative z-10 mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-          >
-            <cfg.icon className={cn("h-12 w-12 mx-auto mb-4", cfg.color)} aria-hidden />
-            <h2 className="text-[clamp(1.75rem,4vw,2.5rem)] font-bold tracking-[-0.02em] mb-3">
-              Ready to master{" "}
-              <span className="text-gradient-premium">
-                {vertical === "ai" ? "AI & Machine Learning" : "Cloud Computing"}
-              </span>
-              ?
-            </h2>
-            <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
-              Join thousands of professionals advancing their careers with GuardianX Academy.
-              Expert-led training, hands-on labs, and verifiable certifications.
-            </p>
-            <div className="flex items-center justify-center gap-3 flex-wrap">
-              <Button
-                size="lg"
-                onClick={() => navigate({ name: "catalog" })}
-                className={cn("btn-premium px-8 py-6 text-sm bg-gradient-to-r", cfg.accent)}
-              >
-                EXPLORE COURSES <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                onClick={() => navigate({ name: "contact" })}
-                className="px-6 py-6 text-sm"
-              >
-                TALK TO US
-              </Button>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-    </main>
+        {/* ====================================================
+            FINAL CTA
+            ==================================================== */}
+        <section className="py-12 lg:py-16 border-t border-border/40 text-center">
+          <h2 className="text-[clamp(1.75rem,4vw,2.5rem)] font-bold tracking-[-0.02em] mb-3">
+            Ready to master{" "}
+            <span className="text-gradient-premium">
+              {vertical === "ai" ? "AI & Machine Learning" : "Cloud Computing"}
+            </span>?
+          </h2>
+          <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
+            Join thousands of professionals advancing their careers with GuardianX Academy.
+          </p>
+          <div className="flex items-center justify-center gap-3 flex-wrap">
+            <Button size="lg" onClick={() => navigate({ name: "catalog" })} className={cn("btn-premium px-8", cfg.barColor)}>
+              EXPLORE ALL COURSES <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
+            <Button size="lg" variant="outline" onClick={() => navigate({ name: "contact" })} className="px-6">
+              TALK TO US
+            </Button>
+          </div>
+        </section>
+      </div>
+    </div>
   )
 }

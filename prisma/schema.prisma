@@ -222,6 +222,7 @@ model Course {
   rubrics       GradingRubric[]
   attendanceRecords AttendanceRecord[]
   studyGroups   StudyGroup[]
+  officeHourSlots OfficeHourSlot[]
 }
 
 model Module {
@@ -581,6 +582,7 @@ model OfficeHourSlot {
   instructorId  String
   instructor    User     @relation(fields: [instructorId], references: [id], onDelete: Cascade)
   courseId      String?  // optional course-specific
+  course        Course?  @relation(fields: [courseId], references: [id], onDelete: Cascade)
   startAt       DateTime
   endAt         DateTime
   mode          String   @default("video") // video | in-person | chat

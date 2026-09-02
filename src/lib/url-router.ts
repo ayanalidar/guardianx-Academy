@@ -120,7 +120,7 @@ export function hashToView(hash: string): View {
     "dashboard", "catalog", "batches", "learning", "notes", "live",
     "labs", "certificates", "achievements", "leaderboard", "instructor",
     "school", "admin", "community", "profile", "assignments", "messaging",
-    "study-groups", "office-hours", "auth", "ai-assistant", "threat-feed",
+    "study-groups", "office-hours", "book-session", "auth", "ai-assistant", "threat-feed",
     "code-review", "career-planner", "job-board", "mock-interview",
     "resume-builder", "ctf-platform", "weekly-challenges", "team-missions",
     "learning-analytics", "skill-assessments", "prerequisites-visualizer",

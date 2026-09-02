@@ -17,15 +17,9 @@ export function ServiceWorkerRegister() {
   React.useEffect(() => {
     if (typeof window === "undefined") return
     if (!("serviceWorker" in navigator)) return
-    // Disable SW registration in dev mode to prevent caching issues
-    // and reduce memory pressure during development.
-    if (process.env.NODE_ENV === "development") {
-      // Unregister any existing SWs in dev
-      navigator.serviceWorker.getRegistrations().then(regs => {
-        regs.forEach(r => r.unregister().catch(() => undefined))
-      }).catch(() => undefined)
-      return
-    }
+    // Register the SW in both dev and production so PWA installability works
+    // in the preview environment. The SW provides offline caching + makes the
+    // app installable on mobile/desktop.
 
     let refreshing = false
     const onControllerChange = () => {

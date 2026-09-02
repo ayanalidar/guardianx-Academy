@@ -323,10 +323,13 @@ export function CourseDetailView() {
   const enrollMutation = useMutation({
     mutationFn: () => api(`/api/courses/${courseId}/enroll`, { method: "POST" }),
     onSuccess: () => {
-      toast.success("Enrolled! Start learning now.")
+      toast.success("Enrolled! Redirecting to My Learning…")
       qc.invalidateQueries({ queryKey: ["course", courseId] })
       qc.invalidateQueries({ queryKey: ["courses"] })
       qc.invalidateQueries({ queryKey: ["me"] })
+      // Navigate to My Learning so the student can continue from the
+      // enrolled-courses list + Recommended Courses section.
+      setTimeout(() => navigate({ name: "learning" }), 600)
     },
     onError: (e: any) => toast.error(e.message),
   })

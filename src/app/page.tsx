@@ -56,6 +56,7 @@ import { AssignmentsView } from "@/views/assignments"
 import { MessagingView } from "@/views/messaging"
 import { StudyGroupsView } from "@/views/study-groups"
 import { OfficeHoursView } from "@/views/office-hours"
+import { BookSessionView } from "@/views/book-session"
 // New feature views (heavy) — lazy-loaded with ssr:false for faster initial page render
 import { AIAssistantView } from "@/views/ai-assistant"
 import { ThreatFeedView } from "@/views/threat-feed"
@@ -143,6 +144,7 @@ function ViewRouter() {
       {view.name === "messaging" && <MessagingView />}
       {view.name === "study-groups" && <StudyGroupsView />}
       {view.name === "office-hours" && <OfficeHoursView />}
+      {view.name === "book-session" && <BookSessionView />}
       {/* New feature views */}
       {view.name === "ai-assistant" && <AIAssistantView />}
       {view.name === "threat-feed" && <ThreatFeedView />}

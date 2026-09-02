@@ -38,6 +38,7 @@ export type View =
   | { name: "messaging" }
   | { name: "study-groups" }
   | { name: "office-hours" }
+  | { name: "book-session" }
   | { name: "auth" }
   // New feature views
   | { name: "ai-assistant" }

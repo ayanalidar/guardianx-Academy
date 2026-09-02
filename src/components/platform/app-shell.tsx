@@ -60,6 +60,7 @@ const STUDENT_NAV: NavItem[] = [
   { label: "Mock Interview", icon: Mic, view: { name: "mock-interview" } },
   { label: "Resume Builder", icon: FileText, view: { name: "resume-builder" } },
   { label: "Study Groups", icon: UsersRound, view: { name: "study-groups" } },
+  { label: "Book a Session", icon: CalendarClock, view: { name: "book-session" } },
   { label: "Messages", icon: MessageSquare, view: { name: "messaging" } },
   { label: "Community", icon: Users, view: { name: "community" } },
   { label: "Parent Portal", icon: Heart, view: { name: "parent-portal" } },

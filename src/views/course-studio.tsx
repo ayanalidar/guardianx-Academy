@@ -66,6 +66,7 @@ import {
   Copy,
   Download,
   X,
+  Loader2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
@@ -260,6 +261,9 @@ function ListView({ onOpen }: { onOpen: (id: string) => void }) {
         <StatPill label="In Review" value={totals?.review ?? 0} color="text-amber-400" />
         <StatPill label="Published" value={totals?.published ?? 0} color="text-emerald-400" />
       </div>
+
+      {/* AI Course Generator */}
+      <AICourseGenerator />
 
       {/* Course grid */}
       {isLoading ? (
@@ -1682,5 +1686,137 @@ function EmptyEditor({
       <h3 className="font-semibold mb-1">{title}</h3>
       <p className="text-sm text-muted-foreground max-w-sm">{sub}</p>
     </div>
+  )
+}
+
+/* ============================================================
+   AI Course Generator — multi-agent LLM-powered course creation
+   ============================================================ */
+function AICourseGenerator() {
+  const qc = useQueryClient()
+  const [open, setOpen] = React.useState(false)
+  const [certSlug, setCertSlug] = React.useState("ceh")
+  const [audience, setAudience] = React.useState("Beginner")
+  const [level, setLevel] = React.useState<"Beginner" | "Intermediate" | "Advanced">("Beginner")
+  const [duration, setDuration] = React.useState(40)
+  const [instructorId, setInstructorId] = React.useState("")
+  const [result, setResult] = React.useState<any>(null)
+
+  // Fetch instructors for the dropdown
+  const { data: instrData } = useQuery<any>({
+    queryKey: ["ai-gen-instructors"],
+    queryFn: async () => {
+      try {
+        const res = await fetch("/api/admin/instructors")
+        if (!res.ok) return { instructors: [] }
+        return res.json()
+      } catch { return { instructors: [] } }
+    },
+  })
+
+  const generateMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/ai-course-generator", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ certificationSlug: certSlug, audience, level, durationHours: duration, instructorId }),
+        credentials: "include",
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Failed" }))
+        throw new Error(err.error || "Failed to generate course")
+      }
+      return res.json()
+    },
+    onSuccess: (data) => {
+      setResult(data)
+      toast.success("Course generated successfully!")
+      qc.invalidateQueries({ queryKey: ["course-studio-list"] })
+    },
+    onError: (e: any) => toast.error(e.message || "Failed to generate course"),
+  })
+
+  return (
+    <Card className="border-violet-500/30 bg-gradient-to-br from-violet-950/30 via-card to-card overflow-hidden">
+      <div className="p-5 lg:p-6">
+        <div className="flex items-start gap-4">
+          <div className="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-violet-500/10 text-violet-300 shrink-0">
+            <Sparkles className="h-6 w-6" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-bold text-lg mb-1">AI Course Generator</h3>
+            <p className="text-sm text-muted-foreground mb-3">
+              Generate a complete course from a certification using multi-agent LLM orchestration — curriculum, lessons, quizzes, and assessments.
+            </p>
+            <Button onClick={() => setOpen(o => !o)} variant="outline" size="sm" className="border-violet-500/30 text-violet-300 hover:bg-violet-500/10">
+              <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+              {open ? "Hide" : "Generate with AI"}
+            </Button>
+          </div>
+        </div>
+
+        {open && (
+          <div className="mt-4 pt-4 border-t border-violet-500/20 space-y-4">
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Certification Slug</label>
+                <Input value={certSlug} onChange={(e) => setCertSlug(e.target.value)} placeholder="ceh, security-plus, ccna..." className="font-mono text-sm" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Assign Instructor</label>
+                <Select value={instructorId} onValueChange={setInstructorId}>
+                  <SelectTrigger className="h-9"><SelectValue placeholder="Select instructor" /></SelectTrigger>
+                  <SelectContent>
+                    {(instrData?.instructors ?? []).map((i: any) => (
+                      <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Audience</label>
+                <Input value={audience} onChange={(e) => setAudience(e.target.value)} placeholder="Beginner, Working Professional..." />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Level</label>
+                <Select value={level} onValueChange={(v: any) => setLevel(v)}>
+                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Beginner">Beginner</SelectItem>
+                    <SelectItem value="Intermediate">Intermediate</SelectItem>
+                    <SelectItem value="Advanced">Advanced</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Duration (hours)</label>
+                <Input type="number" value={duration} onChange={(e) => setDuration(Number(e.target.value))} min={1} max={200} />
+              </div>
+            </div>
+
+            <Button
+              onClick={() => generateMutation.mutate()}
+              disabled={generateMutation.isPending || !certSlug || !instructorId}
+              className="bg-violet-600 hover:bg-violet-500 btn-premium w-full"
+            >
+              {generateMutation.isPending ? (
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Generating... (this can take 1-2 minutes)</>
+              ) : (
+                <><Sparkles className="h-4 w-4 mr-2" /> Generate Course</>
+              )}
+            </Button>
+
+            {result && (
+              <div className="mt-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4">
+                <p className="font-semibold text-emerald-300 mb-2">✓ Course Generated</p>
+                <pre className="text-xs text-muted-foreground overflow-auto max-h-60">
+                  {JSON.stringify(result, null, 2)}
+                </pre>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </Card>
   )
 }

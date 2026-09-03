@@ -95,10 +95,12 @@ export async function POST(req: NextRequest) {
   const existing = await db.user.findUnique({ where: { email: email.trim().toLowerCase() } })
   if (existing) return NextResponse.json({ error: "Email already in use" }, { status: 409 })
 
-  // Use provided password or default to a secure-ish placeholder (instructor should reset)
-  const finalPassword = password && password.length >= 6 ? password : "GuardianX@123"
+  // Require a password — no hardcoded default (security fix: S27)
+  if (!password || password.length < 6) {
+    return NextResponse.json({ error: "Password is required (min 6 characters)" }, { status: 400 })
+  }
 
-  const passwordHash = bcrypt.hashSync(finalPassword, 10)
+  const passwordHash = bcrypt.hashSync(password, 10)
 
   const user = await db.user.create({
     data: {

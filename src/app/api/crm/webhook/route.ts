@@ -33,8 +33,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
     }
 
-    // Verify webhook token (security)
-    const webhookSecret = process.env.CRM_WEBHOOK_SECRET || "guardianx-crm-webhook-2025"
+    // Verify webhook token (security) — no hardcoded fallback in production
+    const webhookSecret = process.env.CRM_WEBHOOK_SECRET || (process.env.NODE_ENV === "production"
+      ? null
+      : "guardianx-crm-webhook-2025")
+    if (!webhookSecret) {
+      return NextResponse.json({ error: "CRM_WEBHOOK_SECRET not configured" }, { status: 500 })
+    }
     if (body.token !== webhookSecret) {
       return NextResponse.json({ error: "Invalid webhook token" }, { status: 401 })
     }

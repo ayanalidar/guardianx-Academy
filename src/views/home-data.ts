@@ -634,32 +634,3 @@ export const METHODOLOGY_STEPS = [
  * the GuardianX DB. Shown here as a static showcase; will be wired to
  * /api/instructors in a later task.
  */
-export const INSTRUCTORS = [
-  {
-    name: "Dr. Sarah Chen",
-    initials: "SC",
-    expertise: "Penetration Testing, Web Security",
-    experience: "12+ years",
-    certs: "CEH, OSCP, CISSP",
-    avatarBg: "bg-violet-500/15",
-    avatarColor: "text-violet-300",
-  },
-  {
-    name: "Raj Patel",
-    initials: "RP",
-    expertise: "Network Security, SOC",
-    experience: "8+ years",
-    certs: "CCNA, CCNP, GCIA",
-    avatarBg: "bg-cyan-500/15",
-    avatarColor: "text-cyan-300",
-  },
-  {
-    name: "Alex Mercer",
-    initials: "AM",
-    expertise: "Cloud Security, GRC",
-    experience: "15+ years",
-    certs: "CISSP, CCSP, CISM",
-    avatarBg: "bg-amber-500/15",
-    avatarColor: "text-amber-300",
-  },
-] as const

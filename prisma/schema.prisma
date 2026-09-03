@@ -1591,19 +1591,3 @@ model Event {
 }
 
 // ============================================================
-// RBAC — fine-grained role/action/resource permissions (master-prompt §50)
-// Roles reference the User.role string (STUDENT | INSTRUCTOR | ADMIN |
-// SUPER_ADMIN | PROCTOR | SCHOOL_ADMIN | INSTITUTION_ADMIN).
-// Action examples: "course.create", "exam.grade", "cert.issue", "user.manage".
-// Resource defaults to "*" (all resources) but can be scoped to a specific
-// resource id/slug when finer scoping is needed.
-// ============================================================
-model Permission {
-  id        String   @id @default(cuid())
-  role      String   // STUDENT | INSTRUCTOR | ADMIN | SUPER_ADMIN | PROCTOR | SCHOOL_ADMIN | INSTITUTION_ADMIN
-  action    String   // e.g. "course.create", "exam.grade", "cert.issue"
-  resource  String   @default("*") // resource name or "*" for all
-  createdAt DateTime @default(now())
-
-  @@unique([role, action, resource])
-}

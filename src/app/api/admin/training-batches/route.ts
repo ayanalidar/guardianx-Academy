@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { requireRole } from "@/lib/session"
+import { requireRole, withErrorHandler } from "@/lib/session"
 
 export const runtime = "nodejs"
 
@@ -107,7 +107,7 @@ function computeLevelPalette(level: string) {
 // Uses `select` to return only the fields the admin batch calendar needs — drops the
 // 9 auto-computed color-class columns and the createdAt/updatedAt timestamps (which
 // the calendar never renders). This keeps the JSON payload lean.
-export async function GET() {
+export const GET = withErrorHandler(async () => {
   const currentUser = await requireRole(["ADMIN", "INSTRUCTOR"])
   if (currentUser instanceof NextResponse) return currentUser
 
@@ -135,11 +135,11 @@ export async function GET() {
   })
 
   return NextResponse.json({ batches, count: batches.length })
-}
+})
 
 // POST /api/admin/training-batches — create a new training batch.
 // Auto-computes cert / level color classes from the certification name + level.
-export async function POST(req: NextRequest) {
+export const POST = withErrorHandler(async (req: NextRequest) => {
   const currentUser = await requireRole(["ADMIN"])
   if (currentUser instanceof NextResponse) return currentUser
 
@@ -219,4 +219,4 @@ export async function POST(req: NextRequest) {
   })
 
   return NextResponse.json({ batch: created }, { status: 201 })
-}
+})

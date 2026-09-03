@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getCurrentUser } from "@/lib/session"
+import { getCurrentUser, withErrorHandler } from "@/lib/session"
 
-export async function GET(req: NextRequest) {
+export const GET = withErrorHandler(async (req: NextRequest) => {
   const { searchParams } = new URL(req.url)
   const category = searchParams.get("category")
   const level = searchParams.get("level")
@@ -91,4 +91,4 @@ export async function GET(req: NextRequest) {
   })
 
   return NextResponse.json({ courses: result })
-}
+})

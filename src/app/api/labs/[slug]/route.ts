@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getCurrentUser } from "@/lib/session"
+import { getCurrentUser, withErrorHandler } from "@/lib/session"
 import { safeLab } from "@/lib/safe-lab"
 
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
+export const GET = withErrorHandler(async (_req: NextRequest, { params }: { params: Promise<{ slug: string }> }) => {
   const { slug } = await params
   const lab = await db.lab.findUnique({ where: { slug } })
   if (!lab) return NextResponse.json({ error: "Lab not found" }, { status: 404 })
 
   const user = await getCurrentUser()
-  let progress = null
+  let progress: Awaited<ReturnType<typeof db.labProgress.findUnique>> = null
   if (user) {
     progress = await db.labProgress.findUnique({ where: { userId_labId: { userId: user.id, labId: lab.id } } })
   }
@@ -21,4 +21,4 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ slu
   // confirmation (master-prompt §34, §80-81). This was previously leaking
   // the full lab object including `flag` to every unauthenticated visitor.
   return NextResponse.json({ lab: safeLab(lab), progress })
-}
+})

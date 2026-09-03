@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server"
+import { NextResponse, NextRequest } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { db } from "@/lib/db"
@@ -14,36 +14,15 @@ export async function getCurrentUser() {
 }
 
 export type SafeUser = Awaited<ReturnType<typeof getCurrentUser>>
-
-/**
- * AuthUser — non-null variant of SafeUser. Returned by `requireRole()` on
- * success. Has every field SafeUser has except `null`.
- */
 export type AuthUser = NonNullable<SafeUser>
 
 /**
  * requireRole(roles) — server-side RBAC gate for API routes.
  *
- * - Resolves the current authenticated user via `getCurrentUser()`.
- * - If no session: returns a 401 NextResponse.
- * - If the user's role is not in `roles`: returns a 403 NextResponse.
- * - Otherwise: returns the user (typed as `AuthUser`).
- *
- * Usage in API route handlers:
- *
+ * Usage:
  *   const user = await requireRole(["ADMIN"])
  *   if (user instanceof NextResponse) return user  // auth/forbidden failed
  *   // ... user is guaranteed to be in one of the allowed roles
- *
- * Multi-role gates (e.g. instructors may also read the instructor list):
- *
- *   const user = await requireRole(["ADMIN", "INSTRUCTOR"])
- *   if (user instanceof NextResponse) return user
- *
- * The `instanceof NextResponse` check is the recommended pattern because
- * `requireRole()` returns a union type `AuthUser | NextResponse` — a plain
- * truthy check would not narrow the type correctly (a NextResponse is also
- * truthy).
  */
 export async function requireRole(
   roles: string[]
@@ -56,4 +35,43 @@ export async function requireRole(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
   return user
+}
+
+/**
+ * withErrorHandler() — higher-order function that wraps an API route handler
+ * with try/catch to prevent Prisma/DB stack traces from leaking to clients.
+ *
+ * On unhandled errors, returns a generic 500 with no stack trace.
+ *
+ * Usage:
+ *   export const GET = withErrorHandler(async (req) => {
+ *     // ... your handler code
+ *   })
+ *
+ *   export const POST = withErrorHandler(async (req) => {
+ *     // ... your handler code
+ *   })
+ *
+ * For dynamic route params:
+ *   export const PATCH = withErrorHandler(async (req, { params }) => {
+ *     const { id } = await params
+ *     // ...
+ *   })
+ */
+export function withErrorHandler<T extends any[]>(
+  handler: (...args: T) => Promise<NextResponse>
+): (...args: T) => Promise<NextResponse> {
+  return async (...args: T) => {
+    try {
+      return await handler(...args)
+    } catch (error: any) {
+      // Log the error server-side for debugging
+      console.error("[API Error]", error?.message || error)
+      // Return a generic 500 — never leak the stack trace
+      return NextResponse.json(
+        { error: "Internal server error" },
+        { status: 500 }
+      )
+    }
+  }
 }

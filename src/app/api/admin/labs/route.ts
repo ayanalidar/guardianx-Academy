@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getCurrentUser } from "@/lib/session"
+import { getCurrentUser, withErrorHandler } from "@/lib/session"
 
 // GET /api/admin/labs — list all labs with progress counts
-export async function GET(req: NextRequest) {
+export const GET = withErrorHandler(async (req: NextRequest) => {
   const user = await getCurrentUser()
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   if (user.role !== "ADMIN") {
@@ -81,10 +81,10 @@ export async function GET(req: NextRequest) {
   })
 
   return NextResponse.json({ labs: result, total: result.length })
-}
+})
 
 // POST /api/admin/labs — create a new lab (ADMIN only)
-export async function POST(req: NextRequest) {
+export const POST = withErrorHandler(async (req: NextRequest) => {
   const user = await getCurrentUser()
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   if (user.role !== "ADMIN") {
@@ -99,7 +99,7 @@ export async function POST(req: NextRequest) {
     category, difficulty, durationMin, points, tags,
     scenario, objectives, hints, flag, commands,
     virtualEnv, color, autoGrade, xpReward, passingScore,
-  } = body as Record<string, unknown>
+  } = body as Record<string, any>
 
   if (!title?.trim()) return NextResponse.json({ error: "Title required" }, { status: 400 })
 
@@ -136,4 +136,4 @@ export async function POST(req: NextRequest) {
   })
 
   return NextResponse.json({ lab }, { status: 201 })
-}
+})

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { requireRole } from "@/lib/session"
+import { requireRole, withErrorHandler } from "@/lib/session"
 
 export const runtime = "nodejs"
 
@@ -8,7 +8,7 @@ export const runtime = "nodejs"
 // Supports `?q=` search (by email/name) and `?page=` pagination (50/page).
 // Returns each student with computed stats: enrollmentCount, completedCount,
 // labCount, certCount, and avgProgress (across all their enrollments).
-export async function GET(req: NextRequest) {
+export const GET = withErrorHandler(async (req: NextRequest) => {
   const currentUser = await requireRole(["ADMIN"])
   if (currentUser instanceof NextResponse) return currentUser
 
@@ -109,4 +109,4 @@ export async function GET(req: NextRequest) {
     pageSize,
     totalPages: Math.max(1, Math.ceil(total / pageSize)),
   })
-}
+})

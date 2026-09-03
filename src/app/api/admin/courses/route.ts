@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getCurrentUser } from "@/lib/session"
+import { getCurrentUser, withErrorHandler } from "@/lib/session"
 
 // GET /api/admin/courses — list all courses with enrollment counts, module counts, lesson counts
-export async function GET(req: NextRequest) {
+export const GET = withErrorHandler(async (req: NextRequest) => {
   const user = await getCurrentUser()
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   if (user.role !== "ADMIN") {
@@ -64,10 +64,10 @@ export async function GET(req: NextRequest) {
   })
 
   return NextResponse.json({ courses: result, total: result.length })
-}
+})
 
 // POST /api/admin/courses — create a new course (ADMIN only)
-export async function POST(req: NextRequest) {
+export const POST = withErrorHandler(async (req: NextRequest) => {
   const user = await getCurrentUser()
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   if (user.role !== "ADMIN") {
@@ -140,4 +140,4 @@ export async function POST(req: NextRequest) {
   })
 
   return NextResponse.json({ course }, { status: 201 })
-}
+})

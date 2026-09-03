@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
 import { db } from "@/lib/db"
-import { requireRole } from "@/lib/session"
+import { requireRole, withErrorHandler } from "@/lib/session"
 
 // GET /api/admin/instructors — list all instructors with their profiles + workload
-export async function GET() {
+export const GET = withErrorHandler(async () => {
   const currentUser = await requireRole(["ADMIN", "INSTRUCTOR"])
   if (currentUser instanceof NextResponse) return currentUser
 
@@ -51,10 +51,10 @@ export async function GET() {
   }))
 
   return NextResponse.json({ instructors: result, count: result.length })
-}
+})
 
 // POST /api/admin/instructors — create a new instructor (User + InstructorProfile)
-export async function POST(req: NextRequest) {
+export const POST = withErrorHandler(async (req: NextRequest) => {
   const currentUser = await requireRole(["ADMIN"])
   if (currentUser instanceof NextResponse) return currentUser
 
@@ -151,7 +151,7 @@ export async function POST(req: NextRequest) {
     },
     { status: 201 },
   )
-}
+})
 
 function safeParse<T>(value: string | null | undefined, fallback: T): T {
   if (!value) return fallback

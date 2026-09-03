@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getCurrentUser } from "@/lib/session"
+import { getCurrentUser, withErrorHandler } from "@/lib/session"
 
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export const GET = withErrorHandler(async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params
   const user = await getCurrentUser()
 
@@ -34,7 +34,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
   if (!course) return NextResponse.json({ error: "Course not found" }, { status: 404 })
 
-  let enrollment = null
+  let enrollment: Awaited<ReturnType<typeof db.enrollment.findUnique>> = null
   let lessonProgress: Record<string, { completed: boolean; position: number }> = {}
   if (user) {
     enrollment = await db.enrollment.findUnique({
@@ -59,4 +59,4 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     completedLessons,
     progressPct: totalLessons ? Math.round((completedLessons / totalLessons) * 100) : 0,
   })
-}
+})

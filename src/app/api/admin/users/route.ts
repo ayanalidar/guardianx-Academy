@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
 import { db } from "@/lib/db"
-import { requireRole } from "@/lib/session"
+import { requireRole, withErrorHandler } from "@/lib/session"
 
 // GET /api/admin/users — list all users with pagination (50/page), search, role filter
-export async function GET(req: NextRequest) {
+export const GET = withErrorHandler(async (req: NextRequest) => {
   const currentUser = await requireRole(["ADMIN"])
   if (currentUser instanceof NextResponse) return currentUser
 
@@ -77,10 +77,10 @@ export async function GET(req: NextRequest) {
     total,
     totalPages: Math.max(1, Math.ceil(total / pageSize)),
   })
-}
+})
 
 // POST /api/admin/users — create a new user (ADMIN only)
-export async function POST(req: NextRequest) {
+export const POST = withErrorHandler(async (req: NextRequest) => {
   const currentUser = await requireRole(["ADMIN"])
   if (currentUser instanceof NextResponse) return currentUser
 
@@ -142,4 +142,4 @@ export async function POST(req: NextRequest) {
   })
 
   return NextResponse.json({ user }, { status: 201 })
-}
+})

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { requireRole } from "@/lib/session"
+import { requireRole, withErrorHandler } from "@/lib/session"
 
 const LEAD_STATUSES = ["New", "Contacted", "Qualified", "Proposal", "Negotiation", "Converted", "Lost"]
 const LEAD_TYPES = ["Individual", "School", "College", "University", "Corporate", "Partner", "Workshop", "CTF", "Webinar"]
@@ -55,7 +55,7 @@ function computeLeadScore(lead: {
 }
 
 // GET /api/admin/leads — list leads + compute scores + stats
-export async function GET(req: NextRequest) {
+export const GET = withErrorHandler(async (req: NextRequest) => {
   const currentUser = await requireRole(["ADMIN"])
   if (currentUser instanceof NextResponse) return currentUser
 
@@ -151,10 +151,10 @@ export async function GET(req: NextRequest) {
       bySource,
     },
   })
-}
+})
 
 // POST /api/admin/leads — create a new lead manually
-export async function POST(req: NextRequest) {
+export const POST = withErrorHandler(async (req: NextRequest) => {
   const currentUser = await requireRole(["ADMIN"])
   if (currentUser instanceof NextResponse) return currentUser
 
@@ -199,4 +199,4 @@ export async function POST(req: NextRequest) {
   })
 
   return NextResponse.json({ lead }, { status: 201 })
-}
+})

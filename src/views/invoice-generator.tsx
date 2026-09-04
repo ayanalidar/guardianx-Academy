@@ -130,11 +130,7 @@ export function InvoiceGeneratorView() {
   const [bankName, setBankName] = React.useState("Jammu & Kashmir Bank")
   const [accountName, setAccountName] = React.useState("GuardianX")
   const [accountNumber, setAccountNumber] = React.useState("0778040100005715")
-<<<<<<< HEAD
-  const [ifscCode, setIfscCode] = React.useState("JAKA0SATARA") // J&K Bank IFSC — update if different
-=======
   const [ifscCode, setIfscCode] = React.useState("JAKA0KANIHA") // J&K Bank IFSC
->>>>>>> b56385ef9c37a852749a76c527a2973bae3c8732
   const [upiId, setUpiId] = React.useState("ayanalidar@okaxis")
 
   // Notes & Terms

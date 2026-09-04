@@ -40,6 +40,8 @@ import { EventsView } from "@/views/events"
 import { EventDetailView } from "@/views/event-detail"
 import { BlogView } from "@/views/blog"
 import { BlogPostView } from "@/views/blog-post"
+import { CertLandingView } from "@/views/cert-landing"
+import { AdminCoursesView } from "@/views/admin-courses"
 import { CourseDetailView } from "@/views/course-detail"
 import { LessonView } from "@/views/lesson-view"
 import { MyLearningView } from "@/views/my-learning"
@@ -92,6 +94,7 @@ const PUBLIC_VIEWS = new Set([
   "exams", "credentials", "support", "verify",
   "instructors", "instructor-detail", "events", "event-detail",
   "blog", "blog-post",
+  "cert-landing",
 ])
 
 function ViewRouter() {
@@ -132,6 +135,8 @@ function ViewRouter() {
       {view.name === "event-detail" && <EventDetailView />}
       {view.name === "blog" && <BlogView />}
       {view.name === "blog-post" && "slug" in view && <BlogPostView slug={view.slug} />}
+      {view.name === "cert-landing" && "certSlug" in view && <CertLandingView certSlug={view.certSlug} />}
+      {view.name === "admin-courses" && <AdminCoursesView />}
       {view.name === "course" && <CourseDetailView />}
       {view.name === "lesson" && <LessonView />}
       {view.name === "learning" && <MyLearningView />}

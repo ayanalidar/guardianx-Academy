@@ -48,6 +48,7 @@ import {
 } from "@/components/cyber"
 import type { TerminalLine } from "@/components/cyber"
 import { AdvancedSkillMap } from "@/components/home/advanced-skill-map"
+import { SocialProof } from "@/components/platform/social-proof"
 import {
   PILLARS,
   RANGE_SERVICES,
@@ -575,6 +576,23 @@ export function HomeView() {
               <StatusDot status="online" pulse size="sm" label="12 EXPERT INSTRUCTORS" />
             </motion.div>
           </div>
+        </div>
+      </section>
+
+      {/* =====================================================
+          SECTION 1.5 - SOCIAL PROOF / LIVE ACTIVITY
+          Shows "X students enrolled this week", "Y labs solved today",
+          and a rotating live-enrollment toast from /api/enrollment-feed.
+          ===================================================== */}
+      <section
+        aria-labelledby="social-proof-heading"
+        className="relative py-4 lg:py-6 border-y border-border/40"
+      >
+        <h2 id="social-proof-heading" className="sr-only">
+          Live learner activity on GuardianX
+        </h2>
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <SocialProof />
         </div>
       </section>
 

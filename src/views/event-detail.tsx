@@ -4,13 +4,13 @@ import * as React from "react"
 import { motion } from "framer-motion"
 import { useQuery } from "@tanstack/react-query"
 import { useAppStore } from "@/store/app-store"
+import { useUser } from "@/hooks/use-user"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import {
   ArrowLeft, ArrowRight, Calendar, Clock, MapPin, Users, Video,
   Trophy, Mic, FlaskConical, School, Sparkles, User, Mail,
-  ShieldCheck, Tag,
+  ShieldCheck, Tag, CheckCircle2, CalendarPlus, Loader2, LogIn,
 } from "lucide-react"
 
 /* ============================================================
@@ -38,6 +38,15 @@ interface EventDetail {
   status: string
   tags: string
   featured: boolean
+  startIsoDate?: string | null
+}
+
+interface RegisterResponse {
+  success: boolean
+  message?: string
+  registered?: number
+  alreadyRegistered?: boolean
+  soldOut?: boolean
 }
 
 const TYPE_ACCENTS: Record<string, { tint: string; text: string; border: string; icon: React.ComponentType<{ className?: string }> }> = {
@@ -216,61 +225,7 @@ export function EventDetailView() {
 
               {/* Right: register CTA card */}
               <div className="lg:col-span-1">
-                <div className="card-premium rounded-2xl p-6 lg:sticky lg:top-24">
-                  <p className="text-[10px] font-mono text-violet-400 tracking-[0.25em] mb-3">REGISTER</p>
-                  <div className="mb-5">
-                    <span className={cn(
-                      "text-3xl font-bold",
-                      event.fee.toLowerCase() === "free" ? "text-emerald-300" : "text-amber-300",
-                    )}>
-                      {event.fee}
-                    </span>
-                    {event.fee.toLowerCase() !== "free" && (
-                      <p className="text-xs text-muted-foreground mt-1">per participant</p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2 text-xs text-muted-foreground mb-5">
-                    <div className="flex items-center gap-2">
-                      <Users className="h-3.5 w-3.5" />
-                      <span>{event.registered} already registered</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-3.5 w-3.5" />
-                      <span>{event.startDate}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-3.5 w-3.5" />
-                      <span>{event.venue}</span>
-                    </div>
-                  </div>
-
-                  <Button
-                    onClick={() => navigate({ name: "contact" })}
-                    disabled={event.status !== "Open"}
-                    className="bg-violet-600 hover:bg-violet-500 btn-premium w-full"
-                  >
-                    {event.status === "Open" ? (
-                      <>
-                        Register Now
-                        <ArrowRight className="h-4 w-4 ml-1.5" />
-                      </>
-                    ) : event.status === "Full" ? "Sold out" : event.status === "Cancelled" ? "Cancelled" : "Closed"}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => navigate({ name: "contact" })}
-                    className="w-full mt-2"
-                  >
-                    <Mail className="h-4 w-4 mr-1.5" />
-                    Ask a question
-                  </Button>
-
-                  <p className="text-[10px] text-muted-foreground/70 mt-4 text-center leading-relaxed">
-                    Registration is currently handled via our contact team. Reach out and we&apos;ll
-                    confirm your spot within one business day.
-                  </p>
-                </div>
+                <RegisterCard event={event} />
               </div>
             </motion.div>
           )}
@@ -351,6 +306,214 @@ function Fact({ icon: Icon, label, value, tint }: { icon: React.ComponentType<{ 
         </div>
         <div className="text-sm text-foreground leading-snug">{value}</div>
       </div>
+    </div>
+  )
+}
+
+/* ============================================================
+   RegisterCard — registration flow for the event detail page.
+   - Logged-out users see "Sign in to register".
+   - Logged-in users see "Register for this event". On success,
+     the card flips to a "You're registered!" confirmation with an
+     "Add to calendar" button.
+   - Always shows the live "{registered} people registered" count.
+   ============================================================ */
+function RegisterCard({ event }: { event: EventDetail }) {
+  const { navigate } = useAppStore()
+  const { user, isLoading: userLoading } = useUser()
+
+  const [registering, setRegistering] = React.useState(false)
+  const [result, setResult] = React.useState<RegisterResponse | null>(null)
+  const [error, setError] = React.useState<string | null>(null)
+
+  // Local count state — we keep it in sync with the server response so the
+  // "X people registered" counter ticks up immediately after a successful
+  // registration without requiring a full refetch of the event.
+  const [liveRegistered, setLiveRegistered] = React.useState(event.registered)
+  React.useEffect(() => {
+    setLiveRegistered(event.registered)
+  }, [event.registered])
+
+  const isFree = event.fee.toLowerCase() === "free"
+  const seatsLeft = Math.max(0, event.capacity - liveRegistered)
+  const isFull = seatsLeft === 0
+  const isOpen = event.status === "Open" && !isFull
+
+  async function handleRegister() {
+    if (!user) {
+      navigate({ name: "login" })
+      return
+    }
+    setRegistering(true)
+    setError(null)
+    try {
+      const res = await fetch(
+        `/api/events/${encodeURIComponent(event.slug)}/register`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ eventId: event.id }),
+          credentials: "include",
+        },
+      )
+      const j: RegisterResponse = await res.json()
+      if (!res.ok || !j.success) {
+        setError(j.message || (j.soldOut ? "This event is sold out." : "Failed to register"))
+        if (j.soldOut) setLiveRegistered(event.capacity)
+        setResult(j)
+      } else {
+        setResult(j)
+        if (typeof j.registered === "number") setLiveRegistered(j.registered)
+      }
+    } catch {
+      setError("Network error. Please try again.")
+    } finally {
+      setRegistering(false)
+    }
+  }
+
+  // Build a Google Calendar "add to calendar" link.
+  const calendarUrl = React.useMemo(() => {
+    const title = encodeURIComponent(event.title)
+    const details = encodeURIComponent(event.description || "")
+    const location = encodeURIComponent(event.venue || event.mode || "")
+    const start = event.startIsoDate ? new Date(event.startIsoDate) : null
+    const end = start ? new Date(start.getTime() + 2 * 60 * 60 * 1000) : null
+    const fmt = (d: Date) =>
+      d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z")
+    const dates = start && end ? `${fmt(start)}/${fmt(end)}` : ""
+    const q = dates ? `?dates=${dates}` : ""
+    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${details}&location=${location}${q}`
+  }, [event])
+
+  return (
+    <div className="card-premium rounded-2xl p-6 lg:sticky lg:top-24">
+      <p className="text-[10px] font-mono text-violet-400 tracking-[0.25em] mb-3">REGISTER</p>
+
+      {/* Fee */}
+      <div className="mb-5">
+        <span className={cn(
+          "text-3xl font-bold",
+          isFree ? "text-emerald-300" : "text-amber-300",
+        )}>
+          {event.fee}
+        </span>
+        {!isFree && <p className="text-xs text-muted-foreground mt-1">per participant</p>}
+      </div>
+
+      {/* Stats row */}
+      <div className="space-y-2 text-xs text-muted-foreground mb-5">
+        <div className="flex items-center gap-2">
+          <Users className="h-3.5 w-3.5" />
+          <span>
+            <span className="font-mono tabular-nums text-foreground">{liveRegistered}</span>
+            {" "}people registered
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Calendar className="h-3.5 w-3.5" />
+          <span>{event.startDate}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <MapPin className="h-3.5 w-3.5" />
+          <span>{event.venue}</span>
+        </div>
+        {isOpen && (
+          <div className="flex items-center gap-2 pt-2 border-t border-border/40">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 pulse-dot" />
+            <span className="text-emerald-300">{seatsLeft} seats left</span>
+          </div>
+        )}
+      </div>
+
+      {/* Registration state */}
+      {result?.success ? (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.96 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.25 }}
+          className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 mb-3 text-center"
+        >
+          <CheckCircle2 className="h-7 w-7 text-emerald-300 mx-auto mb-2" />
+          <p className="text-sm font-semibold text-emerald-200 mb-1">You&apos;re registered!</p>
+          <p className="text-xs text-emerald-200/80">{result.message}</p>
+        </motion.div>
+      ) : error ? (
+        <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 mb-3">
+          <p className="text-xs text-rose-300 text-center">{error}</p>
+        </div>
+      ) : null}
+
+      {/* Primary action */}
+      {result?.success ? (
+        <>
+          <a href={calendarUrl} target="_blank" rel="noopener noreferrer" className="block w-full">
+            <Button className="bg-violet-600 hover:bg-violet-500 btn-premium w-full">
+              <CalendarPlus className="h-4 w-4 mr-1.5" />
+              Add to calendar
+            </Button>
+          </a>
+          <Button
+            variant="outline"
+            onClick={() => navigate({ name: "events" })}
+            className="w-full mt-2"
+          >
+            Browse more events
+          </Button>
+        </>
+      ) : !isOpen ? (
+        <Button disabled className="bg-muted text-muted-foreground w-full">
+          {event.status === "Full" || isFull ? "Sold out" : event.status === "Cancelled" ? "Cancelled" : "Closed"}
+        </Button>
+      ) : userLoading ? (
+        <Button disabled className="bg-violet-600 hover:bg-violet-500 btn-premium w-full">
+          <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+          Loading...
+        </Button>
+      ) : !user ? (
+        <Button
+          onClick={() => navigate({ name: "login" })}
+          className="bg-violet-600 hover:bg-violet-500 btn-premium w-full"
+        >
+          <LogIn className="h-4 w-4 mr-1.5" />
+          Sign in to register
+        </Button>
+      ) : (
+        <Button
+          onClick={handleRegister}
+          disabled={registering}
+          className="bg-violet-600 hover:bg-violet-500 btn-premium w-full"
+        >
+          {registering ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+              Registering...
+            </>
+          ) : (
+            <>
+              Register for this event
+              <ArrowRight className="h-4 w-4 ml-1.5" />
+            </>
+          )}
+        </Button>
+      )}
+
+      {/* Secondary action */}
+      {!result?.success && (
+        <Button
+          variant="outline"
+          onClick={() => navigate({ name: "contact" })}
+          className="w-full mt-2"
+        >
+          <Mail className="h-4 w-4 mr-1.5" />
+          Ask a question
+        </Button>
+      )}
+
+      <p className="text-[10px] text-muted-foreground/70 mt-4 text-center leading-relaxed">
+        Free events reserve your seat instantly. Paid events will follow up by email
+        with payment instructions.
+      </p>
     </div>
   )
 }

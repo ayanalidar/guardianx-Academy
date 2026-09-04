@@ -14,6 +14,7 @@ import {
   FileBadge, ShieldCheck,
   Calendar, TrendingUp, DollarSign, UserCog, Activity, Mail,
   Ticket,
+  Gift,
 } from "lucide-react"
 import { useAppStore, type View } from "@/store/app-store"
 import { useUser } from "@/hooks/use-user"
@@ -66,6 +67,7 @@ const STUDENT_NAV: NavItem[] = [
   { label: "Messages", icon: MessageSquare, view: { name: "messaging" } },
   { label: "Community", icon: Users, view: { name: "community" } },
   { label: "Parent Portal", icon: Heart, view: { name: "parent-portal" } },
+  { label: "Affiliate", icon: Gift, view: { name: "affiliate" } },
 ]
 
 // ============================================================

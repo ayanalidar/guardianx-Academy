@@ -144,6 +144,12 @@ const MEGA_MENU_GROUPS: MegaMenuGroup[] = [
         description: "Your verifiable proctored credentials",
         view: { name: "credentials" },
       },
+      {
+        icon: TrendingUp,
+        title: "Pricing",
+        description: "Plans for learners, teams, and institutions",
+        view: { name: "pricing" },
+      },
     ],
   },
   {

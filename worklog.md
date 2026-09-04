@@ -5053,3 +5053,75 @@ Work Log:
 - **0 new tsc errors** in my files.
 - **0 schema migrations** — all features use existing models.
 - Both new public views + new admin view wired into View union, url-router, page.tsx ViewRouter, and (for admin-courses) admin sidebar. Direct URL entry + refresh + back/forward all work.
+
+---
+
+## BATCH-5-FEATURES — Affiliate Program + Subscription Plans + Institution Reports
+
+Shipped 3 features in one batch: (1) a full affiliate program with referral codes, click tracking, and an affiliate dashboard (4 new API routes + 1 new view + 2 new Prisma models); (2) a public pricing page with 3 plan cards + comparison table + FAQ, fed by a new SubscriptionPlan model with admin CRUD APIs (4 new API routes + 1 new view); (3) an institution reports API + a Generate Report dialog wired into the existing Student Progress admin view, supporting 4 report types with date-range filtering + institution filtering + CSV export.
+
+### Files created (9)
+1. `src/app/api/affiliate/me/route.ts` — auth-required GET. Returns the current user's affiliate record + last 20 click activities. Computes `conversionRate` from existing `clicks`/`conversions` counters.
+2. `src/app/api/affiliate/join/route.ts` — auth-required POST. Creates an Affiliate row with a unique code generated from the user's name slug + 6-char hex suffix (`<NAME>-<HEX>`). Idempotent: returns existing record if the user is already an affiliate. Optional `commissionRate` (0–100, default 10). Logs `affiliate.join` via `logAction`.
+3. `src/app/api/affiliate/track/route.ts` — public GET. Increments `affiliate.clicks` + creates an `AffiliateClick` row (IP + UA + optional courseId) in a single Prisma transaction, then 302-redirects to `/`. Used as the referral link target — never 404s in the browser (silent-fails on invalid codes).
+4. `src/app/api/admin/affiliates/route.ts` — ADMIN-only GET. Returns all affiliates with linked user (name/email/avatar) + per-affiliate `_count.clicksLog`. Computes a `totals` summary (clicks/signups/conversions/earnings summed across all affiliates).
+5. `src/app/api/subscription-plans/route.ts` — public GET. Returns active plans ordered by `order` asc. If the DB is empty (fresh install), returns a sensible default set of 3 plans (Free/Pro/Enterprise) so the pricing page is never empty.
+6. `src/app/api/admin/subscription-plans/route.ts` — ADMIN-only POST. Validates `name` (required) + `price` (>= 0). Coerces `features` (string[] or JSON-encoded string) to a JSON-encoded string column. Logs `subscription-plan.create`.
+7. `src/app/api/admin/subscription-plans/[id]/route.ts` — ADMIN-only PATCH + DELETE. PATCH accepts any subset of fields; DELETE hard-deletes. Both audit-logged.
+8. `src/app/api/admin/reports/route.ts` — ADMIN-only GET. Accepts `?type=enrollment|attendance|completion|revenue&institutionId=&from=&to=`. Date range defaults to last 30 days. For each type, returns aggregated totals + per-course breakdown + flat `rows` array ready for table render. Institution filter resolves the school's student user IDs via `db.schoolMember.findMany` and applies a `userId: { in: [...] }` filter to every underlying query.
+9. `src/app/api/admin/schools/route.ts` — ADMIN-only GET. Returns minimal `[{ id, name, type, city }]` list of all schools, used to populate the Institution dropdown in the Generate Report dialog.
+10. `src/views/affiliate.tsx` — affiliate dashboard. Two states:
+    - **Not yet an affiliate**: large gradient CTA card ("Become a GuardianX Affiliate", 4 bullet benefits, "Join the Affiliate Program" button → POSTs to /api/affiliate/join).
+    - **Affiliate**: referral link (copyable input + Test link anchor + Copy button w/ toast), QR code (qrcode.react `QRCodeSVG` — already in package.json), stats grid (clicks/signups/conversions/earnings w/ color-coded icons), commission + conversion rate + avg-earning-per-conversion strip, recent click activity table (max-h-96, scrollable, formatted UA strings, time-ago, masked IPs), "How It Works" 3-step explainer.
+11. `src/views/pricing.tsx` — public pricing page. Hero ("Simple, transparent pricing"), 3 plan cards (Free / Pro / Enterprise) with per-plan accent color + glow + the "popular" plan highlighted with a `Popular` badge + `lg:-translate-y-3` lift + violet border. Comparison table below (12 rows × 3 plan columns, with Check icons / `—` / string values). FAQ accordion (6 entries) + a "Still have questions?" CTA card linking to contact.
+
+### Files modified (8)
+1. `prisma/schema.prisma` — appended 3 new models (`Affiliate` with `userId @unique` so the `User.affiliate?` one-to-one relation is valid; `AffiliateClick` with `affiliateId` cascade; `SubscriptionPlan`) + added `affiliate Affiliate?` relation to `User`.
+2. `src/store/app-store.ts` — added `| { name: "affiliate" }` and `| { name: "pricing" }` to the View union.
+3. `src/lib/url-router.ts` — added `"affiliate"` and `"pricing"` to the `knownViews` allowlist (both have flat `/<name>` hash routes via the default branch of `viewToHash`/`hashToView`).
+4. `src/app/page.tsx` — imported `AffiliateView` + `PricingView`; added `"pricing"` to `PUBLIC_VIEWS` (pricing is a public page); rendered both views in `ViewRouter`.
+5. `src/components/platform/app-shell.tsx` — added `Gift` to the lucide-react import list; added `{ label: "Affiliate", icon: Gift, view: { name: "affiliate" } }` to `STUDENT_NAV` (last position, after Parent Portal).
+6. `src/components/platform/public-header.tsx` — added a "Pricing" item to the Career mega-menu group (with TrendingUp icon + "Plans for learners, teams, and institutions" description).
+7. `src/components/platform/site-footer.tsx` — added a `Pricing` link to the `PLATFORM_LINKS` column (between Certifications and Proctored Exams).
+8. `src/views/admin-student-progress.tsx` — full rewrite (148 → 374 lines). Preserved all existing functionality (header strip + stats grid + filters + student table + Export CSV button). Added a new "Generate Report" button in the header strip that opens a `Dialog` with:
+    - **Report Type dropdown** (4 options: Enrollment Summary / Attendance Report / Completion Rate / Revenue Report — each with an icon).
+    - **Institution filter** dropdown (populated from `/api/admin/schools`; default "All institutions"; falls back to a helpful message when no schools exist).
+    - **From Date / To Date** inputs (default last 30 days; rendered as `<input type="date">` for simplicity + cross-browser reliability — no calendar popover dependency).
+    - **Generate button** — fetches `/api/admin/reports?type=…&institutionId=…&from=…&to=…`, shows loading spinner, surfaces errors in a rose-colored banner.
+    - **Download CSV button** — exports the current `rows` array to a CSV via Blob + URL.createObjectURL. Generic — derives columns from `rows[0]` keys, properly escapes quotes/newlines/commas. Filename pattern: `<type>-report-<YYYY-MM-DD>.csv`.
+    - **Summary chips** — type-specific stats (e.g. Total Enrollments / Attendance Rate / Completion Rate / Total Revenue + Avg Order Value) rendered as compact pills above the table.
+    - **Results table** — generic, derived from `rows[0]` keys. Pretty-prints camelCase headers ("enrolledAt" → "Enrolled At"), formats `_at`/`_date` columns as locale dates, formats `amount`/`revenue`/`finalAmount`/`discount` columns as `₹XX.XX`. Caps render at 200 rows with a "Download CSV for the full N rows" footer.
+    - **Empty state** + **Error state** + **Loading skeleton** all handled.
+
+### Verification
+- `bun run lint` → **0 errors, 1 pre-existing warning** (`src/lib/db.ts:25:5` — same baseline as every prior agent).
+- `npx tsc --noEmit` → **181 errors total** (unchanged from baseline). Confirmed via `git stash && npx tsc --noEmit | grep "error TS" | wc -l` → 181 before my changes, 181 after. **0 new tsc errors** in any of my new or modified files (verified via `grep -E "affiliate|pricing|reports|admin-schools|admin-student-progress|app-store|url-router|app/page|app-shell|site-footer|public-header|subscription-plans" | head -40` → empty for my new files; the 12 pre-existing app-shell.tsx errors at lines 154–239 are unrelated to my Gift icon import + sidebar addition at lines 17 + 69).
+- `bun run db:push` → succeeded on the first retry (initial attempt failed with P1012 because the sandbox shell exports the SQLite `DATABASE_URL=file:...` fallback; resolved by passing the Neon URL inline as the prior agents documented: `DATABASE_URL='postgresql://...' bun run db:push`). The 3 new tables (`Affiliate`, `AffiliateClick`, `SubscriptionPlan`) were created on Neon Postgres.
+- Pre-existing P1012 in `.zscripts/dev.log` is the system bootstrap's db:push attempt that runs without the inline Neon override — unrelated to my changes (every prior agent's worklog notes this).
+
+### Implementation notes
+- **Affiliate referral link** — built as `${window.location.origin}/api/affiliate/track?code=<code>`. The track endpoint is the public, cookie-free, redirect-after-count target. The QR code (qrcode.react `QRCodeSVG`) encodes the same URL so a phone scan goes straight to the track endpoint → logs the click → redirects to home.
+- **Idempotent join** — `POST /api/affiliate/join` returns the existing record if the user is already an affiliate, so double-clicking the "Join" button or refreshing after join is safe (no duplicate rows, no `P2002` on the unique `userId` constraint).
+- **Affiliate code uniqueness** — `generateUniqueCode()` loops up to 10 times with a fresh 6-char hex suffix each attempt (`<NAME>-<HEX>`). Statistically never collides (16^6 = 1.67B suffix space) but caps at 10 attempts to fail fast on pathological cases.
+- **Transaction for click counting** — `db.$transaction([update + create])` ensures the `clicks` counter never drifts from the `AffiliateClick` log even if one of the writes fails.
+- **Default pricing plans** — `GET /api/subscription-plans` returns 3 sensible defaults (Free ₹0 / Pro ₹999 popular / Enterprise ₹4999) when the `SubscriptionPlan` table is empty. This means the pricing page is never blank on a fresh install, and admins can later override via the admin CRUD endpoints. The `isDefault: true` flag in the response lets the client know these are placeholders.
+- **Reports institution filter** — when `institutionId` is provided, the API resolves the school's student user IDs once via `db.schoolMember.findMany({ where: { schoolId }, select: { userId } })` and applies `userId: { in: [...] }` to every per-type query. This avoids N+1 joins and keeps each report a single round-trip per underlying model (Enrollment / AttendanceRecord / Certificate / Order).
+- **Attendance date filter quirk** — `AttendanceRecord.date` is a `String` (YYYY-MM-DD), not a `DateTime`. The reports route slices `from`/`to` to YYYY-MM-DD and uses string comparison (`date: { gte: fromYMD, lte: toYMD }`). The other three report types use real `DateTime` columns with `gte`/`lte` Date objects.
+- **Generic CSV export** — the same `downloadCsv(filename, rows)` helper handles both the existing "Export CSV" button on the students list (passing the student rows) and the new "Download CSV" button on the report results. Derives columns from `Object.keys(rows[0])`, properly escapes values per RFC 4180.
+- **Report table columns** — derived dynamically from `rows[0]` keys so the table adapts to any future report type without UI changes. Column headers are pretty-printed from camelCase → "Title Case with spaces". Type-aware cell formatting (boolean → ✓/—, dates → locale string, currency columns → ₹XX.XX, everything else → String).
+- **Report table 200-row cap** — the table renders the first 200 rows; longer reports require a CSV download. Keeps the dialog scrollable + the DOM size reasonable for very long date ranges.
+- **`<input type="date">` over Calendar popover** — chose native date inputs for the report dialog to avoid pulling in `react-day-picker` calendar config + popover plumbing. Native inputs are mobile-friendly, accessible, and reliable across browsers. The default values use a `daysAgoISO(30)` helper to pre-fill the last 30 days.
+
+### Issues encountered
+1. **`db:push` P1012** — initial attempt failed because the shell exports the SQLite fallback URL. Resolved by passing the Neon URL inline (same workaround as every prior agent).
+2. **`db:push` P1012 second run** — first attempt also failed with P1012 on the `Affiliate.userId` field because the User→Affiliate relation is one-to-one (User has `affiliate Affiliate?`), but `userId` wasn't `@unique`. Fixed by adding `@unique` to the `Affiliate.userId` field — only one affiliate per user, which is the intended semantic anyway.
+3. **No dedicated schools list endpoint** — needed one to populate the Institution dropdown in the report dialog. Added a minimal `GET /api/admin/schools` (15-line ADMIN-only route returning `{ id, name, type, city }[]`). This is a tiny, single-purpose endpoint — no other admin views need it yet, but the report dialog does.
+
+### Stage Summary
+- **3 features shipped end-to-end**: Affiliate Program (4 new APIs + dashboard view + sidebar wiring + QR + click tracking + CSV-ready report-friendly data), Subscription Plans (public + admin CRUD APIs + pricing view with comparison + FAQ + header/footer wiring), Institution Reports (admin-only reports API + Generate Report dialog integrated into existing Student Progress view with 4 report types + CSV export + institution filter + date range).
+- **11 new files** + **8 modified files** (4 are standard View-union/url-router/page.tsx/sidebar/footer wiring; 4 are feature work — affiliate view, pricing view, admin-student-progress dialog rewrite, schema; 1 is a tiny supporting schools endpoint).
+- **Schema synced to Neon Postgres** — 3 new tables (`Affiliate`, `AffiliateClick`, `SubscriptionPlan`).
+- **0 lint errors** (1 pre-existing unrelated warning).
+- **0 new tsc errors** in any of my files (verified via `git stash` + `npx tsc --noEmit | grep "error TS" | wc -l` baseline comparison: 181 before → 181 after).
+- **Existing behavior preserved** — the admin-student-progress view's existing UI (header strip, stats grid, search/filter, student table, Export CSV) is unchanged; only added a new "Generate Report" button + dialog. The home view, footer, and public-header mega-menu all retained their original structures — only added the Pricing link as a new item.
+- **Direct URL entry works** — `#/affiliate` (logged-in only, requires AppShell) and `#/pricing` (public, also works for logged-in users via PublicPageShell) both load via `hashToView` parsing + the `knownViews` allowlist.

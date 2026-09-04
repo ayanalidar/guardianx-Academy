@@ -8,19 +8,109 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
+import { Label } from "@/components/ui/label"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
-import { api } from "@/lib/api"
 import {
   ArrowLeft, Users, Search, BookOpen, FlaskConical, Award,
-  TrendingUp, Clock, CheckCircle2, Download,
+  TrendingUp, Clock, CheckCircle2, Download, BarChart3,
+  FileSpreadsheet, Loader2, X, Building2,
 } from "lucide-react"
+import { toast } from "sonner"
 
+/* ============================================================
+ *  REPORT TYPES — kept in sync with /api/admin/reports route
+ * ============================================================ */
+type ReportType = "enrollment" | "attendance" | "completion" | "revenue"
+
+const REPORT_TYPES: { value: ReportType; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  { value: "enrollment", label: "Enrollment Summary", icon: Users },
+  { value: "attendance", label: "Attendance Report", icon: Clock },
+  { value: "completion", label: "Completion Rate", icon: Award },
+  { value: "revenue", label: "Revenue Report", icon: TrendingUp },
+]
+
+/* Generic row type — the actual shape varies per report type, but
+ * every report returns a `rows` array of flat objects. We index by
+ * key for the CSV export + dynamic table render. */
+type ReportRow = Record<string, string | number | boolean | null>
+
+type ReportResponse = {
+  type: ReportType
+  from: string
+  to: string
+  institutionId: string | null
+  institutionName: string | null
+  rows: ReportRow[]
+  [key: string]: unknown
+}
+
+/* ============================================================
+ *  CSV EXPORT — generic for any report shape
+ * ============================================================ */
+function downloadCsv(filename: string, rows: ReportRow[]) {
+  if (rows.length === 0) {
+    toast.error("No rows to export")
+    return
+  }
+  const keys = Object.keys(rows[0])
+  const escape = (v: unknown) => {
+    if (v === null || v === undefined) return ""
+    const s = String(v)
+    if (s.includes(",") || s.includes('"') || s.includes("\n")) {
+      return `"${s.replace(/"/g, '""')}"`
+    }
+    return s
+  }
+  const lines = [keys.join(",")]
+  for (const row of rows) {
+    lines.push(keys.map((k) => escape(row[k])).join(","))
+  }
+  const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement("a")
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+  toast.success(`Exported ${rows.length} rows to ${filename}`)
+}
+
+/* ============================================================
+ *  Helper — pretty-print date inputs default to today/30 days ago
+ * ============================================================ */
+function todayISO(): string {
+  return new Date().toISOString().slice(0, 10)
+}
+function daysAgoISO(days: number): string {
+  const d = new Date()
+  d.setDate(d.getDate() - days)
+  return d.toISOString().slice(0, 10)
+}
+
+/* ============================================================
+ *  Main view
+ * ============================================================ */
 export function StudentProgressView() {
   const { navigate } = useAppStore()
   const [search, setSearch] = React.useState("")
   const [courseFilter, setCourseFilter] = React.useState("all")
 
+  /* ----------- Report dialog state ----------- */
+  const [reportOpen, setReportOpen] = React.useState(false)
+  const [reportType, setReportType] = React.useState<ReportType>("enrollment")
+  const [reportFrom, setReportFrom] = React.useState(daysAgoISO(30))
+  const [reportTo, setReportTo] = React.useState(todayISO())
+  const [institutionFilter, setInstitutionFilter] = React.useState<string>("")
+  const [reportLoading, setReportLoading] = React.useState(false)
+  const [reportData, setReportData] = React.useState<ReportResponse | null>(null)
+  const [reportError, setReportError] = React.useState<string | null>(null)
+
+  /* ----------- DB query: students ----------- */
   const { data, isLoading } = useQuery({
     queryKey: ["admin-student-progress", search, courseFilter],
     queryFn: async () => {
@@ -34,14 +124,107 @@ export function StudentProgressView() {
     staleTime: 60_000,
   })
 
+  /* ----------- DB query: institutions (schools) for the report dialog filter ----------- */
+  const { data: schoolsData } = useQuery({
+    queryKey: ["admin-reports-schools"],
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      const res = await fetch("/api/admin/schools", { credentials: "include" })
+      if (!res.ok) return { schools: [] as { id: string; name: string }[] }
+      return res.json()
+    },
+  })
+
+  const schools: { id: string; name: string }[] = (schoolsData as any)?.schools ?? []
+
   const students = data?.students ?? []
   const totalStudents = (data as any)?.total ?? students.length
-  // Derive summary stats from real data instead of hardcoding them.
   const avgProgress = students.length > 0
     ? Math.round(students.reduce((sum: number, s: any) => sum + (s.progress ?? 0), 0) / students.length)
     : 0
   const totalLabs = students.reduce((sum: number, s: any) => sum + (s.labsCompleted ?? 0), 0)
   const totalCerts = students.reduce((sum: number, s: any) => sum + (s.certCount ?? 0), 0)
+
+  /* ----------- Report handlers ----------- */
+  function openReportDialog() {
+    setReportError(null)
+    setReportData(null)
+    setReportOpen(true)
+  }
+
+  async function handleGenerateReport() {
+    setReportLoading(true)
+    setReportError(null)
+    try {
+      const params = new URLSearchParams({
+        type: reportType,
+        from: new Date(reportFrom).toISOString(),
+        to: new Date(reportTo).toISOString(),
+      })
+      if (institutionFilter) params.set("institutionId", institutionFilter)
+      const res = await fetch(`/api/admin/reports?${params.toString()}`, {
+        credentials: "include",
+      })
+      const j = await res.json()
+      if (!res.ok) {
+        setReportError(j.error || "Failed to generate report")
+        return
+      }
+      setReportData(j as ReportResponse)
+      toast.success(`Generated ${reportType} report — ${j.rows?.length ?? 0} rows`)
+    } catch (err) {
+      setReportError((err as Error)?.message || "Network error")
+    } finally {
+      setReportLoading(false)
+    }
+  }
+
+  function handleDownloadCsv() {
+    if (!reportData || reportData.rows.length === 0) {
+      toast.error("No data to export")
+      return
+    }
+    const ts = new Date().toISOString().slice(0, 10)
+    downloadCsv(`${reportType}-report-${ts}.csv`, reportData.rows)
+  }
+
+  /* ----------- Report table columns (derived from rows[0] keys) ----------- */
+  const reportColumns = reportData && reportData.rows.length > 0
+    ? Object.keys(reportData.rows[0])
+    : []
+
+  /* ----------- Report summary chips ----------- */
+  function renderSummary() {
+    if (!reportData) return null
+    const d = reportData
+    const chips: { label: string; value: string | number }[] = []
+    if (d.type === "enrollment") {
+      chips.push({ label: "Total Enrollments", value: d.totalEnrollments as number })
+    } else if (d.type === "attendance") {
+      chips.push({ label: "Total Records", value: d.totalRecords as number })
+      chips.push({ label: "Attendance Rate", value: `${d.attendanceRate}%` })
+    } else if (d.type === "completion") {
+      chips.push({ label: "Total Certificates", value: d.totalCertificates as number })
+      chips.push({ label: "Completion Rate", value: `${d.completionRate}%` })
+    } else if (d.type === "revenue") {
+      chips.push({ label: "Total Revenue", value: `₹${Number(d.totalRevenue).toLocaleString("en-IN", { minimumFractionDigits: 2 })}` })
+      chips.push({ label: "Total Orders", value: d.totalOrders as number })
+      chips.push({ label: "Avg Order Value", value: `₹${d.avgOrderValue}` })
+    }
+    if (d.institutionName) {
+      chips.unshift({ label: "Institution", value: d.institutionName })
+    }
+    return (
+      <div className="flex flex-wrap gap-2 mb-4">
+        {chips.map((c, i) => (
+          <div key={i} className="px-3 py-1.5 rounded-lg border border-border/60 bg-muted/40 text-xs">
+            <span className="text-muted-foreground uppercase tracking-wider mr-1.5">{c.label}:</span>
+            <span className="font-semibold">{c.value}</span>
+          </div>
+        ))}
+      </div>
+    )
+  }
 
   return (
     <div className="relative min-h-screen">
@@ -55,9 +238,18 @@ export function StudentProgressView() {
               <TrendingUp className="h-5 w-5 text-emerald-400" /> Student Progress Overview
             </h1>
           </div>
-          <Button size="sm" variant="outline">
-            <Download className="h-3.5 w-3.5 mr-1.5" /> Export CSV
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline" onClick={openReportDialog}>
+              <BarChart3 className="h-3.5 w-3.5 mr-1.5" /> Generate Report
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => downloadCsv(`students-${todayISO()}.csv`, students as unknown as ReportRow[])}
+            >
+              <Download className="h-3.5 w-3.5 mr-1.5" /> Export CSV
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -142,6 +334,176 @@ export function StudentProgressView() {
           </div>
         </Card>
       </div>
+
+      {/* ============== Generate Report Dialog ============== */}
+      <Dialog open={reportOpen} onOpenChange={setReportOpen}>
+        <DialogContent className="sm:max-w-[760px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4 text-violet-400" /> Generate Institution Report
+            </DialogTitle>
+            <DialogDescription>
+              Pull aggregated data for enrollment, attendance, completion, or revenue across a date range.
+              Results show in a table you can export as CSV.
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Form controls */}
+          <div className="grid sm:grid-cols-2 gap-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="report-type" className="text-xs uppercase tracking-wider text-muted-foreground">Report Type</Label>
+              <Select value={reportType} onValueChange={(v) => setReportType(v as ReportType)}>
+                <SelectTrigger id="report-type"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {REPORT_TYPES.map((rt) => (
+                    <SelectItem key={rt.value} value={rt.value}>
+                      <span className="flex items-center gap-2">
+                        <rt.icon className="h-3.5 w-3.5" /> {rt.label}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="report-institution" className="text-xs uppercase tracking-wider text-muted-foreground">
+                Institution (optional)
+              </Label>
+              <Select value={institutionFilter} onValueChange={setInstitutionFilter}>
+                <SelectTrigger id="report-institution">
+                  <SelectValue placeholder="All institutions" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">All institutions</SelectItem>
+                  {schools.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {schools.length === 0 && (
+                <p className="text-[10px] text-muted-foreground">
+                  <Building2 className="inline h-3 w-3 mr-1" />
+                  No institution filter available — reports will cover all students.
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="report-from" className="text-xs uppercase tracking-wider text-muted-foreground">From Date</Label>
+              <Input id="report-from" type="date" value={reportFrom} onChange={(e) => setReportFrom(e.target.value)} />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="report-to" className="text-xs uppercase tracking-wider text-muted-foreground">To Date</Label>
+              <Input id="report-to" type="date" value={reportTo} onChange={(e) => setReportTo(e.target.value)} />
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex items-center gap-2 flex-wrap py-2">
+            <Button onClick={handleGenerateReport} disabled={reportLoading}>
+              {reportLoading ? (
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Generating…</>
+              ) : (
+                <><BarChart3 className="h-4 w-4 mr-2" /> Generate</>
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleDownloadCsv}
+              disabled={!reportData || reportData.rows.length === 0}
+            >
+              <FileSpreadsheet className="h-4 w-4 mr-2" /> Download CSV
+            </Button>
+            {reportData && (
+              <Badge variant="outline" className="ml-auto">
+                {reportData.rows.length} rows · {new Date(reportData.from).toLocaleDateString()} → {new Date(reportData.to).toLocaleDateString()}
+              </Badge>
+            )}
+          </div>
+
+          {/* Error */}
+          {reportError && (
+            <div className="px-4 py-3 rounded-lg border border-rose-500/30 bg-rose-500/5 text-sm text-rose-300 flex items-start gap-2">
+              <X className="h-4 w-4 mt-0.5 shrink-0" />
+              <span>{reportError}</span>
+            </div>
+          )}
+
+          {/* Loading skeleton */}
+          {reportLoading && !reportData && (
+            <div className="space-y-2 py-4">
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-full" />
+            </div>
+          )}
+
+          {/* Summary chips */}
+          {reportData && renderSummary()}
+
+          {/* Results table */}
+          {reportData && reportData.rows.length > 0 && (
+            <Card className="overflow-hidden">
+              <div className="overflow-x-auto max-h-[40vh] overflow-y-auto scrollbar-thin">
+                <table className="w-full text-sm">
+                  <thead className="bg-muted/50 sticky top-0">
+                    <tr className="text-left">
+                      {reportColumns.map((col) => (
+                        <th key={col} className="py-2.5 px-4 text-[10px] font-bold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
+                          {col.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase())}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {reportData.rows.slice(0, 200).map((row, ri) => (
+                      <tr key={ri} className="border-t border-border/40 hover:bg-muted/20">
+                        {reportColumns.map((col) => {
+                          const v = row[col]
+                          const display = typeof v === "boolean"
+                            ? (v ? "✓" : "—")
+                            : v === null || v === undefined
+                              ? "—"
+                              : col.toLowerCase().includes("date") || col.toLowerCase().endsWith("at")
+                                ? new Date(String(v)).toLocaleDateString()
+                                : col.toLowerCase().includes("amount") || col.toLowerCase().includes("revenue") || col.toLowerCase() === "finalamount" || col.toLowerCase() === "discount"
+                                  ? `₹${Number(v).toFixed(2)}`
+                                  : String(v)
+                          return (
+                            <td key={col} className="py-2.5 px-4 text-xs whitespace-nowrap">
+                              {display}
+                            </td>
+                          )
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {reportData.rows.length > 200 && (
+                <div className="px-4 py-2 text-[10px] text-muted-foreground border-t border-border/40">
+                  Showing first 200 rows · Download CSV for the full {reportData.rows.length} rows.
+                </div>
+              )}
+            </Card>
+          )}
+
+          {/* Empty state */}
+          {reportData && reportData.rows.length === 0 && (
+            <div className="py-8 text-center text-sm text-muted-foreground">
+              No data found for the selected filters. Try a different date range or report type.
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReportOpen(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

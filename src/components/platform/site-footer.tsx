@@ -29,6 +29,7 @@ const PLATFORM_LINKS: FooterLink[] = [
   { label: "Labs", icon: FlaskConical, view: { name: "auth" } },
   { label: "Live Sessions", icon: Radio, view: { name: "auth" } },
   { label: "Certifications", icon: Award, view: { name: "certifications" } },
+  { label: "Pricing", icon: Award, view: { name: "pricing" } },
   { label: "Proctored Exams", icon: Terminal, view: { name: "certifications" } },
 ]
 

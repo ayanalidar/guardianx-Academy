@@ -597,11 +597,11 @@ export function CourseDetailView() {
         </section>
 
         {/* ====================================================
-            METADATA STRIP - editorial, numbered, NO cards
+            METADATA STRIP - editorial stat tiles, full-width grid
             ==================================================== */}
         <section className="border-y border-border/60 bg-background/40 backdrop-blur">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-            
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 lg:gap-4">
               {[
                 { label: "CATEGORY", value: course.category, icon: Layers },
                 { label: "LEVEL", value: course.level, icon: Target },
@@ -611,19 +611,19 @@ export function CourseDetailView() {
                 { label: "MODULES", value: course.modules.length, icon: BookOpen },
                 { label: "LESSONS", value: totalLessons, icon: FileText },
               ].map((m, i) => (
-                  <div key={m.label} className="group">
-                    <div className="flex items-baseline gap-2 mb-1.5">
+                  <div key={m.label} className="group rounded-xl border border-border/40 bg-card/40 p-3 lg:p-4 hover:border-violet-500/30 transition-all">
+                    <div className="flex items-center gap-2 mb-2">
                       <span className="text-[9px] font-mono text-muted-foreground/50 tracking-[0.2em]">
                         {String(i + 1).padStart(2, "0")}
                       </span>
                       <m.icon className="h-3 w-3 text-violet-300/70" />
                     </div>
-                    <div className="text-xl lg:text-2xl font-bold tabular-nums">{m.value}</div>
+                    <div className="text-lg lg:text-2xl font-bold tabular-nums">{m.value}</div>
                     <div className="text-[10px] font-mono text-muted-foreground tracking-[0.2em] mt-0.5">{m.label}</div>
                   </div>
                 
               ))}
-            
+            </div>
           </div>
         </section>
 

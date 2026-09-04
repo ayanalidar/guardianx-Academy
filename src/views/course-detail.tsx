@@ -223,7 +223,7 @@ export function CourseDetailView() {
     return (
       <div className="relative min-h-screen">
         <div className="absolute inset-0 bg-mesh opacity-40 pointer-events-none" />
-        <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 space-y-8">
+        <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8 space-y-6">
           <Skeleton className="h-[500px] w-full rounded-3xl" />
           <Skeleton className="h-24 w-full rounded-2xl" />
           <div className="grid lg:grid-cols-3 gap-6">
@@ -301,7 +301,7 @@ export function CourseDetailView() {
             {course.shortName}
           </div>
 
-          <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+          <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 lg:py-6 lg:py-8">
             {/* Back to catalog */}
             <button
               onClick={() => navigate({ name: "catalog" })}
@@ -592,7 +592,7 @@ export function CourseDetailView() {
         {/* ====================================================
             19. FINAL CTA — atmospheric
             ==================================================== */}
-        <section className="py-24 lg:py-32 border-t border-border/60 relative overflow-hidden">
+        <section className="py-10 lg:py-14 border-t border-border/60 relative overflow-hidden">
           <div className="absolute inset-0">
             <div className="w-full h-full opacity-15 bg-grid" />
           </div>
@@ -814,9 +814,9 @@ function AchievementCollection({ course, outcomes }: { course: any; outcomes: st
   }
 
   return (
-    <section className="py-20 lg:py-28 border-t border-border/60">
+    <section className="py-8 lg:py-10 border-t border-border/60">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="max-w-2xl mb-12">
+        <div className="max-w-2xl mb-6">
           <SectionLabel index="01" className="text-violet-300">OUTCOMES</SectionLabel>
           <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
             What you&apos;ll
@@ -866,7 +866,7 @@ function SkillProgressionChart({ tags }: { tags?: string | null }) {
   const skills = safeParseTags(tags).slice(0, 6)
   if (skills.length === 0) {
     return (
-      <section className="py-20 lg:py-28 border-t border-border/60">
+      <section className="py-8 lg:py-10 border-t border-border/60">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <SectionLabel index="02" className="text-emerald-300">SKILL PROGRESSION</SectionLabel>
           <p className="text-muted-foreground">Skill progression data available after enrollment.</p>
@@ -884,10 +884,10 @@ function SkillProgressionChart({ tags }: { tags?: string | null }) {
   })
 
   return (
-    <section className="py-20 lg:py-28 border-t border-border/60 relative overflow-hidden">
+    <section className="py-8 lg:py-10 border-t border-border/60 relative overflow-hidden">
       <div className="absolute top-0 right-0 w-[500px] h-[400px] bg-emerald-600/5 blur-[120px] rounded-full" />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
-        <div className="max-w-2xl mb-12">
+        <div className="max-w-2xl mb-6">
           <SectionLabel index="02" className="text-emerald-300">SKILL PROGRESSION</SectionLabel>
           <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
             Before vs
@@ -1000,10 +1000,10 @@ function CareerPathSection({
   ]
 
   return (
-    <section className="py-20 lg:py-28 border-t border-border/60 relative overflow-hidden">
+    <section className="py-8 lg:py-10 border-t border-border/60 relative overflow-hidden">
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-violet-600/5 blur-[120px] rounded-full" />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
-        <div className="max-w-2xl mb-12">
+        <div className="max-w-2xl mb-6">
           <SectionLabel index="03" className="text-cyan-300">CAREER PATH</SectionLabel>
           <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
             This course is
@@ -1065,7 +1065,7 @@ function CareerPathSection({
 
         {/* Matching learning paths (if any) */}
         {matchingPaths.length > 0 && (
-          <div className="mt-12 pt-8 border-t border-border/40">
+          <div className="mt-6 pt-8 border-t border-border/40">
             <p className="text-[10px] font-mono text-muted-foreground tracking-[0.2em] mb-4">
               OFFICIAL LEARNING PATHS THAT INCLUDE THIS COURSE
             </p>
@@ -1117,9 +1117,9 @@ function CurriculumTimeline({
   completedLessons: number
 }) {
   return (
-    <section className="py-20 lg:py-28 border-t border-border/60 relative">
+    <section className="py-8 lg:py-10 border-t border-border/60 relative">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex items-end justify-between mb-12 flex-wrap gap-6">
+        <div className="flex items-end justify-between mb-6 flex-wrap gap-6">
           <div>
             <SectionLabel index="04" className="text-violet-300">CURRICULUM TIMELINE</SectionLabel>
             <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
@@ -1298,9 +1298,9 @@ function FitChecklist({ level, category }: { level: string; category: string }) 
   }
 
   return (
-    <section className="py-20 lg:py-28 border-t border-border/60">
+    <section className="py-8 lg:py-10 border-t border-border/60">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="max-w-2xl mb-12">
+        <div className="max-w-2xl mb-6">
           <SectionLabel index="05" className="text-amber-300">FIT CHECK</SectionLabel>
           <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
             Is this course right
@@ -1382,10 +1382,10 @@ function DifficultyMeter({ durationHours, modules }: { durationHours: number; mo
   const totalHours = durationHours ?? 0
 
   return (
-    <section className="py-20 lg:py-28 border-t border-border/60 relative overflow-hidden">
+    <section className="py-8 lg:py-10 border-t border-border/60 relative overflow-hidden">
       <div className="absolute top-0 right-0 w-[500px] h-[400px] bg-amber-600/5 blur-[120px] rounded-full" />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
-        <div className="max-w-2xl mb-12">
+        <div className="max-w-2xl mb-6">
           <SectionLabel index="06" className="text-amber-300">INTENSITY METER</SectionLabel>
           <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
             How intense
@@ -1470,10 +1470,10 @@ function StudentProjectsShowcase({ labs, category }: { labs: any[]; category: st
   }
 
   return (
-    <section className="py-20 lg:py-28 border-t border-border/60 relative overflow-hidden">
+    <section className="py-8 lg:py-10 border-t border-border/60 relative overflow-hidden">
       <div className="absolute top-0 left-0 w-[500px] h-[400px] bg-cyan-600/5 blur-[120px] rounded-full" />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
-        <div className="max-w-2xl mb-12">
+        <div className="max-w-2xl mb-6">
           <SectionLabel index="07" className="text-cyan-300">STUDENT PROJECTS</SectionLabel>
           <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
             Build real
@@ -1542,11 +1542,11 @@ function LabIntegrationPreview({
   if (!labs || labs.length === 0) return null
 
   return (
-    <section className="py-20 lg:py-28 border-t border-border/60 relative overflow-hidden">
+    <section className="py-8 lg:py-10 border-t border-border/60 relative overflow-hidden">
       <div className="absolute inset-0 bg-grid opacity-8" />
       <div className="absolute top-0 right-0 w-[500px] h-[400px] bg-violet-600/5 blur-[120px] rounded-full" />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
-        <div className="max-w-2xl mb-12">
+        <div className="max-w-2xl mb-6">
           <SectionLabel index="08" className="text-violet-300">LAB INTEGRATION</SectionLabel>
           <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
             Every lab
@@ -1647,11 +1647,11 @@ function BatchSchedulePreview({
   }
 
   return (
-    <section className="py-20 lg:py-28 border-t border-border/60 relative overflow-hidden">
+    <section className="py-8 lg:py-10 border-t border-border/60 relative overflow-hidden">
       <div className="absolute inset-0 bg-grid opacity-8" />
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-violet-600/5 blur-[120px] rounded-full" />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
-        <div className="max-w-2xl mb-12">
+        <div className="max-w-2xl mb-6">
           <SectionLabel index="09" className="text-violet-300">LIVE BATCH SCHEDULE</SectionLabel>
           <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
             Join a
@@ -1670,7 +1670,7 @@ function BatchSchedulePreview({
             ))}
           </div>
         ) : batches.length === 0 ? (
-          <div className="text-center py-16 rounded-2xl border border-border/40 bg-card/20">
+          <div className="text-center py-8 lg:py-6 lg:py-8 rounded-2xl border border-border/40 bg-card/20">
             <Calendar className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
             <p className="text-sm text-muted-foreground">No live batches scheduled right now. Check back soon.</p>
           </div>
@@ -1808,16 +1808,16 @@ function InstructorSpotlight({ instructor, navigate }: { instructor: any; naviga
     .slice(0, 2)
 
   return (
-    <section className="py-20 lg:py-28 border-t border-border/60 relative overflow-hidden">
+    <section className="py-8 lg:py-10 border-t border-border/60 relative overflow-hidden">
       <div className="absolute top-0 right-0 w-[500px] h-[400px] bg-cyan-600/5 blur-[120px] rounded-full" />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
         <SectionLabel index="10" className="text-cyan-300">INSTRUCTOR SPOTLIGHT</SectionLabel>
-        <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance mb-12">
+        <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance mb-6">
           Learn from a
           <span className="text-gradient-cyan"> practitioner.</span>
         </h2>
 
-        <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+        <div className="grid lg:grid-cols-12 gap-4 lg:gap-6 items-start">
           {/* Left — Big avatar + actions */}
           <div className="lg:col-span-4">
             <div className="lg:sticky lg:top-8 rounded-2xl border border-border/60 bg-card/40 backdrop-blur p-6">
@@ -1967,10 +1967,10 @@ function CertExamBlueprint({ course }: { course: any }) {
   }
 
   return (
-    <section className="py-20 lg:py-28 border-t border-border/60 relative overflow-hidden">
+    <section className="py-8 lg:py-10 border-t border-border/60 relative overflow-hidden">
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-amber-600/5 blur-[120px] rounded-full" />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
-        <div className="max-w-2xl mb-12">
+        <div className="max-w-2xl mb-6">
           <SectionLabel index="11" className="text-amber-300">EXAM BLUEPRINT</SectionLabel>
           <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
             Pass the
@@ -1983,7 +1983,7 @@ function CertExamBlueprint({ course }: { course: any }) {
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-12 gap-8">
+        <div className="grid lg:grid-cols-12 gap-4 lg:gap-6">
           {/* Left — exam facts */}
           <div className="lg:col-span-5">
             <div className="rounded-2xl border border-border/60 bg-card/40 backdrop-blur p-6">
@@ -2101,10 +2101,10 @@ function PrerequisitesGraph({
     .filter(Boolean) as GraphNode[]
 
   return (
-    <section className="py-20 lg:py-28 border-t border-border/60 relative overflow-hidden">
+    <section className="py-8 lg:py-10 border-t border-border/60 relative overflow-hidden">
       <div className="absolute top-0 left-0 w-[500px] h-[400px] bg-violet-600/5 blur-[120px] rounded-full" />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
-        <div className="max-w-2xl mb-12">
+        <div className="max-w-2xl mb-6">
           <SectionLabel index="12" className="text-violet-300">PATH GRAPH</SectionLabel>
           <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
             Your learning
@@ -2249,7 +2249,7 @@ function ActivityFeed({ courseId }: { courseId: string }) {
   const thisWeek = data?.thisWeek ?? 0
 
   return (
-    <section className="py-20 lg:py-28 border-t border-border/60">
+    <section className="py-8 lg:py-10 border-t border-border/60">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-12 gap-10">
           {/* Left — heading + stats */}
@@ -2300,7 +2300,7 @@ function ActivityFeed({ courseId }: { courseId: string }) {
                   ))}
                 </div>
               ) : activities.length === 0 ? (
-                <div className="text-center py-12">
+                <div className="text-center py-6 lg:py-8">
                   <Users className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
                   <p className="text-sm text-muted-foreground">No enrollments yet. Be the first!</p>
                 </div>
@@ -2377,10 +2377,10 @@ function SkillsTagCloud({ tags, modules }: { tags?: string | null; modules: any[
   }
 
   return (
-    <section className="py-20 lg:py-28 border-t border-border/60 relative overflow-hidden">
+    <section className="py-8 lg:py-10 border-t border-border/60 relative overflow-hidden">
       <div className="absolute top-0 right-0 w-[500px] h-[400px] bg-cyan-600/5 blur-[120px] rounded-full" />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
-        <div className="max-w-2xl mb-12">
+        <div className="max-w-2xl mb-6">
           <SectionLabel index="14" className="text-cyan-300">SKILLS YOU&apos;LL EARN</SectionLabel>
           <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
             Walk away
@@ -2464,10 +2464,10 @@ function RelatedCoursesCarousel({
   const courses = data?.courses ?? []
 
   return (
-    <section className="py-20 lg:py-28 border-t border-border/60 relative overflow-hidden">
+    <section className="py-8 lg:py-10 border-t border-border/60 relative overflow-hidden">
       <div className="absolute top-0 left-0 w-[500px] h-[400px] bg-violet-600/5 blur-[120px] rounded-full" />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
-        <div className="flex items-end justify-between mb-12 flex-wrap gap-4">
+        <div className="flex items-end justify-between mb-6 flex-wrap gap-4">
           <div className="max-w-2xl">
             <SectionLabel index="15" className="text-violet-300">RELATED COURSES</SectionLabel>
             <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
@@ -2494,7 +2494,7 @@ function RelatedCoursesCarousel({
             ))}
           </div>
         ) : courses.length === 0 ? (
-          <div className="text-center py-16 rounded-2xl border border-border/40 bg-card/20">
+          <div className="text-center py-8 lg:py-6 lg:py-8 rounded-2xl border border-border/40 bg-card/20">
             <BookOpen className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
             <p className="text-sm text-muted-foreground">No related courses found in this category yet.</p>
           </div>
@@ -2691,15 +2691,15 @@ function ReviewsSection({ courseId, isEnrolled }: { courseId: string; isEnrolled
   const myReview = reviews.find((r) => r.user.id === user?.id)
 
   return (
-    <section className="py-20 lg:py-28 border-t border-border/60">
+    <section className="py-8 lg:py-10 border-t border-border/60">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionLabel index="16" className="text-amber-300">REVIEWS</SectionLabel>
-        <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance mb-12">
+        <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance mb-6">
           Student
           <span className="text-gradient-premium"> voices.</span>
         </h2>
 
-        <div className="space-y-8">
+        <div className="space-y-6">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-baseline gap-3">
               {total > 0 ? (
@@ -2790,7 +2790,7 @@ function ReviewsSection({ courseId, isEnrolled }: { courseId: string; isEnrolled
               {Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-32 rounded-xl" />)}
             </div>
           ) : reviews.length === 0 ? (
-            <div className="text-center py-16">
+            <div className="text-center py-8 lg:py-6 lg:py-8">
               <Star className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
               <p className="text-muted-foreground">No reviews yet. Be the first to review!</p>
             </div>

@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { motion, useInView, AnimatePresence } from "framer-motion"
 import { api } from "@/lib/api"
 import { useAppStore } from "@/store/app-store"
 import { LEVEL_COLORS } from "@/lib/colors"
@@ -18,16 +19,19 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import {
   Star, Clock, Users, BookOpen, ChevronLeft, ChevronRight, CheckCircle2, Circle, PlayCircle,
   FileText, Lock, Award, BarChart3, FlaskConical, MessageSquare, GraduationCap, ShieldCheck,
-  PenLine, ThumbsUp, Bookmark, BookmarkCheck, AlertTriangle, Link2,
-  ArrowRight, Sparkles, Zap, Target, Globe, Cpu, Layers, Shield, Briefcase, Radio, Calendar,
+  PenLine, Bookmark, BookmarkCheck, AlertTriangle, Link2,
+  ArrowRight, ArrowDown, Sparkles, Zap, Target, Layers, Shield, Briefcase, Radio, Calendar,
+  TrendingUp, Rocket, Trophy, Network, Wrench, Brain, Crosshair,
+  Code, Activity, Eye, KeyRound, Bug, X, Hexagon,
 } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { useBookmarks } from "@/hooks/use-bookmarks"
 import { getCourseImage } from "@/lib/course-images"
-import {
-} from "@/components/platform/motion-system"
 
+// ============================================================
+// Types
+// ============================================================
 interface Prerequisite {
   id: string
   title: string
@@ -46,6 +50,9 @@ interface CourseDetail {
   progressPct: number
 }
 
+// ============================================================
+// Constants
+// ============================================================
 const LESSON_ICONS: Record<string, any> = {
   reading: FileText,
   pdf: FileText,
@@ -53,266 +60,122 @@ const LESSON_ICONS: Record<string, any> = {
   lab: FlaskConical,
 }
 
-// ============================================================
-// Upcoming course batches - example static data for the
-// auto-rotating batch carousel. Not fetched from API.
-// ============================================================
-type BatchMode = "Online" | "In-Person" | "Hybrid"
+// Achievement icon rotation
+const ACHIEVEMENT_ICONS = [Shield, Target, Code, Trophy, Brain, Network, KeyRound, Bug, Eye, Lock]
 
-interface CourseBatch {
-  name: string
-  startDate: string
-  schedule: string
-  mode: BatchMode
-  seatsFilled: number
-  seatsTotal: number
-  instructor: string
-}
-
-const BATCH_MODE_STYLES: Record<BatchMode, { badge: string; icon: typeof Radio }> = {
-  Online: {
-    badge: "border-cyan-500/30 text-cyan-300 bg-cyan-500/5",
-    icon: Radio,
-  },
-  "In-Person": {
-    badge: "border-amber-500/30 text-amber-300 bg-amber-500/5",
-    icon: Users,
-  },
-  Hybrid: {
-    badge: "border-violet-500/30 text-violet-300 bg-violet-500/5",
-    icon: Layers,
-  },
-}
-
-const UPCOMING_BATCHES: CourseBatch[] = [
-  {
-    name: "Batch 2025-A",
-    startDate: "Jan 15, 2025",
-    schedule: "Mon / Wed / Fri · 7:00 – 9:00 PM IST",
-    mode: "Online",
-    seatsFilled: 45,
-    seatsTotal: 50,
-    instructor: "Dr. Sarah Chen",
-  },
-  {
-    name: "Batch 2025-B",
-    startDate: "Feb 1, 2025",
-    schedule: "Tue / Thu / Sat · 10:00 AM – 12:00 PM IST",
-    mode: "Hybrid",
-    seatsFilled: 28,
-    seatsTotal: 40,
-    instructor: "Dr. Marcus Reeves",
-  },
-  {
-    name: "Weekend Intensive",
-    startDate: "Feb 8, 2025",
-    schedule: "Sat – Sun · 9:00 AM – 1:00 PM IST",
-    mode: "Online",
-    seatsFilled: 12,
-    seatsTotal: 30,
-    instructor: "Dr. Sarah Chen",
-  },
-  {
-    name: "Self-Paced Cohort",
-    startDate: "Mar 1, 2025",
-    schedule: "Flexible schedule · Weekly mentor sync-ups",
-    mode: "Online",
-    seatsFilled: 95,
-    seatsTotal: 100,
-    instructor: "Dr. Marcus Reeves",
-  },
+// Skill tag importance → size class mapping
+const TAG_SIZE_BY_INDEX = [
+  "text-base px-4 py-2",
+  "text-base px-4 py-2",
+  "text-sm px-3.5 py-1.5",
+  "text-sm px-3.5 py-1.5",
+  "text-xs px-3 py-1",
+  "text-xs px-3 py-1",
+  "text-xs px-2.5 py-0.5",
 ]
 
 // ============================================================
-// BatchCarousel - auto-rotating showcase of upcoming batches
+// Helper: useCountUp — requestAnimationFrame-based count-up
 // ============================================================
-function BatchCarousel({ onEnroll }: { onEnroll: (batch: CourseBatch) => void }) {
-  const [currentIndex, setCurrentIndex] = React.useState(0)
-  const [isPaused, setIsPaused] = React.useState(false)
-
-  // Auto-rotate every 5s; pause on hover/focus
+function useCountUp(target: number, durationMs = 1500, start = true): number {
+  const [value, setValue] = React.useState(0)
   React.useEffect(() => {
-    if (isPaused) return
-    const timer = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % UPCOMING_BATCHES.length)
-    }, 5000)
-    return () => clearInterval(timer)
-  }, [isPaused])
+    if (!start) return
+    let raf: number
+    let startTime: number | null = null
+    const step = (t: number) => {
+      if (startTime === null) startTime = t
+      const elapsed = t - startTime
+      const progress = Math.min(elapsed / durationMs, 1)
+      // ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3)
+      setValue(target * eased)
+      if (progress < 1) {
+        raf = requestAnimationFrame(step)
+      } else {
+        setValue(target)
+      }
+    }
+    raf = requestAnimationFrame(step)
+    return () => cancelAnimationFrame(raf)
+  }, [target, durationMs, start])
+  return value
+}
 
-  const goToSlide = (index: number) => {
-    setCurrentIndex((index + UPCOMING_BATCHES.length) % UPCOMING_BATCHES.length)
-  }
-  const goToPrev = () => goToSlide(currentIndex - 1)
-  const goToNext = () => goToSlide(currentIndex + 1)
-
+// ============================================================
+// Helper: AnimatedNumber — count-up triggered on scroll into view
+// ============================================================
+function AnimatedNumber({
+  value,
+  decimals = 0,
+  prefix = "",
+  suffix = "",
+  duration = 1500,
+  className,
+}: {
+  value: number
+  decimals?: number
+  prefix?: string
+  suffix?: string
+  duration?: number
+  className?: string
+}) {
+  const ref = React.useRef<HTMLSpanElement>(null)
+  const inView = useInView(ref, { once: true, amount: 0.4 })
+  const display = useCountUp(value, duration, inView)
+  const formatted = decimals > 0
+    ? display.toFixed(decimals)
+    : Math.round(display).toLocaleString()
   return (
-    <div
-      className="relative"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
-      onFocus={() => setIsPaused(true)}
-      onBlur={() => setIsPaused(false)}
-    >
-      {/* Carousel viewport */}
-      <div className="relative overflow-hidden rounded-2xl">
-        <div
-          className="flex transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]"
-          style={{ transform: `translateX(-${currentIndex * 100}%)` }}
-        >
-          {UPCOMING_BATCHES.map((batch, i) => {
-            const modeStyle = BATCH_MODE_STYLES[batch.mode]
-            const seatsLeft = batch.seatsTotal - batch.seatsFilled
-            const fillPct = Math.round((batch.seatsFilled / batch.seatsTotal) * 100)
-            const ModeIcon = modeStyle.icon
-            return (
-              <div
-                key={batch.name}
-                className="w-full shrink-0 px-0.5"
-                aria-hidden={i !== currentIndex}
-                aria-label={`Batch ${i + 1} of ${UPCOMING_BATCHES.length}: ${batch.name}`}
-              >
-                <div className="relative rounded-2xl border border-border/60 bg-card shadow-lg overflow-hidden">
-                  {/* Atmospheric accent */}
-                  <div className="absolute top-0 right-0 w-[400px] h-[200px] bg-violet-600/5 blur-[100px] rounded-full pointer-events-none" />
-                  <div className="relative grid lg:grid-cols-12 gap-6 p-6 sm:p-8">
-                    {/* Left - batch identity */}
-                    <div className="lg:col-span-7">
-                      <div className="flex items-center gap-3 mb-4">
-                        <span className="text-[10px] font-mono text-violet-300 tracking-[0.3em]">
-                          UPCOMING BATCH
-                        </span>
-                        <span className="text-[10px] font-mono text-muted-foreground tracking-[0.2em]">
-                          {String(i + 1).padStart(2, "0")} / {String(UPCOMING_BATCHES.length).padStart(2, "0")}
-                        </span>
-                      </div>
-
-                      <h3 className="text-2xl sm:text-3xl font-bold tracking-tight mb-4 text-balance">
-                        {batch.name}
-                      </h3>
-
-                      <div className="flex flex-wrap items-center gap-2 mb-6">
-                        <Badge
-                          variant="outline"
-                          className={cn("text-[10px] font-mono tracking-wider", modeStyle.badge)}
-                        >
-                          <ModeIcon className="h-3 w-3 mr-1" />
-                          {batch.mode.toUpperCase()}
-                        </Badge>
-                        <Badge variant="outline" className="text-[10px] font-mono tracking-wider border-border/60 text-muted-foreground">
-                          <Clock className="h-3 w-3 mr-1" />
-                          {batch.schedule}
-                        </Badge>
-                      </div>
-
-                      {/* Key facts grid */}
-                      <div className="grid sm:grid-cols-2 gap-3">
-                        <div className="rounded-lg border border-border/40 bg-background/40 p-3">
-                          <div className="flex items-center gap-1.5 mb-1">
-                            <Calendar className="h-3 w-3 text-violet-300" />
-                            <span className="text-[9px] font-mono text-muted-foreground tracking-[0.2em]">STARTS</span>
-                          </div>
-                          <div className="text-sm font-semibold">{batch.startDate}</div>
-                        </div>
-                        <div className="rounded-lg border border-border/40 bg-background/40 p-3">
-                          <div className="flex items-center gap-1.5 mb-1">
-                            <GraduationCap className="h-3 w-3 text-cyan-300" />
-                            <span className="text-[9px] font-mono text-muted-foreground tracking-[0.2em]">INSTRUCTOR</span>
-                          </div>
-                          <div className="text-sm font-semibold">{batch.instructor}</div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Right - seats + enroll */}
-                    <div className="lg:col-span-5 flex flex-col justify-center">
-                      <div className="rounded-xl border border-border/40 bg-background/40 p-5">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-[10px] font-mono text-muted-foreground tracking-[0.2em]">
-                            SEATS AVAILABLE
-                          </span>
-                          <span className="text-[10px] font-mono text-amber-300 tracking-[0.2em]">
-                            {seatsLeft} LEFT
-                          </span>
-                        </div>
-                        <div className="flex items-baseline gap-1.5 mb-3">
-                          <span className="text-3xl font-bold tabular-nums">{batch.seatsFilled}</span>
-                          <span className="text-base text-muted-foreground tabular-nums">/ {batch.seatsTotal}</span>
-                          <span className="text-xs text-muted-foreground ml-1">seats filled</span>
-                        </div>
-                        {/* Capacity bar */}
-                        <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden mb-4">
-                          <div
-                            className={cn(
-                              "h-full rounded-full transition-all duration-700",
-                              fillPct >= 90 ? "bg-rose-400" : fillPct >= 70 ? "bg-amber-400" : "bg-emerald-400"
-                            )}
-                            style={{ width: `${fillPct}%` }}
-                          />
-                        </div>
-                        <Button
-                          onClick={() => onEnroll(batch)}
-                          className="w-full bg-violet-600 hover:bg-violet-500 btn-premium"
-                          size="lg"
-                        >
-                          Enroll in Batch
-                          <ArrowRight className="h-4 w-4 ml-2" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </div>
-
-      {/* Side nav buttons */}
-      <button
-        type="button"
-        onClick={goToPrev}
-        aria-label="Previous batch"
-        className="absolute left-2 sm:-left-5 top-1/2 -translate-y-1/2 inline-flex h-10 w-10 items-center justify-center rounded-full border border-border/60 bg-card/80 backdrop-blur shadow-lg text-foreground hover:bg-violet-600 hover:text-white hover:border-violet-500 transition-all duration-300"
-      >
-        <ChevronLeft className="h-5 w-5" />
-      </button>
-      <button
-        type="button"
-        onClick={goToNext}
-        aria-label="Next batch"
-        className="absolute right-2 sm:-right-5 top-1/2 -translate-y-1/2 inline-flex h-10 w-10 items-center justify-center rounded-full border border-border/60 bg-card/80 backdrop-blur shadow-lg text-foreground hover:bg-violet-600 hover:text-white hover:border-violet-500 transition-all duration-300"
-      >
-        <ChevronRight className="h-5 w-5" />
-      </button>
-
-      {/* Dot indicators */}
-      <div className="flex items-center justify-center gap-2 mt-6">
-        {UPCOMING_BATCHES.map((b, i) => (
-          <button
-            key={b.name}
-            type="button"
-            onClick={() => goToSlide(i)}
-            aria-label={`Go to batch ${i + 1}: ${b.name}`}
-            aria-current={i === currentIndex}
-            className={cn(
-              "h-2 rounded-full transition-all duration-500",
-              i === currentIndex
-                ? "w-8 bg-violet-500"
-                : "w-2 bg-muted-foreground/30 hover:bg-muted-foreground/60"
-            )}
-          />
-        ))}
-      </div>
-    </div>
+    <span ref={ref} className={cn("tabular-nums", className)}>
+      {prefix}{formatted}{suffix}
+    </span>
   )
 }
 
+// ============================================================
+// Helper: SectionLabel — small mono label like "01 - OUTCOMES"
+// ============================================================
+function SectionLabel({
+  index,
+  children,
+  className,
+}: {
+  index?: string
+  children: React.ReactNode
+  className?: string
+}) {
+  return (
+    <p className={cn("text-[10px] font-mono tracking-[0.3em] mb-4", className)}>
+      {index && <span className="text-muted-foreground/50">{index} - </span>}
+      {children}
+    </p>
+  )
+}
+
+// ============================================================
+// Helper: safeParseTags — comma-separated string -> string[]
+// ============================================================
+function safeParseTags(tags?: string | null): string[] {
+  if (!tags) return []
+  return tags
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean)
+}
+
+// ============================================================
+// MAIN VIEW
+// ============================================================
 export function CourseDetailView() {
   const { view, navigate } = useAppStore()
   const courseId = view.name === "course" ? view.courseId : ""
   const { user } = useUser()
   const qc = useQueryClient()
-  const heroRef = React.useRef(null)
+
+  // Refs for floating CTA visibility tracking
+  const enrollCardRef = React.useRef<HTMLDivElement>(null)
+  const [showFloatingCta, setShowFloatingCta] = React.useState(false)
 
   const { data, isLoading } = useQuery<CourseDetail>({
     queryKey: ["course", courseId],
@@ -327,20 +190,34 @@ export function CourseDetailView() {
       qc.invalidateQueries({ queryKey: ["course", courseId] })
       qc.invalidateQueries({ queryKey: ["courses"] })
       qc.invalidateQueries({ queryKey: ["me"] })
-      // Navigate to My Learning so the student can continue from the
-      // enrolled-courses list + Recommended Courses section.
       setTimeout(() => navigate({ name: "learning" }), 600)
     },
     onError: (e: any) => toast.error(e.message),
   })
 
-  // Fetch prerequisites for this course
+  // Prerequisites (existing /enroll GET endpoint)
   const { data: prereqData } = useQuery<{ prerequisites: Prerequisite[] }>({
     queryKey: ["course-prerequisites", courseId],
     queryFn: () => api(`/api/courses/${courseId}/enroll`),
     enabled: !!courseId,
   })
   const prerequisites = prereqData?.prerequisites ?? []
+
+  // Track visibility of the enroll card to show/hide the floating CTA
+  React.useEffect(() => {
+    const el = enrollCardRef.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        // Show floating CTA only when enroll card is NOT visible AND user has scrolled past 200px
+        const scrolled = window.scrollY > 400
+        setShowFloatingCta(!entry.isIntersecting && scrolled)
+      },
+      { threshold: 0, rootMargin: "0px 0px -100px 0px" }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [data])
 
   if (isLoading) {
     return (
@@ -370,17 +247,25 @@ export function CourseDetailView() {
     navigate({ name: "lesson", lessonId, courseId })
   }
 
-  // Build learning outcomes from longDescription / tags
+  const handleEnroll = () => {
+    if (!user) {
+      navigate({ name: "login" })
+      return
+    }
+    enrollMutation.mutate()
+  }
+
+  // Build learning outcomes from longDescription / tags (used by Achievements section)
   const outcomes: string[] = []
   if (course.longDescription) {
-    // First two sentences become outcomes preview
     const sentences = course.longDescription.split(/\.\s+/).filter(Boolean).slice(0, 2)
     sentences.forEach((s: string) => outcomes.push(s.trim() + "."))
   }
   if (course.tags) {
-    course.tags.split(",").slice(0, 3).forEach((t: string) => outcomes.push("Master " + t.trim().toLowerCase() + " fundamentals and real-world application."))
+    course.tags.split(",").slice(0, 3).forEach((t: string) =>
+      outcomes.push("Master " + t.trim().toLowerCase() + " fundamentals and real-world application.")
+    )
   }
-  // Ensure we have at least 4 outcomes
   while (outcomes.length < 4) {
     outcomes.push("Develop practical, hands-on skills through GuardianX lab exercises.")
   }
@@ -393,10 +278,9 @@ export function CourseDetailView() {
 
       <div className="relative z-10">
         {/* ====================================================
-            HERO - cinematic course introduction
+            1. HERO — cinematic course introduction (8/4 split)
             ==================================================== */}
-        <section ref={heroRef} className="relative overflow-hidden">
-          {/* Course hero image */}
+        <section className="relative overflow-hidden">
           <div className="absolute inset-0">
             <img
               src={getCourseImage(course)}
@@ -409,9 +293,8 @@ export function CourseDetailView() {
           <div className="absolute top-1/3 -right-40 w-[600px] h-[600px] bg-violet-600/10 blur-[140px] rounded-full" />
           <div className="absolute top-1/2 -left-40 w-[500px] h-[500px] bg-cyan-600/5 blur-[140px] rounded-full" />
 
-          {/* Ghost shortName - giant outline text */}
+          {/* Ghost shortName — giant outline text */}
           <div
-            style={{ transform: "translateY(0)" }}
             aria-hidden
             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[clamp(10rem,30vw,30rem)] font-bold tracking-[-0.08em] text-outline-violet opacity-20 pointer-events-none select-none leading-none whitespace-nowrap"
           >
@@ -420,187 +303,172 @@ export function CourseDetailView() {
 
           <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
             {/* Back to catalog */}
-            
-              <button
-                onClick={() => navigate({ name: "catalog" })}
-                className="group inline-flex items-center gap-2 text-xs font-mono text-muted-foreground hover:text-violet-300 transition-colors tracking-[0.2em] mb-6"
-              >
-                <ChevronLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-1" />
-                <span className="uppercase">Back to Catalog</span>
-              </button>
-            
+            <button
+              onClick={() => navigate({ name: "catalog" })}
+              className="group inline-flex items-center gap-2 text-xs font-mono text-muted-foreground hover:text-violet-300 transition-colors tracking-[0.2em] mb-6"
+            >
+              <ChevronLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-1" />
+              <span className="uppercase">Back to Catalog</span>
+            </button>
 
             <div className="grid lg:grid-cols-12 gap-6 items-start">
-              {/* Hero text - col 8 */}
+              {/* Hero text — col 8 */}
               <div className="lg:col-span-8">
-                
-                  <div className="flex items-center gap-2 mb-6 flex-wrap">
-                    <Badge variant="outline" className={cn("text-[10px] font-mono tracking-[0.3em] uppercase", LEVEL_COLORS[course.level])}>
-                      {course.level}
+                <div className="flex items-center gap-2 mb-6 flex-wrap">
+                  <Badge variant="outline" className={cn("text-[10px] font-mono tracking-[0.3em] uppercase", LEVEL_COLORS[course.level])}>
+                    {course.level}
+                  </Badge>
+                  <Badge variant="outline" className="text-[10px] font-mono tracking-[0.3em] uppercase border-border/60">
+                    {course.category}
+                  </Badge>
+                  {course.certBody && (
+                    <Badge variant="outline" className="text-[10px] font-mono tracking-[0.3em] uppercase border-violet-500/30 text-violet-300">
+                      {course.certBody}
                     </Badge>
-                    <Badge variant="outline" className="text-[10px] font-mono tracking-[0.3em] uppercase border-border/60">
-                      {course.category}
+                  )}
+                  {isEnrolled && (
+                    <Badge className="text-[10px] font-mono tracking-[0.3em] uppercase bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                      <CheckCircle2 className="h-2.5 w-2.5 mr-1" /> ENROLLED
                     </Badge>
-                    {course.certBody && (
-                      <Badge variant="outline" className="text-[10px] font-mono tracking-[0.3em] uppercase border-violet-500/30 text-violet-300">
-                        {course.certBody}
-                      </Badge>
-                    )}
-                    {isEnrolled && (
-                      <Badge className="text-[10px] font-mono tracking-[0.3em] uppercase bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-                        <CheckCircle2 className="h-2.5 w-2.5 mr-1" /> ENROLLED
-                      </Badge>
-                    )}
-                  </div>
-                
+                  )}
+                </div>
 
-                
-                  <p className="text-[10px] font-mono text-violet-300 tracking-[0.3em] mb-4">
-                    GUARDIANX · {course.shortName}
-                  </p>
-                
+                <p className="text-[10px] font-mono text-violet-300 tracking-[0.3em] mb-4">
+                  GUARDIANX · {course.shortName}
+                </p>
 
-                
-                  <h1 className="text-[clamp(2.5rem,6vw,5.5rem)] font-bold leading-[0.92] tracking-[-0.04em] text-balance mb-6">
-                    {course.title}
-                  </h1>
-                
+                <h1 className="text-[clamp(2.5rem,6vw,5.5rem)] font-bold leading-[0.92] tracking-[-0.04em] text-balance mb-6">
+                  {course.title}
+                </h1>
 
-                
-                  <p className="text-lg lg:text-xl text-muted-foreground max-w-2xl leading-relaxed text-balance">
-                    {course.description}
-                  </p>
-                
+                <p className="text-lg lg:text-xl text-muted-foreground max-w-2xl leading-relaxed text-balance">
+                  {course.description}
+                </p>
 
                 {/* Instructor info inline */}
-                
-                  <div className="mt-5 flex items-center gap-3">
-                    <Avatar className="h-10 w-10 border border-violet-500/30">
-                      <AvatarFallback className="bg-violet-500/10 text-violet-300 text-xs font-mono">
-                        {course.instructor.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="text-[10px] font-mono text-muted-foreground tracking-[0.2em]">INSTRUCTOR</p>
-                      <p className="text-sm font-medium">
-                        {course.instructor.name}
-                        {course.instructor.title && <span className="text-muted-foreground font-normal"> · {course.instructor.title}</span>}
-                      </p>
-                    </div>
+                <div className="mt-5 flex items-center gap-3">
+                  <Avatar className="h-10 w-10 border border-violet-500/30">
+                    <AvatarFallback className="bg-violet-500/10 text-violet-300 text-xs font-mono">
+                      {course.instructor.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="text-[10px] font-mono text-muted-foreground tracking-[0.2em]">INSTRUCTOR</p>
+                    <p className="text-sm font-medium">
+                      {course.instructor.name}
+                      {course.instructor.title && <span className="text-muted-foreground font-normal"> · {course.instructor.title}</span>}
+                    </p>
                   </div>
-                
+                </div>
               </div>
 
-              {/* Hero right column - enroll / progress card */}
-              <div className="lg:col-span-4">
-                
-                  <Card className="relative overflow-hidden border-border/60 bg-card/50 backdrop-blur-xl p-6">
-                    <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-500/50 to-transparent" />
+              {/* Hero right column — enroll / progress card */}
+              <div className="lg:col-span-4" ref={enrollCardRef}>
+                <Card className="relative overflow-hidden border-border/60 bg-card/50 backdrop-blur-xl p-6">
+                  <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-500/50 to-transparent" />
 
-                    {isEnrolled ? (
-                      <div className="space-y-5">
-                        <div>
-                          <p className="text-[10px] font-mono text-muted-foreground tracking-[0.2em] mb-1">YOUR PROGRESS</p>
-                          <div className="flex items-baseline gap-2 mb-2">
-                            <span className="text-4xl font-bold text-violet-200 tabular-nums">
-                              {progressPct}%
-                            </span>
-                          </div>
-                          <Progress value={progressPct} className="h-1.5 bg-muted" />
-                          <div className="text-xs text-muted-foreground mt-2 font-mono">
-                            {completedLessons} OF {totalLessons} LESSONS COMPLETED
-                          </div>
+                  {isEnrolled ? (
+                    <div className="space-y-5">
+                      <div>
+                        <p className="text-[10px] font-mono text-muted-foreground tracking-[0.2em] mb-1">YOUR PROGRESS</p>
+                        <div className="flex items-baseline gap-2 mb-2">
+                          <span className="text-4xl font-bold text-violet-200 tabular-nums">
+                            {progressPct}%
+                          </span>
                         </div>
+                        <Progress value={progressPct} className="h-1.5 bg-muted" />
+                        <div className="text-xs text-muted-foreground mt-2 font-mono">
+                          {completedLessons} OF {totalLessons} LESSONS COMPLETED
+                        </div>
+                      </div>
 
-                        {progressPct === 100 && (
-                          <div className="flex items-center gap-2 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs">
-                            <Award className="h-4 w-4 shrink-0" />
-                            <span>Course completed · Certificate issued</span>
-                          </div>
-                        )}
+                      {progressPct === 100 && (
+                        <div className="flex items-center gap-2 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs">
+                          <Award className="h-4 w-4 shrink-0" />
+                          <span>Course completed · Certificate issued</span>
+                        </div>
+                      )}
 
-                        <div>
-                          <Button
-                            className="w-full btn-premium bg-violet-600 hover:bg-violet-500 text-violet-50 border border-violet-500/30"
-                            onClick={() => {
-                              for (const m of course.modules) {
-                                for (const l of m.lessons) {
-                                  if (!lessonProgress[l.id]?.completed) {
-                                    goLesson(l.id)
-                                    return
-                                  }
+                      <div>
+                        <Button
+                          className="w-full btn-premium bg-violet-600 hover:bg-violet-500 text-violet-50 border border-violet-500/30"
+                          onClick={() => {
+                            for (const m of course.modules) {
+                              for (const l of m.lessons) {
+                                if (!lessonProgress[l.id]?.completed) {
+                                  goLesson(l.id)
+                                  return
                                 }
                               }
-                              goLesson(course.modules[0]?.lessons[0]?.id)
-                            }}
-                          >
-                            <PlayCircle className="h-4 w-4 mr-1.5" /> {progressPct > 0 ? "Continue Learning" : "Start Learning"}
-                          </Button>
-                        </div>
-
-                        <Button variant="outline" className="w-full border-border/60" onClick={() => navigate({ name: "learning" })}>
-                          <BarChart3 className="h-4 w-4 mr-1.5" /> My Dashboard
+                            }
+                            goLesson(course.modules[0]?.lessons[0]?.id)
+                          }}
+                        >
+                          <PlayCircle className="h-4 w-4 mr-1.5" /> {progressPct > 0 ? "Continue Learning" : "Start Learning"}
                         </Button>
                       </div>
-                    ) : (
-                      <div className="space-y-5">
-                        <div className="text-center pb-2">
-                          <p className="text-[10px] font-mono text-muted-foreground tracking-[0.2em] mb-1">ONE-TIME PAYMENT</p>
-                          <div className="text-5xl font-bold text-gradient-premium tabular-nums">${course.price}</div>
-                        </div>
 
-                        {prerequisites.length > 0 && (
-                          <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
-                            <div className="flex items-center gap-1.5 text-[10px] font-medium text-amber-300 mb-2 tracking-[0.2em] font-mono">
-                              <AlertTriangle className="h-3.5 w-3.5" /> PREREQUISITES
-                            </div>
-                            <div className="space-y-1.5">
-                              {prerequisites.map((p) => (
-                                <div key={p.id} className="flex items-center gap-2 text-xs">
-                                  <Link2 className="h-3 w-3 text-amber-300/70 shrink-0" />
-                                  <span className="font-medium truncate flex-1">{p.title}</span>
-                                  <Badge variant="outline" className="text-[9px] py-0 h-4 font-mono">{p.shortName}</Badge>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        <div>
-                          <Button
-                            className="w-full btn-premium bg-violet-600 hover:bg-violet-500 text-violet-50 border border-violet-500/30"
-                            onClick={() => {
-                              if (!user) {
-                                navigate({ name: "login" })
-                                return
-                              }
-                              enrollMutation.mutate()
-                            }}
-                            disabled={enrollMutation.isPending}
-                          >
-                            <GraduationCap className="h-4 w-4 mr-1.5" /> {enrollMutation.isPending ? "Enrolling..." : "Enroll Now"}
-                          </Button>
-                        </div>
-
-                        <BookmarkButton courseId={course.id} />
-
-                        <div className="space-y-2 text-xs text-muted-foreground pt-2">
-                          <div className="flex items-center gap-2"><ShieldCheck className="h-3.5 w-3.5 text-emerald-300" /> Full lifetime access</div>
-                          <div className="flex items-center gap-2"><FileText className="h-3.5 w-3.5 text-emerald-300" /> PDF study materials</div>
-                          <div className="flex items-center gap-2"><Award className="h-3.5 w-3.5 text-emerald-300" /> Certificate of completion</div>
-                          <div className="flex items-center gap-2"><MessageSquare className="h-3.5 w-3.5 text-emerald-300" /> Community discussions</div>
-                        </div>
+                      <Button variant="outline" className="w-full border-border/60" onClick={() => navigate({ name: "learning" })}>
+                        <BarChart3 className="h-4 w-4 mr-1.5" /> My Dashboard
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-5">
+                      <div className="text-center pb-2">
+                        <p className="text-[10px] font-mono text-muted-foreground tracking-[0.2em] mb-1">ONE-TIME PAYMENT</p>
+                        <div className="text-5xl font-bold text-gradient-premium tabular-nums">${course.price}</div>
                       </div>
-                    )}
-                  </Card>
-                
+
+                      {prerequisites.length > 0 && (
+                        <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
+                          <div className="flex items-center gap-1.5 text-[10px] font-medium text-amber-300 mb-2 tracking-[0.2em] font-mono">
+                            <AlertTriangle className="h-3.5 w-3.5" /> PREREQUISITES
+                          </div>
+                          <div className="space-y-1.5">
+                            {prerequisites.map((p) => (
+                              <div key={p.id} className="flex items-center gap-2 text-xs">
+                                <Link2 className="h-3 w-3 text-amber-300/70 shrink-0" />
+                                <span className="font-medium truncate flex-1">{p.title}</span>
+                                <Badge variant="outline" className="text-[9px] py-0 h-4 font-mono">{p.shortName}</Badge>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <div>
+                        <Button
+                          className="w-full btn-premium bg-violet-600 hover:bg-violet-500 text-violet-50 border border-violet-500/30"
+                          onClick={handleEnroll}
+                          disabled={enrollMutation.isPending}
+                        >
+                          <GraduationCap className="h-4 w-4 mr-1.5" /> {enrollMutation.isPending ? "Enrolling..." : "Enroll Now"}
+                        </Button>
+                      </div>
+
+                      <BookmarkButton courseId={course.id} />
+
+                      <div className="space-y-2 text-xs text-muted-foreground pt-2">
+                        <div className="flex items-center gap-2"><ShieldCheck className="h-3.5 w-3.5 text-emerald-300" /> Full lifetime access</div>
+                        <div className="flex items-center gap-2"><FileText className="h-3.5 w-3.5 text-emerald-300" /> PDF study materials</div>
+                        <div className="flex items-center gap-2"><Award className="h-3.5 w-3.5 text-emerald-300" /> Certificate of completion</div>
+                        <div className="flex items-center gap-2"><MessageSquare className="h-3.5 w-3.5 text-emerald-300" /> Community discussions</div>
+                      </div>
+                    </div>
+                  )}
+                </Card>
               </div>
             </div>
           </div>
         </section>
 
         {/* ====================================================
-            METADATA STRIP - editorial stat tiles, full-width grid
+            2. STATS HERO BAR — 4 animated stat tiles with count-up
+            ==================================================== */}
+        <StatsHeroBar course={course} />
+
+        {/* ====================================================
+            3. METADATA STRIP — 7-column grid (existing)
             ==================================================== */}
         <section className="border-y border-border/60 bg-background/40 backdrop-blur">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
@@ -614,608 +482,115 @@ export function CourseDetailView() {
                 { label: "MODULES", value: course.modules.length, icon: BookOpen },
                 { label: "LESSONS", value: totalLessons, icon: FileText },
               ].map((m, i) => (
-                  <div key={m.label} className="group rounded-xl border border-border/40 bg-card/40 p-3 lg:p-4 hover:border-violet-500/30 transition-all">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-[9px] font-mono text-muted-foreground/50 tracking-[0.2em]">
-                        {String(i + 1).padStart(2, "0")}
-                      </span>
-                      <m.icon className="h-3 w-3 text-violet-300/70" />
-                    </div>
-                    <div className="text-lg lg:text-2xl font-bold tabular-nums">{m.value}</div>
-                    <div className="text-[10px] font-mono text-muted-foreground tracking-[0.2em] mt-0.5">{m.label}</div>
+                <div key={m.label} className="group rounded-xl border border-border/40 bg-card/40 p-3 lg:p-4 hover:border-violet-500/30 transition-all">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-[9px] font-mono text-muted-foreground/50 tracking-[0.2em]">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                    <m.icon className="h-3 w-3 text-violet-300/70" />
                   </div>
-                
+                  <div className="text-lg lg:text-2xl font-bold tabular-nums">{m.value}</div>
+                  <div className="text-[10px] font-mono text-muted-foreground tracking-[0.2em] mt-0.5">{m.label}</div>
+                </div>
               ))}
             </div>
           </div>
         </section>
 
         {/* ====================================================
-            LEARNING OUTCOMES - editorial, no cards
+            4. WHAT YOU'LL ACHIEVE — visual achievement cards
             ==================================================== */}
-        <section className="py-20 lg:py-28">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="grid lg:grid-cols-12 gap-12">
-              <div className="lg:col-span-5">
-                <div className="lg:sticky lg:top-8">
-                  
-                    <p className="text-[10px] font-mono text-violet-300 tracking-[0.3em] mb-6">01 - OUTCOMES</p>
-                  
-                  
-                    <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
-                      What you&apos;ll
-                      <span className="text-gradient-premium"> master.</span>
-                    </h2>
-                  
-                  
-                    <p className="text-muted-foreground mt-6 max-w-md leading-relaxed">
-                      A focused curriculum engineered for real-world application - every lesson
-                      builds toward verifiable, hands-on competence.
-                    </p>
-                  
-                </div>
-              </div>
-
-              <div className="lg:col-span-7">
-                
-                  {outcomes.map((outcome, i) => (
-                      <div key={i} className="group flex items-start gap-5 pb-8 border-b border-border/40 last:border-0">
-                        <span className="text-[10px] font-mono text-muted-foreground/40 tracking-[0.2em] pt-1">
-                          {String(i + 1).padStart(2, "0")}
-                        </span>
-                        <div className="flex-1">
-                          <p className="text-lg lg:text-xl text-foreground/90 leading-relaxed">
-                            {outcome}
-                          </p>
-                        </div>
-                        <ArrowRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-violet-300 group-hover:translate-x-1 transition-all shrink-0 mt-1.5" />
-                      </div>
-                    
-                  ))}
-                
-              </div>
-            </div>
-          </div>
-        </section>
+        <AchievementCollection course={course} outcomes={outcomes} />
 
         {/* ====================================================
-            CURRICULUM - premium accordion modules
+            5. ANIMATED SKILL PROGRESSION CHART (Before vs After)
             ==================================================== */}
-        <section className="py-20 lg:py-28 border-t border-border/60 relative">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="flex items-end justify-between mb-12 flex-wrap gap-6">
-              
-                <div>
-                  <p className="text-[10px] font-mono text-violet-300 tracking-[0.3em] mb-4">02 - CURRICULUM</p>
-                  <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
-                    Modules &amp;
-                    <span className="text-muted-foreground/50"> lessons.</span>
-                  </h2>
-                </div>
-              
-              
-                <div className="flex items-center gap-6 text-xs font-mono text-muted-foreground">
-                  <div>
-                    <span className="text-violet-300 font-bold text-lg">{course.modules.length}</span> MODULES
-                  </div>
-                  <div className="h-8 w-px bg-border" />
-                  <div>
-                    <span className="text-violet-300 font-bold text-lg">{totalLessons}</span> LESSONS
-                  </div>
-                  {isEnrolled && (
-                    <>
-                      <div className="h-8 w-px bg-border" />
-                      <div>
-                        <span className="text-emerald-300 font-bold text-lg">{completedLessons}</span> DONE
-                      </div>
-                    </>
-                  )}
-                </div>
-              
-            </div>
-
-            
-              <Accordion type="multiple" defaultValue={[course.modules[0]?.id]} className="space-y-3">
-                {course.modules.map((m: any, mi: number) => {
-                  const moduleDone = m.lessons.filter((l: any) => lessonProgress[l.id]?.completed).length
-                  const modulePct = m.lessons.length > 0 ? (moduleDone / m.lessons.length) * 100 : 0
-                  return (
-                    <AccordionItem
-                      key={m.id}
-                      value={m.id}
-                      className="group relative overflow-hidden rounded-2xl border border-border/60 bg-card/30 backdrop-blur transition-colors hover:border-violet-500/30 data-[state=open]:border-violet-500/40"
-                    >
-                      <AccordionTrigger className="px-5 lg:px-7 py-5 hover:no-underline hover:bg-violet-500/[0.02]">
-                        <div className="flex items-center gap-4 text-left flex-1 min-w-0">
-                          <div className="relative shrink-0">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-violet-500/30 bg-violet-500/10 font-mono text-sm font-bold text-violet-200">
-                              {String(mi + 1).padStart(2, "0")}
-                            </div>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="font-semibold text-base lg:text-lg tracking-tight truncate">{m.title}</div>
-                            <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
-                              <span className="font-mono tracking-wider">{m.lessons.length} LESSONS</span>
-                              {moduleDone > 0 && (
-                                <span className="font-mono tracking-wider text-emerald-300">{moduleDone} DONE</span>
-                              )}
-                            </div>
-                          </div>
-                          {/* Mini progress bar */}
-                          {isEnrolled && modulePct > 0 && (
-                            <div className="hidden sm:block w-20">
-                              <div className="text-[9px] font-mono text-muted-foreground text-right mb-1">{Math.round(modulePct)}%</div>
-                              <div className="h-1 bg-muted overflow-hidden rounded-full">
-                                <div
-                                  className={cn("h-full rounded-full transition-all", modulePct === 100 ? "bg-emerald-400" : "bg-violet-400")}
-                                  style={{ width: `${modulePct}%` }}
-                                />
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </AccordionTrigger>
-                      <AccordionContent className="px-5 lg:px-7 pb-4">
-                        <div className="space-y-1 mt-3 border-l border-border/60 ml-6 pl-6">
-                          {m.lessons.map((l: any, li: number) => {
-                            const Icon = LESSON_ICONS[l.type] ?? FileText
-                            const done = lessonProgress[l.id]?.completed
-                            const locked = !isEnrolled && !l.preview
-                            return (
-                              <button
-                                key={l.id}
-                                onClick={() => goLesson(l.id)}
-                                className="group/lesson w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-violet-500/5 text-left transition-colors"
-                              >
-                                <span className="text-[9px] font-mono text-muted-foreground/40 w-6 shrink-0">
-                                  {String(li + 1).padStart(2, "0")}
-                                </span>
-                                {done ? (
-                                  <CheckCircle2 className="h-4 w-4 text-emerald-300 shrink-0" />
-                                ) : locked ? (
-                                  <Lock className="h-3.5 w-3.5 text-muted-foreground/60 shrink-0" />
-                                ) : (
-                                  <Circle className="h-3.5 w-3.5 text-muted-foreground/50 shrink-0 group-hover/lesson:text-violet-300 transition-colors" />
-                                )}
-                                <Icon className={cn("h-4 w-4 shrink-0", done ? "text-emerald-300" : "text-muted-foreground")} />
-                                <span className={cn(
-                                  "flex-1 text-sm truncate transition-colors",
-                                  done ? "text-muted-foreground line-through" : "group-hover/lesson:text-violet-200"
-                                )}>
-                                  {l.title}
-                                </span>
-                                {l.preview && !isEnrolled && (
-                                  <Badge variant="outline" className="text-[9px] text-emerald-300 border-emerald-500/30 font-mono tracking-wider">FREE</Badge>
-                                )}
-                                <span className="text-[10px] text-muted-foreground font-mono tracking-wider">{l.durationMin}m</span>
-                              </button>
-                            )
-                          })}
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  )
-                })}
-              </Accordion>
-            
-          </div>
-        </section>
+        <SkillProgressionChart tags={course.tags} />
 
         {/* ====================================================
-            PREREQUISITES & TARGET AUDIENCE
+            6. CAREER PATH INTEGRATION
             ==================================================== */}
-        <section className="py-20 lg:py-28 border-t border-border/60">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="grid lg:grid-cols-2 gap-12">
-              {/* Prerequisites */}
-              <div>
-                
-                  <p className="text-[10px] font-mono text-violet-300 tracking-[0.3em] mb-4">PREREQUISITES</p>
-                
-                
-                  <h3 className="text-[clamp(1.5rem,3vw,2.25rem)] font-bold leading-[1.05] tracking-[-0.02em] mb-6">
-                    What you need before starting.
-                  </h3>
-                
-                
-                  <div className="space-y-3">
-                    {[
-                      { icon: CheckCircle2, text: "Basic understanding of computer networks and TCP/IP", color: "text-emerald-400" },
-                      { icon: CheckCircle2, text: "Familiarity with Linux command line fundamentals", color: "text-emerald-400" },
-                      { icon: CheckCircle2, text: "Understanding of basic security concepts (CIA triad)", color: "text-emerald-400" },
-                      { icon: Circle, text: "No prior certification required - beginner-friendly entry", color: "text-muted-foreground" },
-                    ].map((req, i) => (
-                      <div key={i} className="flex items-start gap-3">
-                        <req.icon className={cn("h-5 w-5 mt-0.5 shrink-0", req.color)} />
-                        <span className="text-sm text-muted-foreground leading-relaxed">{req.text}</span>
-                      </div>
-                    ))}
-                  </div>
-                
-
-                {/* Prerequisite courses */}
-                {prereqData?.prerequisites && prereqData.prerequisites.length > 0 && (
-                  
-                    <div className="mt-5 pt-6 border-t border-border/40">
-                      <p className="text-[10px] font-mono text-muted-foreground tracking-[0.2em] mb-4">RECOMMENDED PRIOR COURSES</p>
-                      <div className="space-y-2">
-                        {prereqData.prerequisites.map((p) => (
-                          <button
-                            key={p.id}
-                            onClick={() => navigate({ name: "course", courseId: p.id })}
-                            className="group w-full flex items-center justify-between p-3 rounded-lg border border-border/60 hover:border-violet-500/40 transition-all text-left"
-                          >
-                            <div className="flex items-center gap-3">
-                              {p.completed ? (
-                                <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                              ) : (
-                                <Lock className="h-4 w-4 text-muted-foreground" />
-                              )}
-                              <span className="text-sm font-medium group-hover:text-violet-300 transition-colors">{p.title}</span>
-                            </div>
-                            <Badge variant="outline" className="text-[10px]">{p.shortName}</Badge>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  
-                )}
-              </div>
-
-              {/* Target Audience */}
-              <div>
-                
-                  <p className="text-[10px] font-mono text-cyan-300 tracking-[0.3em] mb-4">TARGET AUDIENCE</p>
-                
-                
-                  <h3 className="text-[clamp(1.5rem,3vw,2.25rem)] font-bold leading-[1.05] tracking-[-0.02em] mb-6">
-                    Who this course is for.
-                  </h3>
-                
-                
-                  <div className="space-y-3">
-                    {[
-                      { icon: GraduationCap, text: "Aspiring cybersecurity professionals entering the field", color: "text-violet-300" },
-                      { icon: Shield, text: "IT professionals transitioning to security roles", color: "text-cyan-300" },
-                      { icon: Target, text: "Security analysts seeking industry certification", color: "text-amber-300" },
-                      { icon: Users, text: "Students preparing for certification exams", color: "text-emerald-300" },
-                      { icon: Briefcase, text: "Professionals needing CEUs or skill verification", color: "text-rose-300" },
-                    ].map((aud, i) => (
-                      <div key={i} className="flex items-start gap-3 p-3 rounded-lg border border-border/40 bg-card/20">
-                        <aud.icon className={cn("h-5 w-5 mt-0.5 shrink-0", aud.color)} />
-                        <span className="text-sm text-muted-foreground leading-relaxed">{aud.text}</span>
-                      </div>
-                    ))}
-                  </div>
-                
-              </div>
-            </div>
-          </div>
-        </section>
+        <CareerPathSection courseId={course.id} courseTitle={course.title} courseLevel={course.level} />
 
         {/* ====================================================
-            HANDS-ON LABS - dedicated section
+            7. INTERACTIVE CURRICULUM TIMELINE
             ==================================================== */}
-        <section className="py-20 lg:py-28 border-t border-border/60 relative overflow-hidden">
-          <div className="absolute inset-0 bg-grid opacity-8" />
-          <div className="absolute top-0 right-0 w-[500px] h-[400px] bg-cyan-600/5 blur-[120px] rounded-full" />
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
-            
-              <p className="text-[10px] font-mono text-cyan-300 tracking-[0.3em] mb-4">HANDS-ON LABS</p>
-            
-            
-              <h2 className="text-[clamp(2rem,4vw,3rem)] font-bold leading-[1.05] tracking-[-0.02em] mb-4 text-balance">
-                Practice in a real cyber range.
-              </h2>
-            
-            
-              <p className="text-base text-muted-foreground max-w-lg mb-12">
-                Every GuardianX course includes hands-on labs with Docker-powered live targets.
-                {isEnrolled ? " You're enrolled - launch the lab directly." : " Enroll to access the full lab environment."}
-              </p>
-            
-
-            {course.labs && course.labs.length > 0 ? (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {course.labs.map((lab: any) => (
-                  <div key={lab.id} className="group h-full">
-                      <div
-                        className="relative h-full rounded-xl border border-border/60 bg-card/30 p-6 cursor-pointer overflow-hidden"
-                        onClick={() => navigate(isEnrolled ? { name: "lab", labSlug: lab.slug } : { name: "login" })}
-                      >
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="inline-flex p-2.5 rounded-lg bg-cyan-500/10">
-                            <FlaskConical className="h-5 w-5 text-cyan-300" />
-                          </div>
-                          <Badge variant="outline" className={cn(
-                            "text-[10px] font-mono",
-                            lab.difficulty === "Easy" ? "border-emerald-500/30 text-emerald-400" :
-                            lab.difficulty === "Medium" ? "border-amber-500/30 text-amber-400" :
-                            "border-rose-500/30 text-rose-400"
-                          )}>
-                            {lab.difficulty.toUpperCase()}
-                          </Badge>
-                        </div>
-                        <h3 className="font-semibold text-base mb-2 group-hover:text-violet-300 transition-colors">{lab.title}</h3>
-                        <p className="text-xs text-muted-foreground mb-4">{lab.category}</p>
-                        <div className="flex items-center justify-between pt-4 border-t border-border/40">
-                          <span className="text-[10px] font-mono text-violet-300">{lab.points} XP</span>
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground group-hover:text-violet-300 transition-colors">
-                            {isEnrolled ? "Launch Lab" : "Enroll to Access"}
-                            <ArrowRight className="h-3 w-3" />
-                          </div>
-                        </div>
-                        {!isEnrolled && (
-                          <div className="absolute top-2 right-2">
-                            <Lock className="h-4 w-4 text-muted-foreground/40" />
-                          </div>
-                        )}
-                      </div>
-                </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12 rounded-xl border border-border/40 bg-card/20">
-                <FlaskConical className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
-                <p className="text-sm text-muted-foreground">Labs for this course are being prepared.</p>
-              </div>
-            )}
-          </div>
-        </section>
+        <CurriculumTimeline
+          course={course}
+          isEnrolled={isEnrolled}
+          lessonProgress={lessonProgress}
+          goLesson={goLesson}
+          totalLessons={totalLessons}
+          completedLessons={completedLessons}
+        />
 
         {/* ====================================================
-            UPCOMING BATCHES - auto-rotating carousel
+            8. IS THIS COURSE RIGHT FOR YOU?
             ==================================================== */}
-        <section className="py-20 lg:py-28 border-t border-border/60 relative overflow-hidden">
-          <div className="absolute inset-0 bg-grid opacity-8" />
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-violet-600/5 blur-[120px] rounded-full pointer-events-none" />
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
-            <div className="mb-12 max-w-2xl">
-              <p className="text-[10px] font-mono text-violet-300 tracking-[0.3em] mb-4">UPCOMING BATCHES</p>
-              <h2 className="text-[clamp(2rem,4vw,3rem)] font-bold leading-[1.05] tracking-[-0.02em] mb-4 text-balance">
-                Choose a cohort that fits.
-              </h2>
-              <p className="text-base text-muted-foreground">
-                New batches start every few weeks. Pick the schedule and mode that works
-                for you - slides auto-advance, or use the arrows to browse.
-              </p>
-            </div>
-
-            <BatchCarousel
-              onEnroll={(batch) => {
-                if (!user) {
-                  navigate({ name: "login" })
-                  return
-                }
-                toast.success(`Enrollment requested for ${batch.name}`, {
-                  description: `${batch.startDate} · ${batch.mode} · ${batch.instructor}`,
-                })
-              }}
-            />
-          </div>
-        </section>
+        <FitChecklist level={course.level} category={course.category} />
 
         {/* ====================================================
-            INSTRUCTOR - editorial section
+            9. COURSE DIFFICULTY METER
             ==================================================== */}
-        <section className="py-20 lg:py-28 border-t border-border/60 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-[500px] h-[400px] bg-cyan-600/5 blur-[120px] rounded-full" />
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
-            <div className="grid lg:grid-cols-12 gap-12 items-start">
-              <div className="lg:col-span-5">
-                
-                  <p className="text-[10px] font-mono text-cyan-300 tracking-[0.3em] mb-6">03 - INSTRUCTOR</p>
-                
-                
-                  <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance mb-6">
-                    Learn from a
-                    <span className="text-gradient-cyan"> practitioner.</span>
-                  </h2>
-                
-                
-                  <div className="flex items-center gap-4 mb-6">
-                    <Avatar className="h-16 w-16 border-2 border-cyan-500/30">
-                      <AvatarFallback className="bg-cyan-500/10 text-cyan-300 text-base font-mono">
-                        {course.instructor.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="text-xl font-bold tracking-tight">{course.instructor.name}</div>
-                      <div className="text-sm text-muted-foreground">{course.instructor.title}</div>
-                    </div>
-                  </div>
-                
-                {course.instructor.bio && (
-                  
-                    <p className="text-muted-foreground leading-relaxed max-w-md">
-                      {course.instructor.bio}
-                    </p>
-                  
-                )}
-              </div>
-
-              <div className="lg:col-span-7">
-                
-                  <div className="grid grid-cols-3 gap-6">
-                    {[
-                      { label: "COURSES", value: 12, icon: BookOpen, color: "text-violet-300" },
-                      { label: "STUDENTS", value: 8400, icon: Users, color: "text-cyan-300" },
-                      { label: "RATING", value: "4.9", icon: Star, color: "text-amber-300" },
-                    ].map((stat) => (
-                      <div key={stat.label} className="border-l border-border/60 pl-4">
-                        <stat.icon className={cn("h-4 w-4 mb-2", stat.color)} />
-                        <div className="text-3xl font-bold mb-1 tabular-nums">{stat.value}</div>
-                        <div className="text-[10px] font-mono text-muted-foreground tracking-[0.2em]">{stat.label}</div>
-                      </div>
-                    ))}
-                  </div>
-                
-              </div>
-            </div>
-          </div>
-        </section>
+        <DifficultyMeter durationHours={course.durationHours} modules={course.modules} />
 
         {/* ====================================================
-            ABOUT + LABS - two-column editorial
+            10. REAL STUDENT PROJECTS SHOWCASE
             ==================================================== */}
-        <section className="py-20 lg:py-28 border-t border-border/60">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="grid lg:grid-cols-12 gap-12">
-              {/* About this course */}
-              <div className="lg:col-span-7">
-                
-                  <p className="text-[10px] font-mono text-violet-300 tracking-[0.3em] mb-6">04 - OVERVIEW</p>
-                
-                
-                  <h2 className="text-[clamp(1.75rem,3.5vw,2.75rem)] font-bold leading-[1.05] tracking-[-0.03em] mb-6">
-                    About this course.
-                  </h2>
-                
-                
-                  <p className="text-base lg:text-lg text-muted-foreground leading-relaxed mb-6">
-                    {course.longDescription}
-                  </p>
-                
-                {course.tags && (
-                  
-                    <div className="flex flex-wrap gap-2 mt-6">
-                      {course.tags.split(",").map((t: string) => (
-                        <Badge key={t} variant="outline" className="text-xs font-mono tracking-wider border-violet-500/30 text-violet-200 bg-violet-500/5">
-                          {t.trim()}
-                        </Badge>
-                      ))}
-                    </div>
-                  
-                )}
-              </div>
-
-              {/* Labs sidebar */}
-              <div className="lg:col-span-5">
-                {course.labs?.length > 0 ? (
-                  
-                    <div>
-                      <p className="text-[10px] font-mono text-cyan-300 tracking-[0.3em] mb-4">PRACTICE LABS</p>
-                      <div className="space-y-2">
-                        {course.labs.map((lab: any) => (
-                          <button
-                            key={lab.id}
-                            onClick={() => navigate({ name: "lab", labSlug: lab.slug })}
-                            className="group w-full flex items-center justify-between p-4 rounded-xl border border-border/60 hover:border-violet-500/40 hover:bg-violet-500/3 text-left transition-all"
-                          >
-                            <div className="min-w-0 flex-1">
-                              <div className="text-sm font-medium truncate group-hover:text-violet-200 transition-colors">{lab.title}</div>
-                              <div className="text-xs text-muted-foreground mt-0.5 font-mono tracking-wider">
-                                {lab.category} · {lab.difficulty}
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2 shrink-0 ml-3">
-                              <Badge variant="outline" className="text-[10px] text-violet-300 border-violet-500/30 font-mono">
-                                {lab.points} PTS
-                              </Badge>
-                              <ArrowRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-violet-300 group-hover:translate-x-1 transition-all" />
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  
-                ) : null}
-
-                {/* Community */}
-                
-                  <div className="mt-6 p-5 rounded-xl border border-border/60 bg-card/30 backdrop-blur">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="flex items-center gap-2 text-sm font-semibold">
-                        <MessageSquare className="h-4 w-4 text-cyan-300" /> Community
-                      </h3>
-                      <span className="text-[10px] font-mono text-muted-foreground tracking-wider">
-                        {course._count?.discussions ?? 0} THREADS
-                      </span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mb-3">
-                      {course._count?.enrollments ?? 0} students enrolled and active in discussions.
-                    </p>
-                    <Button variant="outline" size="sm" className="w-full" onClick={() => navigate({ name: "community" })}>
-                      <MessageSquare className="h-3.5 w-3.5 mr-1.5" /> Join Discussion
-                    </Button>
-                  </div>
-                
-              </div>
-            </div>
-          </div>
-        </section>
+        <StudentProjectsShowcase labs={course.labs ?? []} category={course.category} />
 
         {/* ====================================================
-            CERTIFICATE PREVIEW
+            11. LAB INTEGRATION PREVIEW
             ==================================================== */}
-        <section className="py-20 lg:py-28 border-t border-border/60 relative overflow-hidden">
-          <div className="absolute inset-0">
-            <div className="w-full h-full opacity-10 bg-grid" />
-          </div>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-violet-600/8 blur-[120px] rounded-full" />
-
-          <div className="relative z-10 mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-            
-              <p className="text-[10px] font-mono text-amber-300 tracking-[0.3em] mb-6 text-center">05 - CERTIFICATION</p>
-            
-            
-              <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance text-center mb-12">
-                Earn a verifiable
-                <span className="text-gradient-premium"> certificate.</span>
-              </h2>
-            
-
-            
-              <div className="relative aspect-[1.6/1] max-w-2xl mx-auto rounded-2xl border-2 border-violet-500/30 bg-gradient-to-br from-violet-950/40 via-background to-background overflow-hidden">
-                <div className="absolute inset-0 bg-grid opacity-15" />
-                <div className="absolute inset-4 border border-violet-500/20 rounded-xl" />
-                <div className="absolute top-4 right-4 text-[10px] font-mono text-violet-300/60 tracking-[0.3em]">
-                  GUARDIANX · CERTIFIED
-                </div>
-
-                <div className="relative h-full flex flex-col items-center justify-center p-8 text-center">
-                  <div className="mb-4">
-                    <Award className="h-12 w-12 text-violet-300" />
-                  </div>
-                  <p className="text-[10px] font-mono text-muted-foreground tracking-[0.3em] mb-2">CERTIFICATE OF COMPLETION</p>
-                  <p className="text-2xl lg:text-3xl font-bold tracking-tight mb-2">{course.title}</p>
-                  <div className="h-px w-32 bg-gradient-to-r from-transparent via-violet-500/50 to-transparent my-3" />
-                  <p className="text-sm text-muted-foreground">Awarded to <span className="text-foreground font-medium">{user?.name ?? "the bearer"}</span></p>
-                  <p className="text-[10px] font-mono text-muted-foreground/60 tracking-[0.2em] mt-4">
-                    {course.certBody ?? "GUARDIANX ACADEMY"} · {course.shortName}
-                  </p>
-                </div>
-              </div>
-            
-
-            
-              <p className="text-center text-sm text-muted-foreground mt-6 max-w-xl mx-auto">
-                Complete all modules and pass the final assessment to earn a blockchain-verifiable certificate
-                recognized by industry partners.
-              </p>
-            
-          </div>
-        </section>
+        <LabIntegrationPreview labs={course.labs ?? []} isEnrolled={isEnrolled} navigate={navigate} />
 
         {/* ====================================================
-            REVIEWS
+            12. LIVE BATCH SCHEDULE PREVIEW
             ==================================================== */}
-        <section className="py-20 lg:py-28 border-t border-border/60">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            
-              <p className="text-[10px] font-mono text-amber-300 tracking-[0.3em] mb-6">06 - REVIEWS</p>
-            
-            
-              <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance mb-12">
-                Student voices.
-              </h2>
-            
-            <ReviewsSection courseId={course.id} isEnrolled={isEnrolled} />
-          </div>
-        </section>
+        <BatchSchedulePreview courseId={course.id} user={user} navigate={navigate} />
 
         {/* ====================================================
-            FINAL CTA - atmospheric
+            13. INSTRUCTOR SPOTLIGHT CARD
+            ==================================================== */}
+        <InstructorSpotlight instructor={course.instructor} navigate={navigate} />
+
+        {/* ====================================================
+            14. CERTIFICATION EXAM BLUEPRINT
+            ==================================================== */}
+        <CertExamBlueprint course={course} />
+
+        {/* ====================================================
+            15. PREREQUISITES VISUAL GRAPH
+            ==================================================== */}
+        <PrerequisitesGraph
+          course={course}
+          prerequisites={prerequisites}
+          user={user}
+          navigate={navigate}
+        />
+
+        {/* ====================================================
+            16. LIVE "WHO'S ENROLLED" ACTIVITY FEED
+            ==================================================== */}
+        <ActivityFeed courseId={course.id} />
+
+        {/* ====================================================
+            17. SKILLS YOU'LL EARN (TAG CLOUD)
+            ==================================================== */}
+        <SkillsTagCloud tags={course.tags} modules={course.modules} />
+
+        {/* ====================================================
+            REVIEWS — kept from existing implementation
+            ==================================================== */}
+        <ReviewsSection courseId={course.id} isEnrolled={isEnrolled} />
+
+        {/* ====================================================
+            18. RELATED COURSES CAROUSEL
+            ==================================================== */}
+        <RelatedCoursesCarousel courseId={course.id} navigate={navigate} />
+
+        {/* ====================================================
+            19. FINAL CTA — atmospheric
             ==================================================== */}
         <section className="py-24 lg:py-32 border-t border-border/60 relative overflow-hidden">
           <div className="absolute inset-0">
@@ -1225,81 +600,2054 @@ export function CourseDetailView() {
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] bg-violet-600/10 blur-[140px] rounded-full" />
 
           <div className="relative z-10 mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
-            
-              <p className="text-[10px] font-mono text-violet-300 tracking-[0.3em] mb-6">READY?</p>
-            
-            
-              <h2 className="text-[clamp(2.5rem,6vw,5rem)] font-bold leading-[0.92] tracking-[-0.04em] text-balance mb-6">
-                {isEnrolled ? (
-                  <>Continue your <span className="text-gradient-premium">journey.</span></>
-                ) : (
-                  <>Begin your <span className="text-gradient-premium">ascent.</span></>
-                )}
-              </h2>
-            
-            
-              <p className="text-lg text-muted-foreground max-w-xl mx-auto mb-6 leading-relaxed">
-                {isEnrolled
-                  ? `You're ${progressPct}% through this course. Keep the momentum going.`
-                  : "Join thousands of security professionals mastering their craft on GuardianX."}
-              </p>
-            
-            
-              <div className="flex items-center justify-center gap-3 flex-wrap">
-                {isEnrolled ? (
-                  <Button
-                    size="lg"
-                    className="btn-premium bg-violet-600 hover:bg-violet-500 text-violet-50 border border-violet-500/30 h-12 px-8 text-base"
-                    onClick={() => {
-                      for (const m of course.modules) {
-                        for (const l of m.lessons) {
-                          if (!lessonProgress[l.id]?.completed) {
-                            goLesson(l.id)
-                            return
-                          }
-                        }
-                      }
-                      goLesson(course.modules[0]?.lessons[0]?.id)
-                    }}
-                  >
-                    <PlayCircle className="h-5 w-5 mr-2" /> Continue Learning
-                  </Button>
-                ) : (
-                  <div>
-                    <Button
-                      size="lg"
-                      className="btn-premium bg-violet-600 hover:bg-violet-500 text-violet-50 border border-violet-500/30 h-12 px-8 text-base"
-                      onClick={() => {
-                        if (!user) {
-                          navigate({ name: "login" })
-                          return
-                        }
-                        enrollMutation.mutate()
-                      }}
-                      disabled={enrollMutation.isPending}
-                    >
-                      <GraduationCap className="h-5 w-5 mr-2" /> {enrollMutation.isPending ? "Enrolling..." : `Enroll for $${course.price}`}
-                    </Button>
-                  </div>
-                )}
+            <p className="text-[10px] font-mono text-violet-300 tracking-[0.3em] mb-6">READY?</p>
+            <h2 className="text-[clamp(2.5rem,6vw,5rem)] font-bold leading-[0.92] tracking-[-0.04em] text-balance mb-6">
+              {isEnrolled ? (
+                <>Continue your <span className="text-gradient-premium">journey.</span></>
+              ) : (
+                <>Begin your <span className="text-gradient-premium">ascent.</span></>
+              )}
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-xl mx-auto mb-6 leading-relaxed">
+              {isEnrolled
+                ? `You're ${progressPct}% through this course. Keep the momentum going.`
+                : "Join thousands of security professionals mastering their craft on GuardianX."}
+            </p>
+            <div className="flex items-center justify-center gap-3 flex-wrap">
+              {isEnrolled ? (
                 <Button
                   size="lg"
-                  variant="outline"
-                  className="border-border/60 h-12 px-8 text-base"
-                  onClick={() => navigate({ name: "catalog" })}
+                  className="btn-premium bg-violet-600 hover:bg-violet-500 text-violet-50 border border-violet-500/30 h-12 px-8 text-base"
+                  onClick={() => {
+                    for (const m of course.modules) {
+                      for (const l of m.lessons) {
+                        if (!lessonProgress[l.id]?.completed) {
+                          goLesson(l.id)
+                          return
+                        }
+                      }
+                    }
+                    goLesson(course.modules[0]?.lessons[0]?.id)
+                  }}
                 >
-                  Browse Catalog <ArrowRight className="h-4 w-4 ml-2" />
+                  <PlayCircle className="h-5 w-5 mr-2" /> Continue Learning
                 </Button>
-              </div>
-            
+              ) : (
+                <Button
+                  size="lg"
+                  className="btn-premium bg-violet-600 hover:bg-violet-500 text-violet-50 border border-violet-500/30 h-12 px-8 text-base"
+                  onClick={handleEnroll}
+                  disabled={enrollMutation.isPending}
+                >
+                  <GraduationCap className="h-5 w-5 mr-2" /> {enrollMutation.isPending ? "Enrolling..." : `Enroll for $${course.price}`}
+                </Button>
+              )}
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-border/60 h-12 px-8 text-base"
+                onClick={() => navigate({ name: "catalog" })}
+              >
+                Browse Catalog <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            </div>
           </div>
         </section>
       </div>
+
+      {/* ====================================================
+          20. FLOATING ENROLL CTA — sticky bottom bar
+          ==================================================== */}
+      <FloatingEnrollCTA
+        course={course}
+        isEnrolled={isEnrolled}
+        onEnroll={handleEnroll}
+        onContinue={() => {
+          for (const m of course.modules) {
+            for (const l of m.lessons) {
+              if (!lessonProgress[l.id]?.completed) {
+                goLesson(l.id)
+                return
+              }
+            }
+          }
+          goLesson(course.modules[0]?.lessons[0]?.id)
+        }}
+        isEnrolling={enrollMutation.isPending}
+        visible={showFloatingCta && !isEnrolled}
+        progressPct={progressPct}
+      />
     </div>
   )
 }
 
-// ---- Reviews Section ----
+// ============================================================
+// 2. STATS HERO BAR
+// ============================================================
+function StatsHeroBar({ course }: { course: any }) {
+  const stats = [
+    {
+      label: "Students Enrolled",
+      value: course.studentsCount ?? 0,
+      icon: Users,
+      color: "text-violet-300",
+      bg: "bg-violet-500/10",
+      border: "border-violet-500/30",
+      decimals: 0,
+      suffix: "",
+    },
+    {
+      label: "Course Rating",
+      value: course.rating ?? 0,
+      icon: Star,
+      color: "text-amber-300",
+      bg: "bg-amber-500/10",
+      border: "border-amber-500/30",
+      decimals: 1,
+      suffix: "/5",
+    },
+    {
+      label: "Completion Rate",
+      value: 87,
+      icon: TrendingUp,
+      color: "text-emerald-300",
+      bg: "bg-emerald-500/10",
+      border: "border-emerald-500/30",
+      decimals: 0,
+      suffix: "%",
+    },
+    {
+      label: "Career Advancement",
+      value: 73,
+      icon: Briefcase,
+      color: "text-cyan-300",
+      bg: "bg-cyan-500/10",
+      border: "border-cyan-500/30",
+      decimals: 0,
+      suffix: "%",
+    },
+  ]
+
+  return (
+    <section className="relative -mt-2 pb-6 lg:pb-8">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+          {stats.map((s, i) => (
+            <motion.div
+              key={s.label}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.5, delay: i * 0.08, ease: [0.16, 1, 0.3, 1] }}
+              className={cn(
+                "relative rounded-2xl border bg-card/60 backdrop-blur p-4 lg:p-5 overflow-hidden group",
+                s.border
+              )}
+            >
+              <div className={cn("absolute top-0 right-0 w-32 h-32 blur-3xl rounded-full pointer-events-none opacity-40", s.bg)} />
+              <div className="relative">
+                <div className="flex items-center justify-between mb-3">
+                  <div className={cn("inline-flex h-8 w-8 items-center justify-center rounded-lg", s.bg)}>
+                    <s.icon className={cn("h-4 w-4", s.color)} />
+                  </div>
+                  <span className="text-[9px] font-mono text-muted-foreground/50 tracking-[0.2em]">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                </div>
+                <div className="text-2xl lg:text-3xl font-bold leading-none">
+                  <AnimatedNumber
+                    value={s.value}
+                    decimals={s.decimals}
+                    suffix={s.suffix}
+                    className={s.color}
+                  />
+                </div>
+                <div className="text-[10px] font-mono text-muted-foreground tracking-[0.2em] mt-1.5">
+                  {s.label.toUpperCase()}
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ============================================================
+// 4. WHAT YOU'LL ACHIEVE — Badge Collection
+// ============================================================
+function AchievementCollection({ course, outcomes }: { course: any; outcomes: string[] }) {
+  // Build 3-6 achievement cards from outcomes + tags
+  const tags = safeParseTags(course.tags)
+  const cards: { icon: any; title: string; description: string }[] = []
+
+  // Use the first 3-5 tags as achievements
+  tags.slice(0, 5).forEach((tag, i) => {
+    const Icon = ACHIEVEMENT_ICONS[i % ACHIEVEMENT_ICONS.length]
+    cards.push({
+      icon: Icon,
+      title: `Master ${tag}`,
+      description: `Hands-on expertise in ${tag.toLowerCase()} — from fundamentals to advanced real-world scenarios.`,
+    })
+  })
+
+  // Pad with outcomes if we have fewer than 3
+  while (cards.length < 3 && outcomes.length > 0) {
+    const idx = cards.length
+    const Icon = ACHIEVEMENT_ICONS[idx % ACHIEVEMENT_ICONS.length]
+    cards.push({
+      icon: Icon,
+      title: idx === 0 ? "Industry-Ready Skills" : "Practical Mastery",
+      description: outcomes[idx] ?? "Build hands-on competence through real lab exercises.",
+    })
+  }
+
+  // Fallback to 4 generic achievements if nothing available
+  if (cards.length === 0) {
+    cards.push(
+      { icon: Shield, title: "Defensive Mastery", description: "Build defensive security skills across modern infrastructures." },
+      { icon: Target, title: "Threat Detection", description: "Identify, analyze, and mitigate security threats effectively." },
+      { icon: Code, title: "Hands-on Tools", description: "Use industry-standard tools with confidence in real scenarios." },
+      { icon: Trophy, title: "Certification Ready", description: "Walk into the certification exam fully prepared." },
+    )
+  }
+
+  return (
+    <section className="py-20 lg:py-28 border-t border-border/60">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="max-w-2xl mb-12">
+          <SectionLabel index="01" className="text-violet-300">OUTCOMES</SectionLabel>
+          <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
+            What you&apos;ll
+            <span className="text-gradient-premium"> achieve.</span>
+          </h2>
+          <p className="text-muted-foreground mt-6 leading-relaxed">
+            Every lesson builds toward verifiable, hands-on competence. Earn a LEVEL UP
+            badge for each milestone you complete.
+          </p>
+        </div>
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {cards.map((card, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ duration: 0.5, delay: i * 0.08, ease: [0.16, 1, 0.3, 1] }}
+              className="group relative rounded-2xl border border-border/60 bg-card/40 backdrop-blur p-6 hover:border-violet-500/40 hover:bg-card/60 transition-all"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-violet-600/5 blur-3xl rounded-full pointer-events-none" />
+              <div className="relative">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-violet-500/10 border border-violet-500/30">
+                    <card.icon className="h-5 w-5 text-violet-300" />
+                  </div>
+                  <Badge className="text-[9px] font-mono tracking-[0.2em] bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                    <Zap className="h-2.5 w-2.5 mr-1" /> LEVEL UP
+                  </Badge>
+                </div>
+                <h3 className="text-base lg:text-lg font-bold mb-2 tracking-tight">{card.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{card.description}</p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ============================================================
+// 5. ANIMATED SKILL PROGRESSION CHART (Before vs After)
+// ============================================================
+function SkillProgressionChart({ tags }: { tags?: string | null }) {
+  const skills = safeParseTags(tags).slice(0, 6)
+  if (skills.length === 0) {
+    return (
+      <section className="py-20 lg:py-28 border-t border-border/60">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <SectionLabel index="02" className="text-emerald-300">SKILL PROGRESSION</SectionLabel>
+          <p className="text-muted-foreground">Skill progression data available after enrollment.</p>
+        </div>
+      </section>
+    )
+  }
+
+  // Deterministic pseudo-random percentages derived from skill name length + index
+  const skillBars = skills.map((skill, i) => {
+    const seed = skill.length + i * 7
+    const beforePct = 10 + (seed % 21) // 10-30
+    const afterPct = 70 + ((seed * 3) % 26) // 70-95
+    return { skill, beforePct, afterPct, i }
+  })
+
+  return (
+    <section className="py-20 lg:py-28 border-t border-border/60 relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-[500px] h-[400px] bg-emerald-600/5 blur-[120px] rounded-full" />
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
+        <div className="max-w-2xl mb-12">
+          <SectionLabel index="02" className="text-emerald-300">SKILL PROGRESSION</SectionLabel>
+          <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
+            Before vs
+            <span className="text-gradient-premium"> after.</span>
+          </h2>
+          <p className="text-muted-foreground mt-6 leading-relaxed">
+            Watch your skill levels transform. Bars animate as you scroll — see the
+            measurable jump from beginner to practitioner.
+          </p>
+        </div>
+
+        <div className="grid lg:grid-cols-2 gap-5">
+          {skillBars.map((bar) => (
+            <motion.div
+              key={bar.skill}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.5, delay: bar.i * 0.06 }}
+              className="rounded-2xl border border-border/60 bg-card/40 backdrop-blur p-5"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10">
+                    <Brain className="h-4 w-4 text-emerald-300" />
+                  </div>
+                  <span className="font-semibold text-sm lg:text-base">{bar.skill}</span>
+                </div>
+                <Badge variant="outline" className="text-[9px] font-mono text-emerald-300 border-emerald-500/30 tracking-wider">
+                  +{bar.afterPct - bar.beforePct}%
+                </Badge>
+              </div>
+
+              {/* Before bar */}
+              <div className="mb-3">
+                <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground tracking-wider mb-1.5">
+                  <span>BEFORE</span>
+                  <span className="tabular-nums">{bar.beforePct}%</span>
+                </div>
+                <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-muted-foreground/40"
+                    style={{ width: `${bar.beforePct}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* After bar — animated */}
+              <div>
+                <div className="flex items-center justify-between text-[10px] font-mono tracking-wider mb-1.5">
+                  <span className="text-emerald-300">AFTER</span>
+                  <span className="tabular-nums text-emerald-300">{bar.afterPct}%</span>
+                </div>
+                <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    whileInView={{ width: `${bar.afterPct}%` }}
+                    viewport={{ once: true, amount: 0.5 }}
+                    transition={{ duration: 1, delay: 0.2 + bar.i * 0.08, ease: [0.16, 1, 0.3, 1] }}
+                    className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-300"
+                  />
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ============================================================
+// 6. CAREER PATH INTEGRATION
+// ============================================================
+interface LearningPath {
+  id: string
+  title: string
+  slug: string
+  description?: string
+  courses: string[]
+  skills?: string[]
+  level?: string
+}
+function CareerPathSection({
+  courseId,
+  courseTitle,
+  courseLevel,
+}: {
+  courseId: string
+  courseTitle: string
+  courseLevel: string
+}) {
+  const navigate = useAppStore((s) => s.navigate)
+  const { data } = useQuery<{ learningPaths: LearningPath[]; count: number }>({
+    queryKey: ["learning-paths-for-course", courseId],
+    queryFn: () => api(`/api/learning-paths`),
+    enabled: !!courseId,
+  })
+
+  const matchingPaths = (data?.learningPaths ?? []).filter((p) =>
+    Array.isArray(p.courses) && p.courses.includes(courseId)
+  )
+
+  // Visual path nodes — Beginner → This Course → Advanced → Certification
+  const pathNodes = [
+    { icon: Sparkles, label: "Beginner", sub: "Foundations", color: "text-emerald-300", border: "border-emerald-500/30", bg: "bg-emerald-500/10" },
+    { icon: Target, label: "This Course", sub: courseLevel, color: "text-violet-300", border: "border-violet-500/40", bg: "bg-violet-500/10", highlight: true },
+    { icon: Rocket, label: "Advanced", sub: "Specialization", color: "text-amber-300", border: "border-amber-500/30", bg: "bg-amber-500/10" },
+    { icon: Award, label: "Certification", sub: "Industry-recognized", color: "text-cyan-300", border: "border-cyan-500/30", bg: "bg-cyan-500/10" },
+  ]
+
+  return (
+    <section className="py-20 lg:py-28 border-t border-border/60 relative overflow-hidden">
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-violet-600/5 blur-[120px] rounded-full" />
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
+        <div className="max-w-2xl mb-12">
+          <SectionLabel index="03" className="text-cyan-300">CAREER PATH</SectionLabel>
+          <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
+            This course is
+            <span className="text-gradient-premium"> part of.</span>
+          </h2>
+          <p className="text-muted-foreground mt-6 leading-relaxed">
+            A guided journey from foundations to certified practitioner. Click any node
+            to explore the full learning path.
+          </p>
+        </div>
+
+        {/* Visual path — 4 nodes with arrows */}
+        <div className="relative">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 relative">
+            {pathNodes.map((node, i) => (
+              <motion.button
+                key={node.label}
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{ duration: 0.5, delay: i * 0.12, ease: [0.16, 1, 0.3, 1] }}
+                onClick={() => navigate({ name: "learning-paths" })}
+                className={cn(
+                  "group relative rounded-2xl border bg-card/40 backdrop-blur p-5 text-left transition-all hover:bg-card/60 hover:scale-[1.02]",
+                  node.border,
+                  node.highlight && "ring-2 ring-violet-500/40"
+                )}
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className={cn("inline-flex h-10 w-10 items-center justify-center rounded-xl", node.bg)}>
+                    <node.icon className={cn("h-5 w-5", node.color)} />
+                  </div>
+                  <span className="text-[9px] font-mono text-muted-foreground/60 tracking-[0.2em]">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                </div>
+                <div className="text-base font-bold mb-0.5">{node.label}</div>
+                <div className="text-[10px] font-mono text-muted-foreground tracking-[0.2em] uppercase">
+                  {node.sub}
+                </div>
+                {node.highlight && (
+                  <div className="mt-3 text-[10px] font-mono text-violet-300 tracking-wider truncate">
+                    {courseTitle.length > 28 ? courseTitle.slice(0, 28) + "…" : courseTitle}
+                  </div>
+                )}
+              </motion.button>
+            ))}
+          </div>
+
+          {/* Connecting arrows — desktop only */}
+          <div className="hidden lg:flex absolute top-1/2 -translate-y-1/2 left-0 right-0 pointer-events-none">
+            {[25, 50, 75].map((left) => (
+              <div key={left} className="absolute -translate-x-1/2" style={{ left: `${left}%` }}>
+                <ArrowRight className="h-4 w-4 text-muted-foreground/30" />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Matching learning paths (if any) */}
+        {matchingPaths.length > 0 && (
+          <div className="mt-12 pt-8 border-t border-border/40">
+            <p className="text-[10px] font-mono text-muted-foreground tracking-[0.2em] mb-4">
+              OFFICIAL LEARNING PATHS THAT INCLUDE THIS COURSE
+            </p>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {matchingPaths.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => navigate({ name: "learning-paths" })}
+                  className="group text-left rounded-xl border border-border/60 bg-card/30 p-4 hover:border-violet-500/40 hover:bg-card/50 transition-all"
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <Crosshair className="h-4 w-4 text-violet-300" />
+                    <span className="text-sm font-semibold group-hover:text-violet-200 transition-colors">{p.title}</span>
+                  </div>
+                  {p.description && (
+                    <p className="text-xs text-muted-foreground line-clamp-2">{p.description}</p>
+                  )}
+                  {p.skills && p.skills.length > 0 && (
+                    <div className="text-[10px] font-mono text-muted-foreground/60 tracking-wider mt-2">
+                      {p.skills.length} SKILLS · {p.courses.length} COURSES
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  )
+}
+
+// ============================================================
+// 7. INTERACTIVE CURRICULUM TIMELINE
+// ============================================================
+function CurriculumTimeline({
+  course,
+  isEnrolled,
+  lessonProgress,
+  goLesson,
+  totalLessons,
+  completedLessons,
+}: {
+  course: any
+  isEnrolled: boolean
+  lessonProgress: Record<string, { completed: boolean; position: number }>
+  goLesson: (lessonId: string) => void
+  totalLessons: number
+  completedLessons: number
+}) {
+  return (
+    <section className="py-20 lg:py-28 border-t border-border/60 relative">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex items-end justify-between mb-12 flex-wrap gap-6">
+          <div>
+            <SectionLabel index="04" className="text-violet-300">CURRICULUM TIMELINE</SectionLabel>
+            <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
+              Modules &amp;
+              <span className="text-muted-foreground/50"> lessons.</span>
+            </h2>
+          </div>
+          <div className="flex items-center gap-6 text-xs font-mono text-muted-foreground">
+            <div>
+              <span className="text-violet-300 font-bold text-lg">{course.modules.length}</span> MODULES
+            </div>
+            <div className="h-8 w-px bg-border" />
+            <div>
+              <span className="text-violet-300 font-bold text-lg">{totalLessons}</span> LESSONS
+            </div>
+            {isEnrolled && (
+              <>
+                <div className="h-8 w-px bg-border" />
+                <div>
+                  <span className="text-emerald-300 font-bold text-lg">{completedLessons}</span> DONE
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Timeline wrapper — vertical connecting line on the left */}
+        <div className="relative">
+          {/* Vertical line — desktop only */}
+          <div className="hidden lg:block absolute left-[26px] top-2 bottom-2 w-px bg-gradient-to-b from-violet-500/40 via-border/40 to-transparent" />
+
+          <Accordion type="multiple" defaultValue={[course.modules[0]?.id]} className="space-y-4 lg:pl-0">
+            {course.modules.map((m: any, mi: number) => {
+              const moduleDone = m.lessons.filter((l: any) => lessonProgress[l.id]?.completed).length
+              const modulePct = m.lessons.length > 0 ? (moduleDone / m.lessons.length) * 100 : 0
+              const moduleMins = m.lessons.reduce((acc: number, l: any) => acc + (l.durationMin || 0), 0)
+              const moduleHours = Math.floor(moduleMins / 60)
+              const moduleMinsRem = moduleMins % 60
+              const estTime = moduleHours > 0
+                ? `${moduleHours}h${moduleMinsRem > 0 ? ` ${moduleMinsRem}m` : ""}`
+                : `${moduleMinsRem}m`
+
+              return (
+                <AccordionItem
+                  key={m.id}
+                  value={m.id}
+                  className="group relative overflow-hidden rounded-2xl border border-border/60 bg-card/30 backdrop-blur transition-colors hover:border-violet-500/30 data-[state=open]:border-violet-500/40 lg:pl-12"
+                >
+                  {/* Timeline node — desktop only */}
+                  <div className="hidden lg:flex absolute left-[14px] top-7 z-10 h-6 w-6 items-center justify-center rounded-full border-2 border-violet-500/40 bg-card">
+                    <div className={cn(
+                      "h-2 w-2 rounded-full",
+                      modulePct === 100 ? "bg-emerald-400" : modulePct > 0 ? "bg-violet-400" : "bg-muted-foreground/40"
+                    )} />
+                  </div>
+
+                  <AccordionTrigger className="px-5 lg:px-6 py-5 hover:no-underline hover:bg-violet-500/[0.02]">
+                    <div className="flex items-center gap-4 text-left flex-1 min-w-0">
+                      {/* Mobile number badge */}
+                      <div className="lg:hidden relative shrink-0">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-violet-500/30 bg-violet-500/10 font-mono text-sm font-bold text-violet-200">
+                          {String(mi + 1).padStart(2, "0")}
+                        </div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-base lg:text-lg tracking-tight truncate">{m.title}</div>
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                          <span className="font-mono tracking-wider">{m.lessons.length} LESSONS</span>
+                          <span className="font-mono tracking-wider">{estTime}</span>
+                          {moduleDone > 0 && (
+                            <span className="font-mono tracking-wider text-emerald-300">{moduleDone} DONE</span>
+                          )}
+                        </div>
+                      </div>
+                      {/* Mini progress bar */}
+                      {isEnrolled && modulePct > 0 && (
+                        <div className="hidden sm:block w-20">
+                          <div className="text-[9px] font-mono text-muted-foreground text-right mb-1">{Math.round(modulePct)}%</div>
+                          <div className="h-1 bg-muted overflow-hidden rounded-full">
+                            <div
+                              className={cn("h-full rounded-full transition-all", modulePct === 100 ? "bg-emerald-400" : "bg-violet-400")}
+                              style={{ width: `${modulePct}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-5 lg:px-6 pb-4">
+                    <div className="space-y-1 mt-3 border-l border-border/60 ml-6 pl-6">
+                      {m.lessons.map((l: any, li: number) => {
+                        const Icon = LESSON_ICONS[l.type] ?? FileText
+                        const done = lessonProgress[l.id]?.completed
+                        const locked = !isEnrolled && !l.preview
+                        return (
+                          <button
+                            key={l.id}
+                            onClick={() => goLesson(l.id)}
+                            className="group/lesson w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-violet-500/5 text-left transition-colors"
+                          >
+                            <span className="text-[9px] font-mono text-muted-foreground/40 w-6 shrink-0">
+                              {String(li + 1).padStart(2, "0")}
+                            </span>
+                            {done ? (
+                              <CheckCircle2 className="h-4 w-4 text-emerald-300 shrink-0" />
+                            ) : locked ? (
+                              <Lock className="h-3.5 w-3.5 text-muted-foreground/60 shrink-0" />
+                            ) : (
+                              <Circle className="h-3.5 w-3.5 text-muted-foreground/50 shrink-0 group-hover/lesson:text-violet-300 transition-colors" />
+                            )}
+                            <Icon className={cn("h-4 w-4 shrink-0", done ? "text-emerald-300" : "text-muted-foreground")} />
+                            <span className={cn(
+                              "flex-1 text-sm truncate transition-colors",
+                              done ? "text-muted-foreground line-through" : "group-hover/lesson:text-violet-200"
+                            )}>
+                              {l.title}
+                            </span>
+                            {l.preview && !isEnrolled && (
+                              <Badge variant="outline" className="text-[9px] text-emerald-300 border-emerald-500/30 font-mono tracking-wider">FREE</Badge>
+                            )}
+                            <span className="text-[10px] text-muted-foreground font-mono tracking-wider">{l.durationMin}m</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              )
+            })}
+          </Accordion>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ============================================================
+// 8. IS THIS COURSE RIGHT FOR YOU?
+// ============================================================
+function FitChecklist({ level, category }: { level: string; category: string }) {
+  // Generate fit/non-fit items based on level + category
+  const fitItems: { text: string; icon: any }[] = []
+  const notFitItems: { text: string; icon: any }[] = []
+
+  // Fit items — derived from level + category
+  if (level === "Beginner") {
+    fitItems.push(
+      { text: "You're new to cybersecurity and want a structured entry point", icon: Sparkles },
+      { text: "You have basic IT literacy and want to learn security fundamentals", icon: CheckCircle2 },
+      { text: `You're curious about ${category.toLowerCase()} and want hands-on practice`, icon: Target },
+    )
+    notFitItems.push(
+      { text: "You're an experienced practitioner seeking advanced specialization", icon: X },
+      { text: "You already hold an intermediate certification in this domain", icon: X },
+    )
+  } else if (level === "Intermediate") {
+    fitItems.push(
+      { text: "You understand basic networking and TCP/IP fundamentals", icon: CheckCircle2 },
+      { text: "You have 1-2 years of IT or security experience", icon: CheckCircle2 },
+      { text: `You want to deepen your ${category.toLowerCase()} expertise`, icon: Target },
+    )
+    notFitItems.push(
+      { text: "You're an absolute beginner with no IT background", icon: X },
+      { text: "You're looking for an expert-level / red-team curriculum", icon: X },
+    )
+  } else {
+    fitItems.push(
+      { text: "You have intermediate security experience and want advanced techniques", icon: CheckCircle2 },
+      { text: `You're preparing for a senior ${category.toLowerCase()} role`, icon: Target },
+      { text: "You want hands-on lab challenges with real-world complexity", icon: Rocket },
+    )
+    notFitItems.push(
+      { text: "You're new to cybersecurity — start with a Beginner course", icon: X },
+      { text: "You're looking for foundational theory without lab work", icon: X },
+    )
+  }
+
+  return (
+    <section className="py-20 lg:py-28 border-t border-border/60">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="max-w-2xl mb-12">
+          <SectionLabel index="05" className="text-amber-300">FIT CHECK</SectionLabel>
+          <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
+            Is this course right
+            <span className="text-gradient-premium"> for you?</span>
+          </h2>
+        </div>
+
+        <div className="grid lg:grid-cols-2 gap-6">
+          {/* Good fit */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            className="rounded-2xl border border-emerald-500/30 bg-emerald-500/[0.03] p-6 lg:p-8"
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/15 border border-emerald-500/30">
+                <CheckCircle2 className="h-5 w-5 text-emerald-300" />
+              </div>
+              <div>
+                <p className="text-[10px] font-mono text-emerald-300 tracking-[0.2em]">GOOD FIT IF</p>
+                <h3 className="text-xl font-bold">You&apos;re ready to start</h3>
+              </div>
+            </div>
+            <ul className="space-y-3">
+              {fitItems.map((item, i) => (
+                <li key={i} className="flex items-start gap-3">
+                  <item.icon className="h-5 w-5 text-emerald-300 mt-0.5 shrink-0" />
+                  <span className="text-sm text-foreground/90 leading-relaxed">{item.text}</span>
+                </li>
+              ))}
+            </ul>
+          </motion.div>
+
+          {/* Not ideal */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            className="rounded-2xl border border-rose-500/30 bg-rose-500/[0.03] p-6 lg:p-8"
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-rose-500/15 border border-rose-500/30">
+                <X className="h-5 w-5 text-rose-300" />
+              </div>
+              <div>
+                <p className="text-[10px] font-mono text-rose-300 tracking-[0.2em]">NOT IDEAL IF</p>
+                <h3 className="text-xl font-bold">Consider a different path</h3>
+              </div>
+            </div>
+            <ul className="space-y-3">
+              {notFitItems.map((item, i) => (
+                <li key={i} className="flex items-start gap-3">
+                  <item.icon className="h-5 w-5 text-rose-300 mt-0.5 shrink-0" />
+                  <span className="text-sm text-foreground/90 leading-relaxed">{item.text}</span>
+                </li>
+              ))}
+            </ul>
+          </motion.div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ============================================================
+// 9. COURSE DIFFICULTY METER
+// ============================================================
+function DifficultyMeter({ durationHours, modules }: { durationHours: number; modules: any[] }) {
+  const phases = [
+    { label: "Foundations", pct: 25, color: "bg-emerald-500", text: "text-emerald-300", icon: Sparkles },
+    { label: "Hands-on Labs", pct: 30, color: "bg-amber-500", text: "text-amber-300", icon: FlaskConical },
+    { label: "Advanced Topics", pct: 25, color: "bg-orange-500", text: "text-orange-300", icon: Rocket },
+    { label: "Exam Prep", pct: 20, color: "bg-rose-500", text: "text-rose-300", icon: Award },
+  ]
+  const moduleCount = modules?.length ?? 0
+  const totalHours = durationHours ?? 0
+
+  return (
+    <section className="py-20 lg:py-28 border-t border-border/60 relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-[500px] h-[400px] bg-amber-600/5 blur-[120px] rounded-full" />
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
+        <div className="max-w-2xl mb-12">
+          <SectionLabel index="06" className="text-amber-300">INTENSITY METER</SectionLabel>
+          <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
+            How intense
+            <span className="text-gradient-premium"> is this?</span>
+          </h2>
+          <p className="text-muted-foreground mt-6 leading-relaxed">
+            A snapshot of how the difficulty ramps across the {totalHours} hour journey
+            and {moduleCount} modules.
+          </p>
+        </div>
+
+        {/* Difficulty bar — gradient green → amber → orange → red */}
+        <div className="rounded-2xl border border-border/60 bg-card/40 backdrop-blur p-6 lg:p-8">
+          {/* Bar */}
+          <div className="relative h-4 w-full rounded-full overflow-hidden bg-muted mb-2">
+            <motion.div
+              initial={{ scaleX: 0 }}
+              whileInView={{ scaleX: 1 }}
+              viewport={{ once: true, amount: 0.5 }}
+              transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+              className="absolute inset-0 origin-left bg-gradient-to-r from-emerald-500 via-amber-500 via-orange-500 to-rose-500"
+            />
+            {/* Phase divider marks */}
+            {phases.slice(0, -1).map((p, i) => {
+              const cumulative = phases.slice(0, i + 1).reduce((acc, ph) => acc + ph.pct, 0)
+              return (
+                <div
+                  key={i}
+                  className="absolute top-0 bottom-0 w-px bg-background/40"
+                  style={{ left: `${cumulative}%` }}
+                />
+              )
+            })}
+          </div>
+
+          {/* Phase labels */}
+          <div className="flex justify-between mt-4 flex-wrap gap-2">
+            {phases.map((p, i) => (
+              <motion.div
+                key={p.label}
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.5 }}
+                transition={{ duration: 0.4, delay: i * 0.1 }}
+                className="flex items-center gap-2"
+              >
+                <div className={cn("inline-flex h-7 w-7 items-center justify-center rounded-lg", p.color, "bg-opacity-15")}>
+                  <p.icon className={cn("h-3.5 w-3.5", p.text)} />
+                </div>
+                <div>
+                  <div className="text-xs font-semibold">{p.label}</div>
+                  <div className="text-[10px] font-mono text-muted-foreground tracking-wider">{p.pct}% of course</div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ============================================================
+// 10. REAL STUDENT PROJECTS SHOWCASE
+// ============================================================
+function StudentProjectsShowcase({ labs, category }: { labs: any[]; category: string }) {
+  // Derive 3-4 project cards from the course's labs
+  const projects = labs.slice(0, 4).map((lab, i) => {
+    const estHours = lab.difficulty === "Easy" ? 2 : lab.difficulty === "Medium" ? 4 : 6
+    return {
+      id: lab.id,
+      title: lab.title,
+      category: lab.category || category,
+      difficulty: lab.difficulty,
+      estHours,
+      skills: [lab.category, category].filter(Boolean),
+    }
+  })
+
+  if (projects.length === 0) {
+    return null
+  }
+
+  return (
+    <section className="py-20 lg:py-28 border-t border-border/60 relative overflow-hidden">
+      <div className="absolute top-0 left-0 w-[500px] h-[400px] bg-cyan-600/5 blur-[120px] rounded-full" />
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
+        <div className="max-w-2xl mb-12">
+          <SectionLabel index="07" className="text-cyan-300">STUDENT PROJECTS</SectionLabel>
+          <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
+            Build real
+            <span className="text-gradient-premium"> projects.</span>
+          </h2>
+          <p className="text-muted-foreground mt-6 leading-relaxed">
+            Hands-on labs derived from real-world scenarios. You&apos;ll graduate with
+            a portfolio of demonstrable work.
+          </p>
+        </div>
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          {projects.map((p, i) => (
+            <motion.div
+              key={p.id}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ duration: 0.5, delay: i * 0.08 }}
+              className="group relative rounded-2xl border border-border/60 bg-card/40 backdrop-blur p-5 hover:border-cyan-500/40 hover:bg-card/60 transition-all overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-600/5 blur-2xl rounded-full pointer-events-none" />
+              <div className="relative">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-cyan-500/10 border border-cyan-500/20">
+                    <Wrench className="h-4 w-4 text-cyan-300" />
+                  </div>
+                  <Badge variant="outline" className={cn(
+                    "text-[9px] font-mono tracking-wider",
+                    p.difficulty === "Easy" ? "border-emerald-500/30 text-emerald-400" :
+                    p.difficulty === "Medium" ? "border-amber-500/30 text-amber-400" :
+                    "border-rose-500/30 text-rose-400"
+                  )}>
+                    {p.difficulty?.toUpperCase()}
+                  </Badge>
+                </div>
+                <h3 className="font-semibold text-sm mb-2 line-clamp-2 group-hover:text-cyan-200 transition-colors">{p.title}</h3>
+                <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
+                  Apply {p.category.toLowerCase()} techniques in a real-world scenario.
+                </p>
+                <div className="flex items-center gap-3 text-[10px] font-mono text-muted-foreground tracking-wider pt-3 border-t border-border/40">
+                  <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {p.estHours}h</span>
+                  <span className="flex items-center gap-1"><Crosshair className="h-3 w-3" /> {p.skills.length} skills</span>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ============================================================
+// 11. LAB INTEGRATION PREVIEW
+// ============================================================
+function LabIntegrationPreview({
+  labs,
+  isEnrolled,
+  navigate,
+}: {
+  labs: any[]
+  isEnrolled: boolean
+  navigate: any
+}) {
+  if (!labs || labs.length === 0) return null
+
+  return (
+    <section className="py-20 lg:py-28 border-t border-border/60 relative overflow-hidden">
+      <div className="absolute inset-0 bg-grid opacity-8" />
+      <div className="absolute top-0 right-0 w-[500px] h-[400px] bg-violet-600/5 blur-[120px] rounded-full" />
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
+        <div className="max-w-2xl mb-12">
+          <SectionLabel index="08" className="text-violet-300">LAB INTEGRATION</SectionLabel>
+          <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
+            Every lab
+            <span className="text-gradient-premium"> you&apos;ll touch.</span>
+          </h2>
+          <p className="text-muted-foreground mt-6 leading-relaxed">
+            {isEnrolled
+              ? "Click any lab to launch the live Docker-powered environment."
+              : "Enroll to unlock access to the full lab environment."}
+          </p>
+        </div>
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {labs.map((lab, i) => (
+            <motion.div
+              key={lab.id}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ duration: 0.5, delay: i * 0.06 }}
+              className="group relative rounded-2xl border border-border/60 bg-card/40 backdrop-blur p-5 hover:border-violet-500/40 hover:bg-card/60 transition-all overflow-hidden"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-violet-500/10 border border-violet-500/20">
+                  <FlaskConical className="h-4 w-4 text-violet-300" />
+                </div>
+                <Badge variant="outline" className={cn(
+                  "text-[9px] font-mono",
+                  lab.difficulty === "Easy" ? "border-emerald-500/30 text-emerald-400" :
+                  lab.difficulty === "Medium" ? "border-amber-500/30 text-amber-400" :
+                  "border-rose-500/30 text-rose-400"
+                )}>
+                  {lab.difficulty?.toUpperCase()}
+                </Badge>
+              </div>
+              <h3 className="font-semibold text-sm mb-2 group-hover:text-violet-200 transition-colors">{lab.title}</h3>
+              <p className="text-xs text-muted-foreground mb-3 font-mono tracking-wider">{lab.category}</p>
+              <div className="flex items-center justify-between pt-3 border-t border-border/40">
+                <span className="text-[10px] font-mono text-violet-300 tracking-wider">{lab.points} XP</span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs border-violet-500/30 text-violet-200 hover:bg-violet-500/10"
+                  onClick={() => navigate(isEnrolled ? { name: "lab", labSlug: lab.slug } : { name: "login" })}
+                >
+                  Preview Lab <ArrowRight className="h-3 w-3 ml-1" />
+                </Button>
+              </div>
+              {!isEnrolled && (
+                <div className="absolute top-2 right-2">
+                  <Lock className="h-3.5 w-3.5 text-muted-foreground/40" />
+                </div>
+              )}
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ============================================================
+// 12. LIVE BATCH SCHEDULE PREVIEW
+// ============================================================
+interface BatchItem {
+  id: string
+  certification: string
+  name: string
+  schedule: string
+  startDate: string
+  mode: string
+  instructor: string
+  seats: number
+  enrolled: number
+  level: string
+  status: string
+}
+function BatchSchedulePreview({
+  courseId,
+  user,
+  navigate,
+}: {
+  courseId: string
+  user: any
+  navigate: any
+}) {
+  const { data, isLoading } = useQuery<{ batches: BatchItem[]; count: number }>({
+    queryKey: ["course-batches", courseId],
+    queryFn: () => api(`/api/courses/${courseId}/batches`),
+    enabled: !!courseId,
+  })
+  const batches = data?.batches ?? []
+
+  const modeStyle = (mode: string) => {
+    if (mode?.toLowerCase().includes("online")) return { badge: "border-cyan-500/30 text-cyan-300 bg-cyan-500/5", icon: Radio }
+    if (mode?.toLowerCase().includes("person") || mode?.toLowerCase().includes("in-person")) return { badge: "border-amber-500/30 text-amber-300 bg-amber-500/5", icon: Users }
+    return { badge: "border-violet-500/30 text-violet-300 bg-violet-500/5", icon: Layers }
+  }
+
+  return (
+    <section className="py-20 lg:py-28 border-t border-border/60 relative overflow-hidden">
+      <div className="absolute inset-0 bg-grid opacity-8" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-violet-600/5 blur-[120px] rounded-full" />
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
+        <div className="max-w-2xl mb-12">
+          <SectionLabel index="09" className="text-violet-300">LIVE BATCH SCHEDULE</SectionLabel>
+          <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
+            Join a
+            <span className="text-gradient-premium"> live cohort.</span>
+          </h2>
+          <p className="text-muted-foreground mt-6 leading-relaxed">
+            Instructor-led batches with peers. Real-time guidance, structured schedules,
+            and cohort accountability.
+          </p>
+        </div>
+
+        {isLoading ? (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-48 rounded-2xl" />
+            ))}
+          </div>
+        ) : batches.length === 0 ? (
+          <div className="text-center py-16 rounded-2xl border border-border/40 bg-card/20">
+            <Calendar className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
+            <p className="text-sm text-muted-foreground">No live batches scheduled right now. Check back soon.</p>
+          </div>
+        ) : (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {batches.map((b, i) => {
+              const ms = modeStyle(b.mode)
+              const ModeIcon = ms.icon
+              const seatsLeft = Math.max(0, (b.seats ?? 0) - (b.enrolled ?? 0))
+              const fillPct = b.seats > 0 ? Math.round(((b.enrolled ?? 0) / b.seats) * 100) : 0
+              const startDate = b.startDate ? new Date(b.startDate) : null
+              return (
+                <motion.div
+                  key={b.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.2 }}
+                  transition={{ duration: 0.5, delay: i * 0.06 }}
+                  className="group relative rounded-2xl border border-border/60 bg-card/40 backdrop-blur p-5 hover:border-violet-500/40 transition-all overflow-hidden"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <Badge variant="outline" className={cn("text-[9px] font-mono tracking-wider", ms.badge)}>
+                      <ModeIcon className="h-3 w-3 mr-1" />
+                      {b.mode?.toUpperCase() ?? "ONLINE"}
+                    </Badge>
+                    <span className="text-[9px] font-mono text-muted-foreground/50 tracking-wider">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                  </div>
+                  <h3 className="font-semibold text-sm mb-1">{b.name}</h3>
+                  <p className="text-xs text-muted-foreground font-mono tracking-wider mb-3">{b.certification}</p>
+
+                  <div className="space-y-1.5 mb-4">
+                    {startDate && (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Calendar className="h-3 w-3 text-violet-300" />
+                        <span>{startDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
+                      </div>
+                    )}
+                    {b.schedule && (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Clock className="h-3 w-3 text-violet-300" />
+                        <span className="truncate">{b.schedule}</span>
+                      </div>
+                    )}
+                    {b.instructor && (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <GraduationCap className="h-3 w-3 text-violet-300" />
+                        <span className="truncate">{b.instructor}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Seats progress */}
+                  <div className="mb-4">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-[10px] font-mono text-muted-foreground tracking-wider">SEATS</span>
+                      <span className="text-[10px] font-mono text-amber-300 tracking-wider tabular-nums">{seatsLeft} LEFT</span>
+                    </div>
+                    <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                      <div
+                        className={cn(
+                          "h-full rounded-full transition-all",
+                          fillPct >= 90 ? "bg-rose-400" : fillPct >= 70 ? "bg-amber-400" : "bg-emerald-400"
+                        )}
+                        style={{ width: `${fillPct}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  <Button
+                    size="sm"
+                    className="w-full bg-violet-600 hover:bg-violet-500"
+                    onClick={() => {
+                      if (!user) {
+                        navigate({ name: "login" })
+                        return
+                      }
+                      toast.success(`Enrollment requested for ${b.name}`, {
+                        description: `${startDate?.toLocaleDateString() ?? ""} · ${b.mode ?? ""} · ${b.instructor ?? ""}`,
+                      })
+                    }}
+                  >
+                    Enroll in this batch <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
+                  </Button>
+                </motion.div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    </section>
+  )
+}
+
+// ============================================================
+// 13. INSTRUCTOR SPOTLIGHT CARD
+// ============================================================
+interface InstructorDetail {
+  id: string
+  name: string
+  title?: string
+  bio?: string
+  avatar?: string | null
+  expertise?: string[]
+  yearsExperience?: number
+  certifications?: string[]
+  linkedinUrl?: string | null
+  stats?: {
+    coursesCount: number
+    batchesCount: number
+    learnersCount: number
+    yearsExperience: number
+  }
+  courses?: { id: string; title: string; level: string; category: string; enrolledCount: number }[]
+}
+function InstructorSpotlight({ instructor, navigate }: { instructor: any; navigate: any }) {
+  // Fetch full instructor profile (includes expertise, certifications, yearsExperience)
+  const { data, isLoading } = useQuery<{ instructor: InstructorDetail | null }>({
+    queryKey: ["instructor-profile", instructor?.id],
+    queryFn: () => api(`/api/instructors/${instructor.id}`),
+    enabled: !!instructor?.id,
+  })
+
+  const profile = data?.instructor
+  const expertise = profile?.expertise ?? []
+  const certifications = profile?.certifications ?? []
+  const yearsExp = profile?.yearsExperience ?? profile?.stats?.yearsExperience ?? 0
+  const stats = profile?.stats
+  const initials = (instructor.name || "?")
+    .split(" ")
+    .map((n: string) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2)
+
+  return (
+    <section className="py-20 lg:py-28 border-t border-border/60 relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-[500px] h-[400px] bg-cyan-600/5 blur-[120px] rounded-full" />
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
+        <SectionLabel index="10" className="text-cyan-300">INSTRUCTOR SPOTLIGHT</SectionLabel>
+        <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance mb-12">
+          Learn from a
+          <span className="text-gradient-cyan"> practitioner.</span>
+        </h2>
+
+        <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+          {/* Left — Big avatar + actions */}
+          <div className="lg:col-span-4">
+            <div className="lg:sticky lg:top-8 rounded-2xl border border-border/60 bg-card/40 backdrop-blur p-6">
+              <div className="flex flex-col items-center text-center">
+                <Avatar className="h-24 w-24 border-2 border-cyan-500/30 mb-4">
+                  <AvatarFallback className="bg-cyan-500/10 text-cyan-300 text-2xl font-mono">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+                <h3 className="text-xl font-bold tracking-tight">{instructor.name}</h3>
+                {instructor.title && (
+                  <p className="text-sm text-muted-foreground mt-1">{instructor.title}</p>
+                )}
+                {yearsExp > 0 && (
+                  <Badge className="mt-3 text-[10px] font-mono tracking-wider bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">
+                    {yearsExp}+ Years Experience
+                  </Badge>
+                )}
+              </div>
+
+              <div className="mt-6 space-y-2">
+                <Button
+                  className="w-full bg-cyan-600 hover:bg-cyan-500"
+                  onClick={() => navigate({ name: "book-session" })}
+                >
+                  <Calendar className="h-4 w-4 mr-1.5" /> Book a session
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full border-border/60"
+                  onClick={() => {
+                    if (instructor.id) {
+                      navigate({ name: "instructor-detail", instructorId: instructor.id })
+                    } else {
+                      navigate({ name: "instructors" })
+                    }
+                  }}
+                >
+                  <BookOpen className="h-4 w-4 mr-1.5" /> View all courses
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Right — Bio, expertise, certifications, stats */}
+          <div className="lg:col-span-8">
+            {/* Bio */}
+            {instructor.bio && (
+              <p className="text-base lg:text-lg text-muted-foreground leading-relaxed mb-8">
+                {instructor.bio}
+              </p>
+            )}
+
+            {/* Stats row */}
+            {stats && (
+              <div className="grid grid-cols-3 gap-4 mb-8">
+                {[
+                  { label: "COURSES", value: stats.coursesCount, icon: BookOpen, color: "text-violet-300" },
+                  { label: "STUDENTS", value: stats.learnersCount, icon: Users, color: "text-cyan-300" },
+                  { label: "BATCHES", value: stats.batchesCount, icon: GraduationCap, color: "text-amber-300" },
+                ].map((s) => (
+                  <div key={s.label} className="border-l border-border/60 pl-4">
+                    <s.icon className={cn("h-4 w-4 mb-2", s.color)} />
+                    <div className="text-2xl lg:text-3xl font-bold mb-1 tabular-nums">
+                      <AnimatedNumber value={s.value} />
+                    </div>
+                    <div className="text-[10px] font-mono text-muted-foreground tracking-[0.2em]">{s.label}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Expertise tags */}
+            {expertise.length > 0 && (
+              <div className="mb-8">
+                <p className="text-[10px] font-mono text-cyan-300 tracking-[0.2em] mb-3">EXPERTISE</p>
+                <div className="flex flex-wrap gap-2">
+                  {expertise.map((e, i) => (
+                    <Badge
+                      key={i}
+                      variant="outline"
+                      className="text-xs font-mono tracking-wider border-cyan-500/30 text-cyan-200 bg-cyan-500/5"
+                    >
+                      {e}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Certifications */}
+            {certifications.length > 0 && (
+              <div>
+                <p className="text-[10px] font-mono text-amber-300 tracking-[0.2em] mb-3">CERTIFICATIONS HELD</p>
+                <div className="space-y-2">
+                  {certifications.map((c, i) => (
+                    <div key={i} className="flex items-center gap-2 text-sm">
+                      <Award className="h-4 w-4 text-amber-300 shrink-0" />
+                      <span className="text-foreground/90">{c}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {isLoading && (
+              <div className="space-y-3">
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+                <Skeleton className="h-4 w-2/3" />
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ============================================================
+// 14. CERTIFICATION EXAM BLUEPRINT
+// ============================================================
+function CertExamBlueprint({ course }: { course: any }) {
+  // Exam code derived from shortName; domain weightings derived from modules
+  const examCode = course.shortName || "GUARDIANX"
+  const examDuration = Math.max(60, (course.durationHours ?? 4) * 15) // 15 min per hour, min 60
+  const passingScore = 70
+  const questionCount = Math.max(50, (course.modules?.length ?? 4) * 15)
+
+  // Domain weightings — based on module lesson counts
+  const modules = course.modules ?? []
+  const totalLessons = modules.reduce((acc: number, m: any) => acc + (m.lessons?.length ?? 0), 0) || 1
+  const domains = modules.slice(0, 6).map((m: any, i: number) => {
+    const lessonCount = m.lessons?.length ?? 1
+    const pct = Math.round((lessonCount / totalLessons) * 100)
+    return {
+      name: m.title,
+      pct,
+      color: ["text-violet-300", "text-cyan-300", "text-emerald-300", "text-amber-300", "text-rose-300", "text-orange-300"][i % 6],
+      bar: ["bg-violet-500", "bg-cyan-500", "bg-emerald-500", "bg-amber-500", "bg-rose-500", "bg-orange-500"][i % 6],
+    }
+  })
+  // Normalize to 100%
+  const sum = domains.reduce((acc, d) => acc + d.pct, 0)
+  if (sum !== 100 && domains.length > 0) {
+    domains[0].pct += 100 - sum
+  }
+
+  return (
+    <section className="py-20 lg:py-28 border-t border-border/60 relative overflow-hidden">
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-amber-600/5 blur-[120px] rounded-full" />
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
+        <div className="max-w-2xl mb-12">
+          <SectionLabel index="11" className="text-amber-300">EXAM BLUEPRINT</SectionLabel>
+          <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
+            Pass the
+            <span className="text-gradient-premium"> certification exam.</span>
+          </h2>
+          <p className="text-muted-foreground mt-6 leading-relaxed">
+            {course.certBody
+              ? `Aligned with the ${course.certBody} certification blueprint.`
+              : "Aligned with industry certification standards."}
+          </p>
+        </div>
+
+        <div className="grid lg:grid-cols-12 gap-8">
+          {/* Left — exam facts */}
+          <div className="lg:col-span-5">
+            <div className="rounded-2xl border border-border/60 bg-card/40 backdrop-blur p-6">
+              <div className="flex items-center gap-3 mb-6 pb-6 border-b border-border/40">
+                <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/15 border border-amber-500/30">
+                  <Award className="h-6 w-6 text-amber-300" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-mono text-muted-foreground tracking-[0.2em]">EXAM CODE</p>
+                  <div className="text-2xl font-bold tracking-tight">{examCode}</div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="rounded-lg border border-border/40 bg-background/40 p-4">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <Clock className="h-3.5 w-3.5 text-amber-300" />
+                    <span className="text-[10px] font-mono text-muted-foreground tracking-[0.2em]">DURATION</span>
+                  </div>
+                  <div className="text-lg font-bold tabular-nums">{examDuration} min</div>
+                </div>
+                <div className="rounded-lg border border-border/40 bg-background/40 p-4">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <Target className="h-3.5 w-3.5 text-emerald-300" />
+                    <span className="text-[10px] font-mono text-muted-foreground tracking-[0.2em]">PASS</span>
+                  </div>
+                  <div className="text-lg font-bold tabular-nums">{passingScore}%</div>
+                </div>
+                <div className="rounded-lg border border-border/40 bg-background/40 p-4">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <FileText className="h-3.5 w-3.5 text-violet-300" />
+                    <span className="text-[10px] font-mono text-muted-foreground tracking-[0.2em]">QUESTIONS</span>
+                  </div>
+                  <div className="text-lg font-bold tabular-nums">{questionCount}</div>
+                </div>
+                <div className="rounded-lg border border-border/40 bg-background/40 p-4">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <Layers className="h-3.5 w-3.5 text-cyan-300" />
+                    <span className="text-[10px] font-mono text-muted-foreground tracking-[0.2em]">DOMAINS</span>
+                  </div>
+                  <div className="text-lg font-bold tabular-nums">{domains.length}</div>
+                </div>
+              </div>
+              <div className="mt-6 pt-6 border-t border-border/40">
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Format: Multiple choice + performance-based labs. Available online with
+                  remote proctoring.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Right — domain weightings bar chart */}
+          <div className="lg:col-span-7">
+            <div className="rounded-2xl border border-border/60 bg-card/40 backdrop-blur p-6">
+              <p className="text-[10px] font-mono text-amber-300 tracking-[0.2em] mb-4">DOMAIN WEIGHTINGS</p>
+              <div className="space-y-4">
+                {domains.map((d, i) => (
+                  <div key={i}>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-sm font-medium truncate pr-3">{d.name}</span>
+                      <span className={cn("text-xs font-mono tabular-nums tracking-wider", d.color)}>{d.pct}%</span>
+                    </div>
+                    <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        whileInView={{ width: `${d.pct}%` }}
+                        viewport={{ once: true, amount: 0.5 }}
+                        transition={{ duration: 0.8, delay: i * 0.1, ease: [0.16, 1, 0.3, 1] }}
+                        className={cn("h-full rounded-full", d.bar)}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ============================================================
+// 15. PREREQUISITES VISUAL GRAPH
+// ============================================================
+interface GraphNode {
+  id: string
+  title: string
+  shortName: string
+  level: string
+}
+function PrerequisitesGraph({
+  course,
+  prerequisites,
+  user,
+  navigate,
+}: {
+  course: any
+  prerequisites: Prerequisite[]
+  user: any
+  navigate: any
+}) {
+  // "What this unlocks" — fetch the prerequisites graph (authenticated) and find courses that have THIS as a prerequisite
+  const { data: graphData } = useQuery<{ nodes: GraphNode[]; edges: { from: string; to: string }[] }>({
+    queryKey: ["prereq-graph-for-course", course.id],
+    queryFn: () => api(`/api/prerequisites-graph`),
+    enabled: !!user && !!course.id,
+  })
+
+  // Edges pointing AT this course's prerequisites (prereq -> this course)
+  // For "what unlocks": find edges where from == course.id
+  const unlocks = (graphData?.edges ?? [])
+    .filter((e) => e.from === course.id)
+    .map((e) => graphData?.nodes.find((n) => n.id === e.to))
+    .filter(Boolean) as GraphNode[]
+
+  return (
+    <section className="py-20 lg:py-28 border-t border-border/60 relative overflow-hidden">
+      <div className="absolute top-0 left-0 w-[500px] h-[400px] bg-violet-600/5 blur-[120px] rounded-full" />
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
+        <div className="max-w-2xl mb-12">
+          <SectionLabel index="12" className="text-violet-300">PATH GRAPH</SectionLabel>
+          <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
+            Your learning
+            <span className="text-gradient-premium"> graph.</span>
+          </h2>
+          <p className="text-muted-foreground mt-6 leading-relaxed">
+            See where this course sits in your journey — what to take before, and what it unlocks next.
+          </p>
+        </div>
+
+        {/* Visual graph — 3 columns: prerequisites | this course | unlocks */}
+        <div className="grid lg:grid-cols-[1fr_auto_1fr] gap-6 lg:gap-10 items-center">
+          {/* Prerequisites column */}
+          <div>
+            <div className="text-[10px] font-mono text-amber-300 tracking-[0.2em] mb-4 flex items-center gap-2">
+              <ArrowDown className="h-3 w-3 rotate-90" />
+              COMPLETE FIRST
+            </div>
+            {prerequisites.length > 0 ? (
+              <div className="space-y-3">
+                {prerequisites.map((p) => (
+                  <button
+                    key={p.id}
+                    onClick={() => navigate({ name: "course", courseId: p.id })}
+                    className="group w-full flex items-center gap-3 p-3 rounded-xl border border-amber-500/20 bg-amber-500/[0.03] hover:border-amber-500/40 hover:bg-amber-500/[0.06] transition-all text-left"
+                  >
+                    {p.completed ? (
+                      <CheckCircle2 className="h-5 w-5 text-emerald-300 shrink-0" />
+                    ) : (
+                      <Lock className="h-5 w-5 text-amber-300/70 shrink-0" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-medium group-hover:text-amber-200 transition-colors truncate">{p.title}</div>
+                      <div className="text-[10px] font-mono text-muted-foreground tracking-wider">{p.shortName} · {p.level}</div>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-amber-300 transition-colors shrink-0" />
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-xl border border-border/40 bg-card/20 p-4 text-center">
+                <Sparkles className="h-6 w-6 text-emerald-300/60 mx-auto mb-2" />
+                <p className="text-xs text-muted-foreground">No prerequisites — start here.</p>
+              </div>
+            )}
+          </div>
+
+          {/* Center — this course */}
+          <div className="flex justify-center my-6 lg:my-0">
+            <div className="relative">
+              {/* Arrows */}
+              {prerequisites.length > 0 && (
+                <div className="hidden lg:block absolute -left-8 top-1/2 -translate-y-1/2">
+                  <ArrowRight className="h-5 w-5 text-violet-400/60" />
+                </div>
+              )}
+              {unlocks.length > 0 && (
+                <div className="hidden lg:block absolute -right-8 top-1/2 -translate-y-1/2">
+                  <ArrowRight className="h-5 w-5 text-violet-400/60" />
+                </div>
+              )}
+              <div className="relative rounded-2xl border-2 border-violet-500/40 bg-violet-500/[0.06] p-5 min-w-[200px] text-center">
+                <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/15 border border-violet-500/30 mb-3">
+                  <Crosshair className="h-5 w-5 text-violet-300" />
+                </div>
+                <div className="text-sm font-bold mb-1">{course.title}</div>
+                <div className="text-[10px] font-mono text-violet-300 tracking-wider">THIS COURSE</div>
+                <div className="text-[10px] font-mono text-muted-foreground tracking-wider mt-1">{course.shortName} · {course.level}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Unlocks column */}
+          <div>
+            <div className="text-[10px] font-mono text-emerald-300 tracking-[0.2em] mb-4 flex items-center gap-2">
+              UNLOCKS NEXT
+              <ArrowDown className="h-3 w-3 -rotate-90" />
+            </div>
+            {unlocks.length > 0 ? (
+              <div className="space-y-3">
+                {unlocks.map((u) => (
+                  <button
+                    key={u.id}
+                    onClick={() => navigate({ name: "course", courseId: u.id })}
+                    className="group w-full flex items-center gap-3 p-3 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.03] hover:border-emerald-500/40 hover:bg-emerald-500/[0.06] transition-all text-left"
+                  >
+                    <Rocket className="h-5 w-5 text-emerald-300 shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-medium group-hover:text-emerald-200 transition-colors truncate">{u.title}</div>
+                      <div className="text-[10px] font-mono text-muted-foreground tracking-wider">{u.shortName} · {u.level}</div>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-emerald-300 transition-colors shrink-0" />
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-xl border border-border/40 bg-card/20 p-4 text-center">
+                {user ? (
+                  <>
+                    <Trophy className="h-6 w-6 text-amber-300/60 mx-auto mb-2" />
+                    <p className="text-xs text-muted-foreground">Final specialization in this path.</p>
+                  </>
+                ) : (
+                  <>
+                    <Lock className="h-6 w-6 text-muted-foreground/40 mx-auto mb-2" />
+                    <p className="text-xs text-muted-foreground">
+                      <button
+                        onClick={() => navigate({ name: "login" })}
+                        className="text-violet-300 hover:text-violet-200 underline underline-offset-2"
+                      >Sign in</button> to see what this course unlocks.
+                    </p>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ============================================================
+// 16. LIVE "WHO'S ENROLLED" ACTIVITY FEED
+// ============================================================
+interface ActivityItem {
+  id: string
+  name: string
+  avatar?: string | null
+  title?: string | null
+  timeAgo: string
+}
+function ActivityFeed({ courseId }: { courseId: string }) {
+  const { data, isLoading } = useQuery<{ activities: ActivityItem[]; total: number; thisWeek: number }>({
+    queryKey: ["course-activity", courseId],
+    queryFn: () => api(`/api/courses/${courseId}/activity`),
+    enabled: !!courseId,
+  })
+
+  const activities = data?.activities ?? []
+  const total = data?.total ?? 0
+  const thisWeek = data?.thisWeek ?? 0
+
+  return (
+    <section className="py-20 lg:py-28 border-t border-border/60">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="grid lg:grid-cols-12 gap-10">
+          {/* Left — heading + stats */}
+          <div className="lg:col-span-4">
+            <SectionLabel index="13" className="text-emerald-300">LIVE FEED</SectionLabel>
+            <h2 className="text-[clamp(2rem,4vw,3rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance mb-6">
+              Who&apos;s
+              <span className="text-gradient-premium"> enrolled.</span>
+            </h2>
+            <div className="space-y-4">
+              <div className="rounded-xl border border-border/60 bg-card/40 backdrop-blur p-5">
+                <div className="flex items-center gap-3">
+                  <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/15 border border-emerald-500/30">
+                    <Users className="h-5 w-5 text-emerald-300" />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold tabular-nums">
+                      <AnimatedNumber value={total} />
+                    </div>
+                    <div className="text-[10px] font-mono text-muted-foreground tracking-[0.2em]">TOTAL ENROLLED</div>
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-xl border border-border/60 bg-card/40 backdrop-blur p-5">
+                <div className="flex items-center gap-3">
+                  <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/15 border border-violet-500/30">
+                    <TrendingUp className="h-5 w-5 text-violet-300" />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold tabular-nums">
+                      <AnimatedNumber value={thisWeek} />
+                    </div>
+                    <div className="text-[10px] font-mono text-muted-foreground tracking-[0.2em]">ENROLLED THIS WEEK</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right — activity feed */}
+          <div className="lg:col-span-8">
+            <div className="rounded-2xl border border-border/60 bg-card/40 backdrop-blur p-6">
+              <p className="text-[10px] font-mono text-muted-foreground tracking-[0.2em] mb-5">RECENT ENROLLMENTS</p>
+              {isLoading ? (
+                <div className="space-y-3">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <Skeleton key={i} className="h-14 rounded-lg" />
+                  ))}
+                </div>
+              ) : activities.length === 0 ? (
+                <div className="text-center py-12">
+                  <Users className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">No enrollments yet. Be the first!</p>
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
+                  {activities.map((a, i) => {
+                    const initials = (a.name || "A")
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")
+                      .toUpperCase()
+                      .slice(0, 2)
+                    return (
+                      <motion.div
+                        key={a.id}
+                        initial={{ opacity: 0, x: 20 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true, amount: 0.3 }}
+                        transition={{ duration: 0.4, delay: i * 0.05 }}
+                        className="flex items-center gap-3 p-3 rounded-lg border border-border/40 bg-background/30 hover:border-violet-500/30 hover:bg-violet-500/[0.03] transition-all"
+                      >
+                        <Avatar className="h-9 w-9 border border-violet-500/20 shrink-0">
+                          <AvatarFallback className="bg-violet-500/10 text-violet-300 text-xs font-mono">
+                            {initials}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium truncate">{a.name}</div>
+                          {a.title && (
+                            <div className="text-[10px] font-mono text-muted-foreground tracking-wider truncate">{a.title}</div>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1.5 text-[10px] font-mono text-muted-foreground tracking-wider shrink-0">
+                          <Activity className="h-3 w-3 text-emerald-300" />
+                          enrolled {a.timeAgo}
+                        </div>
+                      </motion.div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ============================================================
+// 17. SKILLS YOU'LL EARN (TAG CLOUD)
+// ============================================================
+function SkillsTagCloud({ tags, modules }: { tags?: string | null; modules: any[] }) {
+  const tagList = safeParseTags(tags)
+  const [hoveredTag, setHoveredTag] = React.useState<string | null>(null)
+
+  if (tagList.length === 0) return null
+
+  // Build a map: tag -> first module that mentions it
+  const tagToModule = new Map<string, string>()
+  for (const tag of tagList) {
+    const lowerTag = tag.toLowerCase()
+    const match = modules.find((m: any) =>
+      m.title?.toLowerCase().includes(lowerTag) ||
+      m.lessons?.some((l: any) => l.title?.toLowerCase().includes(lowerTag))
+    )
+    if (match) {
+      tagToModule.set(tag, match.title)
+    } else if (modules.length > 0) {
+      // Fallback — cycle through modules
+      const idx = tagList.indexOf(tag) % modules.length
+      tagToModule.set(tag, modules[idx].title)
+    }
+  }
+
+  return (
+    <section className="py-20 lg:py-28 border-t border-border/60 relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-[500px] h-[400px] bg-cyan-600/5 blur-[120px] rounded-full" />
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
+        <div className="max-w-2xl mb-12">
+          <SectionLabel index="14" className="text-cyan-300">SKILLS YOU&apos;LL EARN</SectionLabel>
+          <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
+            Walk away
+            <span className="text-gradient-premium"> with these.</span>
+          </h2>
+          <p className="text-muted-foreground mt-6 leading-relaxed">
+            Hover any skill to see which module covers it. Larger pills = more emphasis.
+          </p>
+        </div>
+
+        <div className="rounded-2xl border border-border/60 bg-card/40 backdrop-blur p-6 lg:p-8">
+          <div className="flex flex-wrap items-center gap-3">
+            {tagList.map((tag, i) => {
+              const sizeClass = TAG_SIZE_BY_INDEX[i % TAG_SIZE_BY_INDEX.length]
+              const moduleTitle = tagToModule.get(tag)
+              return (
+                <div
+                  key={tag}
+                  className="relative group"
+                  onMouseEnter={() => setHoveredTag(tag)}
+                  onMouseLeave={() => setHoveredTag(null)}
+                >
+                  <button
+                    className={cn(
+                      "inline-flex items-center gap-1.5 rounded-full border font-mono tracking-wider transition-all",
+                      "border-cyan-500/30 bg-cyan-500/[0.04] text-cyan-100 hover:border-cyan-400/60 hover:bg-cyan-500/10 hover:scale-105",
+                      sizeClass
+                    )}
+                  >
+                    <Hexagon className="h-3 w-3 text-cyan-300/60" />
+                    {tag}
+                  </button>
+                  {/* Tooltip */}
+                  {hoveredTag === tag && moduleTitle && (
+                    <div className="absolute z-20 bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg border border-cyan-500/40 bg-popover text-xs whitespace-nowrap shadow-xl pointer-events-none">
+                      <span className="text-cyan-300 font-mono tracking-wider">Covered in: </span>
+                      <span className="text-foreground font-medium">{moduleTitle}</span>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ============================================================
+// 18. RELATED COURSES CAROUSEL
+// ============================================================
+interface RelatedCourse {
+  id: string
+  slug: string
+  title: string
+  shortName: string
+  description: string
+  category: string
+  level: string
+  durationHours: number
+  rating: number
+  studentsCount: number
+  color: string | null
+  thumbnail: string | null
+  instructor: { name: string; title?: string | null }
+}
+function RelatedCoursesCarousel({
+  courseId,
+  navigate,
+}: {
+  courseId: string
+  navigate: any
+}) {
+  const { data, isLoading } = useQuery<{ courses: RelatedCourse[]; count: number }>({
+    queryKey: ["related-courses", courseId],
+    queryFn: () => api(`/api/courses/${courseId}/related`),
+    enabled: !!courseId,
+  })
+
+  const courses = data?.courses ?? []
+
+  return (
+    <section className="py-20 lg:py-28 border-t border-border/60 relative overflow-hidden">
+      <div className="absolute top-0 left-0 w-[500px] h-[400px] bg-violet-600/5 blur-[120px] rounded-full" />
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
+        <div className="flex items-end justify-between mb-12 flex-wrap gap-4">
+          <div className="max-w-2xl">
+            <SectionLabel index="15" className="text-violet-300">RELATED COURSES</SectionLabel>
+            <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
+              Keep
+              <span className="text-gradient-premium"> going.</span>
+            </h2>
+          </div>
+          {courses.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-border/60"
+              onClick={() => navigate({ name: "catalog" })}
+            >
+              Browse all <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
+            </Button>
+          )}
+        </div>
+
+        {isLoading ? (
+          <div className="flex gap-5 overflow-x-auto pb-4 -mx-4 px-4 snap-x">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="min-w-[280px] sm:min-w-[320px] h-72 rounded-2xl shrink-0" />
+            ))}
+          </div>
+        ) : courses.length === 0 ? (
+          <div className="text-center py-16 rounded-2xl border border-border/40 bg-card/20">
+            <BookOpen className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
+            <p className="text-sm text-muted-foreground">No related courses found in this category yet.</p>
+          </div>
+        ) : (
+          <div className="flex gap-5 overflow-x-auto pb-4 -mx-4 px-4 snap-x snap-mandatory scrollbar-thin">
+            {courses.map((c, i) => {
+              const levelColor = LEVEL_COLORS[c.level] ?? ""
+              return (
+                <motion.div
+                  key={c.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.2 }}
+                  transition={{ duration: 0.5, delay: i * 0.06 }}
+                  className="group relative min-w-[280px] sm:min-w-[320px] shrink-0 snap-start"
+                >
+                  <button
+                    onClick={() => navigate({ name: "course", courseId: c.id })}
+                    className="relative w-full h-full text-left rounded-2xl border border-border/60 bg-card/40 backdrop-blur overflow-hidden hover:border-violet-500/40 hover:bg-card/60 transition-all"
+                  >
+                    {/* Thumbnail */}
+                    <div className="relative aspect-[16/10] overflow-hidden">
+                      <img
+                        src={getCourseImage(c)}
+                        alt={c.title}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
+                      <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
+                        <Badge variant="outline" className={cn("text-[9px] font-mono tracking-wider", levelColor)}>
+                          {c.level}
+                        </Badge>
+                      </div>
+                      <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-0.5 rounded-full bg-background/80 backdrop-blur border border-border/40">
+                        <Star className="h-3 w-3 text-amber-400 fill-amber-400" />
+                        <span className="text-[10px] font-mono tabular-nums">{c.rating.toFixed(1)}</span>
+                      </div>
+                    </div>
+                    {/* Body */}
+                    <div className="p-4">
+                      <p className="text-[10px] font-mono text-violet-300 tracking-[0.2em] mb-2">{c.shortName}</p>
+                      <h3 className="font-semibold text-sm mb-2 line-clamp-2 group-hover:text-violet-200 transition-colors min-h-[2.5rem]">{c.title}</h3>
+                      <div className="flex items-center gap-3 text-[10px] font-mono text-muted-foreground tracking-wider mb-3">
+                        <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {c.durationHours}h</span>
+                        <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {c.studentsCount.toLocaleString()}</span>
+                      </div>
+                      <div className="flex items-center justify-between pt-3 border-t border-border/40">
+                        <span className="text-xs text-muted-foreground truncate">{c.instructor.name}</span>
+                        <span className="flex items-center gap-1 text-xs text-violet-300 font-mono group-hover:gap-2 transition-all">
+                          View <ArrowRight className="h-3 w-3" />
+                        </span>
+                      </div>
+                    </div>
+                  </button>
+                </motion.div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    </section>
+  )
+}
+
+// ============================================================
+// 20. FLOATING ENROLL CTA — sticky bottom bar
+// ============================================================
+function FloatingEnrollCTA({
+  course,
+  isEnrolled,
+  onEnroll,
+  onContinue,
+  isEnrolling,
+  visible,
+  progressPct,
+}: {
+  course: any
+  isEnrolled: boolean
+  onEnroll: () => void
+  onContinue: () => void
+  isEnrolling: boolean
+  visible: boolean
+  progressPct: number
+}) {
+  return (
+    <AnimatePresence>
+      {visible && (
+        <motion.div
+          initial={{ y: 100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 100, opacity: 0 }}
+          transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+          className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/60 bg-background/85 backdrop-blur-xl"
+        >
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-500/40 to-transparent" />
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3">
+            <div className="flex items-center gap-4">
+              {/* Course identity */}
+              <div className="hidden sm:flex items-center gap-3 min-w-0 flex-1">
+                <div className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-violet-500/30 bg-violet-500/10 font-mono text-xs font-bold text-violet-200 shrink-0">
+                  {course.shortName?.slice(0, 2).toUpperCase() ?? "GC"}
+                </div>
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold truncate">{course.title}</div>
+                  <div className="text-[10px] font-mono text-muted-foreground tracking-wider">
+                    {course.shortName} · {course.level}
+                  </div>
+                </div>
+              </div>
+
+              {/* Mobile — just title */}
+              <div className="sm:hidden flex-1 min-w-0">
+                <div className="text-sm font-semibold truncate">{course.title}</div>
+                <div className="text-[10px] font-mono text-muted-foreground tracking-wider">{course.shortName}</div>
+              </div>
+
+              {/* Action */}
+              {isEnrolled ? (
+                <Button
+                  className="bg-violet-600 hover:bg-violet-500 shrink-0"
+                  onClick={onContinue}
+                >
+                  <PlayCircle className="h-4 w-4 mr-1.5" />
+                  <span className="hidden sm:inline">Continue ({progressPct}%)</span>
+                  <span className="sm:hidden">Continue</span>
+                </Button>
+              ) : (
+                <div className="flex items-center gap-3 shrink-0">
+                  <div className="text-right hidden sm:block">
+                    <div className="text-[10px] font-mono text-muted-foreground tracking-wider">ONE-TIME</div>
+                    <div className="text-lg font-bold text-gradient-premium tabular-nums">${course.price}</div>
+                  </div>
+                  <Button
+                    className="bg-violet-600 hover:bg-violet-500"
+                    onClick={onEnroll}
+                    disabled={isEnrolling}
+                  >
+                    <GraduationCap className="h-4 w-4 mr-1.5" />
+                    {isEnrolling ? "Enrolling..." : "Enroll Now"}
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  )
+}
+
+// ============================================================
+// REVIEWS SECTION (existing — kept intact)
+// ============================================================
 interface Review {
   id: string
   rating: number
@@ -1343,146 +2691,155 @@ function ReviewsSection({ courseId, isEnrolled }: { courseId: string; isEnrolled
   const myReview = reviews.find((r) => r.user.id === user?.id)
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div className="flex items-baseline gap-3">
-          {total > 0 ? (
-            <>
-              <span className="text-6xl font-bold text-amber-300 tabular-nums leading-none">{avg.toFixed(1)}</span>
-              <div>
-                <div className="flex gap-0.5 mb-1">
-                  {[1, 2, 3, 4, 5].map((s) => (
-                    <Star key={s} className={cn("h-4 w-4", s <= Math.round(avg) ? "text-amber-400 fill-amber-400" : "text-muted-foreground/40")} />
-                  ))}
-                </div>
-                <p className="text-xs text-muted-foreground font-mono tracking-wider">{total} REVIEW{total !== 1 ? "S" : ""}</p>
-              </div>
-            </>
-          ) : (
-            <p className="text-muted-foreground">No reviews yet.</p>
-          )}
-        </div>
+    <section className="py-20 lg:py-28 border-t border-border/60">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <SectionLabel index="16" className="text-amber-300">REVIEWS</SectionLabel>
+        <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance mb-12">
+          Student
+          <span className="text-gradient-premium"> voices.</span>
+        </h2>
 
-        <div className="flex items-center gap-2">
-          {isEnrolled && !myReview && (
-            <Button size="sm" variant="outline" onClick={() => setShowForm((s) => !s)} className="border-violet-500/40 text-violet-200 hover:bg-violet-500/10">
-              <PenLine className="h-3.5 w-3.5 mr-1.5" /> {showForm ? "Cancel" : "Write a Review"}
-            </Button>
-          )}
-          {myReview && (
-            <Badge variant="outline" className="text-[10px] text-emerald-300 border-emerald-500/30 bg-emerald-500/10 font-mono tracking-wider">
-              <CheckCircle2 className="h-3 w-3 mr-1" /> YOU REVIEWED
-            </Badge>
-          )}
-        </div>
-      </div>
+        <div className="space-y-8">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex items-baseline gap-3">
+              {total > 0 ? (
+                <>
+                  <span className="text-6xl font-bold text-amber-300 tabular-nums leading-none">{avg.toFixed(1)}</span>
+                  <div>
+                    <div className="flex gap-0.5 mb-1">
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <Star key={s} className={cn("h-4 w-4", s <= Math.round(avg) ? "text-amber-400 fill-amber-400" : "text-muted-foreground/40")} />
+                      ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground font-mono tracking-wider">{total} REVIEW{total !== 1 ? "S" : ""}</p>
+                  </div>
+                </>
+              ) : (
+                <p className="text-muted-foreground">No reviews yet.</p>
+              )}
+            </div>
 
-      {/* Distribution */}
-      {total > 0 && (
-        <div className="flex flex-col sm:flex-row gap-6 p-5 rounded-xl border border-border/60 bg-card/30 backdrop-blur">
-          <div className="flex-1 space-y-1.5">
-            {distribution.slice().reverse().map((d) => (
-              <div key={d.star} className="flex items-center gap-3 text-xs">
-                <span className="w-3 text-muted-foreground font-mono">{d.star}</span>
-                <Star className="h-3 w-3 text-amber-400 fill-amber-400" />
-                <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
-                  <div className="h-full bg-amber-400 rounded-full transition-all" style={{ width: `${total ? (d.count / total) * 100 : 0}%` }} />
-                </div>
-                <span className="w-8 text-right text-muted-foreground font-mono">{d.count}</span>
-              </div>
-            ))}
+            <div className="flex items-center gap-2">
+              {isEnrolled && !myReview && (
+                <Button size="sm" variant="outline" onClick={() => setShowForm((s) => !s)} className="border-violet-500/40 text-violet-200 hover:bg-violet-500/10">
+                  <PenLine className="h-3.5 w-3.5 mr-1.5" /> {showForm ? "Cancel" : "Write a Review"}
+                </Button>
+              )}
+              {myReview && (
+                <Badge variant="outline" className="text-[10px] text-emerald-300 border-emerald-500/30 bg-emerald-500/10 font-mono tracking-wider">
+                  <CheckCircle2 className="h-3 w-3 mr-1" /> YOU REVIEWED
+                </Badge>
+              )}
+            </div>
           </div>
-        </div>
-      )}
 
-      {/* Review form */}
-      {showForm && (
-        
-          <div className="p-5 rounded-xl border border-violet-500/30 bg-violet-500/[0.03] space-y-3">
-            <div className="flex items-center gap-3">
-              <span className="text-sm font-medium">Your rating:</span>
-              <div className="flex gap-1">
-                {[1, 2, 3, 4, 5].map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    onMouseEnter={() => setHoverRating(s)}
-                    onMouseLeave={() => setHoverRating(0)}
-                    onClick={() => setRating(s)}
-                    className="transition-transform hover:scale-110"
-                  >
-                    <Star className={cn("h-5 w-5", s <= (hoverRating || rating) ? "text-amber-400 fill-amber-400" : "text-muted-foreground/40")} />
-                  </button>
+          {/* Distribution */}
+          {total > 0 && (
+            <div className="flex flex-col sm:flex-row gap-6 p-5 rounded-xl border border-border/60 bg-card/30 backdrop-blur">
+              <div className="flex-1 space-y-1.5">
+                {distribution.slice().reverse().map((d) => (
+                  <div key={d.star} className="flex items-center gap-3 text-xs">
+                    <span className="w-3 text-muted-foreground font-mono">{d.star}</span>
+                    <Star className="h-3 w-3 text-amber-400 fill-amber-400" />
+                    <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+                      <div className="h-full bg-amber-400 rounded-full transition-all" style={{ width: `${total ? (d.count / total) * 100 : 0}%` }} />
+                    </div>
+                    <span className="w-8 text-right text-muted-foreground font-mono">{d.count}</span>
+                  </div>
                 ))}
               </div>
             </div>
-            <Input placeholder="Review title (optional)..." value={title} onChange={(e) => setTitle(e.target.value)} className="bg-background/50" />
-            <Textarea placeholder="Share your experience with this course..." value={content} onChange={(e) => setContent(e.target.value)} className="min-h-[100px] bg-background/50" />
-            <Button
-              size="sm"
-              className="bg-violet-600 hover:bg-violet-500"
-              onClick={() => submitMutation.mutate()}
-              disabled={submitMutation.isPending}
-            >
-              {submitMutation.isPending ? "Submitting..." : "Submit Review"}
-            </Button>
-          </div>
-        
-      )}
+          )}
 
-      {/* Reviews list - editorial */}
-      {isLoading ? (
-        <div className="space-y-3">
-          {Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-32 rounded-xl" />)}
-        </div>
-      ) : reviews.length === 0 ? (
-        <div className="text-center py-16">
-          <Star className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
-          <p className="text-muted-foreground">No reviews yet. Be the first to review!</p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {reviews.slice(0, 5).map((r) => (
-            <div key={r.id} className="group p-5 rounded-xl border border-border/60 bg-card/30 backdrop-blur hover:border-violet-500/30 transition-colors">
-                <div className="flex items-start gap-4">
-                  <Avatar className="h-10 w-10 shrink-0 border border-amber-500/20">
-                    <AvatarFallback className="bg-amber-500/10 text-amber-300 text-xs font-mono">
-                      {r.user.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <span className="text-sm font-semibold">{r.user.name}</span>
-                      {r.user.title && <span className="text-[10px] text-muted-foreground font-mono tracking-wider">· {r.user.title}</span>}
-                      <div className="flex gap-0.5 ml-auto">
-                        {[1, 2, 3, 4, 5].map((s) => (
-                          <Star key={s} className={cn("h-3 w-3", s <= r.rating ? "text-amber-400 fill-amber-400" : "text-muted-foreground/40")} />
-                        ))}
+          {/* Review form */}
+          {showForm && (
+            <div className="p-5 rounded-xl border border-violet-500/30 bg-violet-500/[0.03] space-y-3">
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium">Your rating:</span>
+                <div className="flex gap-1">
+                  {[1, 2, 3, 4, 5].map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onMouseEnter={() => setHoverRating(s)}
+                      onMouseLeave={() => setHoverRating(0)}
+                      onClick={() => setRating(s)}
+                      className="transition-transform hover:scale-110"
+                    >
+                      <Star className={cn("h-5 w-5", s <= (hoverRating || rating) ? "text-amber-400 fill-amber-400" : "text-muted-foreground/40")} />
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <Input placeholder="Review title (optional)..." value={title} onChange={(e) => setTitle(e.target.value)} className="bg-background/50" />
+              <Textarea placeholder="Share your experience with this course..." value={content} onChange={(e) => setContent(e.target.value)} className="min-h-[100px] bg-background/50" />
+              <Button
+                size="sm"
+                className="bg-violet-600 hover:bg-violet-500"
+                onClick={() => submitMutation.mutate()}
+                disabled={submitMutation.isPending}
+              >
+                {submitMutation.isPending ? "Submitting..." : "Submit Review"}
+              </Button>
+            </div>
+          )}
+
+          {/* Reviews list */}
+          {isLoading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-32 rounded-xl" />)}
+            </div>
+          ) : reviews.length === 0 ? (
+            <div className="text-center py-16">
+              <Star className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
+              <p className="text-muted-foreground">No reviews yet. Be the first to review!</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {reviews.slice(0, 5).map((r) => (
+                <div key={r.id} className="group p-5 rounded-xl border border-border/60 bg-card/30 backdrop-blur hover:border-violet-500/30 transition-colors">
+                  <div className="flex items-start gap-4">
+                    <Avatar className="h-10 w-10 shrink-0 border border-amber-500/20">
+                      <AvatarFallback className="bg-amber-500/10 text-amber-300 text-xs font-mono">
+                        {r.user.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <span className="text-sm font-semibold">{r.user.name}</span>
+                        {r.user.title && <span className="text-[10px] text-muted-foreground font-mono tracking-wider">· {r.user.title}</span>}
+                        <div className="flex gap-0.5 ml-auto">
+                          {[1, 2, 3, 4, 5].map((s) => (
+                            <Star key={s} className={cn("h-3 w-3", s <= r.rating ? "text-amber-400 fill-amber-400" : "text-muted-foreground/40")} />
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                    {r.title && <p className="text-sm font-medium mb-1">{r.title}</p>}
-                    {r.content && <p className="text-sm text-muted-foreground leading-relaxed">{r.content}</p>}
-                    <div className="flex items-center gap-3 mt-2 text-[10px] text-muted-foreground font-mono tracking-wider">
-                      <span>{new Date(r.createdAt).toLocaleDateString()}</span>
-                      {r.user.id === user?.id && <span className="text-emerald-300">· YOUR REVIEW</span>}
+                      {r.title && <p className="text-sm font-medium mb-1">{r.title}</p>}
+                      {r.content && <p className="text-sm text-muted-foreground leading-relaxed">{r.content}</p>}
+                      <div className="flex items-center gap-3 mt-2 text-[10px] text-muted-foreground font-mono tracking-wider">
+                        <span>{new Date(r.createdAt).toLocaleDateString()}</span>
+                        {r.user.id === user?.id && <span className="text-emerald-300">· YOUR REVIEW</span>}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            
-          ))}
-          {reviews.length > 5 && (
-            <p className="text-xs text-center text-muted-foreground py-4 font-mono tracking-wider">
-              + {reviews.length - 5} MORE REVIEW{reviews.length - 5 !== 1 ? "S" : ""}
-            </p>
+              ))}
+              {reviews.length > 5 && (
+                <p className="text-xs text-center text-muted-foreground py-4 font-mono tracking-wider">
+                  + {reviews.length - 5} MORE REVIEW{reviews.length - 5 !== 1 ? "S" : ""}
+                </p>
+              )}
+            </div>
           )}
         </div>
-      )}
-    </div>
+      </div>
+    </section>
   )
 }
 
-// ---- Bookmark Button ----
+// ============================================================
+// BOOKMARK BUTTON (existing — kept intact)
+// ============================================================
 function BookmarkButton({ courseId }: { courseId: string }) {
   const { isBookmarked, toggleAsync, isAuthenticated } = useBookmarks()
   const bookmarked = isBookmarked(courseId)

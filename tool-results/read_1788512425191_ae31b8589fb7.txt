@@ -1,0 +1,1635 @@
+     1→// GuardianX LMS — Prisma schema
+     2→
+     3→generator client {
+     4→  provider = "prisma-client-js"
+     5→}
+     6→
+     7→datasource db {
+     8→  provider = "postgresql"
+     9→  url      = env("DATABASE_URL")
+    10→}
+    11→
+    12→model User {
+    13→  id            String   @id @default(cuid())
+    14→  email         String   @unique
+    15→  name          String
+    16→  passwordHash  String
+    17→  role          String   @default("STUDENT") // STUDENT | INSTRUCTOR | ADMIN | SUPER_ADMIN | PROCTOR | SCHOOL_ADMIN | INSTITUTION_ADMIN
+    18→  avatar        String?
+    19→  bio           String?
+    20→  title         String? // e.g. "Senior Security Engineer"
+    21→  phone         String? // contact phone (any role) — editable via profile UI
+    22→  xp            Int      @default(0)
+    23→  level         Int      @default(1)
+    24→  streak        Int      @default(0)
+    25→  lastActiveDate String? // YYYY-MM-DD for streak tracking
+    26→  schoolId      String? // linked school (for school-admin / school students)
+    27→  createdAt     DateTime @default(now())
+    28→  updatedAt     DateTime @updatedAt
+    29→
+    30→  enrollments     Enrollment[]
+    31→  progress        LessonProgress[]
+    32→  notes           Note[]
+    33→  quizAttempts    QuizAttempt[]
+    34→  taughtCourses   Course[]
+    35→  labProgress     LabProgress[]
+    36→  certificates    Certificate[]
+    37→  liveSessionsHost LiveSession[] @relation("hostedSessions")
+    38→  liveSessionMembers LiveSessionMember[]
+    39→  discussions     Discussion[]
+    40→  replies         DiscussionReply[]
+    41→  achievements    UserAchievement[]
+    42→  activities      UserActivity[]
+    43→  notifications   Notification[]
+    44→  reviews         CourseReview[]
+    45→  bookmarks       Bookmark[]
+    46→  // New relations
+    47→  assignmentsCreated   Assignment[]
+    48→  submissions          AssignmentSubmission[]
+    49→  rubricsCreated       GradingRubric[]
+    50→  officeHourSlots      OfficeHourSlot[]
+    51→  officeHourBookings   OfficeHourBooking[]
+    52→  messageThreadsA      MessageThread[] @relation("threadUserA")
+    53→  messageThreadsB      MessageThread[] @relation("threadUserB")
+    54→  messages             Message[]
+    55→  studyGroupsCreated   StudyGroup[]
+    56→  studyGroupMemberships StudyGroupMember[]
+    57→  peerReviewsGiven     PeerReview[]
+    58→  peerReviewsReceived  PeerReview[] @relation("reviewedSubmissions")
+    59→  attendanceRecords    AttendanceRecord[]
+    60→  emailsReceived       EmailLog[]
+    61→  schoolMemberships    SchoolMember[]
+    62→  batchMemberships     BatchMember[]
+    63→  // Feature expansion relations
+    64→  aiChatSessions       AIChatSession[]
+    65→  codeReviews          CodeReview[]
+    66→  careerPaths          CareerPath[]
+    67→  postedJobs           Job[]
+    68→  jobApplications      JobApplication[]
+    69→  mockInterviews       MockInterview[]
+    70→  resumes              Resume[]
+    71→  ctfOrganized         CTFCompetition[]
+    72→  ctfTeamMemberships   CTFTeamMember[]
+    73→  weeklyChallengeSubs  WeeklyChallengeSubmission[]
+    74→  teamMissionMemberships TeamMissionMember[]
+    75→  learningAnalytics    LearningAnalytics[]
+    76→  skillAssessmentResults SkillAssessmentResult[]
+    77→  labSnapshots         LabSnapshot[]
+    78→  cyberRangeMemberships CyberRangeMember[]
+    79→  bugBountySubmissions  BugBountySubmission[]
+    80→  parentAccounts       ParentAccount[]
+    81→  authoredCourses      AuthoredCourse[]
+    82→  instructorProfile    InstructorProfile?
+    83→  leadNotes            LeadNote[]
+    84→  // Payment + coupon relations (PAYMENT-COUPON-SEARCH feature)
+    85→  orders               Order[]
+    86→}
+    87→
+    88→// ============================================================
+    89→// School / Institution model — multi-tenant schools, colleges, universities
+    90→// ============================================================
+    91→model School {
+    92→  id            String   @id @default(cuid())
+    93→  schoolCode    String   @unique // e.g. "GXS-DELHI-001" — used for institution login
+    94→  name          String
+    95→  type          String   @default("SCHOOL") // SCHOOL | COLLEGE | UNIVERSITY
+    96→  email         String?  // contact email
+    97→  phone         String?
+    98→  address       String?
+    99→  city          String?
+   100→  state         String?
+   101→  country       String   @default("India")
+   102→  logoUrl       String?
+   103→  website       String?
+   104→  // School admin credentials (the person who logs in via the School Portal tab)
+   105→  adminName     String
+   106→  adminEmail    String   @unique
+   107→  passwordHash  String
+   108→  status        String   @default("active") // active | suspended | pending
+   109→  maxStudents   Int      @default(500)
+   110→  createdAt     DateTime @default(now())
+   111→  updatedAt     DateTime @updatedAt
+   112→
+   113→  members       SchoolMember[]
+   114→  batches       Batch[]
+   115→}
+   116→
+   117→model SchoolMember {
+   118→  id            String   @id @default(cuid())
+   119→  schoolId      String
+   120→  school        School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+   121→  userId        String
+   122→  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   123→  role          String   @default("STUDENT") // STUDENT | INSTRUCTOR | SCHOOL_ADMIN
+   124→  joinedAt      DateTime @default(now())
+   125→
+   126→  @@unique([schoolId, userId])
+   127→}
+   128→
+   129→model Batch {
+   130→  id            String   @id @default(cuid())
+   131→  schoolId      String
+   132→  school        School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+   133→  name          String   // e.g. "Batch 2024-A"
+   134→  courseIds     String   @default("") // comma-separated course IDs assigned to this batch
+   135→  startDate     DateTime?
+   136→  endDate       DateTime?
+   137→  status        String   @default("active") // active | completed | archived
+   138→  createdAt     DateTime @default(now())
+   139→
+   140→  members       BatchMember[]
+   141→}
+   142→
+   143→model BatchMember {
+   144→  id            String   @id @default(cuid())
+   145→  batchId       String
+   146→  batch         Batch    @relation(fields: [batchId], references: [id], onDelete: Cascade)
+   147→  userId        String
+   148→  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   149→  enrolledAt    DateTime @default(now())
+   150→
+   151→  @@unique([batchId, userId])
+   152→}
+   153→
+   154→model Achievement {
+   155→  id          String   @id @default(cuid())
+   156→  code        String   @unique // e.g. FIRST_LAB, STREAK_7
+   157→  title       String
+   158→  description String
+   159→  icon        String   @default("award") // lucide icon name
+   160→  color       String   @default("emerald")
+   161→  xp          Int      @default(50)
+   162→  tier        String   @default("bronze") // bronze | silver | gold | platinum
+   163→  userAchievements UserAchievement[]
+   164→}
+   165→
+   166→model UserAchievement {
+   167→  id            String   @id @default(cuid())
+   168→  userId        String
+   169→  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   170→  achievementId String
+   171→  achievement   Achievement @relation(fields: [achievementId], references: [id])
+   172→  earnedAt      DateTime @default(now())
+   173→
+   174→  @@unique([userId, achievementId])
+   175→}
+   176→
+   177→model UserActivity {
+   178→  id          String   @id @default(cuid())
+   179→  userId      String
+   180→  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   181→  type        String   // lesson_completed | lab_solved | quiz_passed | note_created | course_enrolled | cert_earned
+   182→  xp          Int      @default(0)
+   183→  meta        String   @default("") // JSON-ish metadata
+   184→  date        String   // YYYY-MM-DD (for daily aggregation / streaks)
+   185→  createdAt   DateTime @default(now())
+   186→}
+   187→
+   188→model Course {
+   189→  id            String   @id @default(cuid())
+   190→  slug          String   @unique
+   191→  title         String
+   192→  shortName     String // e.g. "CEH"
+   193→  description   String
+   194→  longDescription String
+   195→  category      String // Certification / Networking / Cloud Security / etc.
+   196→  vertical     String   @default("cyber") // cyber | ai | cloud
+   197→  level         String // Beginner | Intermediate | Advanced
+   198→  durationHours Int      @default(40)
+   199→  price         Float    @default(0)
+   200→  rating        Float    @default(4.5)
+   201→  studentsCount Int      @default(0)
+   202→  thumbnail     String?
+   203→  color         String   @default("emerald") // theme accent
+   204→  tags          String   @default("") // comma separated
+   205→  certBody      String? // e.g. "EC-Council"
+   206→  published     Boolean  @default(true)
+   207→  prerequisiteIds String @default("") // comma-separated course IDs (Course Prerequisites feature)
+   208→  certificateTemplateId String? // optional template override
+   209→  createdAt     DateTime @default(now())
+   210→  updatedAt     DateTime @updatedAt
+   211→
+   212→  instructorId  String
+   213→  instructor    User     @relation(fields: [instructorId], references: [id])
+   214→
+   215→  modules       Module[]
+   216→  enrollments   Enrollment[]
+   217→  certificates  Certificate[]
+   218→  discussions   Discussion[]
+   219→  labs          Lab[]
+   220→  liveSessions  LiveSession[]
+   221→  reviews       CourseReview[]
+   222→  bookmarks     Bookmark[]
+   223→  // New relations
+   224→  assignments   Assignment[]
+   225→  rubrics       GradingRubric[]
+   226→  attendanceRecords AttendanceRecord[]
+   227→  studyGroups   StudyGroup[]
+   228→  officeHourSlots OfficeHourSlot[]
+   229→  // Payment relations (PAYMENT-COUPON-SEARCH feature)
+   230→  orders        Order[]
+   231→}
+   232→
+   233→model Module {
+   234→  id          String   @id @default(cuid())
+   235→  courseId    String
+   236→  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+   237→  title       String
+   238→  description String?
+   239→  order       Int      @default(0)
+   240→  lessons     Lesson[]
+   241→}
+   242→
+   243→model Lesson {
+   244→  id          String   @id @default(cuid())
+   245→  moduleId    String
+   246→  module      Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+   247→  title       String
+   248→  type        String   @default("reading") // reading | pdf | video | lab
+   249→  content     String   @default("") // markdown / html text content
+   250→  pdfUrl      String?
+   251→  pdfPages    Int      @default(0)
+   252→  durationMin Int      @default(15)
+   253→  order       Int      @default(0)
+   254→  preview     Boolean  @default(false) // free preview
+   255→
+   256→  progress    LessonProgress[]
+   257→  notes       Note[]
+   258→  quiz        Quiz?
+   259→}
+   260→
+   261→model Enrollment {
+   262→  id          String   @id @default(cuid())
+   263→  userId      String
+   264→  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   265→  courseId    String
+   266→  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+   267→  progress    Float    @default(0) // percentage 0-100
+   268→  completed   Boolean  @default(false)
+   269→  enrolledAt  DateTime @default(now())
+   270→  lastAccessed DateTime?
+   271→
+   272→  @@unique([userId, courseId])
+   273→}
+   274→
+   275→model LessonProgress {
+   276→  id          String   @id @default(cuid())
+   277→  userId      String
+   278→  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   279→  lessonId    String
+   280→  lesson      Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+   281→  completed   Boolean  @default(false)
+   282→  position    Int      @default(0) // pdf page or video position
+   283→  updatedAt   DateTime @updatedAt
+   284→
+   285→  @@unique([userId, lessonId])
+   286→}
+   287→
+   288→model Note {
+   289→  id          String   @id @default(cuid())
+   290→  userId      String
+   291→  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   292→  lessonId    String?
+   293→  lesson      Lesson?  @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+   294→  courseId    String?
+   295→  title       String   @default("Untitled note")
+   296→  content     String   @default("")
+   297→  color       String   @default("default")
+   298→  pinned      Boolean  @default(false)
+   299→  createdAt   DateTime @default(now())
+   300→  updatedAt   DateTime @updatedAt
+   301→}
+   302→
+   303→model Quiz {
+   304→  id          String   @id @default(cuid())
+   305→  lessonId    String   @unique
+   306→  lesson      Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+   307→  title       String
+   308→  description String?
+   309→  questions   Question[]
+   310→  attempts    QuizAttempt[]
+   311→}
+   312→
+   313→model Question {
+   314→  id          String   @id @default(cuid())
+   315→  quizId      String
+   316→  quiz        Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+   317→  text        String
+   318→  options     String   @default("") // pipe separated options
+   319→  answerIndex Int      @default(0)
+   320→  explanation String?
+   321→}
+   322→
+   323→model QuizAttempt {
+   324→  id          String   @id @default(cuid())
+   325→  userId      String
+   326→  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   327→  quizId      String
+   328→  quiz        Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+   329→  score       Int      @default(0) // percentage
+   330→  answers     String   @default("[]") // JSON
+   331→  passed      Boolean  @default(false)
+   332→  createdAt   DateTime @default(now())
+   333→}
+   334→
+   335→model Certificate {
+   336→  id          String   @id @default(cuid())
+   337→  userId      String
+   338→  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   339→  courseId    String
+   340→  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+   341→  certificateId String @unique
+   342→  issuedAt    DateTime @default(now())
+   343→  score       Int      @default(0)
+   344→  templateId  String?
+   345→  template    CertificateTemplate? @relation("certificateTemplate", fields: [templateId], references: [id])
+   346→  verificationHash String? // tamper-evident hash for verification
+   347→}
+   348→
+   349→model Lab {
+   350→  id            String   @id @default(cuid())
+   351→  courseId      String?
+   352→  course        Course?  @relation(fields: [courseId], references: [id])
+   353→  title         String
+   354→  slug          String   @unique
+   355→  description   String
+   356→  longDescription String
+   357→  category      String // Web Security | Network | Privilege Escalation | Cryptography | Forensics | Reverse Engineering
+   358→  difficulty    String   @default("Easy") // Easy | Medium | Hard | Insane
+   359→  durationMin   Int      @default(30)
+   360→  points        Int      @default(100)
+   361→  tags          String   @default("")
+   362→  scenario      String   @default("") // markdown scenario/instructions
+   363→  objectives    String   @default("") // pipe separated objectives
+   364→  hints         String   @default("") // pipe separated hints
+   365→  flag          String   @default("FLAG{}") // CTF flag
+   366→  commands      String   @default("") // pipe separated available commands
+   367→  virtualEnv    String   @default("linux") // simulated env type
+   368→  color         String   @default("emerald")
+   369→  published     Boolean  @default(true)
+   370→  autoGrade     Boolean  @default(true) // auto-grade submission when flag matches
+   371→  xpReward      Int      @default(100) // XP awarded on completion
+   372→  passingScore  Int      @default(100) // minimum score to pass (auto-graded labs)
+   373→  createdAt     DateTime @default(now())
+   374→
+   375→  progress      LabProgress[]
+   376→}
+   377→
+   378→model LabProgress {
+   379→  id          String   @id @default(cuid())
+   380→  userId      String
+   381→  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   382→  labId       String
+   383→  lab         Lab      @relation(fields: [labId], references: [id], onDelete: Cascade)
+   384→  status      String   @default("not_started") // not_started | in_progress | completed
+   385→  flagFound   Boolean  @default(false)
+   386→  hintsUsed    Int      @default(0)
+   387→  timeSpentMs Int      @default(0) // cumulative time spent in the lab terminal (ms)
+   388→  startedAt   DateTime?
+   389→  completedAt DateTime?
+   390→  updatedAt   DateTime @updatedAt
+   391→
+   392→  @@unique([userId, labId])
+   393→}
+   394→
+   395→model LiveSession {
+   396→  id          String   @id @default(cuid())
+   397→  title       String
+   398→  description String?
+   399→  hostId      String
+   400→  host        User     @relation("hostedSessions", fields: [hostId], references: [id])
+   401→  courseId    String?
+   402→  course      Course?  @relation(fields: [courseId], references: [id])
+   403→  roomId      String   @unique // socket.io room
+   404→  status      String   @default("scheduled") // scheduled | live | ended
+   405→  scheduledAt DateTime
+   406→  startedAt   DateTime?
+   407→  endedAt     DateTime?
+   408→  maxStudents Int      @default(50)
+   409→  createdAt   DateTime @default(now())
+   410→
+   411→  members     LiveSessionMember[]
+   412→}
+   413→
+   414→model LiveSessionMember {
+   415→  id          String   @id @default(cuid())
+   416→  sessionId   String
+   417→  session     LiveSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+   418→  userId      String
+   419→  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   420→  role        String   @default("viewer") // host | cohost | viewer
+   421→  canShare    Boolean  @default(false)
+   422→  joinedAt    DateTime @default(now())
+   423→
+   424→  @@unique([sessionId, userId])
+   425→}
+   426→
+   427→model Discussion {
+   428→  id          String   @id @default(cuid())
+   429→  courseId    String
+   430→  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+   431→  userId      String
+   432→  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   433→  title       String
+   434→  content     String
+   435→  pinned      Boolean  @default(false)
+   436→  createdAt   DateTime @default(now())
+   437→
+   438→  replies     DiscussionReply[]
+   439→}
+   440→
+   441→model DiscussionReply {
+   442→  id          String   @id @default(cuid())
+   443→  discussionId String
+   444→  discussion  Discussion @relation(fields: [discussionId], references: [id], onDelete: Cascade)
+   445→  userId      String
+   446→  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   447→  content     String
+   448→  createdAt   DateTime @default(now())
+   449→}
+   450→
+   451→model Notification {
+   452→  id          String   @id @default(cuid())
+   453→  userId      String
+   454→  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   455→  type        String   // achievement | level_up | course_update | live_start | reply | streak | welcome | certificate
+   456→  title       String
+   457→  message     String
+   458→  icon        String   @default("bell") // lucide icon name
+   459→  color       String   @default("emerald")
+   460→  link        String?  // optional view target, JSON-encoded e.g. {"name":"achievements"}
+   461→  read        Boolean  @default(false)
+   462→  createdAt   DateTime @default(now())
+   463→}
+   464→
+   465→model CourseReview {
+   466→  id          String   @id @default(cuid())
+   467→  courseId    String
+   468→  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+   469→  userId      String
+   470→  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   471→  rating      Int      // 1-5 stars
+   472→  title       String   @default("")
+   473→  content     String   @default("")
+   474→  createdAt   DateTime @default(now())
+   475→
+   476→  @@unique([userId, courseId])
+   477→}
+   478→
+   479→model Bookmark {
+   480→  id          String   @id @default(cuid())
+   481→  userId      String
+   482→  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   483→  courseId    String
+   484→  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+   485→  createdAt   DateTime @default(now())
+   486→
+   487→  @@unique([userId, courseId])
+   488→}
+   489→
+   490→// ============================================================
+   491→// NEW MODELS — GuardianX Academy feature expansion
+   492→// ============================================================
+   493→
+   494→// --- Assignment System + Grading Rubric + Peer Review ---
+   495→model Assignment {
+   496→  id            String   @id @default(cuid())
+   497→  courseId      String
+   498→  course        Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+   499→  moduleId      String?  // optional module link
+   500→  title         String
+   501→  description   String   @default("")
+   502→  instructions  String   @default("") // markdown
+   503→  pointsPossible Int     @default(100)
+   504→  dueDate       DateTime
+   505→  allowLate     Boolean  @default(true)
+   506→  latePenalty   Int      @default(10) // percent per day
+   507→  submissionType String  @default("text") // text | file | url
+   508→  enablePeerReview Boolean @default(false)
+   509→  peerReviewCount Int    @default(2) // how many peers review each submission
+   510→  peerReviewDueDate DateTime?
+   511→  rubricId      String?
+   512→  rubric        GradingRubric? @relation("assignmentRubric", fields: [rubricId], references: [id])
+   513→  published     Boolean  @default(true)
+   514→  createdAt     DateTime @default(now())
+   515→  updatedAt     DateTime @updatedAt
+   516→
+   517→  submissions   AssignmentSubmission[]
+   518→  instructorId  String
+   519→  instructor    User     @relation(fields: [instructorId], references: [id])
+   520→}
+   521→
+   522→model AssignmentSubmission {
+   523→  id            String   @id @default(cuid())
+   524→  assignmentId  String
+   525→  assignment    Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+   526→  userId        String
+   527→  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   528→  content       String   @default("") // text submission
+   529→  fileUrl       String?  // file or URL submission
+   530→  submittedAt   DateTime @default(now())
+   531→  late          Boolean  @default(false)
+   532→  grade         Int?     // final grade 0-100
+   533→  gradedAt      DateTime?
+   534→  gradedBy      String?
+   535→  feedback      String   @default("") // instructor feedback
+   536→  rubricScores  String   @default("[]") // JSON array of per-criterion scores
+   537→  status        String   @default("submitted") // submitted | graded | returned | resubmitted
+   538→
+   539→  peerReviews   PeerReview[]
+   540→
+   541→  @@unique([assignmentId, userId])
+   542→}
+   543→
+   544→model GradingRubric {
+   545→  id            String   @id @default(cuid())
+   546→  title         String
+   547→  description   String   @default("")
+   548→  courseId      String?
+   549→  course        Course?  @relation(fields: [courseId], references: [id])
+   550→  createdBy     String
+   551→  creator       User     @relation(fields: [createdBy], references: [id])
+   552→  criteria      RubricCriterion[]
+   553→  assignments   Assignment[] @relation("assignmentRubric")
+   554→  createdAt     DateTime @default(now())
+   555→  updatedAt     DateTime @updatedAt
+   556→}
+   557→
+   558→model RubricCriterion {
+   559→  id            String   @id @default(cuid())
+   560→  rubricId      String
+   561→  rubric        GradingRubric @relation(fields: [rubricId], references: [id], onDelete: Cascade)
+   562→  label         String   // e.g. "Technical Accuracy"
+   563→  description   String   @default("")
+   564→  points        Int      @default(25) // max points for this criterion
+   565→  order         Int      @default(0)
+   566→}
+   567→
+   568→model PeerReview {
+   569→  id            String   @id @default(cuid())
+   570→  submissionId  String
+   571→  submission    AssignmentSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+   572→  reviewerId    String
+   573→  reviewer      User     @relation(fields: [reviewerId], references: [id], onDelete: Cascade)
+   574→  reviewedUserId String
+   575→  reviewedUser  User     @relation("reviewedSubmissions", fields: [reviewedUserId], references: [id], onDelete: Cascade)
+   576→  rating        Int      @default(0) // 1-5
+   577→  feedback      String   @default("")
+   578→  rubricScores  String   @default("[]") // JSON
+   579→  submittedAt   DateTime @default(now())
+   580→
+   581→  @@unique([submissionId, reviewerId])
+   582→}
+   583→
+   584→// --- Office Hours Scheduler ---
+   585→model OfficeHourSlot {
+   586→  id            String   @id @default(cuid())
+   587→  instructorId  String
+   588→  instructor    User     @relation(fields: [instructorId], references: [id], onDelete: Cascade)
+   589→  courseId      String?  // optional course-specific
+   590→  course        Course?  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+   591→  startAt       DateTime
+   592→  endAt         DateTime
+   593→  mode          String   @default("video") // video | in-person | chat
+   594→  location      String   @default("") // meeting link or room
+   595→  maxBookings   Int      @default(1)
+   596→  bookings      OfficeHourBooking[]
+   597→  createdAt     DateTime @default(now())
+   598→}
+   599→
+   600→model OfficeHourBooking {
+   601→  id            String   @id @default(cuid())
+   602→  slotId        String
+   603→  slot          OfficeHourSlot @relation(fields: [slotId], references: [id], onDelete: Cascade)
+   604→  studentId     String
+   605→  student       User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+   606→  topic         String   @default("")
+   607→  notes         String   @default("")
+   608→  status        String   @default("booked") // booked | completed | cancelled
+   609→  createdAt     DateTime @default(now())
+   610→
+   611→  @@unique([slotId, studentId])
+   612→}
+   613→
+   614→// --- Student Messaging ---
+   615→model MessageThread {
+   616→  id            String   @id @default(cuid())
+   617→  userAId       String
+   618→  userA         User     @relation("threadUserA", fields: [userAId], references: [id], onDelete: Cascade)
+   619→  userBId       String
+   620→  userB         User     @relation("threadUserB", fields: [userBId], references: [id], onDelete: Cascade)
+   621→  lastMessageAt DateTime @default(now())
+   622→  messages      Message[]
+   623→
+   624→  @@unique([userAId, userBId])
+   625→}
+   626→
+   627→model Message {
+   628→  id            String   @id @default(cuid())
+   629→  threadId      String
+   630→  thread        MessageThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+   631→  senderId      String
+   632→  sender        User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+   633→  content       String
+   634→  read          Boolean  @default(false)
+   635→  createdAt     DateTime @default(now())
+   636→}
+   637→
+   638→// --- Study Groups ---
+   639→model StudyGroup {
+   640→  id            String   @id @default(cuid())
+   641→  title         String
+   642→  description   String   @default("")
+   643→  courseId      String?  // optional course link
+   644→  course        Course?  @relation(fields: [courseId], references: [id], onDelete: SetNull)
+   645→  creatorId     String
+   646→  creator       User     @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+   647→  maxMembers    Int      @default(10)
+   648→  isPrivate     Boolean  @default(false)
+   649→  joinCode      String?  // required if private
+   650→  meetingLink   String?  // optional video/chat link
+   651→  tags          String   @default("")
+   652→  createdAt     DateTime @default(now())
+   653→  members       StudyGroupMember[]
+   654→}
+   655→
+   656→model StudyGroupMember {
+   657→  id            String   @id @default(cuid())
+   658→  groupId       String
+   659→  group         StudyGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+   660→  userId        String
+   661→  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   662→  role          String   @default("member") // owner | member
+   663→  joinedAt      DateTime @default(now())
+   664→
+   665→  @@unique([groupId, userId])
+   666→}
+   667→
+   668→// --- Attendance Tracking ---
+   669→model AttendanceRecord {
+   670→  id            String   @id @default(cuid())
+   671→  courseId      String
+   672→  course        Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+   673→  userId        String
+   674→  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   675→  date          String   // YYYY-MM-DD
+   676→  sessionType   String   @default("live") // live | in-person | exam
+   677→  status        String   @default("present") // present | absent | late | excused
+   678→  notes         String   @default("")
+   679→  recordedAt    DateTime @default(now())
+   680→
+   681→  @@unique([courseId, userId, date, sessionType])
+   682→}
+   683→
+   684→// --- Certificate Templates ---
+   685→model CertificateTemplate {
+   686→  id            String   @id @default(cuid())
+   687→  name          String
+   688→  description   String   @default("")
+   689→  // Visual config (JSON-encoded)
+   690→  primaryColor  String   @default("#10b981") // emerald
+   691→  accentColor   String   @default("#06b6d4") // cyan
+   692→  fontFamily    String   @default("serif")
+   693→  borderStyle   String   @default("classic") // classic | modern | minimal | holographic
+   694→  logoUrl       String?
+   695→  signatureText String   @default("Director, GuardianX Academy")
+   696→  sealStyle     String   @default("emerald") // emerald | gold | cyan | holographic
+   697→  backgroundPattern String @default("grid") // grid | particles | none | circuit
+   698→  isDefault     Boolean  @default(false)
+   699→  createdAt     DateTime @default(now())
+   700→  updatedAt     DateTime @updatedAt
+   701→  certificates  Certificate[] @relation("certificateTemplate")
+   702→}
+   703→
+   704→// --- Email Notifications (log + stub) ---
+   705→model EmailLog {
+   706→  id            String   @id @default(cuid())
+   707→  userId        String?
+   708→  user          User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+   709→  toEmail       String
+   710→  subject       String
+   711→  body          String
+   712→  type          String   @default("notification") // notification | certificate | assignment | reminder | welcome
+   713→  status        String   @default("sent") // sent | failed | queued
+   714→  sentAt        DateTime @default(now())
+   715→}
+   716→
+   717→// ============================================================
+   718→// FEATURE EXPANSION — 20 new feature models
+   719→// ============================================================
+   720→
+   721→// --- 1. AI Learning Assistant ---
+   722→model AIChatSession {
+   723→  id          String   @id @default(cuid())
+   724→  userId      String
+   725→  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   726→  courseId    String?
+   727→  labId       String?
+   728→  context     String   @default("") // current page context
+   729→  messages    AIChatMessage[]
+   730→  createdAt   DateTime @default(now())
+   731→  updatedAt   DateTime @updatedAt
+   732→}
+   733→
+   734→model AIChatMessage {
+   735→  id          String   @id @default(cuid())
+   736→  sessionId   String
+   737→  session     AIChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+   738→  role        String   // user | assistant
+   739→  content     String
+   740→  createdAt   DateTime @default(now())
+   741→}
+   742→
+   743→// --- 2. Live Threat Intelligence Feed ---
+   744→model ThreatFeed {
+   745→  id          String   @id @default(cuid())
+   746→  title       String
+   747→  description String
+   748→  severity    String   @default("medium") // low | medium | high | critical
+   749→  category    String   // malware | vulnerability | breach | attack | advisory
+   750→  source      String   @default("GuardianX Intelligence")
+   751→  cve         String?
+   752→  ioc         String?  // indicator of compromise
+   753→  affectedSystems String @default("")
+   754→  publishedAt DateTime @default(now())
+   755→  createdAt   DateTime @default(now())
+   756→}
+   757→
+   758→// --- 3. AI Code Review ---
+   759→model CodeReview {
+   760→  id          String   @id @default(cuid())
+   761→  userId      String
+   762→  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   763→  courseId    String?
+   764→  labId       String?
+   765→  language    String   @default("python") // python | bash | javascript | c | sql
+   766→  code        String
+   767→  feedback    String   @default("") // AI-generated feedback (JSON)
+   768→  score       Int      @default(0) // 0-100
+   769→  issues      String   @default("[]") // JSON array of issues found
+   770→  createdAt   DateTime @default(now())
+   771→}
+   772→
+   773→// --- 4. Career Path Planner ---
+   774→model CareerPath {
+   775→  id          String   @id @default(cuid())
+   776→  userId      String
+   777→  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   778→  targetRole  String   // SOC Analyst | Pentester | Security Engineer | CISO | etc.
+   779→  currentRole String   @default("")
+   780→  targetSalary String  @default("")
+   781→  recommendedCourses String @default("[]") // JSON array of course IDs
+   782→  recommendedCerts String @default("[]") // JSON array of cert names
+   783→  recommendedLabs String @default("[]") // JSON array of lab IDs
+   784→  estimatedWeeks Int   @default(12)
+   785→  progress    Int      @default(0) // 0-100
+   786→  createdAt   DateTime @default(now())
+   787→  updatedAt   DateTime @updatedAt
+   788→}
+   789→
+   790→model CareerRole {
+   791→  id          String   @id @default(cuid())
+   792→  title       String   @unique
+   793→  description String
+   794→  avgSalary   String
+   795→  requiredSkills String @default("[]") // JSON array
+   796→  recommendedCourses String @default("[]") // JSON array of course IDs
+   797→  growthRate  String   @default("15%")
+   798→  category    String   @default("security") // security | network | cloud | governance
+   799→}
+   800→
+   801→// --- 5. Job Board ---
+   802→model Job {
+   803→  id          String   @id @default(cuid())
+   804→  title       String
+   805→  company     String
+   806→  companyLogo String?
+   807→  location    String
+   808→  remote      Boolean  @default(false)
+   809→  type        String   @default("full-time") // full-time | part-time | contract | internship
+   810→  salary      String   @default("")
+   811→  description String
+   812→  requirements String  @default("")
+   813→  requiredCerts String @default("[]") // JSON array
+   814→  requiredSkills String @default("[]") // JSON array
+   815→  postedById  String
+   816→  postedBy    User     @relation(fields: [postedById], references: [id])
+   817→  status      String   @default("active") // active | closed | draft
+   818→  applications JobApplication[]
+   819→  createdAt   DateTime @default(now())
+   820→}
+   821→
+   822→model JobApplication {
+   823→  id          String   @id @default(cuid())
+   824→  jobId       String
+   825→  job         Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+   826→  userId      String
+   827→  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   828→  coverLetter String   @default("")
+   829→  status      String   @default("pending") // pending | reviewed | shortlisted | rejected | hired
+   830→  createdAt   DateTime @default(now())
+   831→
+   832→  @@unique([jobId, userId])
+   833→}
+   834→
+   835→// --- 6. Mock Interview ---
+   836→model MockInterview {
+   837→  id          String   @id @default(cuid())
+   838→  userId      String
+   839→  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   840→  role        String   // SOC Analyst | Pentester | etc.
+   841→  difficulty  String   @default("intermediate") // beginner | intermediate | advanced
+   842→  questions   String   @default("[]") // JSON array of questions
+   843→  answers     String   @default("[]") // JSON array of answers
+   844→  score       Int      @default(0)
+   845→  feedback    String   @default("")
+   846→  duration    Int      @default(0) // seconds
+   847→  completedAt DateTime?
+   848→  createdAt   DateTime @default(now())
+   849→}
+   850→
+   851→model InterviewQuestion {
+   852→  id          String   @id @default(cuid())
+   853→  role        String   // SOC Analyst | Pentester | etc.
+   854→  difficulty  String   @default("intermediate")
+   855→  question    String
+   856→  expectedAnswer String @default("")
+   857→  category    String   @default("technical") // technical | behavioral | scenario
+   858→  tags        String   @default("")
+   859→}
+   860→
+   861→// --- 7. Resume Builder ---
+   862→model Resume {
+   863→  id          String   @id @default(cuid())
+   864→  userId      String
+   865→  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   866→  template    String   @default("professional") // professional | modern | minimal | cybersecurity
+   867→  summary     String   @default("")
+   868→  experience  String   @default("[]") // JSON array
+   869→  education   String   @default("[]") // JSON array
+   870→  skills      String   @default("[]") // JSON array
+   871→  certifications String @default("[]") // JSON array (auto-populated from GuardianX)
+   872→  projects    String   @default("[]") // JSON array
+   873→  contactInfo String   @default("{}") // JSON
+   874→  isPublic    Boolean  @default(false)
+   875→  shareUrl    String?
+   876→  createdAt   DateTime @default(now())
+   877→  updatedAt   DateTime @updatedAt
+   878→}
+   879→
+   880→// --- 8. CTF Competition ---
+   881→model CTFCompetition {
+   882→  id          String   @id @default(cuid())
+   883→  title       String
+   884→  description String
+   885→  format      String   @default("jeopardy") // jeopardy | attack-defense
+   886→  startAt     DateTime
+   887→  endAt       DateTime
+   888→  maxTeams    Int      @default(50)
+   889→  teamSize    Int      @default(4)
+   890→  status      String   @default("upcoming") // upcoming | live | ended
+   891→  prizes      String   @default("")
+   892→  organizerId String
+   893→  organizer   User     @relation(fields: [organizerId], references: [id])
+   894→  challenges  CTFChallenge[]
+   895→  teams       CTFTeam[]
+   896→  createdAt   DateTime @default(now())
+   897→}
+   898→
+   899→model CTFChallenge {
+   900→  id            String   @id @default(cuid())
+   901→  competitionId String
+   902→  competition   CTFCompetition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+   903→  title         String
+   904→  description   String
+   905→  category      String   // web | crypto | forensics | reverse | pwn | misc
+   906→  difficulty    String   @default("easy") // easy | medium | hard | insane
+   907→  points        Int      @default(100)
+   908→  flag          String
+   909→  hint          String?
+   910→  hintsUsed     Int      @default(0)
+   911→  solveCount    Int      @default(0)
+   912→  order         Int      @default(0)
+   913→  submissions   CTFSubmission[]
+   914→}
+   915→
+   916→model CTFTeam {
+   917→  id            String   @id @default(cuid())
+   918→  competitionId String
+   919→  competition   CTFCompetition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+   920→  name          String
+   921→  captainId     String
+   922→  members       CTFTeamMember[]
+   923→  score         Int      @default(0)
+   924→  rank          Int      @default(0)
+   925→  createdAt     DateTime @default(now())
+   926→
+   927→  @@unique([competitionId, name])
+   928→}
+   929→
+   930→model CTFTeamMember {
+   931→  id          String   @id @default(cuid())
+   932→  teamId      String
+   933→  team        CTFTeam  @relation(fields: [teamId], references: [id], onDelete: Cascade)
+   934→  userId      String
+   935→  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   936→  role        String   @default("member") // captain | member
+   937→  joinedAt    DateTime @default(now())
+   938→
+   939→  @@unique([teamId, userId])
+   940→}
+   941→
+   942→model CTFSubmission {
+   943→  id            String   @id @default(cuid())
+   944→  challengeId   String
+   945→  challenge     CTFChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+   946→  teamId        String
+   947→  flag          String
+   948→  correct       Boolean  @default(false)
+   949→  submittedAt   DateTime @default(now())
+   950→}
+   951→
+   952→// --- 9. Weekly Challenges ---
+   953→model WeeklyChallenge {
+   954→  id          String   @id @default(cuid())
+   955→  title       String
+   956→  description String
+   957→  category    String   // web | crypto | forensics | network | misc
+   958→  difficulty  String   @default("medium")
+   959→  flag        String
+   960→  points      Int      @default(500)
+   961→  hint        String?
+   962→  startAt     DateTime @default(now())
+   963→  endAt       DateTime
+   964→  isActive    Boolean  @default(true)
+   965→  participants WeeklyChallengeSubmission[]
+   966→  createdAt   DateTime @default(now())
+   967→}
+   968→
+   969→model WeeklyChallengeSubmission {
+   970→  id          String   @id @default(cuid())
+   971→  challengeId String
+   972→  challenge   WeeklyChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+   973→  userId      String
+   974→  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   975→  flag        String
+   976→  correct     Boolean  @default(false)
+   977→  timeTaken   Int      @default(0) // seconds
+   978→  submittedAt DateTime @default(now())
+   979→
+   980→  @@unique([challengeId, userId])
+   981→}
+   982→
+   983→// --- 10. Team Lab Missions ---
+   984→model TeamMission {
+   985→  id          String   @id @default(cuid())
+   986→  title       String
+   987→  description String
+   988→  scenario    String
+   989→  maxTeamSize Int      @default(4)
+   990→  duration    Int      @default(60) // minutes
+   991→  difficulty  String   @default("medium")
+   992→  objectives  String   @default("[]") // JSON array
+   993→  status      String   @default("active")
+   994→  sessions    TeamMissionSession[]
+   995→  createdAt   DateTime @default(now())
+   996→}
+   997→
+   998→model TeamMissionSession {
+   999→  id          String   @id @default(cuid())
+  1000→  missionId   String
+  1001→  mission     TeamMission @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  1002→  leaderId    String
+  1003→  status      String   @default("waiting") // waiting | active | completed | failed
+  1004→  members     TeamMissionMember[]
+  1005→  startedAt   DateTime?
+  1006→  completedAt DateTime?
+  1007→  score       Int      @default(0)
+  1008→  createdAt   DateTime @default(now())
+  1009→}
+  1010→
+  1011→model TeamMissionMember {
+  1012→  id          String   @id @default(cuid())
+  1013→  sessionId   String
+  1014→  session     TeamMissionSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  1015→  userId      String
+  1016→  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  1017→  role        String   @default("member") // leader | scanner | exploiter | reporter
+  1018→  joinedAt    DateTime @default(now())
+  1019→
+  1020→  @@unique([sessionId, userId])
+  1021→}
+  1022→
+  1023→// --- 11. Learning Analytics ---
+  1024→model LearningAnalytics {
+  1025→  id          String   @id @default(cuid())
+  1026→  userId      String
+  1027→  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  1028→  totalTimeSpent Int   @default(0) // seconds
+  1029→  coursesStarted Int   @default(0)
+  1030→  coursesCompleted Int @default(0)
+  1031→  labsAttempted Int    @default(0)
+  1032→  labsSolved  Int      @default(0)
+  1033→  avgQuizScore Float   @default(0)
+  1034→  currentStreak Int    @default(0)
+  1035→  longestStreak Int    @default(0)
+  1036→  skillRadar  String   @default("{}") // JSON: { web: 75, network: 60, ... }
+  1037→  weeklyActivity String @default("[]") // JSON: array of {date, minutes}
+  1038→  peerComparison String @default("{}") // JSON: percentile data
+  1039→  updatedAt   DateTime @updatedAt
+  1040→}
+  1041→
+  1042→// --- 12. Skill Assessment ---
+  1043→model SkillAssessment {
+  1044→  id          String   @id @default(cuid())
+  1045→  title       String
+  1046→  description String
+  1047→  category    String   // web | network | crypto | forensics | reverse | governance
+  1048→  difficulty  String   @default("intermediate")
+  1049→  duration    Int      @default(30) // minutes
+  1050→  questions   SkillAssessmentQuestion[]
+  1051→  results     SkillAssessmentResult[]
+  1052→  createdAt   DateTime @default(now())
+  1053→}
+  1054→
+  1055→model SkillAssessmentQuestion {
+  1056→  id            String   @id @default(cuid())
+  1057→  assessmentId  String
+  1058→  assessment    SkillAssessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  1059→  question      String
+  1060→  options       String   @default("[]") // JSON array
+  1061→  correctAnswer Int      @default(0)
+  1062→  explanation   String   @default("")
+  1063→  skillTag      String   @default("") // e.g., "sql-injection"
+  1064→  points        Int      @default(10)
+  1065→}
+  1066→
+  1067→model SkillAssessmentResult {
+  1068→  id            String   @id @default(cuid())
+  1069→  assessmentId  String
+  1070→  assessment    SkillAssessment @relation(fields: [assessmentId], references: [id])
+  1071→  userId        String
+  1072→  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  1073→  answers       String   @default("[]") // JSON
+  1074→  score         Int      @default(0)
+  1075→  passed        Boolean  @default(false)
+  1076→  skillScores   String   @default("{}") // JSON: per-skill breakdown
+  1077→  takenAt       DateTime @default(now())
+  1078→}
+  1079→
+  1080→// --- 13. Course Prerequisites Visualizer ---
+  1081→// Uses existing Course.prerequisiteIds field
+  1082→// No new models needed — data is derived from Course model
+  1083→
+  1084→// --- 14. Lab Snapshots ---
+  1085→model LabSnapshot {
+  1086→  id          String   @id @default(cuid())
+  1087→  userId      String
+  1088→  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  1089→  labId       String
+  1090→  name        String   @default("Untitled Snapshot")
+  1091→  description String   @default("")
+  1092→  state       String   @default("{}") // JSON: terminal history, env vars, progress
+  1093→  createdAt   DateTime @default(now())
+  1094→}
+  1095→
+  1096→// --- 15. Collaborative Cyber Range ---
+  1097→model CyberRange {
+  1098→  id          String   @id @default(cuid())
+  1099→  name        String
+  1100→  description String
+  1101→  topology    String   @default("{}") // JSON: network topology config
+  1102→  machines    String   @default("[]") // JSON: array of machine configs
+  1103→  maxUsers    Int      @default(10)
+  1104→  difficulty  String   @default("advanced")
+  1105→  duration    Int      @default(120) // minutes
+  1106→  status      String   @default("available")
+  1107→  sessions    CyberRangeSession[]
+  1108→  createdAt   DateTime @default(now())
+  1109→}
+  1110→
+  1111→model CyberRangeSession {
+  1112→  id          String   @id @default(cuid())
+  1113→  rangeId     String
+  1114→  range       CyberRange @relation(fields: [rangeId], references: [id], onDelete: Cascade)
+  1115→  leaderId    String
+  1116→  status      String   @default("waiting") // waiting | active | completed
+  1117→  members     CyberRangeMember[]
+  1118→  startedAt   DateTime?
+  1119→  endedAt     DateTime?
+  1120→  createdAt   DateTime @default(now())
+  1121→}
+  1122→
+  1123→model CyberRangeMember {
+  1124→  id          String   @id @default(cuid())
+  1125→  sessionId   String
+  1126→  session     CyberRangeSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  1127→  userId      String
+  1128→  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  1129→  role        String   @default("member") // leader | attacker | defender | observer
+  1130→  joinedAt    DateTime @default(now())
+  1131→
+  1132→  @@unique([sessionId, userId])
+  1133→}
+  1134→
+  1135→// --- 16. Bug Bounty Integration ---
+  1136→model BugBountyProgram {
+  1137→  id          String   @id @default(cuid())
+  1138→  name        String
+  1139→  platform    String   @default("GuardianX") // GuardianX | HackerOne | Bugcrowd
+  1140→  url         String
+  1141→  description String
+  1142→  scope       String   @default("")
+  1143→  rewardRange String   @default("$0 - $0")
+  1144→  difficulty  String   @default("medium")
+  1145→  tags        String   @default("")
+  1146→  submissions BugBountySubmission[]
+  1147→  createdAt   DateTime @default(now())
+  1148→}
+  1149→
+  1150→model BugBountySubmission {
+  1151→  id          String   @id @default(cuid())
+  1152→  userId      String
+  1153→  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  1154→  programId   String
+  1155→  program     BugBountyProgram @relation(fields: [programId], references: [id])
+  1156→  title       String
+  1157→  description String
+  1158→  severity    String   @default("medium") // low | medium | high | critical
+  1159→  status      String   @default("submitted") // submitted | validated | rewarded | rejected
+  1160→  bounty      String   @default("")
+  1161→  createdAt   DateTime @default(now())
+  1162→}
+  1163→
+  1164→// --- 17. PWA ---
+  1165→// No DB models needed — PWA is a frontend manifest + service worker
+  1166→
+  1167→// --- 19. Parent/Guardian Portal ---
+  1168→model ParentAccount {
+  1169→  id          String   @id @default(cuid())
+  1170→  email       String   @unique
+  1171→  name        String
+  1172→  passwordHash String
+  1173→  phone       String?
+  1174→  studentId   String
+  1175→  student     User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  1176→  relationship String  @default("parent") // parent | guardian
+  1177→  createdAt   DateTime @default(now())
+  1178→}
+  1179→
+  1180→// --- 20. Course Authoring Studio ---
+  1181→model AuthoredCourse {
+  1182→  id          String   @id @default(cuid())
+  1183→  title       String
+  1184→  authorId    String
+  1185→  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  1186→  status      String   @default("draft") // draft | review | published
+  1187→  config      String   @default("{}") // JSON: full course config (modules, lessons, quizzes, labs)
+  1188→  version     Int      @default(1)
+  1189→  createdAt   DateTime @default(now())
+  1190→  updatedAt   DateTime @updatedAt
+  1191→}
+  1192→
+  1193→// Update User model with new relations
+  1194→// Note: These are added at the end to avoid circular reference issues
+  1195→
+  1196→// --- 22. CMS (Content Management System) ---
+  1197→// SiteContent stores editable copy for every public-facing page so admins
+  1198→// can change text/copy/arrays/objects without redeploying. Pages read the
+  1199→// public GET /api/cms/[page] endpoint to render.
+  1200→model SiteContent {
+  1201→  id        String   @id @default(cuid())
+  1202→  page      String   // e.g. "home", "impact", "contact", "institutions", "catalog", "course-detail", "auth", "global"
+  1203→  section   String   // e.g. "hero", "stats", "audiences", "courses", "labs", "corporate", "partners", "benefits", "finalCta", "header", "footer", "trust"
+  1204→  key       String   // e.g. "title", "subtitle", "description", "ctaPrimary", "stats", "items", "body"
+  1205→  value     Json     // can be string | string[] | {title, desc, icon}[] | object
+  1206→  updatedAt DateTime @updatedAt
+  1207→  updatedBy String?
+  1208→
+  1209→  @@unique([page, section, key])
+  1210→  @@index([page, section])
+  1211→}
+  1212→
+  1213→// ============================================================
+  1214→// PRODUCTION MODELS — database-driven content (Phase PROD-DB)
+  1215→// ============================================================
+  1216→
+  1217→/// Learning paths — guided career journeys (replaces hardcoded arrays)
+  1218→model LearningPath {
+  1219→  id          String   @id @default(cuid())
+  1220→  slug        String   @unique
+  1221→  title       String
+  1222→  subtitle    String?
+  1223→  description String
+  1224→  vertical   String   @default("cyber") // cyber | ai | cloud
+  1225→  icon        String   @default("Route") // Lucide icon name
+  1226→  color       String   @default("text-violet-300")
+  1227→  tint        String   @default("bg-violet-500/10")
+  1228→  difficulty  String   @default("Beginner") // Beginner | Intermediate | Advanced
+  1229→  duration    String   @default("12 weeks")
+  1230→  skillsCount Int      @default(0)
+  1231→  labsCount   Int      @default(0)
+  1232→  xpReward    Int      @default(5000)
+  1233→  careerOutcome String?
+  1234→  skills      String   @default("[]") // JSON array of skill names
+  1235→  courses     String   @default("[]") // JSON array of course IDs
+  1236→  order       Int      @default(0)
+  1237→  published   Boolean  @default(true)
+  1238→  featured    Boolean  @default(false)
+  1239→  createdAt   DateTime @default(now())
+  1240→  updatedAt   DateTime @updatedAt
+  1241→}
+  1242→
+  1243→/// Skill categories — branches of the skill tree
+  1244→model SkillCategory {
+  1245→  id          String   @id @default(cuid())
+  1246→  slug        String   @unique
+  1247→  name        String
+  1248→  icon        String   @default("Shield")
+  1249→  color       String   @default("text-violet-300")
+  1250→  tint        String   @default("bg-violet-500/10")
+  1251→  description String?
+  1252→  order       Int      @default(0)
+  1253→  createdAt   DateTime @default(now())
+  1254→  updatedAt   DateTime @updatedAt
+  1255→  skills      Skill[]
+  1256→}
+  1257→
+  1258→/// Individual skills — nodes in the skill tree
+  1259→model Skill {
+  1260→  id          String   @id @default(cuid())
+  1261→  slug        String   @unique
+  1262→  name        String
+  1263→  description String?
+  1264→  categoryId  String
+  1265→  category    SkillCategory @relation(fields: [categoryId], references: [id])
+  1266→  difficulty  String   @default("Beginner")
+  1267→  xp          Int      @default(100)
+  1268→  status      String   @default("available") // locked | available | in-progress | completed
+  1269→  prerequisites String @default("[]") // JSON array of skill slugs
+  1270→  relatedCourses String @default("[]") // JSON array of course IDs
+  1271→  relatedLabs String   @default("[]") // JSON array of lab IDs
+  1272→  order       Int      @default(0)
+  1273→  createdAt   DateTime @default(now())
+  1274→  updatedAt   DateTime @updatedAt
+  1275→}
+  1276→
+  1277→/// Rank hierarchy — 8 tiers from Recruit to Elite Guardian
+  1278→model Rank {
+  1279→  id          String   @id @default(cuid())
+  1280→  name        String   @unique // RECRUIT, ANALYST, HUNTER, OPERATOR, SPECIALIST, SENTINEL, GUARDIAN, ELITE_GUARDIAN
+  1281→  displayName String   // "Recruit", "Analyst", etc.
+  1282→  level       Int      @unique // 1-8
+  1283→  xpThreshold Int      // XP needed to reach this rank
+  1284→  color       String   @default("text-gray-400")
+  1285→  description String?
+  1286→  icon        String   @default("Shield")
+  1287→  order       Int      @default(0)
+  1288→  createdAt   DateTime @default(now())
+  1289→  updatedAt   DateTime @updatedAt
+  1290→}
+  1291→
+  1292→/// Career roles — for career matching engine
+  1293→/// (renamed from CareerRole → CareerPathRole to avoid collision with the
+  1294→///  pre-existing CareerRole model used by /api/career/roles)
+  1295→model CareerPathRole {
+  1296→  id          String   @id @default(cuid())
+  1297→  slug        String   @unique
+  1298→  title       String
+  1299→  description String?
+  1300→  icon        String   @default("Briefcase")
+  1301→  color       String   @default("text-violet-300")
+  1302→  // Skill weights as JSON: {"networking": 20, "linux": 20, "web": 25, "pentesting": 30, "reporting": 5}
+  1303→  skillWeights String  @default("{}")
+  1304→  minThreshold Int     @default(60) // minimum readiness % to be "ready"
+  1305→  recommendedCerts String @default("[]") // JSON array of cert names
+  1306→  recommendedCourses String @default("[]") // JSON array of course IDs
+  1307→  recommendedLabs String @default("[]") // JSON array of lab IDs
+  1308→  salaryRange String?
+  1309→  demand      String   @default("High") // High | Medium | Low
+  1310→  published   Boolean  @default(true)
+  1311→  order       Int      @default(0)
+  1312→  createdAt   DateTime @default(now())
+  1313→  updatedAt   DateTime @updatedAt
+  1314→}
+  1315→
+  1316→/// Platform statistics — admin-managed, optionally auto-calculated
+  1317→model PlatformStat {
+  1318→  id          String   @id @default(cuid())
+  1319→  key         String   @unique // "learner_count", "lab_count", "course_count", "partner_count"
+  1320→  label       String   // "Learners", "Labs", "Courses", "Partners"
+  1321→  value       String   // "12000+" or calculated value
+  1322→  source      String   @default("manual") // "manual" | "calculated"
+  1323→  displayStatus String @default("visible") // visible | hidden
+  1324→  suffix      String?  // "+", "", etc.
+  1325→  icon        String   @default("Users")
+  1326→  color       String   @default("text-violet-300")
+  1327→  updatedAt   DateTime @updatedAt
+  1328→  updatedBy   String?
+  1329→}
+  1330→
+  1331→/// Technology ecosystem — replaces fake "Trusted by Google" logos
+  1332→model TechnologyPartner {
+  1333→  id          String   @id @default(cuid())
+  1334→  name        String   @unique
+  1335→  category    String   @default("tool") // tool | platform | framework
+  1336→  description String?
+  1337→  url         String?
+  1338→  icon        String   @default("Terminal")
+  1339→  order       Int      @default(0)
+  1340→  published   Boolean  @default(true)
+  1341→  createdAt   DateTime @default(now())
+  1342→  updatedAt   DateTime @updatedAt
+  1343→}
+  1344→
+  1345→// ============================================================
+  1346→// EXAM PLATFORM — Proctored examinations and GuardianX certs
+  1347→// ============================================================
+  1348→
+  1349→/// GuardianX certification — distinct from external certifications
+  1350→model GuardianCertification {
+  1351→  id          String   @id @default(cuid())
+  1352→  slug        String   @unique
+  1353→  name        String
+  1354→  description String?
+  1355→  level       String   @default("Intermediate") // Beginner | Intermediate | Advanced | Expert
+  1356→  domains     String   @default("[]") // JSON array of domain names
+  1357→  skills      String   @default("[]") // JSON array of skills assessed
+  1358→  examId      String?  // linked exam (legacy reference — Exam.certificationId is the canonical FK)
+  1359→  passingScore Int     @default(70)
+  1360→  validityPeriod Int   @default(36) // months
+  1361→  icon        String   @default("Award")
+  1362→  color       String   @default("text-violet-300")
+  1363→  published   Boolean  @default(true)
+  1364→  createdAt   DateTime @default(now())
+  1365→  updatedAt   DateTime @updatedAt
+  1366→  credentials GuardianCredential[]
+  1367→  exams       Exam[]
+  1368→}
+  1369→
+  1370→/// Exam blueprint — configurable exam template
+  1371→model Exam {
+  1372→  id            String   @id @default(cuid())
+  1373→  slug          String   @unique
+  1374→  title         String
+  1375→  description   String?
+  1376→  certificationId String? // linked GuardianCertification
+  1377→  certification GuardianCertification? @relation(fields: [certificationId], references: [id])
+  1378→  duration      Int      @default(120) // minutes
+  1379→  passingScore  Int      @default(70)
+  1380→  maxAttempts   Int      @default(3)
+  1381→  questionCount Int      @default(50)
+  1382→  sections      String   @default("[]") // JSON: [{title, questionCount, domains}]
+  1383→  questionType  String   @default("mcq") // mcq | multiple | truefalse | scenario | practical | hybrid
+  1384→  proctoringEnabled Boolean @default(true)
+  1385→  shuffleQuestions Boolean @default(true)
+  1386→  shuffleOptions  Boolean @default(true)
+  1387→  status        String   @default("draft") // draft | published | archived
+  1388→  createdAt     DateTime @default(now())
+  1389→  updatedAt     DateTime @updatedAt
+  1390→  attempts      ExamAttempt[]
+  1391→  questions     QuestionBank[]
+  1392→}
+  1393→
+  1394→/// Question bank — tagged by domain, skill, difficulty
+  1395→model QuestionBank {
+  1396→  id            String   @id @default(cuid())
+  1397→  examId        String?
+  1398→  exam          Exam?    @relation(fields: [examId], references: [id])
+  1399→  type          String   @default("mcq") // mcq | multiple | truefalse | scenario | practical
+  1400→  domain        String   // e.g. "Web Security", "Network Security", "GRC", "DFIR"
+  1401→  skill         String?
+  1402→  difficulty    String   @default("medium") // easy | medium | hard
+  1403→  question      String
+  1404→  options       String   @default("[]") // JSON array of option strings
+  1405→  correctAnswer String   // JSON: index for mcq, array for multiple, "true"/"false" for boolean
+  1406→  explanation   String?
+  1407→  points        Int      @default(1)
+  1408→  tags          String   @default("[]") // JSON array
+  1409→  createdAt     DateTime @default(now())
+  1410→  updatedAt     DateTime @updatedAt
+  1411→}
+  1412→
+  1413→/// Exam attempt — a learner's attempt at an exam
+  1414→model ExamAttempt {
+  1415→  id            String   @id @default(cuid())
+  1416→  examId        String
+  1417→  exam          Exam     @relation(fields: [examId], references: [id])
+  1418→  userId        String
+  1419→  status        String   @default("scheduled") // scheduled | in-progress | submitted | graded | passed | failed | voided
+  1420→  startedAt     DateTime?
+  1421→  submittedAt   DateTime?
+  1422→  score         Int?     // percentage
+  1423→  totalQuestions Int?
+  1424→  correctAnswers Int?
+  1425→  answers       String   @default("[]") // JSON: [{questionId, selected, correct}]
+  1426→  proctorFlags  String   @default("[]") // JSON: [{type, timestamp, detail}]
+  1427→  shuffleMap    String?  // JSON: { questionOrder: string[], optionOrder: { [questionId]: number[] } } — persisted on start so the submit route can map client-selected indices back to original option positions
+  1428→  timeSpent     Int?     // seconds
+  1429→  createdAt     DateTime @default(now())
+  1430→  updatedAt     DateTime @updatedAt
+  1431→}
+  1432→
+  1433→/// GuardianX credential — issued when a learner passes an exam
+  1434→model GuardianCredential {
+  1435→  id              String   @id @default(cuid())
+  1436→  credentialId    String   @unique // GX-CERT-YYYY-XXXX format
+  1437→  userId          String
+  1438→  certificationId String
+  1439→  certification   GuardianCertification @relation(fields: [certificationId], references: [id])
+  1440→  examAttemptId   String?
+  1441→  candidateName   String
+  1442→  score           Int
+  1443→  skillsAssessed  String   @default("[]") // JSON array
+  1444→  examType        String   @default("proctored")
+  1445→  issueDate       DateTime @default(now())
+  1446→  expiryDate      DateTime?
+  1447→  status          String   @default("valid") // valid | expired | revoked | suspended
+  1448→  verificationHash String  @unique
+  1449→  verificationUrl String?
+  1450→  createdAt       DateTime @default(now())
+  1451→  updatedAt       DateTime @updatedAt
+  1452→}
+  1453→
+  1454→/// Proctoring session — records proctoring data for an exam attempt
+  1455→model ProctoringSession {
+  1456→  id            String   @id @default(cuid())
+  1457→  examAttemptId String   @unique
+  1458→  userId        String
+  1459→  identityVerified Boolean @default(false)
+  1460→  environmentChecked Boolean @default(false)
+  1461→  cameraEnabled Boolean  @default(false)
+  1462→  microphoneEnabled Boolean @default(false)
+  1463→  screenShared  Boolean  @default(false)
+  1464→  fullscreenMode Boolean @default(false)
+  1465→  tabSwitches   Int      @default(0)
+  1466→  windowBlurs   Int      @default(0)
+  1467→  flags         String   @default("[]") // JSON: [{type, timestamp, severity, detail}]
+  1468→  incidentCount Int      @default(0)
+  1469→  recordingUrl  String?
+  1470→  startedAt     DateTime @default(now())
+  1471→  endedAt       DateTime?
+  1472→  createdAt     DateTime @default(now())
+  1473→}
+  1474→
+  1475→// ============================================================
+  1476→// ADMIN-UPGRADE — Instructor Profile + Lead CRM models
+  1477→// ============================================================
+  1478→
+  1479→model InstructorProfile {
+  1480→  id              String   @id @default(cuid())
+  1481→  userId          String   @unique
+  1482→  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  1483→  phone           String?
+  1484→  expertise       String   @default("[]") // JSON: ["Offensive Security", "Defensive", ...]
+  1485→  yearsExperience Int      @default(0)
+  1486→  certifications  String   @default("[]") // JSON: ["CEH", "OSCP", ...]
+  1487→  linkedinUrl     String?
+  1488→  maxBatches      Int      @default(3)
+  1489→  currentBatches  Int      @default(0)
+  1490→  createdAt       DateTime @default(now())
+  1491→  updatedAt       DateTime @updatedAt
+  1492→}
+  1493→
+  1494→model Lead {
+  1495→  id            String   @id @default(cuid())
+  1496→  name          String
+  1497→  email         String?
+  1498→  phone         String?
+  1499→  organization  String?
+  1500→  type          String   @default("Individual") // Individual | School | College | University | Corporate | Partner | Workshop | CTF | Webinar
+  1501→  status        String   @default("New") // New | Contacted | Qualified | Proposal | Negotiation | Converted | Lost
+  1502→  source        String   @default("Contact Form") // Google Form | Contact Form | Manual | Referral
+  1503→  score         Int      @default(0) // 0-100 lead score
+  1504→  notes         LeadNote[]
+  1505→  history       LeadStatusHistory[]
+  1506→  followUpDate  DateTime?
+  1507→  assignedTo    String? // staff member name/ID
+  1508→  createdAt     DateTime @default(now())
+  1509→  updatedAt     DateTime @updatedAt
+  1510→}
+  1511→
+  1512→model LeadNote {
+  1513→  id        String   @id @default(cuid())
+  1514→  leadId    String
+  1515→  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  1516→  authorId  String?
+  1517→  author    User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  1518→  content   String
+  1519→  createdAt DateTime @default(now())
+  1520→}
+  1521→
+  1522→model LeadStatusHistory {
+  1523→  id        String   @id @default(cuid())
+  1524→  leadId    String
+  1525→  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  1526→  fromStatus String?
+  1527→  toStatus  String
+  1528→  changedAt DateTime @default(now())
+  1529→}
+  1530→
+  1531→// ============================================================
+  1532→// TRAINING-BATCH-CRUD — public certification training batches
+  1533→// (separate from the school-tied `Batch` model).
+  1534→// ============================================================
+  1535→model TrainingBatch {
+  1536→  id              String   @id @default(cuid())
+  1537→  certification   String   @default("")             // e.g. "CompTIA Security+", "CEH", "CCNA", "CISSP"
+  1538→  name            String   @default("")             // e.g. "Security+ Weekend Batch"
+  1539→  schedule        String   @default("")             // human-readable schedule
+  1540→  startDate       String   @default("")             // e.g. "October 12" (display string)
+  1541→  startIsoDate    String?                           // optional ISO date for sorting/filtering
+  1542→  mode            String   @default("Live Online")  // "Live Online" | "On-Campus"
+  1543→  instructor      String   @default("")             // instructor name
+  1544→  instructorId    String?                           // optional link to User
+  1545→  seats           Int      @default(20)             // total capacity
+  1546→  enrolled        Int      @default(0)              // currently enrolled count
+  1547→  level           String   @default("Beginner")     // "Beginner" | "Intermediate" | "Advanced"
+  1548→  status          String   @default("Open")         // "Open" | "Almost Full" | "Full" | "Completed" | "Cancelled"
+  1549→  certColor       String   @default("text-emerald-300")
+  1550→  certTint        String   @default("bg-emerald-500/15")
+  1551→  certBorder      String   @default("border-emerald-500/30")
+  1552→  levelColor      String   @default("text-emerald-300")
+  1553→  levelTint       String   @default("bg-emerald-500/10")
+  1554→  levelBorder     String   @default("border-emerald-500/30")
+  1555→  borderColor     String   @default("border-border/60")
+  1556→  btnClass        String   @default("bg-emerald-600 hover:bg-emerald-500")
+  1557→  description     String   @default("")             // optional longer description
+  1558→  featured        Boolean  @default(false)          // show on homepage
+  1559→  order           Int      @default(0)              // sort order
+  1560→  published       Boolean  @default(true)
+  1561→  createdAt       DateTime @default(now())
+  1562→  updatedAt       DateTime @updatedAt
+  1563→}
+  1564→
+  1565→// ============================================================
+  1566→// EVENTS — public workshops/webinars/CTFs/campus programs (master-prompt §36)
+  1567→// ============================================================
+  1568→model Event {
+  1569→  id              String   @id @default(cuid())
+  1570→  slug            String   @unique
+  1571→  title           String
+  1572→  description     String   @default("")
+  1573→  longDescription String   @default("")
+  1574→  type            String   @default("workshop")  // workshop | webinar | ctf | campus | awareness | corporate | bootcamp
+  1575→  category        String   @default("General")
+  1576→  startDate       String   @default("")          // display string e.g. "October 15, 2026"
+  1577→  startIsoDate    String?                         // ISO date for sorting
+  1578→  endDate         String   @default("")
+  1579→  time            String   @default("")          // e.g. "7:00 PM - 9:00 PM IST"
+  1580→  venue           String   @default("Online")   // venue or "Online"
+  1581→  mode            String   @default("Live Online") // Live Online | On-Campus | Hybrid
+  1582→  organizer       String   @default("GuardianX")
+  1583→  instructor      String?                          // optional instructor name
+  1584→  capacity        Int      @default(100)
+  1585→  registered      Int      @default(0)
+  1586→  fee             String   @default("Free")       // "Free" | "₹500" | "$50" etc.
+  1587→  status          String   @default("Open")      // Open | Full | Completed | Cancelled
+  1588→  imageUrl        String?                          // optional event banner
+  1589→  tags            String   @default("")          // pipe-separated tags
+  1590→  featured        Boolean  @default(false)
+  1591→  order           Int      @default(0)
+  1592→  published       Boolean  @default(true)
+  1593→  createdAt       DateTime @default(now())
+  1594→  updatedAt       DateTime @updatedAt
+  1595→}
+  1596→
+  1597→// ============================================================
+  1598→
+  1599→// ============================================================
+  1600→// PAYMENT-COUPON-SEARCH — Razorpay orders + coupon/discount system
+  1601→// ============================================================
+  1602→model Order {
+  1603→  id          String   @id @default(cuid())
+  1604→  userId      String
+  1605→  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  1606→  courseId    String?
+  1607→  course      Course?  @relation(fields: [courseId], references: [id])
+  1608→  batchId     String?
+  1609→  amount      Float    // in INR
+  1610→  currency    String   @default("INR")
+  1611→  status      String   @default("created") // created | paid | failed | refunded
+  1612→  razorpayOrderId   String?
+  1613→  razorpayPaymentId String?
+  1614→  razorpaySignature  String?
+  1615→  couponCode  String?
+  1616→  discount    Float    @default(0)
+  1617→  finalAmount Float    @default(0)
+  1618→  createdAt   DateTime @default(now())
+  1619→  updatedAt   DateTime @updatedAt
+  1620→}
+  1621→
+  1622→model Coupon {
+  1623→  id          String   @id @default(cuid())
+  1624→  code        String   @unique
+  1625→  type        String   @default("percentage") // percentage | fixed
+  1626→  value       Float    // 10 = 10% off, or 500 = ₹500 off
+  1627→  maxUses     Int      @default(100)
+  1628→  usedCount   Int      @default(0)
+  1629→  validFrom   DateTime
+  1630→  validUntil  DateTime?
+  1631→  courseId    String?  // null = all courses
+  1632→  active      Boolean  @default(true)
+  1633→  createdAt   DateTime @default(now())
+  1634→}
+  1635→

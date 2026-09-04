@@ -16,10 +16,15 @@ import * as React from "react"
 import { motion } from "framer-motion"
 import { useQuery } from "@tanstack/react-query"
 import {
+  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip,
+  RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Cell,
+} from "recharts"
+import {
   Activity, ArrowRight, Award, BookMarked, BookOpen, Brain, Bug,
-  ChevronRight, Clock, Crosshair, Crown, Flame, FlaskConical,
-  GraduationCap, Library, Radar, Shield, ShieldCheck, StickyNote,
-  Target, Terminal, TrendingUp, Trophy, Zap,
+  Calendar, ChevronRight, Clock, Crosshair, Crown, Flame, FlaskConical,
+  GraduationCap, Library, Radar as RadarIcon, Shield, ShieldCheck, StickyNote,
+  Target, Terminal, TrendingUp, Trophy, Zap, PlayCircle, AlertCircle,
+  Video, FileText, Hourglass, BarChart2,
 } from "lucide-react"
 import { useAppStore } from "@/store/app-store"
 import { useUser } from "@/hooks/use-user"
@@ -27,6 +32,7 @@ import { api } from "@/lib/api"
 import { levelFromXp, rankTitle } from "@/lib/gamification"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Card } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
@@ -64,6 +70,46 @@ interface LabListItem {
     timeSpentMs: number; startedAt: string | null
     completedAt: string | null; updatedAt: string
   } | null
+}
+
+interface SkillProfileItem {
+  key: string
+  label: string
+  solved: number
+  total: number
+  pct: number
+}
+
+interface WeeklyXpItem {
+  date: string
+  xp: number
+  count: number
+}
+
+interface DeadlineItem {
+  type: "assignment" | "live-session" | "exam"
+  id: string
+  title: string
+  dueDate: string
+  courseId: string | null
+  courseTitle: string | null
+  meta?: string
+}
+
+interface MeData {
+  activities?: ActivityItem[]
+  weeklyXp?: WeeklyXpItem[]
+  upcomingDeadlines?: DeadlineItem[]
+  skillProfile?: SkillProfileItem[]
+  stats?: {
+    enrollments?: number
+    completed?: number
+    inProgress?: number
+    notes?: number
+    labsDone?: number
+    certificates?: number
+    avgScore?: number
+  }
 }
 
 interface LeaderboardEntry {
@@ -187,9 +233,7 @@ function pseudoIp(seed: string): string {
 export function DashboardView() {
   const { user, stats, gamification, isLoading: userLoading } = useUser()
 
-  const { data: meData } = useQuery<{
-    activities?: ActivityItem[]
-  }>({
+  const { data: meData, isLoading: meLoading } = useQuery<MeData>({
     queryKey: ["me"],
     queryFn: async () => {
       try { return await api("/api/me") } catch { return { activities: [] } }
@@ -271,6 +315,17 @@ export function DashboardView() {
   const streak = gamification?.streak ?? 0
   const level = gamification?.level ?? 1
 
+  // Dashboard-specific data from /api/me (added by ACHIEVEMENTS-DASHBOARD-REVENUE task)
+  const weeklyXp = meData?.weeklyXp ?? []
+  const upcomingDeadlines = meData?.upcomingDeadlines ?? []
+  const serverSkillProfile = meData?.skillProfile ?? []
+  const statsOverview = {
+    enrolled: stats?.enrollments ?? 0,
+    completed: stats?.completed ?? 0,
+    inProgress: stats?.inProgress ?? (stats ? Math.max(0, (stats.enrollments ?? 0) - (stats.completed ?? 0)) : 0),
+    certificates: stats?.certificates ?? 0,
+  }
+
   return (
     <div className="relative min-h-screen">
       {/* Atmospheric background - SOC grid */}
@@ -302,6 +357,21 @@ export function DashboardView() {
           rank={rank}
           loading={userLoading}
         />
+
+        {/* ====================================================
+            2b. PROGRESS OVERVIEW - Enrolled / Completed / In-Progress / Certs
+            ==================================================== */}
+        <ScrollReveal delay={0.05}>
+          <ProgressOverview
+            enrolled={statsOverview.enrolled}
+            completed={statsOverview.completed}
+            inProgress={statsOverview.inProgress}
+            certificates={statsOverview.certificates}
+            xp={xp}
+            level={level}
+            loading={userLoading || meLoading}
+          />
+        </ScrollReveal>
 
         {/* ====================================================
             3. MAIN GRID - LEFT (60%) + RIGHT (40%)
@@ -365,8 +435,42 @@ export function DashboardView() {
             <ScrollReveal delay={0.15}>
               <SkillProfile skills={skillProfile} />
             </ScrollReveal>
+
+            {/* STREAK TRACKER */}
+            <ScrollReveal delay={0.2}>
+              <StreakTracker
+                streak={streak}
+                weeklyXp={weeklyXp}
+                loading={userLoading || meLoading}
+              />
+            </ScrollReveal>
           </div>
         </div>
+
+        {/* ====================================================
+            3b. WEEKLY XP + SKILL RADAR - 2-col charts row
+            ==================================================== */}
+        <div className="grid lg:grid-cols-2 gap-6">
+          <ScrollReveal>
+            <WeeklyXpChart data={weeklyXp} loading={userLoading || meLoading} />
+          </ScrollReveal>
+          <ScrollReveal delay={0.05}>
+            <SkillRadar
+              skills={serverSkillProfile.length > 0 ? serverSkillProfile : skillProfile}
+              loading={userLoading || meLoading}
+            />
+          </ScrollReveal>
+        </div>
+
+        {/* ====================================================
+            3c. UPCOMING DEADLINES - assignments, exams, live sessions
+            ==================================================== */}
+        <ScrollReveal>
+          <UpcomingDeadlines
+            deadlines={upcomingDeadlines}
+            loading={userLoading || meLoading}
+          />
+        </ScrollReveal>
 
         {/* ====================================================
             4. ACTIVITY FEED - recent activity timeline
@@ -614,40 +718,63 @@ function ContinueLearning({
         />
       ) : (
         <div className="grid gap-3">
-          {courses.map((c) => (
-            <button
-              key={c.id}
-              onClick={() => navigate({ name: "course", courseId: c.id })}
-              className="group card-premium relative flex items-center gap-4 rounded-xl p-4 text-left"
-            >
+          {courses.map((c) => {
+            const progress = c.enrollment?.progress ?? 0
+            const lastAcc = c.enrollment?.lastAccessed
+            return (
               <div
-                className={cn(
-                  "flex size-12 shrink-0 items-center justify-center rounded-lg border border-border/50 font-mono text-sm font-bold",
-                  "bg-violet-500/10 text-violet-200",
-                )}
-                aria-hidden
+                key={c.id}
+                className="group card-premium relative flex items-center gap-4 rounded-xl p-4"
               >
-                {c.shortName.slice(0, 4)}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center justify-between gap-2">
-                  <h3 className="truncate font-semibold text-sm text-foreground group-hover:text-violet-200 transition-colors">
-                    {c.title}
-                  </h3>
-                  <span className="shrink-0 font-mono text-[10px] uppercase tracking-wider text-cyan-300">
-                    {c.enrollment?.progress ?? 0}%
-                  </span>
+                <button
+                  onClick={() => navigate({ name: "course", courseId: c.id })}
+                  className="absolute inset-0 z-0"
+                  aria-label={`Open course ${c.title}`}
+                />
+                <div
+                  className={cn(
+                    "relative z-10 flex size-12 shrink-0 items-center justify-center rounded-lg border border-border/50 font-mono text-sm font-bold",
+                    "bg-violet-500/10 text-violet-200",
+                  )}
+                  aria-hidden
+                >
+                  {c.shortName.slice(0, 4)}
                 </div>
-                <p className="mt-0.5 truncate text-[11px] text-muted-foreground font-mono uppercase tracking-wider">
-                  {c.category} · {c.lessonCount} lessons · {c.durationHours}h
-                </p>
-                <div className="mt-2">
-                  <Progress value={c.enrollment?.progress ?? 0} className="h-1.5" />
+                <div className="relative z-10 min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="truncate font-semibold text-sm text-foreground group-hover:text-violet-200 transition-colors">
+                      {c.title}
+                    </h3>
+                    <span className="shrink-0 font-mono text-[10px] uppercase tracking-wider text-cyan-300">
+                      {progress}%
+                    </span>
+                  </div>
+                  <p className="mt-0.5 truncate text-[11px] text-muted-foreground font-mono uppercase tracking-wider">
+                    {c.category} · {c.lessonCount} lessons · {c.durationHours}h
+                    {lastAcc && (
+                      <span className="ml-2 normal-case tracking-normal text-muted-foreground/70">
+                        · Last: {relativeTime(lastAcc)}
+                      </span>
+                    )}
+                  </p>
+                  <div className="mt-2">
+                    <Progress value={progress} className="h-1.5" />
+                  </div>
                 </div>
+                <Button
+                  size="sm"
+                  className="relative z-10 shrink-0 gap-1.5 bg-primary hover:bg-primary/90"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    navigate({ name: "course", courseId: c.id })
+                  }}
+                >
+                  <PlayCircle className="size-3.5" aria-hidden />
+                  Resume
+                </Button>
               </div>
-              <ChevronRight className="size-4 shrink-0 text-muted-foreground group-hover:text-violet-300 transition-colors" aria-hidden />
-            </button>
-          ))}
+            )
+          })}
         </div>
       )}
     </section>
@@ -1000,7 +1127,7 @@ function SkillProfile({
   return (
     <section aria-label="Skill profile">
       <SectionHeader
-        icon={Radar}
+        icon={RadarIcon}
         label="Skill Profile"
         tone="cyan"
         actionLabel="Explore Skill Tree"
@@ -1224,5 +1351,455 @@ function EmptyState({
         </Button>
       </div>
     </div>
+  )
+}
+
+/* ============================================================
+   2b. Progress Overview — Enrolled / Completed / In-Progress / Certs
+   ============================================================ */
+function ProgressOverview({
+  enrolled, completed, inProgress, certificates, xp, level, loading,
+}: {
+  enrolled: number
+  completed: number
+  inProgress: number
+  certificates: number
+  xp: number
+  level: number
+  loading: boolean
+}) {
+  if (loading) {
+    return (
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-[110px] rounded-xl" />
+        ))}
+      </div>
+    )
+  }
+
+  const tiles: {
+    icon: typeof BookOpen
+    label: string
+    value: number
+    suffix?: string
+    color: string
+    tint: string
+  }[] = [
+    { icon: BookMarked, label: "Courses Enrolled", value: enrolled, color: "text-cyan-300", tint: "bg-cyan-500/10" },
+    { icon: Hourglass, label: "In Progress", value: inProgress, color: "text-amber-300", tint: "bg-amber-500/10" },
+    { icon: ShieldCheck, label: "Completed", value: completed, color: "text-emerald-300", tint: "bg-emerald-500/10" },
+    { icon: Award, label: "Certificates", value: certificates, color: "text-violet-300", tint: "bg-violet-500/10" },
+  ]
+
+  return (
+    <section aria-label="Progress overview" className="space-y-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {tiles.map((s) => (
+          <Card
+            key={s.label}
+            className="relative overflow-hidden p-4 card-premium"
+          >
+            <div className="flex items-start gap-3">
+              <div className={cn("inline-flex size-9 items-center justify-center rounded-lg", s.tint)}>
+                <s.icon className={cn("size-4", s.color)} aria-hidden />
+              </div>
+              <div className="min-w-0">
+                <div className="text-2xl font-bold tabular-nums">{s.value.toLocaleString()}</div>
+                <div className="text-[10px] text-muted-foreground uppercase tracking-wider truncate">
+                  {s.label}
+                </div>
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+      {/* condensed XP / level summary band */}
+      <div className="card-premium rounded-xl px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-2">
+          <Zap className="size-3.5 text-amber-300" aria-hidden />
+          <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+            Total XP
+          </span>
+          <span className="font-mono text-sm font-bold text-amber-300 tabular-nums">
+            {xp.toLocaleString()}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <TrendingUp className="size-3.5 text-emerald-300" aria-hidden />
+          <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+            Current Level
+          </span>
+          <span className="font-mono text-sm font-bold text-emerald-300 tabular-nums">{level}</span>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* ============================================================
+   3b-i. Weekly XP Chart — Recharts bar chart, last 7 days
+   ============================================================ */
+function WeeklyXpChart({
+  data, loading,
+}: {
+  data: WeeklyXpItem[]
+  loading: boolean
+}) {
+  const chartData = React.useMemo(() => {
+    return data.map((d) => {
+      const dt = new Date(d.date + "T00:00:00")
+      const day = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][dt.getDay()]
+      return { day, xp: d.xp, count: d.count, date: d.date }
+    })
+  }, [data])
+  const totalXp = chartData.reduce((s, d) => s + d.xp, 0)
+
+  return (
+    <section aria-label="Weekly XP chart">
+      <SectionHeader icon={BarChart2} label="Weekly XP" tone="violet" />
+      <Card className="card-premium p-4 sm:p-5">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <div className="text-2xl font-bold tabular-nums">
+              {totalXp.toLocaleString()} <span className="text-xs font-mono text-muted-foreground">XP this week</span>
+            </div>
+          </div>
+          <Badge variant="outline" className="font-mono text-[10px] uppercase tracking-wider border-amber-500/30 bg-amber-500/10 text-amber-300">
+            7d
+          </Badge>
+        </div>
+        {loading ? (
+          <Skeleton className="h-44 w-full" />
+        ) : chartData.length === 0 ? (
+          <div className="h-44 flex items-center justify-center text-xs text-muted-foreground">
+            No activity yet this week.
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height={180}>
+            <BarChart data={chartData} margin={{ top: 4, right: 4, left: -16, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.3 0.02 270 / 0.25)" vertical={false} />
+              <XAxis
+                dataKey="day"
+                tick={{ fill: "oklch(0.7 0.02 270 / 0.7)", fontSize: 10, fontFamily: "monospace" }}
+                axisLine={{ stroke: "oklch(0.3 0.02 270 / 0.4)" }}
+                tickLine={false}
+              />
+              <YAxis
+                tick={{ fill: "oklch(0.7 0.02 270 / 0.6)", fontSize: 9, fontFamily: "monospace" }}
+                axisLine={{ stroke: "oklch(0.3 0.02 270 / 0.4)" }}
+                tickLine={false}
+                allowDecimals={false}
+                width={36}
+              />
+              <RTooltip
+                cursor={{ fill: "oklch(0.6 0.18 295 / 0.08)" }}
+                contentStyle={{
+                  background: "oklch(0.18 0.02 270)",
+                  border: "1px solid oklch(0.3 0.02 270 / 0.5)",
+                  borderRadius: 8,
+                  fontSize: 11,
+                  fontFamily: "monospace",
+                  color: "oklch(0.95 0.02 270)",
+                }}
+                labelStyle={{ color: "oklch(0.7 0.02 270 / 0.9)" }}
+                formatter={(value: any, _name, item: any) => [
+                  `${value} XP (${item?.payload?.count ?? 0} activities)`,
+                  "Earned",
+                ]}
+              />
+              <Bar dataKey="xp" radius={[4, 4, 0, 0]} maxBarSize={32}>
+                {chartData.map((entry, idx) => (
+                  <Cell
+                    key={idx}
+                    fill={entry.xp > 0 ? "oklch(0.65 0.18 295)" : "oklch(0.35 0.02 270)"}
+                  />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        )}
+      </Card>
+    </section>
+  )
+}
+
+/* ============================================================
+   3b-ii. Skill Radar — Recharts RadarChart across skill domains
+   ============================================================ */
+function SkillRadar({
+  skills, loading,
+}: {
+  skills: SkillProfileItem[]
+  loading: boolean
+}) {
+  // Map skill items to a 0-100 scale for the radar. Each entry needs at
+  // least 3 axes to render a polygon, so we pad with placeholders if
+  // fewer than 3.
+  const radarData = React.useMemo(() => {
+    if (skills.length === 0) return []
+    // Use a max of 6 categories so the radar stays readable. If there are
+    // fewer than 3, pad with "—" entries so the radar still renders a
+    // polygon instead of a flat line.
+    const top = skills.slice(0, 6)
+    while (top.length < 3) {
+      top.push({ key: `pad-${top.length}`, label: "—", solved: 0, total: 0, pct: 0 })
+    }
+    return top.map((s) => ({
+      domain: s.label.length > 12 ? s.label.slice(0, 11) + "…" : s.label,
+      level: s.pct,
+      fullMark: 100,
+    }))
+  }, [skills])
+
+  return (
+    <section aria-label="Skill radar">
+      <SectionHeader icon={RadarIcon} label="Skill Radar" tone="cyan" />
+      <Card className="card-premium p-4 sm:p-5">
+        {loading ? (
+          <Skeleton className="h-44 w-full" />
+        ) : radarData.length === 0 ? (
+          <div className="h-44 flex items-center justify-center text-xs text-muted-foreground">
+            Solve labs to populate your skill profile.
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height={220}>
+            <RadarChart data={radarData} outerRadius="75%">
+              <PolarGrid stroke="oklch(0.35 0.02 270 / 0.4)" />
+              <PolarAngleAxis
+                dataKey="domain"
+                tick={{ fill: "oklch(0.75 0.02 270 / 0.85)", fontSize: 10, fontFamily: "monospace" }}
+              />
+              <PolarRadiusAxis
+                angle={90}
+                domain={[0, 100]}
+                tick={{ fill: "oklch(0.6 0.02 270 / 0.6)", fontSize: 9, fontFamily: "monospace" }}
+                tickCount={5}
+              />
+              <Radar
+                name="Skill"
+                dataKey="level"
+                stroke="oklch(0.7 0.16 200)"
+                fill="oklch(0.7 0.16 200)"
+                fillOpacity={0.28}
+                strokeWidth={1.5}
+                isAnimationActive
+              />
+              <RTooltip
+                contentStyle={{
+                  background: "oklch(0.18 0.02 270)",
+                  border: "1px solid oklch(0.3 0.02 270 / 0.5)",
+                  borderRadius: 8,
+                  fontSize: 11,
+                  fontFamily: "monospace",
+                  color: "oklch(0.95 0.02 270)",
+                }}
+                labelStyle={{ color: "oklch(0.7 0.02 270 / 0.9)" }}
+                formatter={(value: any) => [`${value}%`, "Skill level"]}
+              />
+            </RadarChart>
+          </ResponsiveContainer>
+        )}
+      </Card>
+    </section>
+  )
+}
+
+/* ============================================================
+   3d-ii. Streak Tracker — visual flame + last-7-days dots
+   ============================================================ */
+function StreakTracker({
+  streak, weeklyXp, loading,
+}: {
+  streak: number
+  weeklyXp: WeeklyXpItem[]
+  loading: boolean
+}) {
+  // 7-day activity dots — a dot is "lit" if there was any activity that day
+  const dots = React.useMemo(() => {
+    return weeklyXp.map((d) => {
+      const dt = new Date(d.date + "T00:00:00")
+      const day = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"][dt.getDay()]
+      return { date: d.date, day, xp: d.xp, active: d.count > 0 }
+    })
+  }, [weeklyXp])
+
+  // flame intensity by streak length
+  const flameTone =
+    streak >= 30 ? "text-rose-400"
+    : streak >= 14 ? "text-orange-400"
+    : streak >= 7 ? "text-amber-400"
+    : streak >= 3 ? "text-amber-300"
+    : streak >= 1 ? "text-amber-300/80"
+    : "text-muted-foreground/40"
+  const flameGlow =
+    streak >= 7 ? "drop-shadow-[0_0_18px] drop-shadow-amber-500/40"
+    : streak >= 3 ? "drop-shadow-[0_0_10px] drop-shadow-amber-500/30"
+    : ""
+
+  return (
+    <section aria-label="Streak tracker">
+      <SectionHeader icon={Flame} label="Streak Tracker" tone="amber" />
+      <Card className="card-premium p-4 sm:p-5">
+        {loading ? (
+          <Skeleton className="h-32 w-full" />
+        ) : (
+          <div className="flex items-center gap-4">
+            {/* Flame + count */}
+            <div className="flex flex-col items-center justify-center gap-1 shrink-0 w-20">
+              <motion.div
+                animate={streak > 0 ? { scale: [1, 1.08, 1] } : { scale: 1 }}
+                transition={{
+                  duration: 1.6,
+                  repeat: streak > 0 ? Infinity : 0,
+                  ease: "easeInOut",
+                }}
+                className={cn("relative", flameGlow)}
+              >
+                <Flame className={cn("size-12", flameTone)} strokeWidth={1.5} />
+              </motion.div>
+              <div className="text-center">
+                <div className="font-mono text-2xl font-bold tabular-nums leading-none">
+                  {streak}
+                </div>
+                <div className="text-[9px] font-mono uppercase tracking-wider text-muted-foreground mt-0.5">
+                  Day streak
+                </div>
+              </div>
+            </div>
+            {/* Divider */}
+            <div className="h-20 w-px bg-border/40 shrink-0" />
+            {/* 7-day dots */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-1.5 mb-2">
+                <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                  Last 7 days
+                </span>
+                <span className="font-mono text-[10px] text-amber-300/80">
+                  {dots.filter((d) => d.active).length} / 7 active
+                </span>
+              </div>
+              <div className="grid grid-cols-7 gap-1.5">
+                {dots.map((d) => (
+                  <div key={d.date} className="flex flex-col items-center gap-1">
+                    <div
+                      className={cn(
+                        "w-full aspect-square rounded-md border transition-all",
+                        d.active
+                          ? "bg-amber-500/40 border-amber-500/50"
+                          : "bg-muted/20 border-border",
+                      )}
+                      title={`${d.date}: ${d.active ? `${d.xp} XP` : "no activity"}`}
+                    />
+                    <div className="text-[9px] font-mono text-muted-foreground">{d.day}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </Card>
+    </section>
+  )
+}
+
+/* ============================================================
+   3c. Upcoming Deadlines — assignments / live sessions / exams
+   ============================================================ */
+function UpcomingDeadlines({
+  deadlines, loading,
+}: {
+  deadlines: DeadlineItem[]
+  loading: boolean
+}) {
+  const { navigate } = useAppStore()
+
+  const typeMeta: Record<DeadlineItem["type"], { icon: typeof BookOpen; label: string; tone: string; tint: string }> = {
+    "assignment": { icon: FileText, label: "Assignment", tone: "text-amber-300", tint: "bg-amber-500/10" },
+    "live-session": { icon: Video, label: "Live Session", tone: "text-rose-300", tint: "bg-rose-500/10" },
+    "exam": { icon: ShieldCheck, label: "Exam", tone: "text-violet-300", tint: "bg-violet-500/10" },
+  }
+
+  return (
+    <section aria-label="Upcoming deadlines">
+      <SectionHeader
+        icon={Calendar}
+        label="Upcoming Deadlines"
+        tone="amber"
+        actionLabel="Calendar"
+        onAction={() => navigate({ name: "admin-batch-calendar" })}
+      />
+      {loading ? (
+        <Skeleton className="h-32 rounded-xl" />
+      ) : deadlines.length === 0 ? (
+        <EmptyState
+          title="No Deadlines This Fortnight"
+          description="You're all caught up. Upcoming assignments, live sessions, and exams (next 14 days) will appear here."
+          ctaLabel="Browse Catalog"
+          onCta={() => navigate({ name: "catalog" })}
+          icon={Calendar}
+          accent="amber"
+        />
+      ) : (
+        <Card className="card-premium p-0 overflow-hidden">
+          <div className="max-h-96 overflow-y-auto pr-1 custom-scroll">
+            <ol className="divide-y divide-border/40">
+              {deadlines.map((d) => {
+                const meta = typeMeta[d.type]
+                const due = new Date(d.dueDate)
+                const now = new Date()
+                const msUntil = due.getTime() - now.getTime()
+                const hoursUntil = Math.round(msUntil / 3600000)
+                const daysUntil = Math.round(hoursUntil / 24)
+                const overdue = msUntil < 0
+                const imminent = !overdue && hoursUntil <= 24
+                const urgencyLabel = overdue
+                  ? "Overdue"
+                  : hoursUntil <= 24
+                    ? `${hoursUntil}h left`
+                    : `${daysUntil}d left`
+                const urgencyColor = overdue
+                  ? "text-rose-300 bg-rose-500/10 border-rose-500/30"
+                  : imminent
+                    ? "text-amber-300 bg-amber-500/10 border-amber-500/30"
+                    : "text-muted-foreground bg-muted/30 border-border/40"
+
+                return (
+                  <li
+                    key={`${d.type}-${d.id}`}
+                    className={cn(
+                      "relative flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/20",
+                    )}
+                  >
+                    <div className={cn("inline-flex size-9 shrink-0 items-center justify-center rounded-lg", meta.tint)}>
+                      <meta.icon className={cn("size-4", meta.tone)} aria-hidden />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-foreground">{d.title}</p>
+                      <p className="truncate font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                        {meta.label}
+                        {d.courseTitle && <span className="normal-case tracking-normal"> · {d.courseTitle}</span>}
+                        {d.meta && <span className="normal-case tracking-normal"> · {d.meta}</span>}
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1 shrink-0">
+                      <Badge
+                        variant="outline"
+                        className={cn("font-mono text-[9px] uppercase tracking-wider", urgencyColor)}
+                      >
+                        {urgencyLabel}
+                      </Badge>
+                      <span className="font-mono text-[10px] text-muted-foreground">
+                        {due.toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                      </span>
+                    </div>
+                  </li>
+                )
+              })}
+            </ol>
+          </div>
+        </Card>
+      )}
+    </section>
   )
 }

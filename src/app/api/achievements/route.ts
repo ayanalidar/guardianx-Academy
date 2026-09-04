@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/session"
-import { levelFromXp, rankTitle, ACHIEVEMENT_DEFS, checkAchievements } from "@/lib/gamification"
+import { levelFromXp, rankTitle, ACHIEVEMENT_DEFS, checkAchievements, getAllProgress } from "@/lib/gamification"
 
 export async function GET() {
   const user = await getCurrentUser()
@@ -10,7 +10,7 @@ export async function GET() {
   // make sure achievements are up to date
   await checkAchievements(user.id)
 
-  const [fullUser, earned, activities] = await Promise.all([
+  const [fullUser, earned, activities, progressMap] = await Promise.all([
     db.user.findUnique({ where: { id: user.id }, select: { xp: true, level: true, streak: true, lastActiveDate: true } }),
     db.userAchievement.findMany({
       where: { userId: user.id },
@@ -22,14 +22,21 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
       take: 20,
     }),
+    getAllProgress(user.id),
   ])
 
   const xp = fullUser?.xp ?? 0
   const levelInfo = levelFromXp(xp)
   const rank = rankTitle(levelInfo.level)
 
-  // build full achievement list (earned + locked)
-  const allAchievements = ACHIEVEMENT_DEFS.map((d) => {
+  // build full achievement list (earned + locked) — also include any
+  // admin-created achievements stored in the DB that aren't part of the
+  // static ACHIEVEMENT_DEFS list (so admin-created trophies still show).
+  const dynamicRows = await db.achievement.findMany({
+    where: { code: { notIn: ACHIEVEMENT_DEFS.map((d) => d.code) } },
+  })
+
+  const staticAchievements = ACHIEVEMENT_DEFS.map((d) => {
     const e = earned.find((x) => x.achievement.code === d.code)
     return {
       code: d.code,
@@ -41,8 +48,25 @@ export async function GET() {
       tier: d.tier,
       earned: !!e,
       earnedAt: e?.earnedAt ?? null,
+      progress: progressMap[d.code] ?? null,
     }
   })
+  const dynamicAchievements = dynamicRows.map((a) => {
+    const e = earned.find((x) => x.achievementId === a.id)
+    return {
+      code: a.code,
+      title: a.title,
+      description: a.description,
+      icon: a.icon,
+      color: a.color,
+      xp: a.xp,
+      tier: a.tier,
+      earned: !!e,
+      earnedAt: e?.earnedAt ?? null,
+      progress: null as any, // admin-created achievements have no progress metric
+    }
+  })
+  const allAchievements = [...staticAchievements, ...dynamicAchievements]
 
   // last 7 days activity heatmap
   const today = new Date()
@@ -80,7 +104,7 @@ export async function GET() {
     streak: fullUser?.streak ?? 0,
     achievements: allAchievements,
     earnedCount: earned.length,
-    totalCount: ACHIEVEMENT_DEFS.length,
+    totalCount: allAchievements.length,
     activities: activities.slice(0, 10).map((a) => ({ type: a.type, xp: a.xp, date: a.date, createdAt: a.createdAt })),
     heatmap,
     leaderboard,

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser, withErrorHandler } from "@/lib/session"
-import { awardXp, XP_REWARDS } from "@/lib/gamification"
+import { awardXp, XP_REWARDS, awardSpecificAchievement } from "@/lib/gamification"
 
 export const POST = withErrorHandler(async (req: NextRequest, { params }: { params: Promise<{ slug: string }> }) => {
   const { slug } = await params

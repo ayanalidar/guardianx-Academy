@@ -53,8 +53,16 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     where: { id },
     data: { studentsCount: { increment: 1 } },
   })
-  const { awardXp } = await import("@/lib/gamification")
+  const { awardXp, awardSpecificAchievement } = await import("@/lib/gamification")
   await awardXp(user.id, "course_enrolled", 25, id)
+  // Spec-mandated: award FIRST_STEP on the user's first course enrollment.
+  // The auto-checkAchievements flow inside awardXp also catches this,
+  // but the explicit call makes the award path self-documenting.
+  try {
+    await awardSpecificAchievement(user.id, "FIRST_STEP")
+  } catch (e) {
+    console.error("[enroll] FIRST_STEP award failed:", e)
+  }
 
   // Welcome email on enrollment
   const { sendEmail } = await import("@/lib/email")

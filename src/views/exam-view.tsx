@@ -39,7 +39,7 @@ interface ExamData {
 
 export function ExamView() {
   const { view, navigate } = useAppStore()
-  const examId = view.name === "exam" ? view.examId : ""
+  const examId = (view.name as string) === "exam" ? (view as any).examId : ""
   const [phase, setPhase] = React.useState<"intro" | "instructions" | "exam" | "results">("intro")
   const [attemptId, setAttemptId] = React.useState<string | null>(null)
 

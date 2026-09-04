@@ -52,6 +52,41 @@ function yesterdayStr(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
 }
 
+export type AchievementStats = {
+  lessonsCompleted: number
+  labsSolved: number
+  labsTotal: number
+  perfectQuizzes: number
+  notes: number
+  coursesCompleted: number
+  enrollments: number
+  certificates: number
+  streak: number
+  level: number
+  xp: number
+}
+
+export type AchievementProgress = {
+  current: number
+  target: number
+  /** Human label shown under the progress bar (e.g. "3 / 5 labs solved"). */
+  label: string
+}
+
+export type AchievementDef = {
+  code: string
+  title: string
+  description: string
+  icon: string
+  color: string
+  xp: number
+  tier: "bronze" | "silver" | "gold" | "platinum"
+  check: (stats: AchievementStats) => Promise<boolean>
+  /** Optional progress indicator for locked achievements. Returns null when
+   *  the achievement is binary (no partial progress to show). */
+  progressFor?: (stats: AchievementStats) => AchievementProgress | null
+}
+
 // Award XP, update streak, log activity, and check achievements.
 export async function awardXp(
   userId: string,
@@ -91,6 +126,19 @@ export async function awardXp(
   // check achievements
   const newAchievements = await checkAchievements(userId, type)
 
+  // WEEK_WARRIOR (7-day streak) — explicitly award on every awardXp call
+  // if the user has reached a 7-day streak. The auto-checkAchievements
+  // flow also catches this, but the explicit call makes the spec-mandated
+  // award path obvious and self-documenting in the API route.
+  if (newStreak >= 7) {
+    try {
+      const weekWarrior = await awardSpecificAchievement(userId, "WEEK_WARRIOR")
+      if (weekWarrior) newAchievements.push(weekWarrior)
+    } catch (e) {
+      console.error("[gamification] WEEK_WARRIOR award failed:", e)
+    }
+  }
+
   // fire notifications (non-blocking, best-effort)
   try {
     const { notifyAchievement, notifyLevelUp } = await import("@/lib/notifications")
@@ -108,25 +156,71 @@ export async function awardXp(
 }
 
 // Achievement definitions checked dynamically.
-const ACHIEVEMENT_DEFS = [
-  { code: "FIRST_LESSON", title: "First Steps", description: "Complete your first lesson", icon: "BookOpen", color: "emerald", xp: 25, tier: "bronze", check: async (s: any) => s.lessonsCompleted >= 1 },
-  { code: "LESSONS_10", title: "Scholar", description: "Complete 10 lessons", icon: "GraduationCap", color: "cyan", xp: 100, tier: "bronze", check: async (s: any) => s.lessonsCompleted >= 10 },
-  { code: "FIRST_LAB", title: "Script Kiddie No More", description: "Solve your first lab", icon: "Terminal", color: "violet", xp: 50, tier: "bronze", check: async (s: any) => s.labsSolved >= 1 },
-  { code: "LABS_5", title: "Bug Hunter", description: "Solve 5 labs", icon: "Bug", color: "violet", xp: 150, tier: "silver", check: async (s: any) => s.labsSolved >= 5 },
-  { code: "LABS_ALL", title: "Lab Conqueror", description: "Solve all labs", icon: "Trophy", color: "amber", xp: 500, tier: "gold", check: async (s: any) => s.labsTotal > 0 && s.labsSolved >= s.labsTotal },
-  { code: "QUIZ_ACED", title: "Quiz Master", description: "Pass a quiz with 100%", icon: "Brain", color: "cyan", xp: 75, tier: "silver", check: async (s: any) => s.perfectQuizzes >= 1 },
-  { code: "NOTE_TAKER", title: "Note Taker", description: "Create your first note", icon: "StickyNote", color: "amber", xp: 15, tier: "bronze", check: async (s: any) => s.notes >= 1 },
-  { code: "NOTES_20", title: "Knowledge Keeper", description: "Create 20 notes", icon: "Library", color: "amber", xp: 100, tier: "silver", check: async (s: any) => s.notes >= 20 },
-  { code: "STREAK_3", title: "On a Roll", description: "Maintain a 3-day streak", icon: "Flame", color: "orange", xp: 50, tier: "bronze", check: async (s: any) => s.streak >= 3 },
-  { code: "STREAK_7", title: "Week Warrior", description: "Maintain a 7-day streak", icon: "Flame", color: "red", xp: 150, tier: "silver", check: async (s: any) => s.streak >= 7 },
-  { code: "COURSE_DONE", title: "Certified", description: "Complete your first course", icon: "Award", color: "amber", xp: 200, tier: "gold", check: async (s: any) => s.coursesCompleted >= 1 },
-  { code: "LEVEL_5", title: "Rising Guardian", description: "Reach level 5", icon: "TrendingUp", color: "emerald", xp: 100, tier: "silver", check: async (s: any) => s.level >= 5 },
-  { code: "LEVEL_10", title: "Guardian Elite", description: "Reach level 10", icon: "ShieldCheck", color: "emerald", xp: 300, tier: "gold", check: async (s: any) => s.level >= 10 },
-  { code: "ENROLLED_3", title: "Lifelong Learner", description: "Enroll in 3 courses", icon: "BookMarked", color: "cyan", xp: 75, tier: "bronze", check: async (s: any) => s.enrollments >= 3 },
+//
+// Codes follow the naming convention requested by the product spec:
+//   FIRST_STEP   — awarded on the user's first course enrollment
+//   FIRST_LAB    — awarded when the user solves their first lab
+//   WEEK_WARRIOR — awarded when the user maintains a 7-day streak
+//   CERTIFIED    — awarded when the user earns their first certificate
+//
+// Legacy codes (STREAK_3, ENROLLED_3, etc.) are intentionally kept for
+// backward compatibility with existing UserAchievement rows in production.
+const ACHIEVEMENT_DEFS: AchievementDef[] = [
+  { code: "FIRST_LESSON", title: "First Steps", description: "Complete your first lesson", icon: "BookOpen", color: "emerald", xp: 25, tier: "bronze",
+    check: async (s) => s.lessonsCompleted >= 1,
+    progressFor: (s) => ({ current: Math.min(s.lessonsCompleted, 1), target: 1, label: `${s.lessonsCompleted} / 1 lesson completed` }) },
+  { code: "LESSONS_10", title: "Scholar", description: "Complete 10 lessons", icon: "GraduationCap", color: "cyan", xp: 100, tier: "bronze",
+    check: async (s) => s.lessonsCompleted >= 10,
+    progressFor: (s) => ({ current: Math.min(s.lessonsCompleted, 10), target: 10, label: `${s.lessonsCompleted} / 10 lessons completed` }) },
+  { code: "FIRST_LAB", title: "Script Kiddie No More", description: "Solve your first lab", icon: "Terminal", color: "violet", xp: 50, tier: "bronze",
+    check: async (s) => s.labsSolved >= 1,
+    progressFor: (s) => ({ current: Math.min(s.labsSolved, 1), target: 1, label: `${s.labsSolved} / 1 lab solved` }) },
+  { code: "LABS_5", title: "Bug Hunter", description: "Solve 5 labs", icon: "Bug", color: "violet", xp: 150, tier: "silver",
+    check: async (s) => s.labsSolved >= 5,
+    progressFor: (s) => ({ current: Math.min(s.labsSolved, 5), target: 5, label: `${s.labsSolved} / 5 labs solved` }) },
+  { code: "LABS_ALL", title: "Lab Conqueror", description: "Solve all labs", icon: "Trophy", color: "amber", xp: 500, tier: "gold",
+    check: async (s) => s.labsTotal > 0 && s.labsSolved >= s.labsTotal,
+    progressFor: (s) => s.labsTotal > 0 ? ({ current: s.labsSolved, target: s.labsTotal, label: `${s.labsSolved} / ${s.labsTotal} labs solved` }) : null },
+  { code: "QUIZ_ACED", title: "Quiz Master", description: "Pass a quiz with 100%", icon: "Brain", color: "cyan", xp: 75, tier: "silver",
+    check: async (s) => s.perfectQuizzes >= 1,
+    progressFor: (s) => ({ current: Math.min(s.perfectQuizzes, 1), target: 1, label: `${s.perfectQuizzes} / 1 perfect quiz` }) },
+  { code: "NOTE_TAKER", title: "Note Taker", description: "Create your first note", icon: "StickyNote", color: "amber", xp: 15, tier: "bronze",
+    check: async (s) => s.notes >= 1,
+    progressFor: (s) => ({ current: Math.min(s.notes, 1), target: 1, label: `${s.notes} / 1 note created` }) },
+  { code: "NOTES_20", title: "Knowledge Keeper", description: "Create 20 notes", icon: "Library", color: "amber", xp: 100, tier: "silver",
+    check: async (s) => s.notes >= 20,
+    progressFor: (s) => ({ current: Math.min(s.notes, 20), target: 20, label: `${s.notes} / 20 notes created` }) },
+  { code: "STREAK_3", title: "On a Roll", description: "Maintain a 3-day streak", icon: "Flame", color: "orange", xp: 50, tier: "bronze",
+    check: async (s) => s.streak >= 3,
+    progressFor: (s) => ({ current: Math.min(s.streak, 3), target: 3, label: `${s.streak} / 3 day streak` }) },
+  // WEEK_WARRIOR — 7-day streak (spec literal code).
+  { code: "WEEK_WARRIOR", title: "Week Warrior", description: "Maintain a 7-day streak", icon: "Flame", color: "red", xp: 150, tier: "silver",
+    check: async (s) => s.streak >= 7,
+    progressFor: (s) => ({ current: Math.min(s.streak, 7), target: 7, label: `${s.streak} / 7 day streak` }) },
+  // CERTIFIED — first certificate (spec literal code).
+  { code: "CERTIFIED", title: "Certified", description: "Earn your first certificate", icon: "Award", color: "amber", xp: 200, tier: "gold",
+    check: async (s) => s.certificates >= 1,
+    progressFor: (s) => ({ current: Math.min(s.certificates, 1), target: 1, label: `${s.certificates} / 1 certificate earned` }) },
+  { code: "COURSE_DONE", title: "Course Conqueror", description: "Complete your first course", icon: "ShieldCheck", color: "emerald", xp: 200, tier: "gold",
+    check: async (s) => s.coursesCompleted >= 1,
+    progressFor: (s) => ({ current: Math.min(s.coursesCompleted, 1), target: 1, label: `${s.coursesCompleted} / 1 course completed` }) },
+  { code: "LEVEL_5", title: "Rising Guardian", description: "Reach level 5", icon: "TrendingUp", color: "emerald", xp: 100, tier: "silver",
+    check: async (s) => s.level >= 5,
+    progressFor: (s) => ({ current: Math.min(s.level, 5), target: 5, label: `Level ${s.level} / 5` }) },
+  { code: "LEVEL_10", title: "Guardian Elite", description: "Reach level 10", icon: "ShieldCheck", color: "emerald", xp: 300, tier: "gold",
+    check: async (s) => s.level >= 10,
+    progressFor: (s) => ({ current: Math.min(s.level, 10), target: 10, label: `Level ${s.level} / 10` }) },
+  // FIRST_STEP — first course enrollment (spec literal code).
+  { code: "FIRST_STEP", title: "First Step", description: "Enroll in your first course", icon: "BookMarked", color: "cyan", xp: 25, tier: "bronze",
+    check: async (s) => s.enrollments >= 1,
+    progressFor: (s) => ({ current: Math.min(s.enrollments, 1), target: 1, label: `${s.enrollments} / 1 enrollment` }) },
+  { code: "ENROLLED_3", title: "Lifelong Learner", description: "Enroll in 3 courses", icon: "BookMarked", color: "cyan", xp: 75, tier: "bronze",
+    check: async (s) => s.enrollments >= 3,
+    progressFor: (s) => ({ current: Math.min(s.enrollments, 3), target: 3, label: `${s.enrollments} / 3 enrollments` }) },
 ]
 
-async function computeStats(userId: string) {
-  const [lessonsCompleted, labsSolved, labsTotal, perfectQuizzes, notes, coursesCompleted, enrollments, user] = await Promise.all([
+export async function computeStats(userId: string): Promise<AchievementStats> {
+  const [lessonsCompleted, labsSolved, labsTotal, perfectQuizzes, notes, coursesCompleted, enrollments, certificates, user] = await Promise.all([
     db.lessonProgress.count({ where: { userId, completed: true } }),
     db.labProgress.count({ where: { userId, status: "completed" } }),
     db.lab.count({ where: { published: true } }),
@@ -134,6 +228,7 @@ async function computeStats(userId: string) {
     db.note.count({ where: { userId } }),
     db.enrollment.count({ where: { userId, completed: true } }),
     db.enrollment.count({ where: { userId } }),
+    db.certificate.count({ where: { userId } }),
     db.user.findUnique({ where: { id: userId }, select: { streak: true, level: true, xp: true } }),
   ])
   return {
@@ -144,6 +239,7 @@ async function computeStats(userId: string) {
     notes,
     coursesCompleted,
     enrollments,
+    certificates,
     streak: user?.streak ?? 0,
     level: user?.level ?? 1,
     xp: user?.xp ?? 0,
@@ -188,6 +284,83 @@ export async function checkAchievements(userId: string, _triggerType?: string) {
     }
   }
   return newOnes
+}
+
+/**
+ * Compute the progress object for a specific achievement code based on
+ * the user's current stats. Returns null if the code is unknown or the
+ * def has no `progressFor` helper (binary achievements only).
+ *
+ * Used by the /api/achievements endpoint to surface "3 / 5 labs solved"
+ * style progress hints on locked achievement tiles.
+ */
+export async function getProgressForCode(
+  userId: string,
+  code: string
+): Promise<AchievementProgress | null> {
+  const def = ACHIEVEMENT_DEFS.find((d) => d.code === code)
+  if (!def || !def.progressFor) return null
+  const stats = await computeStats(userId)
+  return def.progressFor(stats)
+}
+
+/**
+ * Compute progress for ALL achievement definitions in one pass — used by
+ * /api/achievements to avoid N+1 computeStats calls.
+ */
+export async function getAllProgress(userId: string): Promise<Record<string, AchievementProgress | null>> {
+  const stats = await computeStats(userId)
+  const out: Record<string, AchievementProgress | null> = {}
+  for (const def of ACHIEVEMENT_DEFS) {
+    out[def.code] = def.progressFor ? def.progressFor(stats) : null
+  }
+  return out
+}
+
+/**
+ * Explicitly award an achievement by code (idempotent). Used by API
+ * endpoints that want to guarantee an achievement is granted even
+ * when the auto-check flow hasn't run yet (e.g. the first-time
+ * enrollment path before awardXp runs).
+ *
+ * Returns the Achievement row if a new award was created, or null if
+ * the user already had it.
+ */
+export async function awardSpecificAchievement(
+  userId: string,
+  code: string
+): Promise<any | null> {
+  const def = ACHIEVEMENT_DEFS.find((d) => d.code === code)
+  if (!def) return null
+
+  // ensure achievement row exists in DB
+  let ach = await db.achievement.findUnique({ where: { code: def.code } })
+  if (!ach) {
+    ach = await db.achievement.create({
+      data: {
+        code: def.code,
+        title: def.title,
+        description: def.description,
+        icon: def.icon,
+        color: def.color,
+        xp: def.xp,
+        tier: def.tier,
+      },
+    })
+  }
+
+  const existing = await db.userAchievement.findUnique({
+    where: { userId_achievementId: { userId, achievementId: ach.id } },
+  })
+  if (existing) return null
+
+  const ua = await db.userAchievement.create({
+    data: { userId, achievementId: ach.id },
+    include: { achievement: true },
+  })
+  // bonus XP from achievement
+  await db.user.update({ where: { id: userId }, data: { xp: { increment: def.xp } } })
+  return ua.achievement
 }
 
 export { ACHIEVEMENT_DEFS }

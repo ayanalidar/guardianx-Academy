@@ -79,6 +79,7 @@ export type View =
   | { name: "admin-audit-log" }
   | { name: "admin-platform-health" }
   | { name: "admin-notifications" }
+  | { name: "admin-coupons" }
   | { name: "support" }
   // Public instructors + events (master-prompt §25 / §36)
   | { name: "instructors" }

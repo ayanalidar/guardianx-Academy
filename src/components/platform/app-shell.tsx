@@ -13,6 +13,7 @@ import {
   Code2, ShieldAlert, BarChart3, PenLine, Heart, FileEdit,
   FileBadge, ShieldCheck,
   Calendar, TrendingUp, DollarSign, UserCog, Activity, Mail,
+  Ticket,
 } from "lucide-react"
 import { useAppStore, type View } from "@/store/app-store"
 import { useUser } from "@/hooks/use-user"
@@ -99,6 +100,7 @@ const ADMIN_NAV: NavItem[] = [
   { label: "Audit Logs", icon: Shield, view: { name: "admin-audit-log" } },
   { label: "Platform Health", icon: Activity, view: { name: "admin-platform-health" } },
   { label: "Notifications", icon: Bell, view: { name: "admin-notifications" } },
+  { label: "Coupons", icon: Ticket, view: { name: "admin-coupons" } },
 ]
 
 // Keep legacy NAV_ITEMS for backwards compat (mobile menu etc)

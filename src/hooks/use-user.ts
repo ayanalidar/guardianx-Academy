@@ -6,6 +6,7 @@ import { api } from "@/lib/api"
 export interface UserStats {
   enrollments: number
   completed: number
+  inProgress: number
   notes: number
   labsDone: number
   certificates: number

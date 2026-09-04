@@ -81,6 +81,8 @@ model User {
   authoredCourses      AuthoredCourse[]
   instructorProfile    InstructorProfile?
   leadNotes            LeadNote[]
+  // Payment + coupon relations (PAYMENT-COUPON-SEARCH feature)
+  orders               Order[]
 }
 
 // ============================================================
@@ -224,6 +226,8 @@ model Course {
   attendanceRecords AttendanceRecord[]
   studyGroups   StudyGroup[]
   officeHourSlots OfficeHourSlot[]
+  // Payment relations (PAYMENT-COUPON-SEARCH feature)
+  orders        Order[]
 }
 
 model Module {
@@ -1591,3 +1595,40 @@ model Event {
 }
 
 // ============================================================
+
+// ============================================================
+// PAYMENT-COUPON-SEARCH — Razorpay orders + coupon/discount system
+// ============================================================
+model Order {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId    String?
+  course      Course?  @relation(fields: [courseId], references: [id])
+  batchId     String?
+  amount      Float    // in INR
+  currency    String   @default("INR")
+  status      String   @default("created") // created | paid | failed | refunded
+  razorpayOrderId   String?
+  razorpayPaymentId String?
+  razorpaySignature  String?
+  couponCode  String?
+  discount    Float    @default(0)
+  finalAmount Float    @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Coupon {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  type        String   @default("percentage") // percentage | fixed
+  value       Float    // 10 = 10% off, or 500 = ₹500 off
+  maxUses     Int      @default(100)
+  usedCount   Int      @default(0)
+  validFrom   DateTime
+  validUntil  DateTime?
+  courseId    String?  // null = all courses
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+}

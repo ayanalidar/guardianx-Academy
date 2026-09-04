@@ -16,6 +16,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
 import {
   Star, Clock, Users, BookOpen, ChevronLeft, ChevronRight, CheckCircle2, Circle, PlayCircle,
   FileText, Lock, Award, BarChart3, FlaskConical, MessageSquare, GraduationCap, ShieldCheck,
@@ -23,6 +25,7 @@ import {
   ArrowRight, ArrowDown, Sparkles, Zap, Target, Layers, Shield, Briefcase, Radio, Calendar,
   TrendingUp, Rocket, Trophy, Network, Wrench, Brain, Crosshair,
   Code, Activity, Eye, KeyRound, Bug, X, Hexagon,
+  Ticket, IndianRupee, Percent, Loader2,
 } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
@@ -195,6 +198,111 @@ export function CourseDetailView() {
     onError: (e: any) => toast.error(e.message),
   })
 
+  /* ============ Checkout dialog (paid course flow) ============ */
+  // When a course has price > 0, the "Enroll Now" button opens a checkout dialog
+  // instead of free-enrolling directly. The dialog:
+  //   1. Shows the original price.
+  //   2. Lets the user type a coupon code and apply it (debounced submit).
+  //   3. Shows discount + final amount.
+  //   4. "Pay Now" calls /api/payment/create-order + /api/payment/verify (mock).
+  //   5. On success: toast + redirect to /learning (enrollment is auto-created
+  //      by the verify endpoint).
+  const [checkoutOpen, setCheckoutOpen] = React.useState(false)
+  const [couponCode, setCouponCode] = React.useState("")
+  const [couponState, setCouponState] = React.useState<
+    | { status: "idle" }
+    | { status: "applied"; discount: number; finalAmount: number; type: string; value: number; code: string }
+    | { status: "error"; message: string }
+  >({ status: "idle" })
+
+  const applyCouponMutation = useMutation({
+    mutationFn: (vars: { code: string; amount: number }) =>
+      api<{ valid: boolean; discount?: number; finalAmount?: number; type?: string; value?: number; code?: string; error?: string }>(
+        "/api/coupons/verify",
+        { method: "POST", body: JSON.stringify({ code: vars.code, courseId, amount: vars.amount }) },
+      ),
+    onSuccess: (data) => {
+      if (!data.valid) {
+        setCouponState({ status: "error", message: data.error || "Invalid coupon" })
+        return
+      }
+      setCouponState({
+        status: "applied",
+        discount: data.discount ?? 0,
+        finalAmount: data.finalAmount ?? 0,
+        type: data.type ?? "percentage",
+        value: data.value ?? 0,
+        code: data.code ?? "",
+      })
+      toast.success(`Coupon applied — ${data.type === "percentage" ? `${data.value}% off` : `₹${data.value} off`}`)
+    },
+    onError: (e: any) => {
+      setCouponState({ status: "error", message: e.message || "Failed to apply coupon" })
+    },
+  })
+
+  const payMutation = useMutation({
+    mutationFn: (vars: { couponCode?: string }) =>
+      api<{ orderId: string; amount: number; currency: string; razorpayOrderId: string; mock: boolean }>(
+        "/api/payment/create-order",
+        {
+          method: "POST",
+          body: JSON.stringify({ courseId, couponCode: vars.couponCode }),
+        },
+      ).then(async (createRes) => {
+        // Mock payment: in production, this is where Razorpay's checkout.js
+        // would open its modal and return a paymentId + signature after the
+        // user completes the bank/UPI/Card flow. For now we generate mock
+        // values so the verify endpoint accepts the request end-to-end.
+        const razorpayPaymentId = `pay_mock_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`
+        const razorpaySignature = `sig_mock_${Math.random().toString(36).slice(2, 14)}`
+        const verifyRes = await api<{ success: boolean; enrollment: any }>(
+          "/api/payment/verify",
+          {
+            method: "POST",
+            body: JSON.stringify({
+              orderId: createRes.orderId,
+              razorpayPaymentId,
+              razorpaySignature,
+            }),
+          },
+        )
+        return { ...verifyRes, paidAmount: createRes.amount }
+      }),
+    onSuccess: (data) => {
+      toast.success("Payment successful! Enrolled — redirecting…")
+      qc.invalidateQueries({ queryKey: ["course", courseId] })
+      qc.invalidateQueries({ queryKey: ["courses"] })
+      qc.invalidateQueries({ queryKey: ["me"] })
+      setCheckoutOpen(false)
+      setCouponCode("")
+      setCouponState({ status: "idle" })
+      setTimeout(() => navigate({ name: "learning" }), 700)
+    },
+    onError: (e: any) => {
+      toast.error(e.message || "Payment failed")
+    },
+  })
+
+  function openCheckout() {
+    setCouponCode("")
+    setCouponState({ status: "idle" })
+    setCheckoutOpen(true)
+  }
+
+  function handleApplyCoupon(amount: number) {
+    if (!couponCode.trim()) {
+      setCouponState({ status: "error", message: "Enter a coupon code first" })
+      return
+    }
+    setCouponState({ status: "idle" })
+    applyCouponMutation.mutate({ code: couponCode.trim(), amount })
+  }
+
+  function handlePayNow() {
+    payMutation.mutate({ couponCode: couponState.status === "applied" ? couponState.code : undefined })
+  }
+
   // Prerequisites (existing /enroll GET endpoint)
   const { data: prereqData } = useQuery<{ prerequisites: Prerequisite[] }>({
     queryKey: ["course-prerequisites", courseId],
@@ -250,6 +358,11 @@ export function CourseDetailView() {
   const handleEnroll = () => {
     if (!user) {
       navigate({ name: "login" })
+      return
+    }
+    // Paid courses go through the checkout dialog; free courses enroll directly.
+    if (course.price && course.price > 0) {
+      openCheckout()
       return
     }
     enrollMutation.mutate()
@@ -677,7 +790,199 @@ export function CourseDetailView() {
         visible={showFloatingCta && !isEnrolled}
         progressPct={progressPct}
       />
+
+      {/* ====================================================
+          21. CHECKOUT DIALOG — paid course enrollment
+          ==================================================== */}
+      <CheckoutDialog
+        open={checkoutOpen}
+        onOpenChange={setCheckoutOpen}
+        course={course}
+        couponCode={couponCode}
+        setCouponCode={setCouponCode}
+        couponState={couponState}
+        onApplyCoupon={() => handleApplyCoupon(course.price ?? 0)}
+        onPayNow={handlePayNow}
+        isApplyingCoupon={applyCouponMutation.isPending}
+        isPaying={payMutation.isPending}
+      />
     </div>
+  )
+}
+
+// ============================================================
+// 21b. CheckoutDialog — Razorpay-style payment dialog
+// ============================================================
+function CheckoutDialog({
+  open,
+  onOpenChange,
+  course,
+  couponCode,
+  setCouponCode,
+  couponState,
+  onApplyCoupon,
+  onPayNow,
+  isApplyingCoupon,
+  isPaying,
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  course: any
+  couponCode: string
+  setCouponCode: (s: string) => void
+  couponState:
+    | { status: "idle" }
+    | { status: "applied"; discount: number; finalAmount: number; type: string; value: number; code: string }
+    | { status: "error"; message: string }
+  onApplyCoupon: () => void
+  onPayNow: () => void
+  isApplyingCoupon: boolean
+  isPaying: boolean
+}) {
+  const originalPrice = Number(course?.price ?? 0)
+  const applied = couponState.status === "applied"
+  const discount = applied ? couponState.discount : 0
+  const finalAmount = applied ? couponState.finalAmount : originalPrice
+  const discountPct = applied && originalPrice > 0
+    ? Math.round((discount / originalPrice) * 100)
+    : 0
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[480px] bg-card border-border/60">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4 text-emerald-300" /> Secure Checkout
+          </DialogTitle>
+          <DialogDescription>
+            You're enrolling in <span className="font-medium text-foreground">{course?.title}</span>.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4 py-2">
+          {/* Order summary card */}
+          <div className="rounded-xl border border-border/60 bg-background/40 p-4 space-y-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider mb-1">Course</div>
+                <div className="font-semibold text-sm leading-snug truncate">{course?.title}</div>
+                <div className="text-xs text-muted-foreground mt-0.5">{course?.shortName} · {course?.category}</div>
+              </div>
+              <Badge variant="outline" className="text-[10px] font-mono uppercase tracking-wider border-violet-500/30 text-violet-300 shrink-0">
+                One-time
+              </Badge>
+            </div>
+
+            {/* Price breakdown */}
+            <div className="space-y-2 pt-2 border-t border-border/40">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Original price</span>
+                <span className="font-mono tabular-nums flex items-center">
+                  <IndianRupee className="h-3.5 w-3.5" />
+                  {originalPrice.toFixed(2)}
+                </span>
+              </div>
+              {applied && (
+                <>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-emerald-300 flex items-center gap-1">
+                      <Percent className="h-3 w-3" /> Discount ({couponState.type === "percentage" ? `${couponState.value}%` : `₹${couponState.value}`})
+                    </span>
+                    <span className="font-mono tabular-nums text-emerald-300">− ₹{discount.toFixed(2)}</span>
+                  </div>
+                  <div className="text-[10px] text-muted-foreground flex items-center gap-1">
+                    <Ticket className="h-3 w-3 text-emerald-300" />
+                    Code <span className="font-mono font-semibold tracking-wider">{couponState.code}</span> applied ({discountPct}% off)
+                  </div>
+                </>
+              )}
+              <div className="flex items-center justify-between pt-2 border-t border-border/40">
+                <span className="text-sm font-medium">Total payable</span>
+                <span className="text-2xl font-bold tabular-nums text-gradient-premium flex items-center">
+                  <IndianRupee className="h-5 w-5" />
+                  {finalAmount.toFixed(2)}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Coupon code input */}
+          <div className="space-y-2">
+            <Label htmlFor="coupon-input" className="text-xs font-medium flex items-center gap-1.5">
+              <Ticket className="h-3.5 w-3.5 text-violet-300" /> Have a coupon code?
+            </Label>
+            <div className="flex gap-2">
+              <Input
+                id="coupon-input"
+                value={couponCode}
+                onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                placeholder="WELCOME50"
+                className="font-mono uppercase tracking-wider bg-background/60 border-border/60 flex-1"
+                autoComplete="off"
+                autoCapitalize="characters"
+                spellCheck={false}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !isApplyingCoupon) {
+                    e.preventDefault()
+                    onApplyCoupon()
+                  }
+                }}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onApplyCoupon}
+                disabled={isApplyingCoupon || isPaying || !couponCode.trim()}
+                className="border-border/60 shrink-0"
+              >
+                {isApplyingCoupon ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                ) : (
+                  <Ticket className="h-3.5 w-3.5 mr-1.5" />
+                )}
+                Apply
+              </Button>
+            </div>
+            {couponState.status === "error" && (
+              <p className="text-[11px] text-rose-300 flex items-center gap-1">
+                <AlertTriangle className="h-3 w-3" /> {couponState.message}
+              </p>
+            )}
+            {applied && (
+              <p className="text-[11px] text-emerald-300 flex items-center gap-1">
+                <CheckCircle2 className="h-3 w-3" /> Coupon applied successfully.
+              </p>
+            )}
+          </div>
+
+          {/* Trust badge */}
+          <div className="flex items-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-3 py-2 text-[11px] text-emerald-300">
+            <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
+            <span>Secured by Razorpay · Payments are encrypted end-to-end.</span>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="outline" className="border-border/60" disabled={isPaying}>
+              <X className="h-3.5 w-3.5 mr-1.5" /> Cancel
+            </Button>
+          </DialogClose>
+          <Button
+            onClick={onPayNow}
+            disabled={isPaying}
+            className="bg-violet-600 hover:bg-violet-500 text-violet-50 btn-premium"
+          >
+            {isPaying ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+            ) : (
+              <IndianRupee className="h-3.5 w-3.5 mr-1.5" />
+            )}
+            {isPaying ? "Processing…" : `Pay ₹${finalAmount.toFixed(2)}`}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 

@@ -17,7 +17,10 @@ import { cn } from "@/lib/utils"
 type FooterLink = {
   label: string
   icon?: React.ComponentType<{ className?: string }>
-  view?: View
+  // Allow non-View names (e.g. "about", "privacy") so the footer can
+  // link to CMS pages / external routes that aren't part of the SPA
+  // View union. The navigate call site casts to View.
+  view?: View | { name: string }
   href?: string
 }
 
@@ -79,7 +82,7 @@ function FooterLinkButton({ link }: { link: FooterLink }) {
   }
   if (link.view) {
     return (
-      <button onClick={() => navigate(link.view!)} className="block py-1 text-left w-full">
+      <button onClick={() => navigate(link.view as View)} className="block py-1 text-left w-full">
         {content}
       </button>
     )
@@ -210,7 +213,7 @@ export function SiteFooter() {
             <p className="text-[10px] text-muted-foreground mt-2">
               By subscribing, you agree to our{" "}
               <button
-                onClick={() => navigate({ name: "privacy" })}
+                onClick={() => navigate({ name: "privacy" } as View)}
                 className="text-emerald-400 hover:underline"
               >
                 Privacy Policy
@@ -240,14 +243,14 @@ export function SiteFooter() {
             <span>© {new Date().getFullYear()} GuardianX Security Education</span>
             <span className="opacity-50">·</span>
             <button
-              onClick={() => navigate({ name: "conduct" })}
+              onClick={() => navigate({ name: "conduct" } as View)}
               className="hover:text-emerald-400 transition-colors"
             >
               Code of Conduct
             </button>
             <span className="opacity-50">·</span>
             <button
-              onClick={() => navigate({ name: "terms" })}
+              onClick={() => navigate({ name: "terms" } as View)}
               className="hover:text-emerald-400 transition-colors"
             >
               Terms

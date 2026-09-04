@@ -15,6 +15,7 @@ import { useTheme } from "next-themes"
 import { cn } from "@/lib/utils"
 import { useAppStore, type View } from "@/store/app-store"
 import { AnimatedLogoMark } from "@/components/platform/animated-logo"
+import { GlobalSearch } from "@/components/platform/global-search"
 
 /* ============================================================
    PublicHeader - floating mega-menu navigation
@@ -315,6 +316,11 @@ export function PublicHeader() {
             </div>
           </div>
         </motion.button>
+
+        {/* ===== Global search (between logo and nav) — hidden on mobile ===== */}
+        <div className="hidden lg:block flex-1 max-w-md mx-4">
+          <GlobalSearch />
+        </div>
 
         {/* ===== Desktop mega-menu nav (center) ===== */}
         <nav

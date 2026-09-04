@@ -32,6 +32,7 @@ import { InstructorAssignmentView } from "@/views/admin-instructor-assignment"
 import { AuditLogView } from "@/views/admin-audit-log"
 import { PlatformHealthView } from "@/views/admin-platform-health"
 import { NotificationCenterView } from "@/views/admin-notifications"
+import { AdminCouponsView } from "@/views/admin-coupons"
 import { SupportView } from "@/views/support"
 import { InstructorsView } from "@/views/instructors"
 import { InstructorDetailView } from "@/views/instructor-detail"
@@ -120,6 +121,7 @@ function ViewRouter() {
       {view.name === "admin-audit-log" && <AuditLogView />}
       {view.name === "admin-platform-health" && <PlatformHealthView />}
       {view.name === "admin-notifications" && <NotificationCenterView />}
+      {view.name === "admin-coupons" && <AdminCouponsView />}
       {view.name === "support" && <SupportView />}
       {view.name === "instructors" && <InstructorsView />}
       {view.name === "instructor-detail" && <InstructorDetailView />}
@@ -278,8 +280,8 @@ export default function Home() {
   if (session && view.name === "home") {
     // Auto-redirect to role dashboard on first load after login
     const role = (session as any)?.user?.role
-    const targetView = role === "ADMIN" ? "admin" : role === "INSTRUCTOR" ? "instructor" : "dashboard"
-    if (view.name !== targetView) {
+    const targetView: string = role === "ADMIN" ? "admin" : role === "INSTRUCTOR" ? "instructor" : "dashboard"
+    if ((view.name as string) !== targetView) {
       // Use a microtask to avoid setState during render
       Promise.resolve().then(() => {
         useAppStore.getState().navigate({ name: targetView as any })

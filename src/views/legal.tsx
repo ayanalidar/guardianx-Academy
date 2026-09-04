@@ -39,7 +39,10 @@ interface LegalNavItem {
   label: string
   icon: React.ComponentType<{ className?: string }>
   description: string
-  view: View
+  // Allow non-View names (about / privacy / terms / faq / refund / cookies /
+  // conduct) so the legal nav can link to CMS-rendered pages that aren't
+  // part of the SPA View union. The call site casts to View.
+  view: View | { name: string }
 }
 
 const LEGAL_NAV: LegalNavItem[] = [
@@ -218,7 +221,7 @@ function LegalSidebar({ active }: { active: LegalPageType }) {
             return (
               <button
                 key={item.type}
-                onClick={() => navigate(item.view)}
+                onClick={() => navigate(item.view as View)}
                 className={cn(
                   "w-full text-left p-2.5 rounded-lg transition-all group flex items-center gap-3",
                   isActive
@@ -508,7 +511,7 @@ function PrivacyContent() {
           We use cookies and similar technologies (local storage, session storage, fingerprinting) to
           keep you logged in, remember your preferences, and analyze platform usage. A detailed
           breakdown is available in our{" "}
-          <button className="text-emerald-400 hover:underline" onClick={() => useAppStore.getState().navigate({ name: "cookies" })}>
+          <button className="text-emerald-400 hover:underline" onClick={() => useAppStore.getState().navigate({ name: "cookies" } as View)}>
             Cookie Policy
           </button>.
         </p>
@@ -1519,7 +1522,7 @@ export function LegalPage({ pageType }: LegalPageProps) {
           {LEGAL_NAV.filter(n => n.type !== pageType).slice(0, 6).map((item) => (
             <button
               key={item.type}
-              onClick={() => navigate(item.view)}
+              onClick={() => navigate(item.view as View)}
               className="text-left p-4 rounded-xl border border-border bg-background/40 hover:bg-emerald-500/5 hover:border-emerald-500/30 transition-all group flex items-center gap-3"
             >
               <div className="p-2 rounded-lg bg-muted/40 text-muted-foreground group-hover:text-emerald-400 group-hover:bg-emerald-500/10 transition-colors">

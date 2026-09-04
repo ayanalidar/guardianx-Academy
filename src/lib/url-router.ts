@@ -131,6 +131,7 @@ export function hashToView(hash: string): View {
     "admin-batch-calendar", "admin-student-progress", "admin-revenue",
     "admin-cert-bulk", "admin-email-campaign", "admin-instructor-assignment",
     "admin-audit-log", "admin-platform-health", "admin-notifications",
+    "admin-coupons",
     "support", "verify",
     "instructors", "events",
 

@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { NotificationBell } from "@/components/platform/notification-bell"
 import { cn } from "@/lib/utils"
 
 interface NavItem {
@@ -307,12 +308,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-3 border-b border-border/40 bg-background/80 backdrop-blur-xl">
         <MobileNav />
         <Logo />
-        <div className="w-8" />
+        <NotificationBell />
       </div>
 
       {/* Main content */}
-      <main className="flex-1 min-w-0 overflow-x-hidden pt-16 lg:pt-0">
-        {children}
+      <main className="flex-1 min-w-0 overflow-x-hidden">
+        {/* Desktop top strip — sticky, holds the notification bell */}
+        <div className="hidden lg:flex sticky top-0 z-30 h-12 items-center justify-end px-4 border-b border-border/40 bg-background/70 backdrop-blur-xl">
+          <NotificationBell />
+        </div>
+        <div className="pt-16 lg:pt-0">
+          {children}
+        </div>
       </main>
     </div>
   )

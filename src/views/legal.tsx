@@ -511,7 +511,7 @@ function PrivacyContent() {
           We use cookies and similar technologies (local storage, session storage, fingerprinting) to
           keep you logged in, remember your preferences, and analyze platform usage. A detailed
           breakdown is available in our{" "}
-          <button className="text-emerald-400 hover:underline" onClick={() => useAppStore.getState().navigate({ name: "cookies" } as View)}>
+          <button className="text-emerald-400 hover:underline" onClick={() => useAppStore.getState().navigate({ name: "cookies" } as unknown as View)}>
             Cookie Policy
           </button>.
         </p>

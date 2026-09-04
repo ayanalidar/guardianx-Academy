@@ -86,6 +86,8 @@ export type View =
   | { name: "instructor-detail"; instructorId: string }
   | { name: "events" }
   | { name: "event-detail"; eventSlug: string }
+  | { name: "blog" }
+  | { name: "blog-post"; slug: string }
 
 interface AppState {
   view: View

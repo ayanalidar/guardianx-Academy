@@ -1,0 +1,1806 @@
+     1→"use client"
+     2→
+     3→/**
+     4→ * GUARDIANX // MISSION CONTROL
+     5→ * ----------------------------
+     6→ * Security Operations Center (SOC) for learning. A real-time operator
+     7→ * dashboard that surfaces the user's next mission, in-progress courses,
+     8→ * active lab environments, daily objective, achievements, leaderboard
+     9→ * standing, skill profile, and a chronological activity feed.
+    10→ *
+    11→ * All sections gracefully degrade: loading skeletons, intentional empty
+    12→ * states with CTAs, and color-coded status indicators throughout.
+    13→ */
+    14→
+    15→import * as React from "react"
+    16→import { motion } from "framer-motion"
+    17→import { useQuery } from "@tanstack/react-query"
+    18→import {
+    19→  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip,
+    20→  RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Cell,
+    21→} from "recharts"
+    22→import {
+    23→  Activity, ArrowRight, Award, BookMarked, BookOpen, Brain, Bug,
+    24→  Calendar, ChevronRight, Clock, Crosshair, Crown, Flame, FlaskConical,
+    25→  GraduationCap, Library, Radar as RadarIcon, Shield, ShieldCheck, StickyNote,
+    26→  Target, Terminal, TrendingUp, Trophy, Zap, PlayCircle, AlertCircle,
+    27→  Video, FileText, Hourglass, BarChart2,
+    28→} from "lucide-react"
+    29→import { useAppStore } from "@/store/app-store"
+    30→import { useUser } from "@/hooks/use-user"
+    31→import { api } from "@/lib/api"
+    32→import { levelFromXp, rankTitle } from "@/lib/gamification"
+    33→import { Button } from "@/components/ui/button"
+    34→import { Badge } from "@/components/ui/badge"
+    35→import { Card } from "@/components/ui/card"
+    36→import { Progress } from "@/components/ui/progress"
+    37→import { Skeleton } from "@/components/ui/skeleton"
+    38→import { cn } from "@/lib/utils"
+    39→import { ScrollReveal } from "@/components/platform/motion-system"
+    40→import {
+    41→  LabCard, type LabDifficulty, MissionCard, RankBadge, StatTile,
+    42→  StatusDot, XPBar,
+    43→} from "@/components/cyber"
+    44→
+    45→/* ============================================================
+    46→   Types
+    47→   ============================================================ */
+    48→
+    49→interface CourseListItem {
+    50→  id: string; slug: string; title: string; shortName: string
+    51→  description: string; category: string; level: string; durationHours: number
+    52→  rating: number; studentsCount: number; color: string; thumbnail: string | null
+    53→  tags: string; certBody: string
+    54→  instructor: { id: string; name: string; title: string | null }
+    55→  lessonCount: number; moduleCount: number
+    56→  enrollment?: {
+    57→    progress: number; completed: boolean; lastAccessed: string | null
+    58→    enrolledAt: string
+    59→  } | null
+    60→}
+    61→
+    62→interface LabListItem {
+    63→  id: string; slug: string; title: string; description: string
+    64→  longDescription: string; category: string; difficulty: string
+    65→  durationMin: number; points: number; tags: string; scenario: string
+    66→  objectives: string; hints: string; flag: string; commands: string
+    67→  virtualEnv: string; color: string; published: boolean
+    68→  progress: {
+    69→    status: string; flagFound: boolean; hintsUsed: number
+    70→    timeSpentMs: number; startedAt: string | null
+    71→    completedAt: string | null; updatedAt: string
+    72→  } | null
+    73→}
+    74→
+    75→interface SkillProfileItem {
+    76→  key: string
+    77→  label: string
+    78→  solved: number
+    79→  total: number
+    80→  pct: number
+    81→}
+    82→
+    83→interface WeeklyXpItem {
+    84→  date: string
+    85→  xp: number
+    86→  count: number
+    87→}
+    88→
+    89→interface DeadlineItem {
+    90→  type: "assignment" | "live-session" | "exam"
+    91→  id: string
+    92→  title: string
+    93→  dueDate: string
+    94→  courseId: string | null
+    95→  courseTitle: string | null
+    96→  meta?: string
+    97→}
+    98→
+    99→interface MeData {
+   100→  activities?: ActivityItem[]
+   101→  weeklyXp?: WeeklyXpItem[]
+   102→  upcomingDeadlines?: DeadlineItem[]
+   103→  skillProfile?: SkillProfileItem[]
+   104→  stats?: {
+   105→    enrollments?: number
+   106→    completed?: number
+   107→    inProgress?: number
+   108→    notes?: number
+   109→    labsDone?: number
+   110→    certificates?: number
+   111→    avgScore?: number
+   112→  }
+   113→}
+   114→
+   115→interface LeaderboardEntry {
+   116→  rank: number; id: string; name: string; title: string | null
+   117→  avatar: string | null; xp: number; level: number
+   118→  rankTitle: string; isMe: boolean
+   119→}
+   120→
+   121→interface AchievementItem {
+   122→  code: string; title: string; description: string
+   123→  icon: string; color: string; xp: number; tier: string
+   124→  earned: boolean; earnedAt: string | null
+   125→}
+   126→
+   127→interface ActivityItem {
+   128→  id: string; type: string; xp: number; meta: string
+   129→  date: string; createdAt: string
+   130→}
+   131→
+   132→/* ============================================================
+   133→   Helpers
+   134→   ============================================================ */
+   135→
+   136→const DIFFICULTY_MAP: Record<string, LabDifficulty> = {
+   137→  Easy: "Easy",
+   138→  Medium: "Medium",
+   139→  Hard: "Hard",
+   140→  Insane: "Insane",
+   141→}
+   142→
+   143→const ACTIVITY_META: Record<
+   144→  string,
+   145→  { icon: typeof BookOpen; label: string; color: string; tint: string }
+   146→> = {
+   147→  lesson_completed: {
+   148→    icon: BookOpen, label: "Lesson Completed", color: "text-cyan-300", tint: "bg-cyan-500/10",
+   149→  },
+   150→  lab_solved: {
+   151→    icon: Terminal, label: "Lab Solved", color: "text-violet-300", tint: "bg-violet-500/10",
+   152→  },
+   153→  quiz_passed: {
+   154→    icon: Brain, label: "Quiz Passed", color: "text-amber-300", tint: "bg-amber-500/10",
+   155→  },
+   156→  note_created: {
+   157→    icon: StickyNote, label: "Note Created", color: "text-emerald-300", tint: "bg-emerald-500/10",
+   158→  },
+   159→  course_enrolled: {
+   160→    icon: BookMarked, label: "Course Enrolled", color: "text-cyan-300", tint: "bg-cyan-500/10",
+   161→  },
+   162→  cert_earned: {
+   163→    icon: Award, label: "Certification Earned", color: "text-amber-300", tint: "bg-amber-500/10",
+   164→  },
+   165→}
+   166→
+   167→const ACHIEVEMENT_ICON_MAP: Record<string, typeof BookOpen> = {
+   168→  BookOpen, GraduationCap, Terminal, Bug, Trophy, Brain, StickyNote,
+   169→  Library, Flame, Award, TrendingUp, ShieldCheck, BookMarked,
+   170→}
+   171→
+   172→const ACHIEVEMENT_COLOR_MAP: Record<string, string> = {
+   173→  emerald: "border-emerald-500/40 bg-emerald-500/10 text-emerald-300",
+   174→  cyan: "border-cyan-500/40 bg-cyan-500/10 text-cyan-300",
+   175→  violet: "border-violet-500/40 bg-violet-500/10 text-violet-300",
+   176→  amber: "border-amber-500/40 bg-amber-500/10 text-amber-300",
+   177→  orange: "border-orange-500/40 bg-orange-500/10 text-orange-300",
+   178→  red: "border-rose-500/40 bg-rose-500/10 text-rose-300",
+   179→}
+   180→
+   181→const SKILL_CATEGORIES = [
+   182→  { key: "Web Security", label: "Web", color: "from-violet-500 to-violet-400" },
+   183→  { key: "Network", label: "Network", color: "from-cyan-500 to-cyan-400" },
+   184→  { key: "Cryptography", label: "Crypto", color: "from-amber-500 to-amber-400" },
+   185→  { key: "Forensics", label: "Forensics", color: "from-emerald-500 to-emerald-400" },
+   186→  { key: "Reverse Engineering", label: "Reverse", color: "from-rose-500 to-rose-400" },
+   187→  { key: "Governance", label: "Governance", color: "from-sky-500 to-sky-400" },
+   188→]
+   189→
+   190→function relativeTime(iso: string): string {
+   191→  const d = new Date(iso)
+   192→  const diff = Date.now() - d.getTime()
+   193→  const min = Math.floor(diff / 60000)
+   194→  if (min < 1) return "just now"
+   195→  if (min < 60) return `${min}m ago`
+   196→  const hr = Math.floor(min / 60)
+   197→  if (hr < 24) return `${hr}h ago`
+   198→  const day = Math.floor(hr / 24)
+   199→  if (day < 7) return `${day}d ago`
+   200→  return d.toLocaleDateString(undefined, { month: "short", day: "numeric" })
+   201→}
+   202→
+   203→function formatClock(d: Date): string {
+   204→  return d.toLocaleTimeString(undefined, {
+   205→    hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
+   206→  })
+   207→}
+   208→
+   209→function deriveServices(lab: LabListItem): string[] {
+   210→  const t = (lab.tags || "").toLowerCase()
+   211→  const out: string[] = []
+   212→  if (t.includes("ssh") || lab.commands?.includes("ssh")) out.push("SSH")
+   213→  if (t.includes("http") || t.includes("web")) out.push("HTTP")
+   214→  if (t.includes("ftp") || t.includes("smb")) out.push("FTP")
+   215→  if (t.includes("dns") || t.includes("smtp")) out.push("DNS")
+   216→  if (t.includes("mysql") || t.includes("sql")) out.push("MySQL")
+   217→  if (out.length === 0) out.push("SSH", "HTTP")
+   218→  return out.slice(0, 3)
+   219→}
+   220→
+   221→function pseudoIp(seed: string): string {
+   222→  let h = 0
+   223→  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) | 0
+   224→  const a = (Math.abs(h) % 200) + 10
+   225→  const b = (Math.abs(h >> 8) % 200) + 10
+   226→  return `10.10.${a % 250}.${b % 250}`
+   227→}
+   228→
+   229→/* ============================================================
+   230→   DashboardView - main export (kept name for back-compat)
+   231→   ============================================================ */
+   232→
+   233→export function DashboardView() {
+   234→  const { user, stats, gamification, isLoading: userLoading } = useUser()
+   235→
+   236→  const { data: meData, isLoading: meLoading } = useQuery<MeData>({
+   237→    queryKey: ["me"],
+   238→    queryFn: async () => {
+   239→      try { return await api("/api/me") } catch { return { activities: [] } }
+   240→    },
+   241→    retry: false,
+   242→  })
+   243→
+   244→  const { data: coursesData, isLoading: coursesLoading } = useQuery<{ courses: CourseListItem[] }>({
+   245→    queryKey: ["courses", "dashboard-enrolled"],
+   246→    queryFn: async () => {
+   247→      try { return await api(`/api/courses?enrolled=true&userId=${user?.id ?? ""}&status=in-progress`) } catch { return { courses: [] } }
+   248→    },
+   249→    enabled: !!user?.id,
+   250→    retry: false,
+   251→  })
+   252→
+   253→  const { data: labsData, isLoading: labsLoading } = useQuery<{ labs: LabListItem[] }>({
+   254→    queryKey: ["labs", "dashboard"],
+   255→    queryFn: async () => {
+   256→      try { return await api("/api/labs") } catch { return { labs: [] } }
+   257→    },
+   258→    retry: false,
+   259→  })
+   260→
+   261→  const { data: leaderboardData, isLoading: leaderboardLoading } = useQuery<{
+   262→    topUsers: LeaderboardEntry[]
+   263→    currentUser: LeaderboardEntry | null
+   264→    totalUsers: number
+   265→  }>({
+   266→    queryKey: ["leaderboard", "dashboard"],
+   267→    queryFn: async () => {
+   268→      try { return await api("/api/leaderboard") } catch { return { topUsers: [], currentUser: null, totalUsers: 0 } }
+   269→    },
+   270→    retry: false,
+   271→  })
+   272→
+   273→  const { data: achievementsData, isLoading: achievementsLoading } = useQuery<{
+   274→    achievements: AchievementItem[]
+   275→    earnedCount: number
+   276→    totalCount: number
+   277→  }>({
+   278→    queryKey: ["achievements", "dashboard"],
+   279→    queryFn: async () => {
+   280→      try { return await api("/api/achievements") } catch { return { achievements: [], earnedCount: 0, totalCount: 0 } }
+   281→    },
+   282→    enabled: !!user?.id,
+   283→    retry: false,
+   284→  })
+   285→
+   286→  const activities = meData?.activities ?? []
+   287→  const enrolledCourses = (coursesData?.courses ?? []).filter(
+   288→    (c) => c.enrollment && !c.enrollment.completed,
+   289→  )
+   290→  const labs = labsData?.labs ?? []
+   291→
+   292→  // Current mission = first lab the user hasn't completed
+   293→  const currentMission = labs.find(
+   294→    (l) => !l.progress || l.progress.status !== "completed",
+   295→  )
+   296→
+   297→  // Active labs = labs the user has started (in-progress)
+   298→  const activeLabs = labs.filter((l) => l.progress?.status === "in_progress")
+   299→
+   300→  // Skill profile = completion percentage per category
+   301→  const skillProfile = React.useMemo(() => {
+   302→    return SKILL_CATEGORIES.map((cat) => {
+   303→      const total = labs.filter((l) => l.category === cat.key).length
+   304→      const solved = labs.filter(
+   305→        (l) => l.category === cat.key && l.progress?.status === "completed",
+   306→      ).length
+   307→      const pct = total > 0 ? Math.round((solved / total) * 100) : 0
+   308→      return { ...cat, total, solved, pct }
+   309→    })
+   310→  }, [labs])
+   311→
+   312→  const xp = gamification?.xp ?? 0
+   313→  const levelInfo = gamification?.levelInfo ?? levelFromXp(0)
+   314→  const rank = gamification?.rank ?? rankTitle(1)
+   315→  const streak = gamification?.streak ?? 0
+   316→  const level = gamification?.level ?? 1
+   317→
+   318→  // Dashboard-specific data from /api/me (added by ACHIEVEMENTS-DASHBOARD-REVENUE task)
+   319→  const weeklyXp = meData?.weeklyXp ?? []
+   320→  const upcomingDeadlines = meData?.upcomingDeadlines ?? []
+   321→  const serverSkillProfile = meData?.skillProfile ?? []
+   322→  const statsOverview = {
+   323→    enrolled: stats?.enrollments ?? 0,
+   324→    completed: stats?.completed ?? 0,
+   325→    inProgress: stats?.inProgress ?? (stats ? Math.max(0, (stats.enrollments ?? 0) - (stats.completed ?? 0)) : 0),
+   326→    certificates: stats?.certificates ?? 0,
+   327→  }
+   328→
+   329→  return (
+   330→    <div className="relative min-h-screen">
+   331→      {/* Atmospheric background - SOC grid */}
+   332→      <div className="absolute inset-0 bg-grid opacity-40 pointer-events-none" />
+   333→      <div className="absolute inset-0 bg-mesh opacity-30 pointer-events-none" />
+   334→      <div className="absolute top-0 right-0 w-[500px] h-[400px] bg-emerald-500/5 blur-[120px] rounded-full pointer-events-none" />
+   335→      <div className="absolute top-1/3 left-0 w-[400px] h-[400px] bg-violet-600/5 blur-[120px] rounded-full pointer-events-none" />
+   336→
+   337→      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8 space-y-6">
+   338→        {/* ====================================================
+   339→            1. HEADER STRIP - WELCOME BACK, [NAME]
+   340→            ==================================================== */}
+   341→        <HeaderStrip
+   342→          userName={user?.name ?? "Operator"}
+   343→          rank={rank}
+   344→          level={level}
+   345→          loading={userLoading}
+   346→          labCount={labs.length}
+   347→        />
+   348→
+   349→        {/* ====================================================
+   350→            2. STATS ROW - 4 StatTiles
+   351→            ==================================================== */}
+   352→        <StatsRow
+   353→          level={level}
+   354→          levelInfo={levelInfo}
+   355→          xp={xp}
+   356→          streak={streak}
+   357→          rank={rank}
+   358→          loading={userLoading}
+   359→        />
+   360→
+   361→        {/* ====================================================
+   362→            2b. PROGRESS OVERVIEW - Enrolled / Completed / In-Progress / Certs
+   363→            ==================================================== */}
+   364→        <ScrollReveal delay={0.05}>
+   365→          <ProgressOverview
+   366→            enrolled={statsOverview.enrolled}
+   367→            completed={statsOverview.completed}
+   368→            inProgress={statsOverview.inProgress}
+   369→            certificates={statsOverview.certificates}
+   370→            xp={xp}
+   371→            level={level}
+   372→            loading={userLoading || meLoading}
+   373→          />
+   374→        </ScrollReveal>
+   375→
+   376→        {/* ====================================================
+   377→            3. MAIN GRID - LEFT (60%) + RIGHT (40%)
+   378→            ==================================================== */}
+   379→        <div className="grid lg:grid-cols-5 gap-6">
+   380→          {/* LEFT COLUMN */}
+   381→          <div className="lg:col-span-3 space-y-6">
+   382→            {/* CURRENT MISSION */}
+   383→            <ScrollReveal>
+   384→              <CurrentMission
+   385→                lab={currentMission}
+   386→                loading={labsLoading}
+   387→              />
+   388→            </ScrollReveal>
+   389→
+   390→            {/* CONTINUE LEARNING */}
+   391→            <ScrollReveal delay={0.05}>
+   392→              <ContinueLearning
+   393→                courses={enrolledCourses.slice(0, 3)}
+   394→                loading={coursesLoading}
+   395→              />
+   396→            </ScrollReveal>
+   397→
+   398→            {/* ACTIVE LABS */}
+   399→            <ScrollReveal delay={0.1}>
+   400→              <ActiveLabs
+   401→                labs={activeLabs}
+   402→                loading={labsLoading}
+   403→              />
+   404→            </ScrollReveal>
+   405→          </div>
+   406→
+   407→          {/* RIGHT COLUMN */}
+   408→          <div className="lg:col-span-2 space-y-6">
+   409→            {/* DAILY OBJECTIVE */}
+   410→            <ScrollReveal>
+   411→              <DailyObjective labsSolvedToday={0} />
+   412→            </ScrollReveal>
+   413→
+   414→            {/* ACHIEVEMENTS */}
+   415→            <ScrollReveal delay={0.05}>
+   416→              <AchievementsPanel
+   417→                achievements={achievementsData?.achievements ?? []}
+   418→                earnedCount={achievementsData?.earnedCount ?? 0}
+   419→                totalCount={achievementsData?.totalCount ?? 0}
+   420→                loading={achievementsLoading}
+   421→              />
+   422→            </ScrollReveal>
+   423→
+   424→            {/* LEADERBOARD */}
+   425→            <ScrollReveal delay={0.1}>
+   426→              <LeaderboardPanel
+   427→                topUsers={leaderboardData?.topUsers ?? []}
+   428→                currentUser={leaderboardData?.currentUser ?? null}
+   429→                totalUsers={leaderboardData?.totalUsers ?? 0}
+   430→                loading={leaderboardLoading}
+   431→              />
+   432→            </ScrollReveal>
+   433→
+   434→            {/* SKILL PROFILE */}
+   435→            <ScrollReveal delay={0.15}>
+   436→              <SkillProfile skills={skillProfile} />
+   437→            </ScrollReveal>
+   438→
+   439→            {/* STREAK TRACKER */}
+   440→            <ScrollReveal delay={0.2}>
+   441→              <StreakTracker
+   442→                streak={streak}
+   443→                weeklyXp={weeklyXp}
+   444→                loading={userLoading || meLoading}
+   445→              />
+   446→            </ScrollReveal>
+   447→          </div>
+   448→        </div>
+   449→
+   450→        {/* ====================================================
+   451→            3b. WEEKLY XP + SKILL RADAR - 2-col charts row
+   452→            ==================================================== */}
+   453→        <div className="grid lg:grid-cols-2 gap-6">
+   454→          <ScrollReveal>
+   455→            <WeeklyXpChart data={weeklyXp} loading={userLoading || meLoading} />
+   456→          </ScrollReveal>
+   457→          <ScrollReveal delay={0.05}>
+   458→            <SkillRadar
+   459→              skills={serverSkillProfile.length > 0 ? serverSkillProfile : skillProfile}
+   460→              loading={userLoading || meLoading}
+   461→            />
+   462→          </ScrollReveal>
+   463→        </div>
+   464→
+   465→        {/* ====================================================
+   466→            3c. UPCOMING DEADLINES - assignments, exams, live sessions
+   467→            ==================================================== */}
+   468→        <ScrollReveal>
+   469→          <UpcomingDeadlines
+   470→            deadlines={upcomingDeadlines}
+   471→            loading={userLoading || meLoading}
+   472→          />
+   473→        </ScrollReveal>
+   474→
+   475→        {/* ====================================================
+   476→            4. ACTIVITY FEED - recent activity timeline
+   477→            ==================================================== */}
+   478→        <ScrollReveal>
+   479→          <ActivityFeed activities={activities.slice(0, 5)} loading={userLoading} />
+   480→        </ScrollReveal>
+   481→      </div>
+   482→    </div>
+   483→  )
+   484→}
+   485→
+   486→/* ============================================================
+   487→   1. Header Strip
+   488→   ============================================================ */
+   489→
+   490→function HeaderStrip({
+   491→  userName, rank, level, loading, labCount,
+   492→}: {
+   493→  userName: string
+   494→  rank: string
+   495→  level: number
+   496→  loading: boolean
+   497→  labCount: number
+   498→}) {
+   499→  const [now, setNow] = React.useState<Date>(() => new Date())
+   500→  React.useEffect(() => {
+   501→    const id = setInterval(() => setNow(new Date()), 1000)
+   502→    return () => clearInterval(id)
+   503→  }, [])
+   504→
+   505→  return (
+   506→    <header
+   507→      className={cn(
+   508→        "relative overflow-hidden rounded-xl border border-border/60 bg-card/40 backdrop-blur-sm",
+   509→        "scanlines px-4 sm:px-6 py-4",
+   510→      )}
+   511→    >
+   512→      <div className="absolute inset-0 bg-grid-fine opacity-30 pointer-events-none" />
+   513→      <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+   514→        {/* LEFT - brand + user identity */}
+   515→        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+   516→          <div
+   517→            className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
+   518→            aria-hidden
+   519→          >
+   520→            <Shield className="size-5" />
+   521→          </div>
+   522→          <div className="min-w-0">
+   523→            <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-emerald-300/90">
+   524→              GUARDIANX // MISSION CONTROL
+   525→            </p>
+   526→            <div className="mt-1 flex flex-wrap items-center gap-2">
+   527→              <h1 className="text-lg sm:text-xl font-bold tracking-tight text-foreground truncate">
+   528→                <span className="text-muted-foreground font-normal">Welcome back,</span>{" "}
+   529→                <span className="text-foreground">{userName}</span>
+   530→              </h1>
+   531→              {!loading && (
+   532→                <RankBadge rank={rank} level={level} size="sm" />
+   533→              )}
+   534→            </div>
+   535→          </div>
+   536→        </div>
+   537→
+   538→        {/* RIGHT - live status indicators */}
+   539→        <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+   540→          <StatusDot status="online" pulse size="sm" label="Systems Online" />
+   541→          <StatusDot
+   542→            status={labCount > 0 ? "online" : "idle"}
+   543→            pulse={labCount > 0}
+   544→            size="sm"
+   545→            label={`${labCount} Labs Available`}
+   546→          />
+   547→          <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+   548→            <Clock className="size-3.5 text-cyan-400" aria-hidden />
+   549→            <span className="tabular-nums text-cyan-200/90">{formatClock(now)}</span>
+   550→          </div>
+   551→        </div>
+   552→      </div>
+   553→    </header>
+   554→  )
+   555→}
+   556→
+   557→/* ============================================================
+   558→   2. Stats Row - 4 StatTiles
+   559→   ============================================================ */
+   560→
+   561→function StatsRow({
+   562→  level, levelInfo, xp, streak, rank, loading,
+   563→}: {
+   564→  level: number
+   565→  levelInfo: { currentLevelXp: number; nextLevelXp: number; progress: number }
+   566→  xp: number
+   567→  streak: number
+   568→  rank: string
+   569→  loading: boolean
+   570→}) {
+   571→  if (loading) {
+   572→    return (
+   573→      <div className="space-y-4">
+   574→        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+   575→          {Array.from({ length: 4 }).map((_, i) => (
+   576→            <Skeleton key={i} className="h-[112px] rounded-xl" />
+   577→          ))}
+   578→        </div>
+   579→        <Skeleton className="h-[64px] rounded-xl" />
+   580→      </div>
+   581→    )
+   582→  }
+   583→
+   584→  return (
+   585→    <section aria-label="Operator metrics" className="space-y-4">
+   586→      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+   587→        <StatTile
+   588→          icon={ShieldCheck}
+   589→          label={`Level ${level} · ${levelInfo.currentLevelXp}/${levelInfo.nextLevelXp} XP`}
+   590→          value={level}
+   591→          suffix=""
+   592→          color="text-violet-300"
+   593→          tint="bg-violet-500/10"
+   594→        />
+   595→        <StatTile
+   596→          icon={Zap}
+   597→          label="Total XP"
+   598→          value={xp}
+   599→          color="text-amber-300"
+   600→          tint="bg-amber-500/10"
+   601→        />
+   602→        <StatTile
+   603→          icon={Flame}
+   604→          label="Streak"
+   605→          value={streak}
+   606→          suffix="days"
+   607→          color="text-rose-300"
+   608→          tint="bg-rose-500/10"
+   609→        />
+   610→        <StatTile
+   611→          icon={Crown}
+   612→          label="Current Rank"
+   613→          value={rank}
+   614→          color="text-emerald-300"
+   615→          tint="bg-emerald-500/10"
+   616→        />
+   617→      </div>
+   618→      <div className="card-premium rounded-xl px-4 py-3">
+   619→        <XPBar
+   620→          current={levelInfo.currentLevelXp}
+   621→          max={levelInfo.nextLevelXp}
+   622→          level={level}
+   623→        />
+   624→      </div>
+   625→    </section>
+   626→  )
+   627→}
+   628→
+   629→/* ============================================================
+   630→   3a. Current Mission - MissionCard or empty state
+   631→   ============================================================ */
+   632→
+   633→function CurrentMission({
+   634→  lab, loading,
+   635→}: {
+   636→  lab: LabListItem | undefined
+   637→  loading: boolean
+   638→}) {
+   639→  const { navigate } = useAppStore()
+   640→
+   641→  if (loading) {
+   642→    return (
+   643→      <section aria-label="Current mission">
+   644→        <SectionHeader icon={Crosshair} label="Current Mission" tone="violet" />
+   645→        <Skeleton className="h-[420px] rounded-2xl" />
+   646→      </section>
+   647→    )
+   648→  }
+   649→
+   650→  if (!lab) {
+   651→    return (
+   652→      <section aria-label="Current mission">
+   653→        <SectionHeader icon={Crosshair} label="Current Mission" tone="violet" />
+   654→        <EmptyState
+   655→          title="No Active Mission"
+   656→          description="Your next mission is waiting. Browse the lab catalog and pick your first target."
+   657→          ctaLabel="Explore Labs"
+   658→          onCta={() => navigate({ name: "labs" })}
+   659→          icon={Crosshair}
+   660→          accent="violet"
+   661→        />
+   662→      </section>
+   663→    )
+   664→  }
+   665→
+   666→  return (
+   667→    <section aria-label="Current mission">
+   668→      <SectionHeader icon={Crosshair} label="Current Mission" tone="violet" />
+   669→      <MissionCard
+   670→        title={lab.title}
+   671→        objective={lab.description || "Capture the flag to complete this mission."}
+   672→        difficulty={DIFFICULTY_MAP[lab.difficulty] ?? "Medium"}
+   673→        xp={lab.points}
+   674→        timeElapsed={lab.progress?.startedAt ? relativeTime(lab.progress.startedAt) : undefined}
+   675→        onLaunch={() => navigate({ name: "lab", labSlug: lab.slug })}
+   676→        onSubmit={() => navigate({ name: "lab", labSlug: lab.slug })}
+   677→      />
+   678→    </section>
+   679→  )
+   680→}
+   681→
+   682→/* ============================================================
+   683→   3b. Continue Learning - courses in progress
+   684→   ============================================================ */
+   685→
+   686→function ContinueLearning({
+   687→  courses, loading,
+   688→}: {
+   689→  courses: CourseListItem[]
+   690→  loading: boolean
+   691→}) {
+   692→  const { navigate } = useAppStore()
+   693→
+   694→  return (
+   695→    <section aria-label="Continue learning">
+   696→      <SectionHeader
+   697→        icon={BookOpen}
+   698→        label="Continue Learning"
+   699→        tone="cyan"
+   700→        actionLabel="View All Courses"
+   701→        onAction={() => navigate({ name: "learning" })}
+   702→      />
+   703→
+   704→      {loading ? (
+   705→        <div className="grid gap-3">
+   706→          {Array.from({ length: 3 }).map((_, i) => (
+   707→            <Skeleton key={i} className="h-[88px] rounded-xl" />
+   708→          ))}
+   709→        </div>
+   710→      ) : courses.length === 0 ? (
+   711→        <EmptyState
+   712→          title="No Courses In Progress"
+   713→          description="You haven't started any courses yet. Browse the catalog and enroll to begin your training."
+   714→          ctaLabel="Browse Catalog"
+   715→          onCta={() => navigate({ name: "catalog" })}
+   716→          icon={BookOpen}
+   717→          accent="cyan"
+   718→        />
+   719→      ) : (
+   720→        <div className="grid gap-3">
+   721→          {courses.map((c) => {
+   722→            const progress = c.enrollment?.progress ?? 0
+   723→            const lastAcc = c.enrollment?.lastAccessed
+   724→            return (
+   725→              <div
+   726→                key={c.id}
+   727→                className="group card-premium relative flex items-center gap-4 rounded-xl p-4"
+   728→              >
+   729→                <button
+   730→                  onClick={() => navigate({ name: "course", courseId: c.id })}
+   731→                  className="absolute inset-0 z-0"
+   732→                  aria-label={`Open course ${c.title}`}
+   733→                />
+   734→                <div
+   735→                  className={cn(
+   736→                    "relative z-10 flex size-12 shrink-0 items-center justify-center rounded-lg border border-border/50 font-mono text-sm font-bold",
+   737→                    "bg-violet-500/10 text-violet-200",
+   738→                  )}
+   739→                  aria-hidden
+   740→                >
+   741→                  {c.shortName.slice(0, 4)}
+   742→                </div>
+   743→                <div className="relative z-10 min-w-0 flex-1">
+   744→                  <div className="flex items-center justify-between gap-2">
+   745→                    <h3 className="truncate font-semibold text-sm text-foreground group-hover:text-violet-200 transition-colors">
+   746→                      {c.title}
+   747→                    </h3>
+   748→                    <span className="shrink-0 font-mono text-[10px] uppercase tracking-wider text-cyan-300">
+   749→                      {progress}%
+   750→                    </span>
+   751→                  </div>
+   752→                  <p className="mt-0.5 truncate text-[11px] text-muted-foreground font-mono uppercase tracking-wider">
+   753→                    {c.category} · {c.lessonCount} lessons · {c.durationHours}h
+   754→                    {lastAcc && (
+   755→                      <span className="ml-2 normal-case tracking-normal text-muted-foreground/70">
+   756→                        · Last: {relativeTime(lastAcc)}
+   757→                      </span>
+   758→                    )}
+   759→                  </p>
+   760→                  <div className="mt-2">
+   761→                    <Progress value={progress} className="h-1.5" />
+   762→                  </div>
+   763→                </div>
+   764→                <Button
+   765→                  size="sm"
+   766→                  className="relative z-10 shrink-0 gap-1.5 bg-primary hover:bg-primary/90"
+   767→                  onClick={(e) => {
+   768→                    e.stopPropagation()
+   769→                    navigate({ name: "course", courseId: c.id })
+   770→                  }}
+   771→                >
+   772→                  <PlayCircle className="size-3.5" aria-hidden />
+   773→                  Resume
+   774→                </Button>
+   775→              </div>
+   776→            )
+   777→          })}
+   778→        </div>
+   779→      )}
+   780→    </section>
+   781→  )
+   782→}
+   783→
+   784→/* ============================================================
+   785→   3c. Active Labs - running lab environments
+   786→   ============================================================ */
+   787→
+   788→function ActiveLabs({
+   789→  labs, loading,
+   790→}: {
+   791→  labs: LabListItem[]
+   792→  loading: boolean
+   793→}) {
+   794→  const { navigate } = useAppStore()
+   795→
+   796→  return (
+   797→    <section aria-label="Active labs">
+   798→      <SectionHeader
+   799→        icon={FlaskConical}
+   800→        label="Active Labs"
+   801→        tone="emerald"
+   802→        actionLabel="Browse Labs"
+   803→        onAction={() => navigate({ name: "labs" })}
+   804→      />
+   805→
+   806→      {loading ? (
+   807→        <div className="grid gap-3 sm:grid-cols-2">
+   808→          {Array.from({ length: 2 }).map((_, i) => (
+   809→            <Skeleton key={i} className="h-[160px] rounded-xl" />
+   810→          ))}
+   811→        </div>
+   812→      ) : labs.length === 0 ? (
+   813→        <EmptyState
+   814→          title="No Active Labs"
+   815→          description="Start a new lab environment. Browse the cyber range and spin up your first target."
+   816→          ctaLabel="Browse Labs"
+   817→          onCta={() => navigate({ name: "labs" })}
+   818→          icon={FlaskConical}
+   819→          accent="emerald"
+   820→        />
+   821→      ) : (
+   822→        <div className="grid gap-3 sm:grid-cols-2">
+   823→          {labs.slice(0, 4).map((lab) => (
+   824→            <LabCard
+   825→              key={lab.id}
+   826→              title={lab.title}
+   827→              category={lab.category}
+   828→              difficulty={DIFFICULTY_MAP[lab.difficulty] ?? "Medium"}
+   829→              xp={lab.points}
+   830→              status="online"
+   831→              ip={pseudoIp(lab.id)}
+   832→              services={deriveServices(lab)}
+   833→              onClick={() => navigate({ name: "lab", labSlug: lab.slug })}
+   834→            />
+   835→          ))}
+   836→        </div>
+   837→      )}
+   838→    </section>
+   839→  )
+   840→}
+   841→
+   842→/* ============================================================
+   843→   3d. Daily Objective
+   844→   ============================================================ */
+   845→
+   846→function DailyObjective({ labsSolvedToday }: { labsSolvedToday: number }) {
+   847→  const target = 1
+   848→  const done = Math.min(labsSolvedToday, target)
+   849→  const complete = done >= target
+   850→  const progressPct = Math.round((done / target) * 100)
+   851→
+   852→  return (
+   853→    <section aria-label="Daily objective">
+   854→      <SectionHeader icon={Target} label="Daily Objective" tone="amber" />
+   855→      <div className="card-premium relative overflow-hidden rounded-xl p-5 scanlines">
+   856→        <div
+   857→          aria-hidden
+   858→          className="pointer-events-none absolute -right-10 -top-10 size-32 rounded-full opacity-30 blur-3xl"
+   859→          style={{
+   860→            background:
+   861→              "radial-gradient(circle, oklch(0.7 0.15 85 / 0.4), transparent 70%)",
+   862→          }}
+   863→        />
+   864→        <div className="relative z-10 space-y-4">
+   865→          <div className="flex items-start justify-between gap-2">
+   866→            <div className="min-w-0">
+   867→              <h3 className="text-sm font-semibold text-foreground">
+   868→                Complete one Web Security lab
+   869→              </h3>
+   870→              <p className="mt-1 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+   871→                Resets at 00:00 UTC
+   872→              </p>
+   873→            </div>
+   874→            <Badge
+   875→              variant="outline"
+   876→              className={cn(
+   877→                "shrink-0 font-mono text-[10px]",
+   878→                complete
+   879→                  ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
+   880→                  : "border-amber-500/40 bg-amber-500/10 text-amber-300",
+   881→              )}
+   882→            >
+   883→              {complete ? "COMPLETE" : "IN PROGRESS"}
+   884→            </Badge>
+   885→          </div>
+   886→
+   887→          <div>
+   888→            <div className="flex items-center justify-between font-mono text-[11px] mb-1.5">
+   889→              <span className="uppercase tracking-wider text-muted-foreground">
+   890→                Progress
+   891→              </span>
+   892→              <span className="tabular-nums text-foreground">
+   893→                {done}/{target}
+   894→              </span>
+   895→            </div>
+   896→            <Progress value={progressPct} className="h-2" />
+   897→          </div>
+   898→
+   899→          <div className="flex items-center justify-between border-t border-border/40 pt-3">
+   900→            <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+   901→              Reward
+   902→            </span>
+   903→            <span className="flex items-center gap-1.5 font-mono text-sm font-semibold text-amber-300">
+   904→              <Zap className="size-3.5" aria-hidden />
+   905→              +250 XP
+   906→            </span>
+   907→          </div>
+   908→        </div>
+   909→      </div>
+   910→    </section>
+   911→  )
+   912→}
+   913→
+   914→/* ============================================================
+   915→   3e. Achievements - recent badges (grid of 6)
+   916→   ============================================================ */
+   917→
+   918→function AchievementsPanel({
+   919→  achievements, earnedCount, totalCount, loading,
+   920→}: {
+   921→  achievements: AchievementItem[]
+   922→  earnedCount: number
+   923→  totalCount: number
+   924→  loading: boolean
+   925→}) {
+   926→  const { navigate } = useAppStore()
+   927→  const earned = achievements.filter((a) => a.earned).slice(0, 6)
+   928→
+   929→  return (
+   930→    <section aria-label="Achievements">
+   931→      <SectionHeader
+   932→        icon={Award}
+   933→        label="Achievements"
+   934→        tone="violet"
+   935→        actionLabel="View All"
+   936→        onAction={() => navigate({ name: "achievements" })}
+   937→      />
+   938→
+   939→      {loading ? (
+   940→        <div className="grid grid-cols-3 gap-2">
+   941→          {Array.from({ length: 6 }).map((_, i) => (
+   942→            <Skeleton key={i} className="h-[88px] rounded-lg" />
+   943→          ))}
+   944→        </div>
+   945→      ) : (
+   946→        <div className="card-premium rounded-xl p-4 space-y-3">
+   947→          <div className="flex items-center justify-between">
+   948→            <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+   949→              Earned Badges
+   950→            </span>
+   951→            <span className="font-mono text-[11px] tabular-nums text-violet-300">
+   952→              {earnedCount} / {totalCount}
+   953→            </span>
+   954→          </div>
+   955→
+   956→          {earned.length === 0 ? (
+   957→            <div className="rounded-lg border border-dashed border-border/50 bg-muted/20 p-6 text-center">
+   958→              <Award className="mx-auto size-6 text-muted-foreground/60" aria-hidden />
+   959→              <p className="mt-2 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+   960→                No badges earned yet
+   961→              </p>
+   962→              <p className="mt-1 text-xs text-muted-foreground">
+   963→                Complete lessons and labs to unlock achievements.
+   964→              </p>
+   965→            </div>
+   966→          ) : (
+   967→            <div className="grid grid-cols-3 gap-2">
+   968→              {earned.map((a) => {
+   969→                const Icon = ACHIEVEMENT_ICON_MAP[a.icon] ?? Award
+   970→                const colorClass =
+   971→                  ACHIEVEMENT_COLOR_MAP[a.color] ?? ACHIEVEMENT_COLOR_MAP.violet
+   972→                return (
+   973→                  <div
+   974→                    key={a.code}
+   975→                    title={`${a.title} - ${a.description}`}
+   976→                    className={cn(
+   977→                      "group flex flex-col items-center gap-1.5 rounded-lg border p-2 text-center transition-transform hover:scale-[1.04]",
+   978→                      colorClass,
+   979→                    )}
+   980→                  >
+   981→                    <Icon className="size-5" aria-hidden />
+   982→                    <span className="font-mono text-[9px] uppercase tracking-wider leading-tight">
+   983→                      {a.title}
+   984→                    </span>
+   985→                  </div>
+   986→                )
+   987→              })}
+   988→            </div>
+   989→          )}
+   990→        </div>
+   991→      )}
+   992→    </section>
+   993→  )
+   994→}
+   995→
+   996→/* ============================================================
+   997→   3f. Leaderboard - Top 5 + user's rank
+   998→   ============================================================ */
+   999→
+  1000→function LeaderboardPanel({
+  1001→  topUsers, currentUser, totalUsers, loading,
+  1002→}: {
+  1003→  topUsers: LeaderboardEntry[]
+  1004→  currentUser: LeaderboardEntry | null
+  1005→  totalUsers: number
+  1006→  loading: boolean
+  1007→}) {
+  1008→  const { navigate } = useAppStore()
+  1009→  const top5 = topUsers.slice(0, 5)
+  1010→  const showUserRow =
+  1011→    currentUser && !top5.some((u) => u.id === currentUser.id)
+  1012→
+  1013→  return (
+  1014→    <section aria-label="Leaderboard">
+  1015→      <SectionHeader
+  1016→        icon={Trophy}
+  1017→        label="Leaderboard"
+  1018→        tone="amber"
+  1019→        actionLabel="View Full"
+  1020→        onAction={() => navigate({ name: "leaderboard" })}
+  1021→      />
+  1022→
+  1023→      {loading ? (
+  1024→        <Skeleton className="h-[260px] rounded-xl" />
+  1025→      ) : (
+  1026→        <div className="card-premium rounded-xl p-4 space-y-1.5">
+  1027→          <div className="mb-2 flex items-center justify-between">
+  1028→            <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+  1029→              Top Operators
+  1030→            </span>
+  1031→            <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+  1032→              {totalUsers.toLocaleString()} total
+  1033→            </span>
+  1034→          </div>
+  1035→
+  1036→          {top5.length === 0 ? (
+  1037→            <div className="rounded-lg border border-dashed border-border/50 p-6 text-center">
+  1038→              <Trophy className="mx-auto size-6 text-muted-foreground/60" aria-hidden />
+  1039→              <p className="mt-2 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+  1040→                No rankings yet
+  1041→              </p>
+  1042→            </div>
+  1043→          ) : (
+  1044→            <ol className="space-y-1">
+  1045→              {top5.map((u) => (
+  1046→                <LeaderboardRow key={u.id} entry={u} />
+  1047→              ))}
+  1048→              {showUserRow && currentUser && (
+  1049→                <>
+  1050→                  <li className="my-1 flex items-center justify-center gap-2 font-mono text-[10px] uppercase tracking-wider text-muted-foreground/60">
+  1051→                    <span className="h-px flex-1 bg-border/40" />
+  1052→                    <span>· · ·</span>
+  1053→                    <span className="h-px flex-1 bg-border/40" />
+  1054→                  </li>
+  1055→                  <LeaderboardRow entry={currentUser} />
+  1056→                </>
+  1057→              )}
+  1058→            </ol>
+  1059→          )}
+  1060→        </div>
+  1061→      )}
+  1062→    </section>
+  1063→  )
+  1064→}
+  1065→
+  1066→function LeaderboardRow({ entry }: { entry: LeaderboardEntry }) {
+  1067→  const rankColor =
+  1068→    entry.rank === 1
+  1069→      ? "text-amber-300"
+  1070→      : entry.rank === 2
+  1071→        ? "text-slate-300"
+  1072→        : entry.rank === 3
+  1073→          ? "text-orange-300"
+  1074→          : "text-muted-foreground"
+  1075→
+  1076→  return (
+  1077→    <li
+  1078→      className={cn(
+  1079→        "flex items-center gap-3 rounded-lg px-2 py-1.5 transition-colors",
+  1080→        entry.isMe
+  1081→          ? "border border-violet-500/40 bg-violet-500/10"
+  1082→          : "hover:bg-muted/30",
+  1083→      )}
+  1084→    >
+  1085→      <span
+  1086→        className={cn(
+  1087→          "w-6 shrink-0 text-center font-mono text-sm font-bold tabular-nums",
+  1088→          rankColor,
+  1089→        )}
+  1090→        aria-hidden
+  1091→      >
+  1092→        {entry.rank}
+  1093→      </span>
+  1094→      <div className="min-w-0 flex-1">
+  1095→        <p className="truncate text-sm font-medium text-foreground">
+  1096→          {entry.name}
+  1097→          {entry.isMe && (
+  1098→            <span className="ml-1.5 font-mono text-[9px] uppercase tracking-wider text-violet-300">
+  1099→              · YOU
+  1100→            </span>
+  1101→          )}
+  1102→        </p>
+  1103→        <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+  1104→          Lvl {entry.level} · {entry.rankTitle}
+  1105→        </p>
+  1106→      </div>
+  1107→      <span className="shrink-0 font-mono text-xs tabular-nums text-amber-300">
+  1108→        {entry.xp.toLocaleString()} XP
+  1109→      </span>
+  1110→    </li>
+  1111→  )
+  1112→}
+  1113→
+  1114→/* ============================================================
+  1115→   3g. Skill Profile - 6 skill bars
+  1116→   ============================================================ */
+  1117→
+  1118→function SkillProfile({
+  1119→  skills,
+  1120→}: {
+  1121→  skills: Array<{
+  1122→    key: string; label: string; color: string
+  1123→    total: number; solved: number; pct: number
+  1124→  }>
+  1125→}) {
+  1126→  const { navigate } = useAppStore()
+  1127→  return (
+  1128→    <section aria-label="Skill profile">
+  1129→      <SectionHeader
+  1130→        icon={RadarIcon}
+  1131→        label="Skill Profile"
+  1132→        tone="cyan"
+  1133→        actionLabel="Explore Skill Tree"
+  1134→        onAction={() => navigate({ name: "skill-tree" })}
+  1135→      />
+  1136→      <div className="card-premium rounded-xl p-4 space-y-3">
+  1137→        {skills.map((s) => (
+  1138→          <div key={s.key} className="space-y-1">
+  1139→            <div className="flex items-center justify-between font-mono text-[11px]">
+  1140→              <span className="uppercase tracking-wider text-foreground/90">
+  1141→                {s.label}
+  1142→              </span>
+  1143→              <span className="tabular-nums text-muted-foreground">
+  1144→                {s.solved}/{s.total} · {s.pct}%
+  1145→              </span>
+  1146→            </div>
+  1147→            <div className="h-1.5 w-full overflow-hidden rounded-full border border-border/40 bg-[oklch(0.1_0.008_270)]">
+  1148→              <motion.div
+  1149→                className={cn("h-full rounded-full bg-gradient-to-r", s.color)}
+  1150→                initial={{ width: 0 }}
+  1151→                animate={{ width: `${s.pct}%` }}
+  1152→                transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+  1153→              />
+  1154→            </div>
+  1155→          </div>
+  1156→        ))}
+  1157→      </div>
+  1158→    </section>
+  1159→  )
+  1160→}
+  1161→
+  1162→/* ============================================================
+  1163→   4. Activity Feed - recent activity timeline
+  1164→   ============================================================ */
+  1165→
+  1166→function ActivityFeed({
+  1167→  activities, loading,
+  1168→}: {
+  1169→  activities: ActivityItem[]
+  1170→  loading: boolean
+  1171→}) {
+  1172→  const { navigate } = useAppStore()
+  1173→
+  1174→  return (
+  1175→    <section aria-label="Recent activity">
+  1176→      <SectionHeader
+  1177→        icon={Activity}
+  1178→        label="Activity Feed"
+  1179→        tone="emerald"
+  1180→        actionLabel="View Analytics"
+  1181→        onAction={() => navigate({ name: "learning-analytics" })}
+  1182→      />
+  1183→
+  1184→      {loading ? (
+  1185→        <Skeleton className="h-[220px] rounded-xl" />
+  1186→      ) : activities.length === 0 ? (
+  1187→        <EmptyState
+  1188→          title="No Activity Yet"
+  1189→          description="Your recent activity will appear here as you complete lessons, solve labs, and earn achievements."
+  1190→          ctaLabel="Start Learning"
+  1191→          onCta={() => navigate({ name: "catalog" })}
+  1192→          icon={Activity}
+  1193→          accent="emerald"
+  1194→        />
+  1195→      ) : (
+  1196→        <div className="card-premium rounded-xl p-4 sm:p-5">
+  1197→          <ol className="relative space-y-4 before:absolute before:left-[15px] before:top-2 before:bottom-2 before:w-px before:bg-border/50">
+  1198→            {activities.map((a, idx) => {
+  1199→              const meta = ACTIVITY_META[a.type] ?? {
+  1200→                icon: Activity,
+  1201→                label: a.type.replace(/_/g, " "),
+  1202→                color: "text-muted-foreground",
+  1203→                tint: "bg-muted/30",
+  1204→              }
+  1205→              const Icon = meta.icon
+  1206→              return (
+  1207→                <li
+  1208→                  key={a.id}
+  1209→                  className="relative flex items-start gap-3"
+  1210→                  style={{ animationDelay: `${idx * 60}ms` }}
+  1211→                >
+  1212→                  <span
+  1213→                    className={cn(
+  1214→                      "z-10 flex size-8 shrink-0 items-center justify-center rounded-full border border-border/50",
+  1215→                      meta.tint,
+  1216→                      meta.color,
+  1217→                    )}
+  1218→                    aria-hidden
+  1219→                  >
+  1220→                    <Icon className="size-4" />
+  1221→                  </span>
+  1222→                  <div className="min-w-0 flex-1 pb-1">
+  1223→                    <div className="flex flex-wrap items-baseline justify-between gap-x-2">
+  1224→                      <p className="text-sm font-medium text-foreground">
+  1225→                        {meta.label}
+  1226→                      </p>
+  1227→                      <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+  1228→                        {relativeTime(a.createdAt)}
+  1229→                      </span>
+  1230→                    </div>
+  1231→                    {a.meta && (
+  1232→                      <p className="mt-0.5 truncate text-xs text-muted-foreground font-mono">
+  1233→                        {a.meta}
+  1234→                      </p>
+  1235→                    )}
+  1236→                    {a.xp > 0 && (
+  1237→                      <span className="mt-1 inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-wider text-amber-300">
+  1238→                        <Zap className="size-3" aria-hidden />
+  1239→                        +{a.xp} XP
+  1240→                      </span>
+  1241→                    )}
+  1242→                  </div>
+  1243→                </li>
+  1244→              )
+  1245→            })}
+  1246→          </ol>
+  1247→        </div>
+  1248→      )}
+  1249→    </section>
+  1250→  )
+  1251→}
+  1252→
+  1253→/* ============================================================
+  1254→   Shared building blocks
+  1255→   ============================================================ */
+  1256→
+  1257→const TONE_MAP: Record<string, { text: string; icon: string }> = {
+  1258→  violet: { text: "text-violet-300", icon: "text-violet-300" },
+  1259→  cyan: { text: "text-cyan-300", icon: "text-cyan-300" },
+  1260→  emerald: { text: "text-emerald-300", icon: "text-emerald-300" },
+  1261→  amber: { text: "text-amber-300", icon: "text-amber-300" },
+  1262→  rose: { text: "text-rose-300", icon: "text-rose-300" },
+  1263→}
+  1264→
+  1265→function SectionHeader({
+  1266→  icon: Icon, label, tone = "violet", actionLabel, onAction,
+  1267→}: {
+  1268→  icon: typeof BookOpen
+  1269→  label: string
+  1270→  tone?: keyof typeof TONE_MAP | string
+  1271→  actionLabel?: string
+  1272→  onAction?: () => void
+  1273→}) {
+  1274→  const t = TONE_MAP[tone] ?? TONE_MAP.violet
+  1275→  return (
+  1276→    <div className="mb-3 flex items-center justify-between gap-2">
+  1277→      <div className="flex items-center gap-2">
+  1278→        <Icon className={cn("size-3.5", t.icon)} aria-hidden />
+  1279→        <h2 className="font-mono text-[11px] uppercase tracking-[0.2em] text-foreground/90">
+  1280→          {label}
+  1281→        </h2>
+  1282→      </div>
+  1283→      {actionLabel && onAction && (
+  1284→        <Button
+  1285→          variant="ghost"
+  1286→          size="sm"
+  1287→          onClick={onAction}
+  1288→          className="h-7 gap-1 px-2 text-[10px] font-mono uppercase tracking-wider text-muted-foreground hover:text-foreground"
+  1289→        >
+  1290→          {actionLabel}
+  1291→          <ChevronRight className="size-3" aria-hidden />
+  1292→        </Button>
+  1293→      )}
+  1294→    </div>
+  1295→  )
+  1296→}
+  1297→
+  1298→const ACCENT_MAP: Record<string, { border: string; bg: string; text: string }> = {
+  1299→  violet: { border: "border-violet-500/30", bg: "bg-violet-500/5", text: "text-violet-300" },
+  1300→  cyan: { border: "border-cyan-500/30", bg: "bg-cyan-500/5", text: "text-cyan-300" },
+  1301→  emerald: { border: "border-emerald-500/30", bg: "bg-emerald-500/5", text: "text-emerald-300" },
+  1302→  amber: { border: "border-amber-500/30", bg: "bg-amber-500/5", text: "text-amber-300" },
+  1303→  rose: { border: "border-rose-500/30", bg: "bg-rose-500/5", text: "text-rose-300" },
+  1304→}
+  1305→
+  1306→function EmptyState({
+  1307→  title, description, ctaLabel, onCta, icon: Icon, accent = "violet",
+  1308→}: {
+  1309→  title: string
+  1310→  description: string
+  1311→  ctaLabel: string
+  1312→  onCta: () => void
+  1313→  icon: typeof BookOpen
+  1314→  accent?: keyof typeof ACCENT_MAP | string
+  1315→}) {
+  1316→  const a = ACCENT_MAP[accent] ?? ACCENT_MAP.violet
+  1317→  return (
+  1318→    <div
+  1319→      className={cn(
+  1320→        "card-premium relative overflow-hidden rounded-xl border border-dashed p-8 text-center",
+  1321→        a.border, a.bg,
+  1322→      )}
+  1323→    >
+  1324→      <div className="absolute inset-0 bg-grid-fine opacity-20 pointer-events-none" />
+  1325→      <div className="relative z-10">
+  1326→        <div
+  1327→          className={cn(
+  1328→            "mx-auto mb-4 flex size-12 items-center justify-center rounded-xl border",
+  1329→            a.border, a.bg, a.text,
+  1330→          )}
+  1331→          aria-hidden
+  1332→        >
+  1333→          <Icon className="size-5" />
+  1334→        </div>
+  1335→        <h3 className="font-mono text-sm font-semibold uppercase tracking-wider text-foreground">
+  1336→          {title}
+  1337→        </h3>
+  1338→        <p className="mx-auto mt-2 max-w-sm text-xs text-muted-foreground">
+  1339→          {description}
+  1340→        </p>
+  1341→        <Button
+  1342→          onClick={onCta}
+  1343→          size="sm"
+  1344→          className={cn(
+  1345→            "mt-4 gap-1.5 font-mono text-[11px] uppercase tracking-wider",
+  1346→            "bg-primary hover:bg-primary/90",
+  1347→          )}
+  1348→        >
+  1349→          {ctaLabel}
+  1350→          <ArrowRight className="size-3.5" aria-hidden />
+  1351→        </Button>
+  1352→      </div>
+  1353→    </div>
+  1354→  )
+  1355→}
+  1356→
+  1357→/* ============================================================
+  1358→   2b. Progress Overview — Enrolled / Completed / In-Progress / Certs
+  1359→   ============================================================ */
+  1360→function ProgressOverview({
+  1361→  enrolled, completed, inProgress, certificates, xp, level, loading,
+  1362→}: {
+  1363→  enrolled: number
+  1364→  completed: number
+  1365→  inProgress: number
+  1366→  certificates: number
+  1367→  xp: number
+  1368→  level: number
+  1369→  loading: boolean
+  1370→}) {
+  1371→  if (loading) {
+  1372→    return (
+  1373→      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+  1374→        {Array.from({ length: 4 }).map((_, i) => (
+  1375→          <Skeleton key={i} className="h-[110px] rounded-xl" />
+  1376→        ))}
+  1377→      </div>
+  1378→    )
+  1379→  }
+  1380→
+  1381→  const tiles: {
+  1382→    icon: typeof BookOpen
+  1383→    label: string
+  1384→    value: number
+  1385→    suffix?: string
+  1386→    color: string
+  1387→    tint: string
+  1388→  }[] = [
+  1389→    { icon: BookMarked, label: "Courses Enrolled", value: enrolled, color: "text-cyan-300", tint: "bg-cyan-500/10" },
+  1390→    { icon: Hourglass, label: "In Progress", value: inProgress, color: "text-amber-300", tint: "bg-amber-500/10" },
+  1391→    { icon: ShieldCheck, label: "Completed", value: completed, color: "text-emerald-300", tint: "bg-emerald-500/10" },
+  1392→    { icon: Award, label: "Certificates", value: certificates, color: "text-violet-300", tint: "bg-violet-500/10" },
+  1393→  ]
+  1394→
+  1395→  return (
+  1396→    <section aria-label="Progress overview" className="space-y-4">
+  1397→      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+  1398→        {tiles.map((s) => (
+  1399→          <Card
+  1400→            key={s.label}
+  1401→            className="relative overflow-hidden p-4 card-premium"
+  1402→          >
+  1403→            <div className="flex items-start gap-3">
+  1404→              <div className={cn("inline-flex size-9 items-center justify-center rounded-lg", s.tint)}>
+  1405→                <s.icon className={cn("size-4", s.color)} aria-hidden />
+  1406→              </div>
+  1407→              <div className="min-w-0">
+  1408→                <div className="text-2xl font-bold tabular-nums">{s.value.toLocaleString()}</div>
+  1409→                <div className="text-[10px] text-muted-foreground uppercase tracking-wider truncate">
+  1410→                  {s.label}
+  1411→                </div>
+  1412→              </div>
+  1413→            </div>
+  1414→          </Card>
+  1415→        ))}
+  1416→      </div>
+  1417→      {/* condensed XP / level summary band */}
+  1418→      <div className="card-premium rounded-xl px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
+  1419→        <div className="flex items-center gap-2">
+  1420→          <Zap className="size-3.5 text-amber-300" aria-hidden />
+  1421→          <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+  1422→            Total XP
+  1423→          </span>
+  1424→          <span className="font-mono text-sm font-bold text-amber-300 tabular-nums">
+  1425→            {xp.toLocaleString()}
+  1426→          </span>
+  1427→        </div>
+  1428→        <div className="flex items-center gap-2">
+  1429→          <TrendingUp className="size-3.5 text-emerald-300" aria-hidden />
+  1430→          <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+  1431→            Current Level
+  1432→          </span>
+  1433→          <span className="font-mono text-sm font-bold text-emerald-300 tabular-nums">{level}</span>
+  1434→        </div>
+  1435→      </div>
+  1436→    </section>
+  1437→  )
+  1438→}
+  1439→
+  1440→/* ============================================================
+  1441→   3b-i. Weekly XP Chart — Recharts bar chart, last 7 days
+  1442→   ============================================================ */
+  1443→function WeeklyXpChart({
+  1444→  data, loading,
+  1445→}: {
+  1446→  data: WeeklyXpItem[]
+  1447→  loading: boolean
+  1448→}) {
+  1449→  const chartData = React.useMemo(() => {
+  1450→    return data.map((d) => {
+  1451→      const dt = new Date(d.date + "T00:00:00")
+  1452→      const day = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][dt.getDay()]
+  1453→      return { day, xp: d.xp, count: d.count, date: d.date }
+  1454→    })
+  1455→  }, [data])
+  1456→  const totalXp = chartData.reduce((s, d) => s + d.xp, 0)
+  1457→
+  1458→  return (
+  1459→    <section aria-label="Weekly XP chart">
+  1460→      <SectionHeader icon={BarChart2} label="Weekly XP" tone="violet" />
+  1461→      <Card className="card-premium p-4 sm:p-5">
+  1462→        <div className="flex items-center justify-between mb-3">
+  1463→          <div>
+  1464→            <div className="text-2xl font-bold tabular-nums">
+  1465→              {totalXp.toLocaleString()} <span className="text-xs font-mono text-muted-foreground">XP this week</span>
+  1466→            </div>
+  1467→          </div>
+  1468→          <Badge variant="outline" className="font-mono text-[10px] uppercase tracking-wider border-amber-500/30 bg-amber-500/10 text-amber-300">
+  1469→            7d
+  1470→          </Badge>
+  1471→        </div>
+  1472→        {loading ? (
+  1473→          <Skeleton className="h-44 w-full" />
+  1474→        ) : chartData.length === 0 ? (
+  1475→          <div className="h-44 flex items-center justify-center text-xs text-muted-foreground">
+  1476→            No activity yet this week.
+  1477→          </div>
+  1478→        ) : (
+  1479→          <ResponsiveContainer width="100%" height={180}>
+  1480→            <BarChart data={chartData} margin={{ top: 4, right: 4, left: -16, bottom: 0 }}>
+  1481→              <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.3 0.02 270 / 0.25)" vertical={false} />
+  1482→              <XAxis
+  1483→                dataKey="day"
+  1484→                tick={{ fill: "oklch(0.7 0.02 270 / 0.7)", fontSize: 10, fontFamily: "monospace" }}
+  1485→                axisLine={{ stroke: "oklch(0.3 0.02 270 / 0.4)" }}
+  1486→                tickLine={false}
+  1487→              />
+  1488→              <YAxis
+  1489→                tick={{ fill: "oklch(0.7 0.02 270 / 0.6)", fontSize: 9, fontFamily: "monospace" }}
+  1490→                axisLine={{ stroke: "oklch(0.3 0.02 270 / 0.4)" }}
+  1491→                tickLine={false}
+  1492→                allowDecimals={false}
+  1493→                width={36}
+  1494→              />
+  1495→              <RTooltip
+  1496→                cursor={{ fill: "oklch(0.6 0.18 295 / 0.08)" }}
+  1497→                contentStyle={{
+  1498→                  background: "oklch(0.18 0.02 270)",
+  1499→                  border: "1px solid oklch(0.3 0.02 270 / 0.5)",
+  1500→                  borderRadius: 8,
+  1501→                  fontSize: 11,
+  1502→                  fontFamily: "monospace",
+  1503→                  color: "oklch(0.95 0.02 270)",
+  1504→                }}
+  1505→                labelStyle={{ color: "oklch(0.7 0.02 270 / 0.9)" }}
+  1506→                formatter={(value: any, _name, item: any) => [
+  1507→                  `${value} XP (${item?.payload?.count ?? 0} activities)`,
+  1508→                  "Earned",
+  1509→                ]}
+  1510→              />
+  1511→              <Bar dataKey="xp" radius={[4, 4, 0, 0]} maxBarSize={32}>
+  1512→                {chartData.map((entry, idx) => (
+  1513→                  <Cell
+  1514→                    key={idx}
+  1515→                    fill={entry.xp > 0 ? "oklch(0.65 0.18 295)" : "oklch(0.35 0.02 270)"}
+  1516→                  />
+  1517→                ))}
+  1518→              </Bar>
+  1519→            </BarChart>
+  1520→          </ResponsiveContainer>
+  1521→        )}
+  1522→      </Card>
+  1523→    </section>
+  1524→  )
+  1525→}
+  1526→
+  1527→/* ============================================================
+  1528→   3b-ii. Skill Radar — Recharts RadarChart across skill domains
+  1529→   ============================================================ */
+  1530→function SkillRadar({
+  1531→  skills, loading,
+  1532→}: {
+  1533→  skills: SkillProfileItem[]
+  1534→  loading: boolean
+  1535→}) {
+  1536→  // Map skill items to a 0-100 scale for the radar. Each entry needs at
+  1537→  // least 3 axes to render a polygon, so we pad with placeholders if
+  1538→  // fewer than 3.
+  1539→  const radarData = React.useMemo(() => {
+  1540→    if (skills.length === 0) return []
+  1541→    // Use a max of 6 categories so the radar stays readable. If there are
+  1542→    // fewer than 3, pad with "—" entries so the radar still renders a
+  1543→    // polygon instead of a flat line.
+  1544→    const top = skills.slice(0, 6)
+  1545→    while (top.length < 3) {
+  1546→      top.push({ key: `pad-${top.length}`, label: "—", solved: 0, total: 0, pct: 0 })
+  1547→    }
+  1548→    return top.map((s) => ({
+  1549→      domain: s.label.length > 12 ? s.label.slice(0, 11) + "…" : s.label,
+  1550→      level: s.pct,
+  1551→      fullMark: 100,
+  1552→    }))
+  1553→  }, [skills])
+  1554→
+  1555→  return (
+  1556→    <section aria-label="Skill radar">
+  1557→      <SectionHeader icon={RadarIcon} label="Skill Radar" tone="cyan" />
+  1558→      <Card className="card-premium p-4 sm:p-5">
+  1559→        {loading ? (
+  1560→          <Skeleton className="h-44 w-full" />
+  1561→        ) : radarData.length === 0 ? (
+  1562→          <div className="h-44 flex items-center justify-center text-xs text-muted-foreground">
+  1563→            Solve labs to populate your skill profile.
+  1564→          </div>
+  1565→        ) : (
+  1566→          <ResponsiveContainer width="100%" height={220}>
+  1567→            <RadarChart data={radarData} outerRadius="75%">
+  1568→              <PolarGrid stroke="oklch(0.35 0.02 270 / 0.4)" />
+  1569→              <PolarAngleAxis
+  1570→                dataKey="domain"
+  1571→                tick={{ fill: "oklch(0.75 0.02 270 / 0.85)", fontSize: 10, fontFamily: "monospace" }}
+  1572→              />
+  1573→              <PolarRadiusAxis
+  1574→                angle={90}
+  1575→                domain={[0, 100]}
+  1576→                tick={{ fill: "oklch(0.6 0.02 270 / 0.6)", fontSize: 9, fontFamily: "monospace" }}
+  1577→                tickCount={5}
+  1578→              />
+  1579→              <Radar
+  1580→                name="Skill"
+  1581→                dataKey="level"
+  1582→                stroke="oklch(0.7 0.16 200)"
+  1583→                fill="oklch(0.7 0.16 200)"
+  1584→                fillOpacity={0.28}
+  1585→                strokeWidth={1.5}
+  1586→                isAnimationActive
+  1587→              />
+  1588→              <RTooltip
+  1589→                contentStyle={{
+  1590→                  background: "oklch(0.18 0.02 270)",
+  1591→                  border: "1px solid oklch(0.3 0.02 270 / 0.5)",
+  1592→                  borderRadius: 8,
+  1593→                  fontSize: 11,
+  1594→                  fontFamily: "monospace",
+  1595→                  color: "oklch(0.95 0.02 270)",
+  1596→                }}
+  1597→                labelStyle={{ color: "oklch(0.7 0.02 270 / 0.9)" }}
+  1598→                formatter={(value: any) => [`${value}%`, "Skill level"]}
+  1599→              />
+  1600→            </RadarChart>
+  1601→          </ResponsiveContainer>
+  1602→        )}
+  1603→      </Card>
+  1604→    </section>
+  1605→  )
+  1606→}
+  1607→
+  1608→/* ============================================================
+  1609→   3d-ii. Streak Tracker — visual flame + last-7-days dots
+  1610→   ============================================================ */
+  1611→function StreakTracker({
+  1612→  streak, weeklyXp, loading,
+  1613→}: {
+  1614→  streak: number
+  1615→  weeklyXp: WeeklyXpItem[]
+  1616→  loading: boolean
+  1617→}) {
+  1618→  // 7-day activity dots — a dot is "lit" if there was any activity that day
+  1619→  const dots = React.useMemo(() => {
+  1620→    return weeklyXp.map((d) => {
+  1621→      const dt = new Date(d.date + "T00:00:00")
+  1622→      const day = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"][dt.getDay()]
+  1623→      return { date: d.date, day, xp: d.xp, active: d.count > 0 }
+  1624→    })
+  1625→  }, [weeklyXp])
+  1626→
+  1627→  // flame intensity by streak length
+  1628→  const flameTone =
+  1629→    streak >= 30 ? "text-rose-400"
+  1630→    : streak >= 14 ? "text-orange-400"
+  1631→    : streak >= 7 ? "text-amber-400"
+  1632→    : streak >= 3 ? "text-amber-300"
+  1633→    : streak >= 1 ? "text-amber-300/80"
+  1634→    : "text-muted-foreground/40"
+  1635→  const flameGlow =
+  1636→    streak >= 7 ? "drop-shadow-[0_0_18px] drop-shadow-amber-500/40"
+  1637→    : streak >= 3 ? "drop-shadow-[0_0_10px] drop-shadow-amber-500/30"
+  1638→    : ""
+  1639→
+  1640→  return (
+  1641→    <section aria-label="Streak tracker">
+  1642→      <SectionHeader icon={Flame} label="Streak Tracker" tone="amber" />
+  1643→      <Card className="card-premium p-4 sm:p-5">
+  1644→        {loading ? (
+  1645→          <Skeleton className="h-32 w-full" />
+  1646→        ) : (
+  1647→          <div className="flex items-center gap-4">
+  1648→            {/* Flame + count */}
+  1649→            <div className="flex flex-col items-center justify-center gap-1 shrink-0 w-20">
+  1650→              <motion.div
+  1651→                animate={streak > 0 ? { scale: [1, 1.08, 1] } : { scale: 1 }}
+  1652→                transition={{
+  1653→                  duration: 1.6,
+  1654→                  repeat: streak > 0 ? Infinity : 0,
+  1655→                  ease: "easeInOut",
+  1656→                }}
+  1657→                className={cn("relative", flameGlow)}
+  1658→              >
+  1659→                <Flame className={cn("size-12", flameTone)} strokeWidth={1.5} />
+  1660→              </motion.div>
+  1661→              <div className="text-center">
+  1662→                <div className="font-mono text-2xl font-bold tabular-nums leading-none">
+  1663→                  {streak}
+  1664→                </div>
+  1665→                <div className="text-[9px] font-mono uppercase tracking-wider text-muted-foreground mt-0.5">
+  1666→                  Day streak
+  1667→                </div>
+  1668→              </div>
+  1669→            </div>
+  1670→            {/* Divider */}
+  1671→            <div className="h-20 w-px bg-border/40 shrink-0" />
+  1672→            {/* 7-day dots */}
+  1673→            <div className="flex-1 min-w-0">
+  1674→              <div className="flex items-center justify-between gap-1.5 mb-2">
+  1675→                <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+  1676→                  Last 7 days
+  1677→                </span>
+  1678→                <span className="font-mono text-[10px] text-amber-300/80">
+  1679→                  {dots.filter((d) => d.active).length} / 7 active
+  1680→                </span>
+  1681→              </div>
+  1682→              <div className="grid grid-cols-7 gap-1.5">
+  1683→                {dots.map((d) => (
+  1684→                  <div key={d.date} className="flex flex-col items-center gap-1">
+  1685→                    <div
+  1686→                      className={cn(
+  1687→                        "w-full aspect-square rounded-md border transition-all",
+  1688→                        d.active
+  1689→                          ? "bg-amber-500/40 border-amber-500/50"
+  1690→                          : "bg-muted/20 border-border",
+  1691→                      )}
+  1692→                      title={`${d.date}: ${d.active ? `${d.xp} XP` : "no activity"}`}
+  1693→                    />
+  1694→                    <div className="text-[9px] font-mono text-muted-foreground">{d.day}</div>
+  1695→                  </div>
+  1696→                ))}
+  1697→              </div>
+  1698→            </div>
+  1699→          </div>
+  1700→        )}
+  1701→      </Card>
+  1702→    </section>
+  1703→  )
+  1704→}
+  1705→
+  1706→/* ============================================================
+  1707→   3c. Upcoming Deadlines — assignments / live sessions / exams
+  1708→   ============================================================ */
+  1709→function UpcomingDeadlines({
+  1710→  deadlines, loading,
+  1711→}: {
+  1712→  deadlines: DeadlineItem[]
+  1713→  loading: boolean
+  1714→}) {
+  1715→  const { navigate } = useAppStore()
+  1716→
+  1717→  const typeMeta: Record<DeadlineItem["type"], { icon: typeof BookOpen; label: string; tone: string; tint: string }> = {
+  1718→    "assignment": { icon: FileText, label: "Assignment", tone: "text-amber-300", tint: "bg-amber-500/10" },
+  1719→    "live-session": { icon: Video, label: "Live Session", tone: "text-rose-300", tint: "bg-rose-500/10" },
+  1720→    "exam": { icon: ShieldCheck, label: "Exam", tone: "text-violet-300", tint: "bg-violet-500/10" },
+  1721→  }
+  1722→
+  1723→  return (
+  1724→    <section aria-label="Upcoming deadlines">
+  1725→      <SectionHeader
+  1726→        icon={Calendar}
+  1727→        label="Upcoming Deadlines"
+  1728→        tone="amber"
+  1729→        actionLabel="Calendar"
+  1730→        onAction={() => navigate({ name: "admin-batch-calendar" })}
+  1731→      />
+  1732→      {loading ? (
+  1733→        <Skeleton className="h-32 rounded-xl" />
+  1734→      ) : deadlines.length === 0 ? (
+  1735→        <EmptyState
+  1736→          title="No Deadlines This Fortnight"
+  1737→          description="You're all caught up. Upcoming assignments, live sessions, and exams (next 14 days) will appear here."
+  1738→          ctaLabel="Browse Catalog"
+  1739→          onCta={() => navigate({ name: "catalog" })}
+  1740→          icon={Calendar}
+  1741→          accent="amber"
+  1742→        />
+  1743→      ) : (
+  1744→        <Card className="card-premium p-0 overflow-hidden">
+  1745→          <div className="max-h-96 overflow-y-auto pr-1 custom-scroll">
+  1746→            <ol className="divide-y divide-border/40">
+  1747→              {deadlines.map((d) => {
+  1748→                const meta = typeMeta[d.type]
+  1749→                const due = new Date(d.dueDate)
+  1750→                const now = new Date()
+  1751→                const msUntil = due.getTime() - now.getTime()
+  1752→                const hoursUntil = Math.round(msUntil / 3600000)
+  1753→                const daysUntil = Math.round(hoursUntil / 24)
+  1754→                const overdue = msUntil < 0
+  1755→                const imminent = !overdue && hoursUntil <= 24
+  1756→                const urgencyLabel = overdue
+  1757→                  ? "Overdue"
+  1758→                  : hoursUntil <= 24
+  1759→                    ? `${hoursUntil}h left`
+  1760→                    : `${daysUntil}d left`
+  1761→                const urgencyColor = overdue
+  1762→                  ? "text-rose-300 bg-rose-500/10 border-rose-500/30"
+  1763→                  : imminent
+  1764→                    ? "text-amber-300 bg-amber-500/10 border-amber-500/30"
+  1765→                    : "text-muted-foreground bg-muted/30 border-border/40"
+  1766→
+  1767→                return (
+  1768→                  <li
+  1769→                    key={`${d.type}-${d.id}`}
+  1770→                    className={cn(
+  1771→                      "relative flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/20",
+  1772→                    )}
+  1773→                  >
+  1774→                    <div className={cn("inline-flex size-9 shrink-0 items-center justify-center rounded-lg", meta.tint)}>
+  1775→                      <meta.icon className={cn("size-4", meta.tone)} aria-hidden />
+  1776→                    </div>
+  1777→                    <div className="min-w-0 flex-1">
+  1778→                      <p className="truncate text-sm font-medium text-foreground">{d.title}</p>
+  1779→                      <p className="truncate font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+  1780→                        {meta.label}
+  1781→                        {d.courseTitle && <span className="normal-case tracking-normal"> · {d.courseTitle}</span>}
+  1782→                        {d.meta && <span className="normal-case tracking-normal"> · {d.meta}</span>}
+  1783→                      </p>
+  1784→                    </div>
+  1785→                    <div className="flex flex-col items-end gap-1 shrink-0">
+  1786→                      <Badge
+  1787→                        variant="outline"
+  1788→                        className={cn("font-mono text-[9px] uppercase tracking-wider", urgencyColor)}
+  1789→                      >
+  1790→                        {urgencyLabel}
+  1791→                      </Badge>
+  1792→                      <span className="font-mono text-[10px] text-muted-foreground">
+  1793→                        {due.toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+  1794→                      </span>
+  1795→                    </div>
+  1796→                  </li>
+  1797→                )
+  1798→              })}
+  1799→            </ol>
+  1800→          </div>
+  1801→        </Card>
+  1802→      )}
+  1803→    </section>
+  1804→  )
+  1805→}
+  1806→

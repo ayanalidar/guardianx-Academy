@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser, withErrorHandler } from "@/lib/session"
+import { logAction } from "@/lib/audit"
 
 export const runtime = "nodejs"
 
@@ -123,6 +124,16 @@ export const PATCH = withErrorHandler(
     }
 
     const updated = await db.coupon.update({ where: { id }, data: updates })
+
+    await logAction(
+      currentUser.id,
+      currentUser.name,
+      "coupon.update",
+      "Coupon",
+      id,
+      { before: { code: existing.code, value: existing.value, active: existing.active }, after: { code: updated.code, value: updated.value, active: updated.active } },
+    )
+
     return NextResponse.json({ coupon: updated })
   },
 )
@@ -141,6 +152,16 @@ export const DELETE = withErrorHandler(
     if (!existing) return NextResponse.json({ error: "Coupon not found" }, { status: 404 })
 
     await db.coupon.delete({ where: { id } })
+
+    await logAction(
+      currentUser.id,
+      currentUser.name,
+      "coupon.delete",
+      "Coupon",
+      id,
+      { code: existing.code, value: existing.value },
+    )
+
     return NextResponse.json({ success: true })
   },
 )

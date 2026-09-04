@@ -83,6 +83,8 @@ model User {
   leadNotes            LeadNote[]
   // Payment + coupon relations (PAYMENT-COUPON-SEARCH feature)
   orders               Order[]
+  // Blog posts authored by this user (BATCH-3-FEATURES — Blog/Content Hub)
+  blogPosts            BlogPost[]
 }
 
 // ============================================================
@@ -1631,4 +1633,36 @@ model Coupon {
   courseId    String?  // null = all courses
   active      Boolean  @default(true)
   createdAt   DateTime @default(now())
+}
+
+// ============================================================
+// BATCH-3-FEATURES — Blog / Content Hub + Audit Log
+// ============================================================
+model BlogPost {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  excerpt     String   @default("")
+  content     String   @default("") // markdown
+  authorId    String
+  author      User     @relation(fields: [authorId], references: [id])
+  category    String   @default("General") // Threat Analysis | How-To | Certification Tips | Industry News
+  tags        String   @default("")
+  thumbnail   String?
+  published   Boolean  @default(false)
+  featured    Boolean  @default(false)
+  views       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  userName   String   @default("")
+  action     String   // e.g. "course.create", "user.delete", "coupon.create"
+  resource   String   @default("") // e.g. "Course", "User", "Coupon"
+  resourceId String? @default("")
+  details    String   @default("") // JSON string with before/after
+  createdAt  DateTime @default(now())
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser, withErrorHandler } from "@/lib/session"
+import { logAction } from "@/lib/audit"
 
 // GET /api/admin/courses — list all courses with enrollment counts, module counts, lesson counts
 export const GET = withErrorHandler(async (req: NextRequest) => {
@@ -138,6 +139,15 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
       instructor: { select: { id: true, name: true, title: true } },
     },
   })
+
+  await logAction(
+    user.id,
+    user.name,
+    "course.create",
+    "Course",
+    course.id,
+    { slug: course.slug, title: course.title, instructorId: finalInstructorId },
+  )
 
   return NextResponse.json({ course }, { status: 201 })
 })

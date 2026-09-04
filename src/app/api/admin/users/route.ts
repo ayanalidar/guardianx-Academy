@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
 import { db } from "@/lib/db"
 import { requireRole, withErrorHandler } from "@/lib/session"
+import { logAction } from "@/lib/audit"
 
 // GET /api/admin/users — list all users with pagination (50/page), search, role filter
 export const GET = withErrorHandler(async (req: NextRequest) => {
@@ -140,6 +141,15 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
       createdAt: true,
     },
   })
+
+  await logAction(
+    currentUser.id,
+    currentUser.name,
+    "user.create",
+    "User",
+    user.id,
+    { email: user.email, name: user.name, role: user.role },
+  )
 
   return NextResponse.json({ user }, { status: 201 })
 })

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
 import { db } from "@/lib/db"
 import { requireRole, withErrorHandler } from "@/lib/session"
+import { logAction } from "@/lib/audit"
 
 // GET /api/admin/instructors — list all instructors with their profiles + workload
 export const GET = withErrorHandler(async () => {
@@ -124,6 +125,15 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
     },
     include: { instructorProfile: true },
   })
+
+  await logAction(
+    currentUser.id,
+    currentUser.name,
+    "instructor.create",
+    "User",
+    user.id,
+    { email: user.email, name: user.name, role: "INSTRUCTOR" },
+  )
 
   return NextResponse.json(
     {

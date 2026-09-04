@@ -51,6 +51,8 @@ export function viewToHash(view: View): string {
       return `/instructor/${encodeURIComponent(view.instructorId)}`
     case "event-detail":
       return `/event/${encodeURIComponent(view.eventSlug)}`
+    case "blog-post":
+      return `/blog/${encodeURIComponent(view.slug)}`
     default:
       return `/${view.name}`
   }
@@ -112,6 +114,10 @@ export function hashToView(hash: string): View {
   if (parts[0] === "event" && parts[1]) {
     return { name: "event-detail", eventSlug: parts[1] }
   }
+  // /blog/<slug>  → single blog post view
+  if (parts[0] === "blog" && parts[1]) {
+    return { name: "blog-post", slug: parts[1] }
+  }
 
   // /<view-name> — validate against the known set so we never produce
   // an unknown view from a user-typed URL.
@@ -134,7 +140,7 @@ export function hashToView(hash: string): View {
     "admin-coupons",
     "support", "verify",
     "instructors", "events",
-
+    "blog",
   ]
   if (knownViews.includes(parts[0] as View["name"])) {
     return { name: parts[0] as View["name"] } as View

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser, withErrorHandler } from "@/lib/session"
+import { logAction } from "@/lib/audit"
 
 export const runtime = "nodejs"
 
@@ -31,6 +32,15 @@ export const DELETE = withErrorHandler(
     // Delete instructor profile first (if exists), then the user
     await db.instructorProfile.deleteMany({ where: { userId: id } }).catch(() => {})
     await db.user.delete({ where: { id } })
+
+    await logAction(
+      currentUser.id,
+      currentUser.name,
+      "instructor.delete",
+      "User",
+      id,
+      { email: instructor.email, name: instructor.name, role: instructor.role },
+    )
 
     return NextResponse.json({ success: true, message: "Instructor deleted" })
   },

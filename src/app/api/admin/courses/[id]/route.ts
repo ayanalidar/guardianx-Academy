@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser, withErrorHandler } from "@/lib/session"
+import { logAction } from "@/lib/audit"
 
 // PATCH /api/admin/courses/[id] — update any course field (incl. published toggle)
 export const PATCH = withErrorHandler(
@@ -67,6 +68,15 @@ export const PATCH = withErrorHandler(
       },
     })
 
+    await logAction(
+      user.id,
+      user.name,
+      "course.update",
+      "Course",
+      id,
+      { before: { title: existing.title, published: existing.published }, after: { title: updated.title, published: updated.published } },
+    )
+
     return NextResponse.json({ course: updated })
   },
 )
@@ -85,6 +95,16 @@ export const DELETE = withErrorHandler(
     if (!existing) return NextResponse.json({ error: "Course not found" }, { status: 404 })
 
     await db.course.delete({ where: { id } })
+
+    await logAction(
+      user.id,
+      user.name,
+      "course.delete",
+      "Course",
+      id,
+      { slug: existing.slug, title: existing.title },
+    )
+
     return NextResponse.json({ ok: true })
   },
 )

@@ -52,7 +52,7 @@ const LEGAL_LINKS: FooterLink[] = [
 const RESOURCE_LINKS: FooterLink[] = [
   { label: "Payloads Library", icon: Database, href: "https://github.com/swisskyrepo/PayloadsAllTheThings" },
   { label: "Documentation", icon: FileCode, view: { name: "faq" } },
-  { label: "Blog", icon: PenSquare, view: { name: "impact" } },
+  { label: "Blog", icon: PenSquare, view: { name: "blog" } },
   { label: "Community", icon: Users, view: { name: "auth" } },
   { label: "API Docs", icon: FileCode, view: { name: "faq" } },
 ]
@@ -213,7 +213,7 @@ export function SiteFooter() {
             <p className="text-[10px] text-muted-foreground mt-2">
               By subscribing, you agree to our{" "}
               <button
-                onClick={() => navigate({ name: "privacy" } as View)}
+                onClick={() => navigate({ name: "privacy" } as unknown as View)}
                 className="text-emerald-400 hover:underline"
               >
                 Privacy Policy
@@ -243,14 +243,14 @@ export function SiteFooter() {
             <span>© {new Date().getFullYear()} GuardianX Security Education</span>
             <span className="opacity-50">·</span>
             <button
-              onClick={() => navigate({ name: "conduct" } as View)}
+              onClick={() => navigate({ name: "conduct" } as unknown as View)}
               className="hover:text-emerald-400 transition-colors"
             >
               Code of Conduct
             </button>
             <span className="opacity-50">·</span>
             <button
-              onClick={() => navigate({ name: "terms" } as View)}
+              onClick={() => navigate({ name: "terms" } as unknown as View)}
               className="hover:text-emerald-400 transition-colors"
             >
               Terms

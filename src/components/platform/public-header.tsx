@@ -193,6 +193,12 @@ const MEGA_MENU_GROUPS: MegaMenuGroup[] = [
         view: { name: "events" },
       },
       {
+        icon: FileText,
+        title: "Blog",
+        description: "Threat analysis, how-tos & certification tips",
+        view: { name: "blog" },
+      },
+      {
         icon: Mail,
         title: "Contact",
         description: "Reach the GuardianX team",

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser, withErrorHandler } from "@/lib/session"
+import { logAction } from "@/lib/audit"
 
 export const runtime = "nodejs"
 
@@ -129,6 +130,15 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
       active: typeof active === "boolean" ? active : true,
     },
   })
+
+  await logAction(
+    currentUser.id,
+    currentUser.name,
+    "coupon.create",
+    "Coupon",
+    created.id,
+    { code: created.code, type: created.type, value: created.value },
+  )
 
   return NextResponse.json({ coupon: created }, { status: 201 })
 })

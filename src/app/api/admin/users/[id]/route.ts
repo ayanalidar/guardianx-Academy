@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
 import { db } from "@/lib/db"
 import { getCurrentUser, withErrorHandler } from "@/lib/session"
+import { logAction } from "@/lib/audit"
 
 // GET /api/admin/users/[id] — user details with enrollments, certificates, lab progress
 export const GET = withErrorHandler(
@@ -114,6 +115,15 @@ export const PATCH = withErrorHandler(
       },
     })
 
+    await logAction(
+      currentUser.id,
+      currentUser.name,
+      "user.update",
+      "User",
+      id,
+      { before: { name: existing.name, role: existing.role }, after: { name: updated.name, role: updated.role } },
+    )
+
     return NextResponse.json({ user: updated })
   },
 )
@@ -136,6 +146,16 @@ export const DELETE = withErrorHandler(
     if (!existing) return NextResponse.json({ error: "User not found" }, { status: 404 })
 
     await db.user.delete({ where: { id } })
+
+    await logAction(
+      currentUser.id,
+      currentUser.name,
+      "user.delete",
+      "User",
+      id,
+      { email: existing.email, name: existing.name, role: existing.role },
+    )
+
     return NextResponse.json({ ok: true })
   },
 )

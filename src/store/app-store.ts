@@ -90,6 +90,8 @@ export type View =
   | { name: "blog-post"; slug: string }
   | { name: "cert-landing"; certSlug: string }
   | { name: "admin-courses" }
+  | { name: "affiliate" }
+  | { name: "pricing" }
 
 interface AppState {
   view: View

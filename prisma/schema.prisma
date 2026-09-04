@@ -85,6 +85,8 @@ model User {
   orders               Order[]
   // Blog posts authored by this user (BATCH-3-FEATURES — Blog/Content Hub)
   blogPosts            BlogPost[]
+  // Affiliate program — one affiliate record per user (BATCH-5-FEATURES)
+  affiliate            Affiliate?
 }
 
 // ============================================================
@@ -1665,4 +1667,43 @@ model AuditLog {
   resourceId String? @default("")
   details    String   @default("") // JSON string with before/after
   createdAt  DateTime @default(now())
+}
+
+// ============================================================
+// BATCH-5-FEATURES — Affiliate Program + Subscription Plans
+// ============================================================
+model Affiliate {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  code           String   @unique // unique referral code
+  commissionRate Float    @default(10) // percentage
+  clicks         Int      @default(0)
+  signups        Int      @default(0)
+  conversions    Int      @default(0)
+  earnings       Float    @default(0)
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  clicksLog      AffiliateClick[]
+}
+
+model AffiliateClick {
+  id          String   @id @default(cuid())
+  affiliateId String
+  affiliate   Affiliate @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+  ip          String   @default("")
+  userAgent   String   @default("")
+  courseId    String?
+  createdAt   DateTime @default(now())
+}
+
+model SubscriptionPlan {
+  id          String   @id @default(cuid())
+  name        String   // Free, Pro, Enterprise
+  price       Float    @default(0) // monthly price in INR
+  features    String   @default("[]") // JSON array of feature strings
+  popular     Boolean  @default(false)
+  order       Int      @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
 }

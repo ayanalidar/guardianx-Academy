@@ -48,7 +48,7 @@ export function CredentialsView() {
   }
 
   function copyUrl(credId: string) {
-    const url = `https://academy.guardianx.cloud/verify?id=${credId}`
+    const url = `https://academy.guardianx.cloud/#/verify/${credId}`
     navigator.clipboard?.writeText(url)
     setCopied(credId)
     toast.success("Verification URL copied!")
@@ -160,7 +160,7 @@ export function CredentialsView() {
                     <Button size="sm" variant="outline" className="flex-1" onClick={() => copyUrl(cred.credentialId)}>
                       {copied === cred.credentialId ? <><Check className="h-3.5 w-3.5 mr-1.5" /> Copied</> : <><Copy className="h-3.5 w-3.5 mr-1.5" /> Share</>}
                     </Button>
-                    <Button size="sm" variant="outline" className="flex-1" onClick={() => window.open(`/verify?id=${cred.credentialId}`, "_blank")}>
+                    <Button size="sm" variant="outline" className="flex-1" onClick={() => navigate({ name: "verify", credentialId: cred.credentialId })}>
                       <ExternalLink className="h-3.5 w-3.5 mr-1.5" /> Verify
                     </Button>
                   </div>

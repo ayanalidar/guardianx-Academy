@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getCurrentUser } from "@/lib/session"
+import { getCurrentUser, withErrorHandler } from "@/lib/session"
 
 export const runtime = "nodejs"
 
@@ -22,160 +22,166 @@ export const runtime = "nodejs"
  * upsert — the previous implementation used `where: { key }` which is
  * invalid because `key` alone is NOT unique (only the composite is).
  */
-export async function PATCH(req: NextRequest, { params }: { params: Promise<{ key: string }> }) {
-  const { key: rawKey } = await params
+export const PATCH = withErrorHandler(
+  async (req: NextRequest, { params }: { params: Promise<{ key: string }> }) => {
+    const { key: rawKey } = await params
 
-  const user = await getCurrentUser()
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+    const user = await getCurrentUser()
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    if (user.role !== "ADMIN") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
 
-  let body: any = {}
-  try {
-    body = await req.json()
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
-  }
+    let body: any = {}
+    try {
+      body = await req.json()
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
+    }
 
-  if (body.value === undefined) {
-    return NextResponse.json({ error: "value is required" }, { status: 400 })
-  }
+    if (body.value === undefined) {
+      return NextResponse.json({ error: "value is required" }, { status: 400 })
+    }
 
-  // Parse the [key] path param. Support dotted forms: page.section.key
-  // or section.key (page falls back to body.page or "home").
-  const parts = rawKey.split(".")
-  let page: string
-  let section: string
-  let key: string
-  if (parts.length >= 3) {
-    page = parts[0]
-    section = parts[1]
-    key = parts.slice(2).join(".")
-  } else if (parts.length === 2) {
-    page = typeof body.page === "string" ? body.page : "home"
-    section = parts[0]
-    key = parts[1]
-  } else {
-    page = typeof body.page === "string" ? body.page : "home"
-    section = typeof body.section === "string" ? body.section : ""
-    key = rawKey
-  }
+    // Parse the [key] path param. Support dotted forms: page.section.key
+    // or section.key (page falls back to body.page or "home").
+    const parts = rawKey.split(".")
+    let page: string
+    let section: string
+    let key: string
+    if (parts.length >= 3) {
+      page = parts[0]
+      section = parts[1]
+      key = parts.slice(2).join(".")
+    } else if (parts.length === 2) {
+      page = typeof body.page === "string" ? body.page : "home"
+      section = parts[0]
+      key = parts[1]
+    } else {
+      page = typeof body.page === "string" ? body.page : "home"
+      section = typeof body.section === "string" ? body.section : ""
+      key = rawKey
+    }
 
-  // Body overrides take precedence (explicit page/section always wins).
-  if (typeof body.page === "string" && body.page.trim()) page = body.page.trim()
-  if (typeof body.section === "string" && body.section.trim()) section = body.section.trim()
+    // Body overrides take precedence (explicit page/section always wins).
+    if (typeof body.page === "string" && body.page.trim()) page = body.page.trim()
+    if (typeof body.section === "string" && body.section.trim()) section = body.section.trim()
 
-  if (!page || !section || !key) {
-    return NextResponse.json(
-      { error: "page, section, and key are all required (use page.section.key in the URL or supply them in the body)" },
-      { status: 400 }
-    )
-  }
+    if (!page || !section || !key) {
+      return NextResponse.json(
+        { error: "page, section, and key are all required (use page.section.key in the URL or supply them in the body)" },
+        { status: 400 }
+      )
+    }
 
-  const item = await db.siteContent.upsert({
-    where: { page_section_key: { page, section, key } },
-    create: { page, section, key, value: body.value, updatedBy: user.id },
-    update: { value: body.value, updatedBy: user.id },
-  })
+    const item = await db.siteContent.upsert({
+      where: { page_section_key: { page, section, key } },
+      create: { page, section, key, value: body.value, updatedBy: user.id },
+      update: { value: body.value, updatedBy: user.id },
+    })
 
-  return NextResponse.json({ item })
-}
+    return NextResponse.json({ item })
+  },
+)
 
 /**
  * GET /api/admin/site-content/[key] — fetch a single SiteContent row by
  * the same dotted-key convention as PATCH. Returns 404 if not found.
  */
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ key: string }> }) {
-  const { key: rawKey } = await params
+export const GET = withErrorHandler(
+  async (_req: NextRequest, { params }: { params: Promise<{ key: string }> }) => {
+    const { key: rawKey } = await params
 
-  const user = await getCurrentUser()
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+    const user = await getCurrentUser()
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    if (user.role !== "ADMIN") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
 
-  // Default page = "home" when only section.key is supplied. Use
-  // body-free GET so we have to guess; "home" matches the homepage CMS
-  // (the most common edit target).
-  const parts = rawKey.split(".")
-  let page: string
-  let section: string
-  let key: string
-  if (parts.length >= 3) {
-    page = parts[0]
-    section = parts[1]
-    key = parts.slice(2).join(".")
-  } else if (parts.length === 2) {
-    page = "home"
-    section = parts[0]
-    key = parts[1]
-  } else {
-    return NextResponse.json(
-      { error: "Use page.section.key or section.key in the URL (single-token keys are ambiguous)" },
-      { status: 400 }
-    )
-  }
+    // Default page = "home" when only section.key is supplied. Use
+    // body-free GET so we have to guess; "home" matches the homepage CMS
+    // (the most common edit target).
+    const parts = rawKey.split(".")
+    let page: string
+    let section: string
+    let key: string
+    if (parts.length >= 3) {
+      page = parts[0]
+      section = parts[1]
+      key = parts.slice(2).join(".")
+    } else if (parts.length === 2) {
+      page = "home"
+      section = parts[0]
+      key = parts[1]
+    } else {
+      return NextResponse.json(
+        { error: "Use page.section.key or section.key in the URL (single-token keys are ambiguous)" },
+        { status: 400 }
+      )
+    }
 
-  const item = await db.siteContent.findUnique({
-    where: { page_section_key: { page, section, key } },
-  })
+    const item = await db.siteContent.findUnique({
+      where: { page_section_key: { page, section, key } },
+    })
 
-  if (!item) return NextResponse.json({ error: "Not found" }, { status: 404 })
-  return NextResponse.json({ item })
-}
+    if (!item) return NextResponse.json({ error: "Not found" }, { status: 404 })
+    return NextResponse.json({ item })
+  },
+)
 
 /**
  * DELETE /api/admin/site-content/[key] — delete a single SiteContent row
  * by the same dotted-key convention as PATCH.
  */
-export async function DELETE(req: NextRequest, { params }: { params: Promise<{ key: string }> }) {
-  const { key: rawKey } = await params
+export const DELETE = withErrorHandler(
+  async (req: NextRequest, { params }: { params: Promise<{ key: string }> }) => {
+    const { key: rawKey } = await params
 
-  const user = await getCurrentUser()
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+    const user = await getCurrentUser()
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    if (user.role !== "ADMIN") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
 
-  let body: any = {}
-  try {
-    body = await req.json()
-  } catch {
-    // empty body is OK
-  }
+    let body: any = {}
+    try {
+      body = await req.json()
+    } catch {
+      // empty body is OK
+    }
 
-  const parts = rawKey.split(".")
-  let page: string
-  let section: string
-  let key: string
-  if (parts.length >= 3) {
-    page = parts[0]
-    section = parts[1]
-    key = parts.slice(2).join(".")
-  } else if (parts.length === 2) {
-    page = typeof body.page === "string" ? body.page : "home"
-    section = parts[0]
-    key = parts[1]
-  } else {
-    page = typeof body.page === "string" ? body.page : "home"
-    section = typeof body.section === "string" ? body.section : ""
-    key = rawKey
-  }
-  if (typeof body.page === "string" && body.page.trim()) page = body.page.trim()
-  if (typeof body.section === "string" && body.section.trim()) section = body.section.trim()
+    const parts = rawKey.split(".")
+    let page: string
+    let section: string
+    let key: string
+    if (parts.length >= 3) {
+      page = parts[0]
+      section = parts[1]
+      key = parts.slice(2).join(".")
+    } else if (parts.length === 2) {
+      page = typeof body.page === "string" ? body.page : "home"
+      section = parts[0]
+      key = parts[1]
+    } else {
+      page = typeof body.page === "string" ? body.page : "home"
+      section = typeof body.section === "string" ? body.section : ""
+      key = rawKey
+    }
+    if (typeof body.page === "string" && body.page.trim()) page = body.page.trim()
+    if (typeof body.section === "string" && body.section.trim()) section = body.section.trim()
 
-  if (!page || !section || !key) {
-    return NextResponse.json({ error: "page, section, and key are required" }, { status: 400 })
-  }
+    if (!page || !section || !key) {
+      return NextResponse.json({ error: "page, section, and key are required" }, { status: 400 })
+    }
 
-  try {
-    await db.siteContent.delete({
-      where: { page_section_key: { page, section, key } },
-    })
-    return NextResponse.json({ deleted: true, page, section, key })
-  } catch {
-    // already deleted — that's fine
-    return NextResponse.json({ deleted: false, page, section, key })
-  }
-}
+    try {
+      await db.siteContent.delete({
+        where: { page_section_key: { page, section, key } },
+      })
+      return NextResponse.json({ deleted: true, page, section, key })
+    } catch {
+      // already deleted — that's fine
+      return NextResponse.json({ deleted: false, page, section, key })
+    }
+  },
+)

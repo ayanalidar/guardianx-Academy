@@ -11,14 +11,13 @@ import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
-  GraduationCap, BookOpen, Award, Clock, ChevronRight, CheckCircle2,
-  PlayCircle, Flame, Target, BarChart3, ArrowRight, Sparkles,
-  Trophy, Shield, Zap,
+  GraduationCap, BookOpen, Clock, ChevronRight, CheckCircle2,
+  PlayCircle, Target, ArrowRight, Sparkles, Shield, Zap, Compass,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
   ScrollReveal, TextReveal, Stagger, StaggerItem, Counter, CursorGlow,
-  MagneticButton,
+  MagneticButton, FadeIn,
 } from "@/components/platform/motion-system"
 import { NetworkVisualization } from "@/components/platform/network-visualization"
 
@@ -47,11 +46,19 @@ interface ResumeData {
 
 export function MyLearningView() {
   const { navigate } = useAppStore()
-  const { user } = useUser()
+  const { user, gamification } = useUser()
 
   const { data, isLoading } = useQuery<{ courses: CourseItem[] }>({
     queryKey: ["courses", "enrolled", user?.id],
     queryFn: () => api(`/api/courses?enrolled=true&userId=${user?.id}`),
+    enabled: !!user,
+  })
+
+  // Recommended courses — published courses the user has NOT enrolled in.
+  // Fetched in parallel; we slice to 6 in the UI.
+  const { data: recData, isLoading: recLoading } = useQuery<{ courses: CourseItem[] }>({
+    queryKey: ["courses", "recommended", user?.id],
+    queryFn: () => api(`/api/courses?status=not-started&userId=${user?.id}`),
     enabled: !!user,
   })
 
@@ -62,9 +69,11 @@ export function MyLearningView() {
   })
 
   const courses = data?.courses ?? []
+  const recommended = (recData?.courses ?? []).slice(0, 6)
   const resume = resumeData?.resume ?? null
   const inProgress = courses.filter((c) => !c.enrollment?.completed)
   const completed = courses.filter((c) => c.enrollment?.completed)
+  const totalXp = gamification?.xp ?? 0
 
   return (
     <div className="relative min-h-screen">
@@ -131,16 +140,16 @@ export function MyLearningView() {
                 ==================================================== */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 mb-16 mt-8">
               {[
-                { label: "Active courses", value: inProgress.length, accent: "border-violet-500/50", color: "text-violet-300", icon: GraduationCap },
+                { label: "Total enrollments", value: courses.length, accent: "border-violet-500/50", color: "text-violet-300", icon: GraduationCap },
+                { label: "In progress", value: inProgress.length, accent: "border-cyan-500/50", color: "text-cyan-300", icon: PlayCircle },
                 { label: "Completed", value: completed.length, accent: "border-emerald-500/50", color: "text-emerald-300", icon: CheckCircle2 },
-                { label: "Total lessons", value: courses.reduce((a, c) => a + c.lessonCount, 0), accent: "border-cyan-500/50", color: "text-cyan-300", icon: BookOpen },
-                { label: "Study hours", value: courses.reduce((a, c) => a + c.durationHours, 0), suffix: "h", accent: "border-amber-500/50", color: "text-amber-300", icon: Clock },
+                { label: "Total XP", value: totalXp, accent: "border-amber-500/50", color: "text-amber-300", icon: Zap },
               ].map((s, i) => (
                 <ScrollReveal key={s.label} delay={0.5 + i * 0.06}>
                   <div className={cn("border-l pl-5", s.accent)}>
                     <s.icon className={cn("h-4 w-4 mb-3", s.color)} />
                     <div className="text-4xl lg:text-5xl font-bold tracking-[-0.03em] mb-1">
-                      <Counter value={s.value} suffix={s.suffix ?? ""} />
+                      <Counter value={s.value} />
                     </div>
                     <div className="text-[10px] text-muted-foreground uppercase tracking-[0.2em]">{s.label}</div>
                   </div>
@@ -179,7 +188,7 @@ export function MyLearningView() {
                 COMPLETED COURSES - with certificate links
                 ==================================================== */}
             {completed.length > 0 && (
-              <section>
+              <section className="mb-20">
                 <ScrollReveal>
                   <div className="flex items-center justify-between mb-8 pb-4 border-b border-border/60">
                     <div>
@@ -201,6 +210,14 @@ export function MyLearningView() {
                 </Stagger>
               </section>
             )}
+
+            {/* ====================================================
+                RECOMMENDED COURSES - courses the user hasn't enrolled in
+                ==================================================== */}
+            <RecommendedCoursesSection
+              courses={recommended}
+              loading={recLoading}
+            />
           </>
         )}
       </div>
@@ -359,6 +376,12 @@ function EnrolledCourseRow({ course: c }: { course: CourseItem }) {
               <span className="flex items-center gap-1"><BookOpen className="h-3 w-3" />{c.lessonCount} LESSONS</span>
               <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{c.durationHours}H</span>
               <span className="text-muted-foreground/70">BY {c.instructor.name.toUpperCase()}</span>
+              {c.enrollment?.lastAccessed && (
+                <span className="flex items-center gap-1 text-violet-300/70">
+                  <Target className="h-3 w-3" />
+                  LAST {new Date(c.enrollment.lastAccessed).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                </span>
+              )}
             </div>
           </div>
 
@@ -497,3 +520,165 @@ function EmptyLearningState() {
     </ScrollReveal>
   )
 }
+
+/* ============================================================
+   RecommendedCoursesSection — courses the user hasn't enrolled in
+   ============================================================ */
+function RecommendedCoursesSection({
+  courses,
+  loading,
+}: {
+  courses: CourseItem[]
+  loading: boolean
+}) {
+  const { navigate } = useAppStore()
+
+  return (
+    <section>
+      <ScrollReveal>
+        <div className="flex items-end justify-between mb-8 pb-4 border-b border-border/60">
+          <div>
+            <p className="text-[10px] font-mono text-amber-400 tracking-[0.3em] mb-1">
+              03 — RECOMMENDED FOR YOU
+            </p>
+            <h2 className="text-2xl lg:text-3xl font-bold tracking-tight">
+              Keep the momentum going
+            </h2>
+          </div>
+          <button
+            onClick={() => navigate({ name: "catalog" })}
+            className="hidden sm:flex items-center gap-1.5 text-[10px] font-mono text-muted-foreground hover:text-violet-300 tracking-[0.2em] transition-colors"
+          >
+            BROWSE ALL <ArrowRight className="h-3 w-3" />
+          </button>
+        </div>
+      </ScrollReveal>
+
+      {loading ? (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-52 rounded-2xl" />
+          ))}
+        </div>
+      ) : courses.length === 0 ? (
+        <FadeIn>
+          <div className="relative overflow-hidden rounded-2xl border border-dashed border-border/60 bg-card/20 p-12 text-center">
+            <div className="absolute inset-0 bg-grid opacity-10 pointer-events-none" />
+            <div className="relative z-10">
+              <div className="inline-flex p-3 rounded-xl border border-amber-500/30 bg-amber-500/10 mb-4">
+                <Compass className="h-6 w-6 text-amber-300" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2 tracking-[-0.02em]">
+                You&apos;re enrolled in everything
+              </h3>
+              <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                You&apos;ve enrolled in every published course on the platform.
+                Check the catalog for new additions.
+              </p>
+            </div>
+          </div>
+        </FadeIn>
+      ) : (
+        <Stagger
+          className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4"
+          staggerChildren={0.07}
+        >
+          {courses.map((c) => (
+            <StaggerItem key={c.id}>
+              <RecommendedCourseCard course={c} />
+            </StaggerItem>
+          ))}
+        </Stagger>
+      )}
+    </section>
+  )
+}
+
+/* ============================================================
+   RecommendedCourseCard — compact premium card with Enroll CTA
+   ============================================================ */
+function RecommendedCourseCard({ course: c }: { course: CourseItem }) {
+  const { navigate } = useAppStore()
+  const col = colorFor(c.color)
+
+  return (
+    <CursorGlow color="oklch(0.7 0.15 85 / 0.05)" className="group h-full">
+      <div
+        className="relative h-full overflow-hidden rounded-2xl border border-border/60 bg-card/20 backdrop-blur p-5 flex flex-col transition-all duration-300 hover:border-amber-500/30 hover:bg-card/30 cursor-pointer"
+        onClick={() => navigate({ name: "course", courseId: c.id })}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault()
+            navigate({ name: "course", courseId: c.id })
+          }
+        }}
+      >
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-amber-500/40 via-amber-500/10 to-transparent" />
+
+        {/* Header — thumbnail/code + level badge */}
+        <div className="flex items-start justify-between mb-4">
+          {c.thumbnail ? (
+            <div className="h-12 w-12 rounded-lg overflow-hidden border border-border">
+              <img
+                src={c.thumbnail}
+                alt={c.title}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  ;(e.target as HTMLImageElement).style.display = "none"
+                }}
+              />
+            </div>
+          ) : (
+            <div
+              className={cn(
+                "flex h-12 w-12 items-center justify-center rounded-lg border font-mono font-bold text-sm",
+                col.bg,
+                col.border,
+                col.text
+              )}
+            >
+              {c.shortName}
+            </div>
+          )}
+          <Badge
+            variant="outline"
+            className={cn("text-[9px] font-mono uppercase", LEVEL_COLORS[c.level])}
+          >
+            {c.level}
+          </Badge>
+        </div>
+
+        {/* Title */}
+        <h3 className="text-base font-bold tracking-tight mb-1.5 group-hover:text-amber-200 transition-colors line-clamp-2">
+          {c.title}
+        </h3>
+        <p className="text-xs text-muted-foreground line-clamp-2 mb-4">{c.description}</p>
+
+        {/* Meta row */}
+        <div className="flex flex-wrap items-center gap-3 text-[10px] text-muted-foreground font-mono mb-4">
+          <span className="flex items-center gap-1">
+            <BookOpen className="h-3 w-3" />
+            {c.lessonCount} LESSONS
+          </span>
+          <span className="flex items-center gap-1">
+            <Clock className="h-3 w-3" />
+            {c.durationHours}H
+          </span>
+          <span className="text-muted-foreground/70">BY {c.instructor.name.toUpperCase()}</span>
+        </div>
+
+        {/* CTA */}
+        <div className="mt-auto">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-mono uppercase tracking-[0.15em] bg-amber-500/10 text-amber-200 border border-amber-500/20 group-hover:bg-amber-500/20 transition-colors">
+            <Sparkles className="h-3 w-3" />
+            View Course
+            <ChevronRight className="h-3 w-3" />
+          </div>
+        </div>
+      </div>
+    </CursorGlow>
+  )
+}
+

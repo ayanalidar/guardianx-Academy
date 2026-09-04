@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
 import { db } from "@/lib/db"
-import { getCurrentUser } from "@/lib/session"
+import { requireRole, withErrorHandler } from "@/lib/session"
 
 // GET /api/admin/instructors — list all instructors with their profiles + workload
-export async function GET() {
-  const currentUser = await getCurrentUser()
-  if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (currentUser.role !== "ADMIN" && currentUser.role !== "INSTRUCTOR") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+export const GET = withErrorHandler(async () => {
+  const currentUser = await requireRole(["ADMIN", "INSTRUCTOR"])
+  if (currentUser instanceof NextResponse) return currentUser
 
   const instructors = await db.user.findMany({
     where: { role: "INSTRUCTOR" },
@@ -54,15 +51,12 @@ export async function GET() {
   }))
 
   return NextResponse.json({ instructors: result, count: result.length })
-}
+})
 
 // POST /api/admin/instructors — create a new instructor (User + InstructorProfile)
-export async function POST(req: NextRequest) {
-  const currentUser = await getCurrentUser()
-  if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (currentUser.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+export const POST = withErrorHandler(async (req: NextRequest) => {
+  const currentUser = await requireRole(["ADMIN"])
+  if (currentUser instanceof NextResponse) return currentUser
 
   const body = await req.json().catch(() => null)
   if (!body) return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
@@ -101,10 +95,12 @@ export async function POST(req: NextRequest) {
   const existing = await db.user.findUnique({ where: { email: email.trim().toLowerCase() } })
   if (existing) return NextResponse.json({ error: "Email already in use" }, { status: 409 })
 
-  // Use provided password or default to a secure-ish placeholder (instructor should reset)
-  const finalPassword = password && password.length >= 6 ? password : "GuardianX@123"
+  // Require a password — no hardcoded default (security fix: S27)
+  if (!password || password.length < 6) {
+    return NextResponse.json({ error: "Password is required (min 6 characters)" }, { status: 400 })
+  }
 
-  const passwordHash = bcrypt.hashSync(finalPassword, 10)
+  const passwordHash = bcrypt.hashSync(password, 10)
 
   const user = await db.user.create({
     data: {
@@ -155,7 +151,7 @@ export async function POST(req: NextRequest) {
     },
     { status: 201 },
   )
-}
+})
 
 function safeParse<T>(value: string | null | undefined, fallback: T): T {
   if (!value) return fallback

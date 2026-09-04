@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getCurrentUser } from "@/lib/session"
+import { getCurrentUser, withErrorHandler } from "@/lib/session"
 import { levelFromXp, rankTitle } from "@/lib/gamification"
 
 /**
@@ -17,7 +17,7 @@ import { levelFromXp, rankTitle } from "@/lib/gamification"
  *     totalUsers: number
  *   }
  */
-export async function GET() {
+export const GET = withErrorHandler(async () => {
   const currentUser = await getCurrentUser()
 
   const [allUsers, totalUsers] = await Promise.all([
@@ -60,4 +60,4 @@ export async function GET() {
     currentUser: currentUserEntry,
     totalUsers,
   })
-}
+})

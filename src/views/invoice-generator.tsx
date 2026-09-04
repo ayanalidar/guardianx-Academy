@@ -130,7 +130,11 @@ export function InvoiceGeneratorView() {
   const [bankName, setBankName] = React.useState("Jammu & Kashmir Bank")
   const [accountName, setAccountName] = React.useState("GuardianX")
   const [accountNumber, setAccountNumber] = React.useState("0778040100005715")
+<<<<<<< HEAD
   const [ifscCode, setIfscCode] = React.useState("JAKA0SATARA") // J&K Bank IFSC — update if different
+=======
+  const [ifscCode, setIfscCode] = React.useState("JAKA0KANIHA") // J&K Bank IFSC
+>>>>>>> b56385ef9c37a852749a76c527a2973bae3c8732
   const [upiId, setUpiId] = React.useState("ayanalidar@okaxis")
 
   // Notes & Terms
@@ -169,9 +173,54 @@ export function InvoiceGeneratorView() {
     return `${cur.symbol}${amount.toLocaleString(cur.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }
 
-  function handlePrint() {
-    window.print()
-    toast.success("Invoice print dialog opened - save as PDF")
+  async function handlePrint() {
+    const preview = document.getElementById("invoice-preview")
+    if (!preview) {
+      toast.error("Invoice preview not found")
+      return
+    }
+    try {
+      // Dynamically import the heavy PDF libraries (only when the user clicks Generate PDF)
+      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+        import("html2canvas"),
+        import("jspdf"),
+      ])
+
+      toast.info("Generating PDF...")
+
+      // Capture the exact on-screen rendering of the invoice preview element.
+      // `useCORS: true` allows the QR code + any images to be captured.
+      // `backgroundColor: null` preserves the dark card background so the PDF
+      // looks identical to what the admin sees in the platform.
+      const canvas = await html2canvas(preview, {
+        scale: 2,              // 2x resolution for crisp text + QR
+        useCORS: true,
+        backgroundColor: "#0a0a0f",  // match the dark card background
+        logging: false,
+        windowWidth: preview.scrollWidth,
+        windowHeight: preview.scrollHeight,
+      })
+
+      // A4 landscape: 297mm x 210mm
+      const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" })
+      const pdfWidth = 297
+      const pdfHeight = 210
+      const imgWidth = canvas.width
+      const imgHeight = canvas.height
+      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight)
+      const scaledWidth = imgWidth * ratio
+      const scaledHeight = imgHeight * ratio
+      const x = (pdfWidth - scaledWidth) / 2
+      const y = (pdfHeight - scaledHeight) / 2
+
+      const imgData = canvas.toDataURL("image/jpeg", 0.95)
+      pdf.addImage(imgData, "JPEG", x, y, scaledWidth, scaledHeight)
+      pdf.save(`${invoiceNumber || "invoice"}.pdf`)
+      toast.success("PDF downloaded — matches the on-screen preview")
+    } catch (err: any) {
+      console.error("[invoice-pdf]", err)
+      toast.error(err?.message || "Failed to generate PDF. Try the Print button as fallback.")
+    }
   }
 
   function handleCopyInvoiceNumber() {

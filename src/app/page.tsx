@@ -19,6 +19,7 @@ import { CourseCatalogView } from "@/views/course-catalog"
 import { BatchesView } from "@/views/batches"
 import { ExamsView } from "@/views/exams"
 import { CredentialsView } from "@/views/credentials"
+import { VerifyView } from "@/views/verify"
 import { InvoiceGeneratorView } from "@/views/invoice-generator"
 import { ProposalMakerView } from "@/views/proposal-maker"
 import { LeadCrmView } from "@/views/admin-lead-crm"
@@ -32,6 +33,10 @@ import { AuditLogView } from "@/views/admin-audit-log"
 import { PlatformHealthView } from "@/views/admin-platform-health"
 import { NotificationCenterView } from "@/views/admin-notifications"
 import { SupportView } from "@/views/support"
+import { InstructorsView } from "@/views/instructors"
+import { InstructorDetailView } from "@/views/instructor-detail"
+import { EventsView } from "@/views/events"
+import { EventDetailView } from "@/views/event-detail"
 import { CourseDetailView } from "@/views/course-detail"
 import { LessonView } from "@/views/lesson-view"
 import { MyLearningView } from "@/views/my-learning"
@@ -51,6 +56,7 @@ import { AssignmentsView } from "@/views/assignments"
 import { MessagingView } from "@/views/messaging"
 import { StudyGroupsView } from "@/views/study-groups"
 import { OfficeHoursView } from "@/views/office-hours"
+import { BookSessionView } from "@/views/book-session"
 // New feature views (heavy) — lazy-loaded with ssr:false for faster initial page render
 import { AIAssistantView } from "@/views/ai-assistant"
 import { ThreatFeedView } from "@/views/threat-feed"
@@ -80,7 +86,8 @@ const PUBLIC_VIEWS = new Set([
   "home", "impact", "contact", "institutions", "institutions-schools",
   "institutions-colleges", "institutions-universities",
   "catalog", "batches", "course", "cyber-range", "learning-paths", "skill-tree",
-  "exams", "credentials", "support",
+  "exams", "credentials", "support", "verify",
+  "instructors", "instructor-detail", "events", "event-detail" ,
 ])
 
 function ViewRouter() {
@@ -100,6 +107,7 @@ function ViewRouter() {
       {view.name === "batches" && <BatchesView />}
       {view.name === "exams" && <ExamsView />}
       {view.name === "credentials" && <CredentialsView />}
+      {view.name === "verify" && <VerifyView />}
       {view.name === "invoice-generator" && <InvoiceGeneratorView />}
       {view.name === "proposal-maker" && <ProposalMakerView />}
       {view.name === "admin-lead-crm" && <LeadCrmView />}
@@ -113,6 +121,10 @@ function ViewRouter() {
       {view.name === "admin-platform-health" && <PlatformHealthView />}
       {view.name === "admin-notifications" && <NotificationCenterView />}
       {view.name === "support" && <SupportView />}
+      {view.name === "instructors" && <InstructorsView />}
+      {view.name === "instructor-detail" && <InstructorDetailView />}
+      {view.name === "events" && <EventsView />}
+      {view.name === "event-detail" && <EventDetailView />}
       {view.name === "course" && <CourseDetailView />}
       {view.name === "lesson" && <LessonView />}
       {view.name === "learning" && <MyLearningView />}
@@ -132,6 +144,7 @@ function ViewRouter() {
       {view.name === "messaging" && <MessagingView />}
       {view.name === "study-groups" && <StudyGroupsView />}
       {view.name === "office-hours" && <OfficeHoursView />}
+      {view.name === "book-session" && <BookSessionView />}
       {/* New feature views */}
       {view.name === "ai-assistant" && <AIAssistantView />}
       {view.name === "threat-feed" && <ThreatFeedView />}

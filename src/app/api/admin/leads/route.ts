@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getCurrentUser } from "@/lib/session"
+import { requireRole, withErrorHandler } from "@/lib/session"
 
 const LEAD_STATUSES = ["New", "Contacted", "Qualified", "Proposal", "Negotiation", "Converted", "Lost"]
 const LEAD_TYPES = ["Individual", "School", "College", "University", "Corporate", "Partner", "Workshop", "CTF", "Webinar"]
@@ -55,12 +55,9 @@ function computeLeadScore(lead: {
 }
 
 // GET /api/admin/leads — list leads + compute scores + stats
-export async function GET(req: NextRequest) {
-  const currentUser = await getCurrentUser()
-  if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (currentUser.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+export const GET = withErrorHandler(async (req: NextRequest) => {
+  const currentUser = await requireRole(["ADMIN"])
+  if (currentUser instanceof NextResponse) return currentUser
 
   const url = new URL(req.url)
   const status = url.searchParams.get("status")
@@ -154,15 +151,12 @@ export async function GET(req: NextRequest) {
       bySource,
     },
   })
-}
+})
 
 // POST /api/admin/leads — create a new lead manually
-export async function POST(req: NextRequest) {
-  const currentUser = await getCurrentUser()
-  if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (currentUser.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+export const POST = withErrorHandler(async (req: NextRequest) => {
+  const currentUser = await requireRole(["ADMIN"])
+  if (currentUser instanceof NextResponse) return currentUser
 
   const body = await req.json().catch(() => null)
   if (!body) return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
@@ -205,4 +199,4 @@ export async function POST(req: NextRequest) {
   })
 
   return NextResponse.json({ lead }, { status: 201 })
-}
+})

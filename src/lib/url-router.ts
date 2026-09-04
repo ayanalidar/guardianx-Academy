@@ -14,6 +14,12 @@
  *   `#/course/<courseId>/lesson/<id>` → { name: "lesson", courseId, lessonId }
  *   `#/lab/<labSlug>`                 → { name: "lab", labSlug }
  *   `#/exam/<examId>`                 → { name: "exam-detail", examId }
+ *   `#/verify/<credentialId>`         → { name: "verify", credentialId }
+ *   `#/verify?credentialId=<id>`      → { name: "verify", credentialId }
+ *   `#/instructors`                   → { name: "instructors" }
+ *   `#/instructor/<id>`               → { name: "instructor-detail", instructorId }
+ *   `#/events`                         → { name: "events" }
+ *   `#/event/<slug>`                   → { name: "event-detail", eventSlug }
  *
  * This gives us: URL changes on nav, refresh works, browser back/forward
  * works, direct URL entry works, "open in new tab" works — all while
@@ -37,6 +43,14 @@ export function viewToHash(view: View): string {
       return `/lab/${encodeURIComponent(view.labSlug)}`
     case "exam-detail":
       return `/exam/${encodeURIComponent(view.examId)}`
+    case "verify":
+      return view.credentialId
+        ? `/verify/${encodeURIComponent(view.credentialId)}`
+        : "/verify"
+    case "instructor-detail":
+      return `/instructor/${encodeURIComponent(view.instructorId)}`
+    case "event-detail":
+      return `/event/${encodeURIComponent(view.eventSlug)}`
     default:
       return `/${view.name}`
   }
@@ -68,6 +82,36 @@ export function hashToView(hash: string): View {
   if (parts[0] === "exam" && parts[1]) {
     return { name: "exam-detail", examId: parts[1] }
   }
+  // /verify/<id>  OR  /verify?credentialId=<id>  OR  /verify
+  // Note: when the URL is `#/verify?credentialId=...` (no path slash),
+  // split("/") yields a single segment "verify?credentialId=..." — so
+  // we match against both "verify" and the "verify?..." prefix.
+  if (parts[0] === "verify" || parts[0].startsWith("verify?")) {
+    // Format A: /verify/<credentialId>
+    if (parts[1]) {
+      return { name: "verify", credentialId: parts[1] }
+    }
+    // Format B: /verify?credentialId=<id>  — `parts[0]` still contains
+    // the raw "verify?credentialId=..." because split("/") didn't
+    // separate it. Parse the query string off the first segment.
+    const qIdx = parts[0].indexOf("?")
+    if (qIdx !== -1) {
+      const query = new URLSearchParams(parts[0].slice(qIdx + 1))
+      const id = query.get("credentialId") ?? undefined
+      return { name: "verify", credentialId: id }
+    }
+    // Format C: /verify (no id)
+    return { name: "verify" }
+  }
+
+  // /instructor/<id>
+  if (parts[0] === "instructor" && parts[1]) {
+    return { name: "instructor-detail", instructorId: parts[1] }
+  }
+  // /event/<slug>
+  if (parts[0] === "event" && parts[1]) {
+    return { name: "event-detail", eventSlug: parts[1] }
+  }
 
   // /<view-name> — validate against the known set so we never produce
   // an unknown view from a user-typed URL.
@@ -77,7 +121,7 @@ export function hashToView(hash: string): View {
     "dashboard", "catalog", "batches", "learning", "notes", "live",
     "labs", "certificates", "achievements", "leaderboard", "instructor",
     "school", "admin", "community", "profile", "assignments", "messaging",
-    "study-groups", "office-hours", "auth", "ai-assistant", "threat-feed",
+    "study-groups", "office-hours", "book-session", "auth", "ai-assistant", "threat-feed",
     "code-review", "career-planner", "job-board", "mock-interview",
     "resume-builder", "ctf-platform", "weekly-challenges", "team-missions",
     "learning-analytics", "skill-assessments", "prerequisites-visualizer",
@@ -87,10 +131,12 @@ export function hashToView(hash: string): View {
     "admin-batch-calendar", "admin-student-progress", "admin-revenue",
     "admin-cert-bulk", "admin-email-campaign", "admin-instructor-assignment",
     "admin-audit-log", "admin-platform-health", "admin-notifications",
-    "support",
+    "support", "verify",
+    "instructors", "events",
+
   ]
   if (knownViews.includes(parts[0] as View["name"])) {
-    return { name: parts[0] as View["name"] }
+    return { name: parts[0] as View["name"] } as View
   }
 
   // Unknown → fall back to home so the app never crashes on a bad URL

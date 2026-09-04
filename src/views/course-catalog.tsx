@@ -156,7 +156,7 @@ export function CourseCatalogView() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="relative mb-6"
+            className="relative mb-4"
           >
             <div className="flex items-center gap-2 mb-3">
               <span className="h-1.5 w-1.5 rounded-full bg-violet-400 pulse-dot" />

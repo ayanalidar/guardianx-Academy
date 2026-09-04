@@ -7,6 +7,10 @@ async function main() {
   console.log("Seeding GuardianX database...")
 
   // ---- Users ----
+  // NOTE: Dummy instructors (Dr. Sarah Chen, Raj Patel) have been removed.
+  // Real instructors are added via the admin panel (/admin-instructor-assignment).
+  // The seed script only creates admin + student accounts for testing.
+
   const admin = await db.user.upsert({
     where: { email: "admin@guardianx.io" },
     update: {},
@@ -17,32 +21,6 @@ async function main() {
       role: "ADMIN",
       title: "Platform Administrator",
       bio: "GuardianX platform administrator and lead security architect.",
-    },
-  })
-
-  const instructor = await db.user.upsert({
-    where: { email: "instructor@guardianx.io" },
-    update: {},
-    create: {
-      email: "instructor@guardianx.io",
-      name: "Dr. Sarah Chen",
-      passwordHash: hash("instructor123"),
-      role: "INSTRUCTOR",
-      title: "Principal Security Researcher, CISSP",
-      bio: "20+ years in offensive security, ex-NSA red team lead. Author of 'Practical Ethical Hacking'.",
-    },
-  })
-
-  const instructor2 = await db.user.upsert({
-    where: { email: "raj@guardianx.io" },
-    update: {},
-    create: {
-      email: "raj@guardianx.io",
-      name: "Raj Patel",
-      passwordHash: hash("instructor123"),
-      role: "INSTRUCTOR",
-      title: "Network & Cloud Security Engineer, CCIE #56789",
-      bio: "Cisco CCIE and AWS Security Specialist. Passionate about teaching networking fundamentals.",
     },
   })
 

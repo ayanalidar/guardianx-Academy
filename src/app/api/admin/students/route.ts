@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getCurrentUser } from "@/lib/session"
+import { requireRole, withErrorHandler } from "@/lib/session"
 
 export const runtime = "nodejs"
 
@@ -8,12 +8,9 @@ export const runtime = "nodejs"
 // Supports `?q=` search (by email/name) and `?page=` pagination (50/page).
 // Returns each student with computed stats: enrollmentCount, completedCount,
 // labCount, certCount, and avgProgress (across all their enrollments).
-export async function GET(req: NextRequest) {
-  const currentUser = await getCurrentUser()
-  if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (currentUser.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+export const GET = withErrorHandler(async (req: NextRequest) => {
+  const currentUser = await requireRole(["ADMIN"])
+  if (currentUser instanceof NextResponse) return currentUser
 
   const url = new URL(req.url)
   const q = url.searchParams.get("q")?.trim() || undefined
@@ -112,4 +109,4 @@ export async function GET(req: NextRequest) {
     pageSize,
     totalPages: Math.max(1, Math.ceil(total / pageSize)),
   })
-}
+})

@@ -1,23 +1,25 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getCurrentUser } from "@/lib/session"
+import { getCurrentUser, withErrorHandler } from "@/lib/session"
 
 export const runtime = "nodejs"
 
 // GET /api/admin/training-batches/[id] — fetch a single training batch.
 // Requires ADMIN or INSTRUCTOR.
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const currentUser = await getCurrentUser()
-  if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (currentUser.role !== "ADMIN" && currentUser.role !== "INSTRUCTOR") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+export const GET = withErrorHandler(
+  async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+    const currentUser = await getCurrentUser()
+    if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    if (currentUser.role !== "ADMIN" && currentUser.role !== "INSTRUCTOR") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
 
-  const { id } = await params
-  const batch = await db.trainingBatch.findUnique({ where: { id } })
-  if (!batch) return NextResponse.json({ error: "Batch not found" }, { status: 404 })
-  return NextResponse.json({ batch })
-}
+    const { id } = await params
+    const batch = await db.trainingBatch.findUnique({ where: { id } })
+    if (!batch) return NextResponse.json({ error: "Batch not found" }, { status: 404 })
+    return NextResponse.json({ batch })
+  },
+)
 
 // PATCH /api/admin/training-batches/[id] — update any fields on a training batch.
 // Requires ADMIN.
@@ -46,59 +48,63 @@ const UPDATABLE_STRING_FIELDS = [
 const UPDATABLE_INT_FIELDS = ["seats", "enrolled", "order"] as const
 const UPDATABLE_BOOL_FIELDS = ["featured", "published"] as const
 
-export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const currentUser = await getCurrentUser()
-  if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (currentUser.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
-
-  const { id } = await params
-  const body = await req.json().catch(() => null)
-  if (!body) return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
-
-  const existing = await db.trainingBatch.findUnique({ where: { id } })
-  if (!existing) return NextResponse.json({ error: "Batch not found" }, { status: 404 })
-
-  const updates: Record<string, unknown> = {}
-
-  for (const f of UPDATABLE_STRING_FIELDS) {
-    const v = (body as Record<string, unknown>)[f]
-    if (typeof v === "string") {
-      updates[f] = f === "startIsoDate" || f === "instructorId" ? (v.trim() || null) : v.trim()
+export const PATCH = withErrorHandler(
+  async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+    const currentUser = await getCurrentUser()
+    if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    if (currentUser.role !== "ADMIN") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
-  }
-  for (const f of UPDATABLE_INT_FIELDS) {
-    const v = (body as Record<string, unknown>)[f]
-    if (typeof v === "number" && Number.isFinite(v)) updates[f] = v
-    else if (typeof v === "string" && v.trim() !== "" && Number.isFinite(Number(v))) updates[f] = Number(v)
-  }
-  for (const f of UPDATABLE_BOOL_FIELDS) {
-    const v = (body as Record<string, unknown>)[f]
-    if (typeof v === "boolean") updates[f] = v
-  }
 
-  if (Object.keys(updates).length === 0) {
-    return NextResponse.json({ batch: existing })
-  }
+    const { id } = await params
+    const body = await req.json().catch(() => null)
+    if (!body) return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
 
-  const updated = await db.trainingBatch.update({ where: { id }, data: updates })
-  return NextResponse.json({ batch: updated })
-}
+    const existing = await db.trainingBatch.findUnique({ where: { id } })
+    if (!existing) return NextResponse.json({ error: "Batch not found" }, { status: 404 })
+
+    const updates: Record<string, unknown> = {}
+
+    for (const f of UPDATABLE_STRING_FIELDS) {
+      const v = (body as Record<string, unknown>)[f]
+      if (typeof v === "string") {
+        updates[f] = f === "startIsoDate" || f === "instructorId" ? (v.trim() || null) : v.trim()
+      }
+    }
+    for (const f of UPDATABLE_INT_FIELDS) {
+      const v = (body as Record<string, unknown>)[f]
+      if (typeof v === "number" && Number.isFinite(v)) updates[f] = v
+      else if (typeof v === "string" && v.trim() !== "" && Number.isFinite(Number(v))) updates[f] = Number(v)
+    }
+    for (const f of UPDATABLE_BOOL_FIELDS) {
+      const v = (body as Record<string, unknown>)[f]
+      if (typeof v === "boolean") updates[f] = v
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return NextResponse.json({ batch: existing })
+    }
+
+    const updated = await db.trainingBatch.update({ where: { id }, data: updates })
+    return NextResponse.json({ batch: updated })
+  },
+)
 
 // DELETE /api/admin/training-batches/[id] — delete a training batch.
 // Requires ADMIN.
-export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const currentUser = await getCurrentUser()
-  if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (currentUser.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+export const DELETE = withErrorHandler(
+  async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+    const currentUser = await getCurrentUser()
+    if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    if (currentUser.role !== "ADMIN") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
 
-  const { id } = await params
-  const existing = await db.trainingBatch.findUnique({ where: { id } })
-  if (!existing) return NextResponse.json({ error: "Batch not found" }, { status: 404 })
+    const { id } = await params
+    const existing = await db.trainingBatch.findUnique({ where: { id } })
+    if (!existing) return NextResponse.json({ error: "Batch not found" }, { status: 404 })
 
-  await db.trainingBatch.delete({ where: { id } })
-  return NextResponse.json({ success: true })
-}
+    await db.trainingBatch.delete({ where: { id } })
+    return NextResponse.json({ success: true })
+  },
+)

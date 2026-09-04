@@ -23,6 +23,7 @@ import {
   Network,
   Rocket,
   Server,
+  Shield,
   Sparkles,
   Target,
   TrendingUp,
@@ -68,7 +69,7 @@ import {
   UPCOMING_BATCHES,
   SCHEDULES,
   METHODOLOGY_STEPS,
-  INSTRUCTORS,
+  // INSTRUCTORS removed — now fetched from /api/instructors (real DB data)
   type TechnologyPartner,
   type PlatformStat,
   type LearningPathRow,
@@ -331,6 +332,38 @@ export function HomeView() {
     staleTime: 60_000,
   })
   const rankRows = ranksData?.ranks ?? []
+
+  /* ---------------------- INSTRUCTORS (DB-backed) ------------------------- *
+   *  Real instructor profiles from /api/instructors. The homepage shows   *
+   *  these instead of hardcoded dummy data. Falls back to an empty state  *
+   *  if the API fails.                                                     *
+   * ---------------------------------------------------------------------- */
+  type InstructorRow = {
+    id: string
+    name: string
+    title: string | null
+    avatar: string | null
+    bio: string | null
+    profile: {
+      expertise: string | null
+      yearsExperience: number | null
+      certifications: string | null
+    } | null
+  }
+  const { data: instructorsData } = useQuery<{ instructors: InstructorRow[]; count: number } | null>({
+    queryKey: ["home-instructors"],
+    queryFn: async () => {
+      try {
+        const res = await fetch("/api/instructors")
+        if (!res.ok) return null
+        return res.json()
+      } catch {
+        return null
+      }
+    },
+    staleTime: 60_000,
+  })
+  const instructorRows = instructorsData?.instructors ?? []
 
   /* ---------------------- UPCOMING BATCHES (DB-backed) --------------------- *
    *  Public list of live instructor-led certification batches.             *
@@ -933,69 +966,104 @@ export function HomeView() {
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-5">
-            {INSTRUCTORS.map((ins, i) => (
-              <motion.div
-                key={ins.name}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.05 * i, ease: "easeOut" }}
-                className="card-premium rounded-2xl p-5 lg:p-6 h-full flex flex-col"
-              >
-                {/* Avatar + name */}
-                <div className="flex items-start gap-4 mb-4">
-                  <div
-                    className={cn(
-                      "flex size-14 items-center justify-center rounded-full font-semibold text-base shrink-0",
-                      ins.avatarBg,
-                      ins.avatarColor
-                    )}
-                    aria-hidden
+            {instructorRows.length > 0 ? (
+              instructorRows.slice(0, 3).map((ins, i) => {
+                // Parse expertise from JSON string (e.g. ["offensive","web"])
+                let expertiseLabel = ins.title || "Security Instructor"
+                try {
+                  const expertise = ins.profile?.expertise ? JSON.parse(ins.profile.expertise) : []
+                  if (Array.isArray(expertise) && expertise.length > 0) {
+                    const labels: Record<string, string> = {
+                      offensive: "Offensive Security",
+                      defensive: "Defensive Security",
+                      network: "Network Security",
+                      web: "Web Security",
+                      cloud: "Cloud Security",
+                      grc: "GRC",
+                      dfir: "DFIR",
+                      iam: "IAM",
+                    }
+                    expertiseLabel = expertise.map((e: string) => labels[e] || e.charAt(0).toUpperCase() + e.slice(1)).join(", ")
+                  }
+                } catch {}
+                // Parse certifications
+                let certsLabel = ""
+                try {
+                  const certs = ins.profile?.certifications ? JSON.parse(ins.profile.certifications) : []
+                  if (Array.isArray(certs)) certsLabel = certs.join(", ")
+                } catch {}
+                const initials = ins.name?.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase() || "??"
+                const avatarColors = [
+                  { bg: "bg-violet-500/15", color: "text-violet-300" },
+                  { bg: "bg-cyan-500/15", color: "text-cyan-300" },
+                  { bg: "bg-amber-500/15", color: "text-amber-300" },
+                ]
+                const av = avatarColors[i % avatarColors.length]
+
+                return (
+                  <motion.div
+                    key={ins.id}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.05 * i, ease: "easeOut" }}
+                    className="card-premium rounded-2xl p-5 lg:p-6 h-full flex flex-col"
                   >
-                    {ins.initials}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <h3 className="text-base font-semibold truncate">{ins.name}</h3>
-                      <BadgeCheck
-                        className="size-4 text-emerald-400 shrink-0"
-                        aria-label="Verified instructor"
-                      />
+                    {/* Avatar + name */}
+                    <div className="flex items-start gap-4 mb-4">
+                      {ins.avatar ? (
+                        <img src={ins.avatar} alt={ins.name} className="size-14 rounded-full object-cover shrink-0" />
+                      ) : (
+                        <div className={cn("flex size-14 items-center justify-center rounded-full font-semibold text-base shrink-0", av.bg, av.color)} aria-hidden>
+                          {initials}
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <h3 className="text-base font-semibold truncate">{ins.name}</h3>
+                          <BadgeCheck className="size-4 text-emerald-400 shrink-0" aria-label="Verified instructor" />
+                        </div>
+                        <p className="text-xs text-muted-foreground">{expertiseLabel}</p>
+                      </div>
                     </div>
-                    <p className="text-xs text-muted-foreground">{ins.expertise}</p>
-                  </div>
-                </div>
 
-                {/* Meta rows */}
-                <dl className="space-y-2 mb-4">
-                  <div className="flex items-center justify-between text-xs">
-                    <dt className="text-muted-foreground">Experience</dt>
-                    <dd className="font-medium">{ins.experience}</dd>
-                  </div>
-                  <div className="flex items-center justify-between text-xs gap-3">
-                    <dt className="text-muted-foreground shrink-0">Certifications</dt>
-                    <dd className="font-mono text-[10px] text-right text-foreground/90">
-                      {ins.certs}
-                    </dd>
-                  </div>
-                </dl>
+                    {/* Meta rows */}
+                    <dl className="space-y-2 mb-4">
+                      <div className="flex items-center justify-between text-xs">
+                        <dt className="text-muted-foreground">Experience</dt>
+                        <dd className="font-medium">{ins.profile?.yearsExperience ? `${ins.profile.yearsExperience}+ years` : "Experienced"}</dd>
+                      </div>
+                      {certsLabel && (
+                        <div className="flex items-center justify-between text-xs gap-3">
+                          <dt className="text-muted-foreground shrink-0">Certifications</dt>
+                          <dd className="font-mono text-[10px] text-right text-foreground/90">{certsLabel}</dd>
+                        </div>
+                      )}
+                    </dl>
 
-                {/* VERIFIED badge */}
-                <div className="mb-4 flex items-center gap-1.5 text-[10px] font-mono text-emerald-400 tracking-wider">
-                  <BadgeCheck className="size-3" aria-hidden />
-                  VERIFIED INSTRUCTOR PROFILE
-                </div>
+                    {/* VERIFIED badge */}
+                    <div className="mb-4 flex items-center gap-1.5 text-[10px] font-mono text-emerald-400 tracking-wider">
+                      <BadgeCheck className="size-3" aria-hidden />
+                      VERIFIED INSTRUCTOR PROFILE
+                    </div>
 
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full mt-auto"
-                  aria-label={`View ${ins.name} instructor profile`}
-                >
-                  VIEW INSTRUCTOR
-                  <ArrowRight className="size-4 ml-2" aria-hidden />
-                </Button>
-              </motion.div>
-            ))}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full mt-auto"
+                      onClick={() => navigate({ name: "instructor-detail", instructorId: ins.id })}
+                      aria-label={`View ${ins.name} instructor profile`}
+                    >
+                      VIEW INSTRUCTOR
+                      <ArrowRight className="size-4 ml-2" aria-hidden />
+                    </Button>
+                  </motion.div>
+                )
+              })
+            ) : (
+              <div className="col-span-3 text-center py-12 text-muted-foreground text-sm">
+                No instructors yet. Add instructors from the admin panel.
+              </div>
+            )}
           </div>
         </div>
       </section>

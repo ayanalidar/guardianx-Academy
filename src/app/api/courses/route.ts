@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getCurrentUser } from "@/lib/session"
+import { getCurrentUser, withErrorHandler } from "@/lib/session"
 
-export async function GET(req: NextRequest) {
+export const GET = withErrorHandler(async (req: NextRequest) => {
   const { searchParams } = new URL(req.url)
   const category = searchParams.get("category")
   const level = searchParams.get("level")
   const q = searchParams.get("q")
+  const vertical = searchParams.get("vertical")
   const enrolledOnly = searchParams.get("enrolled") === "true"
   const status = searchParams.get("status") || "all" // all | not-started | in-progress | completed
   const userIdParam = searchParams.get("userId")
@@ -17,6 +18,7 @@ export async function GET(req: NextRequest) {
   const where: any = { published: true }
   if (category && category !== "All") where.category = category
   if (level && level !== "All") where.level = level
+  if (vertical && vertical !== "all") where.vertical = vertical
   if (q) {
     where.OR = [
       { title: { contains: q } },
@@ -89,4 +91,4 @@ export async function GET(req: NextRequest) {
   })
 
   return NextResponse.json({ courses: result })
-}
+})

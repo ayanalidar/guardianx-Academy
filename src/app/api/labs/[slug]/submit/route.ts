@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getCurrentUser } from "@/lib/session"
+import { getCurrentUser, withErrorHandler } from "@/lib/session"
 import { awardXp, XP_REWARDS } from "@/lib/gamification"
 
-export async function POST(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
+export const POST = withErrorHandler(async (req: NextRequest, { params }: { params: Promise<{ slug: string }> }) => {
   const { slug } = await params
   const user = await getCurrentUser()
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
 
   if (action === "submit") {
     const correct = flag?.trim() === lab.flag
-    let gamification = null
+    let gamification: Awaited<ReturnType<typeof awardXp>> | null = null
     let autoGrade: { passed: boolean; score: number; xpAwarded: number } | null = null
     if (correct && progress.status !== "completed") {
       progress = await db.labProgress.update({
@@ -103,7 +103,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
   // This closes the previous vulnerability where the flag was passed
   // as a React prop to LabTerminal and visible in devtools (§34, §80-81).
   if (action === "reveal") {
-    let gamification = null
+    let gamification: Awaited<ReturnType<typeof awardXp>> | null = null
     let autoGrade: { passed: boolean; score: number; xpAwarded: number } | null = null
     if (progress.status !== "completed") {
       progress = await db.labProgress.update({
@@ -142,4 +142,4 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
   }
 
   return NextResponse.json({ progress })
-}
+})

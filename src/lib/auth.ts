@@ -3,6 +3,23 @@ import CredentialsProvider from "next-auth/providers/credentials"
 import bcrypt from "bcryptjs"
 import { db } from "@/lib/db"
 
+// Rate limiting for login attempts (in-memory, per IP)
+const LOGIN_RATE_LIMIT_WINDOW = 60 * 1000 // 1 minute
+const LOGIN_RATE_LIMIT_MAX = 10 // 10 login attempts per minute per IP
+const loginRateLimitMap = new Map<string, { count: number; resetAt: number }>()
+
+function checkLoginRateLimit(ip: string): boolean {
+  const now = Date.now()
+  const entry = loginRateLimitMap.get(ip)
+  if (!entry || now > entry.resetAt) {
+    loginRateLimitMap.set(ip, { count: 1, resetAt: now + LOGIN_RATE_LIMIT_WINDOW })
+    return true
+  }
+  if (entry.count >= LOGIN_RATE_LIMIT_MAX) return false
+  entry.count++
+  return true
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [
     // Standard credentials provider — email + password for students/instructors/admins
@@ -13,8 +30,11 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         if (!credentials?.email || !credentials?.password) return null
+        // Rate limit by IP to prevent brute-force attacks
+        const ip = (req as any)?.headers?.["x-forwarded-for"]?.split(",")[0]?.trim() || "unknown"
+        if (!checkLoginRateLimit(ip)) return null
         const user = await db.user.findUnique({ where: { email: credentials.email } })
         if (!user) return null
         const ok = bcrypt.compareSync(credentials.password, user.passwordHash)

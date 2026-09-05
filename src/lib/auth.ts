@@ -1,5 +1,6 @@
 import type { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
+import GoogleProvider from "next-auth/providers/google"
 import bcrypt from "bcryptjs"
 import { db } from "@/lib/db"
 
@@ -103,6 +104,13 @@ export const authOptions: NextAuthOptions = {
         } as any
       },
     }),
+
+    // Google OAuth provider — "Sign in with Google" button
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID || "",
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+      allowDangerousEmailAccountLinking: true,
+    }),
   ],
   session: { strategy: "jwt" },
   secret: process.env.NEXTAUTH_SECRET || (() => {
@@ -116,15 +124,42 @@ export const authOptions: NextAuthOptions = {
   })(),
   pages: { signIn: "/" },
   callbacks: {
-    async jwt({ token, user }) {
+    async signIn({ user, account }) {
+      // For Google OAuth: create or link the user in our DB
+      if (account?.provider === "google" && user.email) {
+        const existing = await db.user.findUnique({ where: { email: user.email } })
+        if (!existing) {
+          // Auto-create a new STUDENT account for Google sign-ins
+          await db.user.create({
+            data: {
+              email: user.email,
+              name: user.name || "Google User",
+              passwordHash: bcrypt.hashSync(Math.random().toString(36).slice(-12), 12),
+              role: "STUDENT",
+              title: "Student",
+              avatar: user.image || null,
+            },
+          })
+        }
+      }
+      return true
+    },
+    async jwt({ token, user, account }) {
       if (user) {
         token.role = (user as any).role
         token.schoolId = (user as any).schoolId
       }
+      // For Google OAuth: look up the user's role from DB
+      if (account?.provider === "google" && user?.email) {
+        const dbUser = await db.user.findUnique({ where: { email: user.email } })
+        if (dbUser) {
+          token.role = dbUser.role
+          token.sub = dbUser.id
+        }
+      }
       return token
     },
     async session({ session, token }) {
-      // token.sub holds the user id (standard JWT subject)
       if (session.user && token.sub) {
         (session.user as any).id = token.sub
         ;(session.user as any).role = token.role

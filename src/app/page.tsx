@@ -44,6 +44,7 @@ import { CertLandingView } from "@/views/cert-landing"
 import { AdminCoursesView } from "@/views/admin-courses"
 import { AffiliateView } from "@/views/affiliate"
 import { PricingView } from "@/views/pricing"
+import { AdminSeoView } from "@/views/admin-seo"
 import { CourseDetailView } from "@/views/course-detail"
 import { LessonView } from "@/views/lesson-view"
 import { MyLearningView } from "@/views/my-learning"
@@ -142,6 +143,7 @@ function ViewRouter() {
       {view.name === "admin-courses" && <AdminCoursesView />}
       {view.name === "affiliate" && <AffiliateView />}
       {view.name === "pricing" && <PricingView />}
+      {view.name === "admin-seo" && <AdminSeoView />}
       {view.name === "course" && <CourseDetailView />}
       {view.name === "lesson" && <LessonView />}
       {view.name === "learning" && <MyLearningView />}

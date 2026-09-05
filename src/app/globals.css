@@ -847,6 +847,24 @@ a {
   scrollbar-width: none;
 }
 
+/* Explicit thin scrollbar for dense admin tables / lists.
+   Inherits the global ::-webkit-scrollbar shape but makes the
+   thumb slightly more visible inside scroll containers. */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: oklch(0.4 0.04 200 / 0.5);
+  border-radius: 3px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.55 0.1 180 / 0.7);
+}
+
 /* ============================================================
    Marquee — horizontal scrolling animation for cert ticker
    ============================================================ */

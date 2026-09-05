@@ -23,9 +23,12 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://academy.guardianx.cloud"),
-  title: "GuardianX Academy - Cyber Security Training Operating System",
+  title: {
+    default: "GuardianX Academy — Cyber Security Training Operating System",
+    template: "%s · GuardianX Academy",
+  },
   description:
-    "Master cybersecurity by actually breaking things. Real cyber range, hands-on labs, certification tracks, CTF arena, and career paths. Learn. Break. Defend. Prove.",
+    "Master cybersecurity by actually breaking things. Real cyber range, hands-on labs, certification tracks (CEH, CCNA, CCNP, RHCSA, WAPT, CISSP, CYBERARK-IAM & PAM), CTF arena, and career paths. Learn. Break. Defend. Prove.",
   keywords: [
     "cybersecurity",
     "ethical hacking",
@@ -33,38 +36,72 @@ export const metadata: Metadata = {
     "CTF",
     "CEH",
     "CISSP",
+    "CCNA",
+    "CCNP",
+    "RHCSA",
+    "WAPT",
+    "CYBERARK",
+    "IAM",
+    "PAM",
     "OSCP",
     "penetration testing",
     "SOC analyst",
     "security training",
     "hands-on labs",
+    "GuardianX Academy",
   ],
   authors: [{ name: "GuardianX" }],
+  creator: "GuardianX",
+  publisher: "GuardianX Academy",
   applicationName: "GuardianX Academy",
+  category: "Education",
   alternates: {
     canonical: "/",
   },
   openGraph: {
-    title: "GuardianX Academy - Cyber Security Training Operating System",
+    title: "GuardianX Academy — Cyber Security Training Operating System",
     description:
       "Master cybersecurity by actually breaking things. Real cyber range, hands-on labs, certification tracks, CTF arena, and career paths. Learn. Break. Defend. Prove.",
     url: "https://academy.guardianx.cloud",
     siteName: "GuardianX Academy",
     type: "website",
     locale: "en_US",
+    images: [
+      {
+        url: "/og-default.png",
+        width: 1200,
+        height: 630,
+        alt: "GuardianX Academy — Learn. Break. Defend. Prove.",
+        type: "image/png",
+      },
+      {
+        url: "/guardianx-logo-v2.png",
+        width: 512,
+        height: 512,
+        alt: "GuardianX Academy logo",
+        type: "image/png",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "GuardianX Academy - Cyber Security Training Operating System",
+    site: "@guardianx",
+    creator: "@guardianx",
+    title: "GuardianX Academy — Cyber Security Training Operating System",
     description:
       "Master cybersecurity by actually breaking things. Real cyber range, hands-on labs, certification tracks, CTF arena, and career paths. Learn. Break. Defend. Prove.",
+    images: ["/og-default.png"],
   },
   robots: {
     index: true,
     follow: true,
+    nocache: false,
     googleBot: {
       index: true,
       follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
     },
   },
   appleWebApp: {
@@ -74,6 +111,10 @@ export const metadata: Metadata = {
   },
   formatDetection: {
     telephone: false,
+  },
+  manifest: "/manifest.webmanifest",
+  verification: {
+    google: "guardianx-academy-google-site-verification",
   },
   icons: {
     icon: [

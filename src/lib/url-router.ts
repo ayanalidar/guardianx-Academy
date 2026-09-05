@@ -150,6 +150,7 @@ export function hashToView(hash: string): View {
     "admin-courses",
     "affiliate",
     "pricing",
+    "admin-seo",
   ]
   if (knownViews.includes(parts[0] as View["name"])) {
     return { name: parts[0] as View["name"] } as View

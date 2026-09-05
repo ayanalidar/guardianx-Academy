@@ -92,6 +92,7 @@ export type View =
   | { name: "admin-courses" }
   | { name: "affiliate" }
   | { name: "pricing" }
+  | { name: "admin-seo" }
 
 interface AppState {
   view: View

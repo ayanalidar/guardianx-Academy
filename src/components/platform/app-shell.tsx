@@ -105,6 +105,7 @@ const ADMIN_NAV: NavItem[] = [
   { label: "Platform Health", icon: Activity, view: { name: "admin-platform-health" } },
   { label: "Notifications", icon: Bell, view: { name: "admin-notifications" } },
   { label: "Coupons", icon: Ticket, view: { name: "admin-coupons" } },
+  { label: "SEO Optimization", icon: Search, view: { name: "admin-seo" } },
 ]
 
 // Keep legacy NAV_ITEMS for backwards compat (mobile menu etc)

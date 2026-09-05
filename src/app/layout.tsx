@@ -24,31 +24,35 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL("https://academy.guardianx.cloud"),
   title: {
-    default: "GuardianX Academy — Cyber Security Training Operating System",
+    default: "GuardianX Academy — Cyber Security Training in India | CEH, CISSP, CCNA",
     template: "%s · GuardianX Academy",
   },
   description:
-    "Master cybersecurity by actually breaking things. Real cyber range, hands-on labs, certification tracks (CEH, CCNA, CCNP, RHCSA, WAPT, CISSP, CYBERARK-IAM & PAM), CTF arena, and career paths. Learn. Break. Defend. Prove.",
+    "India's premier cybersecurity training platform. Live instructor-led courses for CEH, CISSP, CCNA, CCNP, RHCSA, WAPT, OSCP & CyberArk PAM. Hands-on labs, cyber range, CTF arena, proctored exams, and verifiable certifications. Serving students, professionals & institutions across India including Jammu & Kashmir.",
   keywords: [
-    "cybersecurity",
-    "ethical hacking",
-    "cyber range",
-    "CTF",
-    "CEH",
-    "CISSP",
-    "CCNA",
-    "CCNP",
-    "RHCSA",
-    "WAPT",
-    "CYBERARK",
-    "IAM",
-    "PAM",
-    "OSCP",
-    "penetration testing",
-    "SOC analyst",
-    "security training",
-    "hands-on labs",
+    "cybersecurity training India",
+    "cyber security training Jammu Kashmir",
+    "ethical hacking course India",
+    "CEH certification India",
+    "CISSP training India",
+    "CCNA course India",
+    "CCNP training",
+    "RHCSA certification",
+    "WAPT certification",
+    "OSCP training India",
+    "CyberArk PAM training",
+    "cyber range India",
+    "hands-on labs cybersecurity",
+    "CTF arena India",
+    "penetration testing course",
+    "SOC analyst training",
+    "security training online India",
+    "cyber security certification India",
     "GuardianX Academy",
+    "cyber security Jammu",
+    "cyber security Kashmir",
+    "ethical hacking Jammu Kashmir",
+    "cyber security course J&K",
   ],
   authors: [{ name: "GuardianX" }],
   creator: "GuardianX",
@@ -160,6 +164,10 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="GuardianX" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-touch-fullscreen" content="yes" />
+        <meta name="geo.region" content="IN-JK" />
+        <meta name="geo.placename" content="Jammu and Kashmir, India" />
+        <meta name="geo.position" content="34.0837;74.7973" />
+        <meta name="ICBM" content="34.0837, 74.7973" />
         <link rel="icon" type="image/png" sizes="32x32" href="/guardianx-logo-v2.png" />
         <link rel="icon" type="image/png" sizes="192x192" href="/guardianx-logo-v2.png" />
         <link rel="icon" type="image/png" sizes="512x512" href="/guardianx-logo-v2.png" />
@@ -169,6 +177,96 @@ export default function RootLayout({
         <link rel="apple-touch-icon" sizes="512x512" href="/guardianx-logo-v2.png" />
         <link rel="shortcut icon" href="/guardianx-logo-v2.png" />
         <link rel="mask-icon" href="/guardianx-logo-v2.png" color="#7c3aed" />
+        {/* JSON-LD: Organization */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "EducationalOrganization",
+              name: "GuardianX Academy",
+              description: "India's premier cybersecurity training platform. Live instructor-led courses for CEH, CISSP, CCNA, CCNP, RHCSA, WAPT, OSCP & CyberArk PAM. Hands-on labs, cyber range, CTF arena, proctored exams, and verifiable certifications.",
+              url: "https://academy.guardianx.cloud",
+              logo: "https://academy.guardianx.cloud/guardianx-logo-v2.png",
+              sameAs: [
+                "https://www.linkedin.com/company/guardianx-academy",
+              ],
+              address: {
+                "@type": "PostalAddress",
+                addressLocality: "Jammu",
+                addressRegion: "Jammu and Kashmir",
+                addressCountry: "IN",
+              },
+              contactPoint: {
+                "@type": "ContactPoint",
+                contactType: "customer service",
+                email: "academy@guardianx.in",
+                availableLanguage: "English",
+              },
+            }),
+          }}
+        />
+        {/* JSON-LD: WebSite with Search Action */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              name: "GuardianX Academy",
+              url: "https://academy.guardianx.cloud",
+              potentialAction: {
+                "@type": "SearchAction",
+                target: "https://academy.guardianx.cloud/#/catalog?q={search_term_string}",
+                "query-input": "required name=search_term_string",
+              },
+            }),
+          }}
+        />
+        {/* JSON-LD: FAQ Page */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "FAQPage",
+              mainEntity: [
+                {
+                  "@type": "Question",
+                  name: "What cybersecurity certifications does GuardianX Academy offer?",
+                  acceptedAnswer: {
+                    "@type": "Answer",
+                    text: "GuardianX Academy offers certification training for CEH (Certified Ethical Hacker), CISSP, CCNA, CCNP, RHCSA, WAPT, OSCP, CyberArk PAM, Security+, and more. Each course includes live instructor-led training, hands-on labs, study materials, mock exams, and proctored certification exams.",
+                  },
+                },
+                {
+                  "@type": "Question",
+                  name: "Is GuardianX Academy available in Jammu and Kashmir?",
+                  acceptedAnswer: {
+                    "@type": "Answer",
+                    text: "Yes, GuardianX Academy provides online cybersecurity training across all of India, including Jammu and Kashmir. Our live instructor-led batches are scheduled at convenient times for students and working professionals in J&K. We also offer on-campus training programs for schools, colleges, and universities in the region.",
+                  },
+                },
+                {
+                  "@type": "Question",
+                  name: "How much do cybersecurity courses cost in India?",
+                  acceptedAnswer: {
+                    "@type": "Answer",
+                    text: "GuardianX Academy offers flexible pricing with free and paid tiers. Certification courses like CEH, CISSP, CCNA range from affordable batch enrollments to premium 1-on-1 instructor sessions. We also offer subscription plans (Free, Pro, Enterprise) for unlimited access. Coupon codes and discounts are available.",
+                  },
+                },
+                {
+                  "@type": "Question",
+                  name: "Do GuardianX certifications have verification?",
+                  acceptedAnswer: {
+                    "@type": "Answer",
+                    text: "Yes, every GuardianX credential is cryptographically signed and publicly verifiable at academy.guardianx.cloud/verify. Employers and recruiters can verify any certificate by entering the credential ID. Certificate revocation and status changes are fully auditable.",
+                  },
+                },
+              ],
+            }),
+          }}
+        />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${jetbrainsMono.variable} antialiased bg-background text-foreground`}

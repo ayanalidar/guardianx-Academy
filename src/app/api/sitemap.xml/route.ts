@@ -99,25 +99,35 @@ export const GET = withErrorHandler(async () => {
     });
   }
 
-  // 2. Dynamic content (parallel fetch — Neon handles it fine)
-  const [courses, blogPosts, events, certifications] = await Promise.all([
-    db.course.findMany({
-      where: { published: true },
-      select: { slug: true, title: true, updatedAt: true },
-    }),
-    db.blogPost.findMany({
-      where: { published: true },
-      select: { slug: true, title: true, updatedAt: true },
-    }),
-    db.event.findMany({
-      where: { published: true },
-      select: { slug: true, title: true, updatedAt: true },
-    }),
-    db.guardianCertification.findMany({
-      where: { published: true },
-      select: { slug: true, name: true, updatedAt: true },
-    }),
-  ]);
+  // 2. Dynamic content — wrapped in try/catch so the sitemap still works
+  //    even if the DB has issues. Static routes are always included.
+  let courses: any[] = []
+  let blogPosts: any[] = []
+  let events: any[] = []
+  let certifications: any[] = []
+  try {
+    [courses, blogPosts, events, certifications] = await Promise.all([
+      db.course.findMany({
+        where: { published: true },
+        select: { slug: true, title: true, updatedAt: true },
+      }).catch(() => []),
+      db.blogPost.findMany({
+        where: { published: true },
+        select: { slug: true, title: true, updatedAt: true },
+      }).catch(() => []),
+      db.event.findMany({
+        where: { published: true },
+        select: { slug: true, title: true, updatedAt: true },
+      }).catch(() => []),
+      db.guardianCertification.findMany({
+        where: { published: true },
+        select: { slug: true, name: true, updatedAt: true },
+      }).catch(() => []),
+    ])
+  } catch (e) {
+    // DB failed — still return the static routes
+    console.error("[sitemap] DB query failed, returning static routes only")
+  }
 
   // 3. Append dynamic entries
   for (const c of courses) {

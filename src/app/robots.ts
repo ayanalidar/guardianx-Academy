@@ -26,7 +26,7 @@ export default function robots(): MetadataRoute.Robots {
         ],
       },
     ],
-    sitemap: "https://academy.guardianx.cloud/api/sitemap.xml",
+    sitemap: "https://academy.guardianx.cloud/sitemap.xml",
     host: "https://academy.guardianx.cloud",
   }
 }

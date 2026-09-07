@@ -1,9 +1,5 @@
 import type { MetadataRoute } from "next"
 
-/**
- * Next.js native robots.txt — generates /robots.txt
- * This overrides the /api/robots.txt route for the root path.
- */
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [

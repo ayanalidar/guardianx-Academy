@@ -5336,3 +5336,53 @@ Stage Summary:
   The build will succeed without these (sitemap queries are caught), but the runtime app needs DATABASE_URL to function.
 - **Production domain status**: `https://academy.guardianx.cloud/` returns 200 (the last successful deployment is still serving; the new build triggered by this push should replace it once it completes).
 
+
+---
+
+## HERO LOGO DOWNLOADABLE HTML (session #4)
+
+Task ID: hero-logo-1
+Agent: main
+Task: User asked for "hero logo in html file downloadable".
+
+Work Log:
+- Explored the project's existing brand assets to match the design language:
+  - `public/logo.svg` — the GuardianX logo mark: a dark rounded square with a stylized white "Z" formed by 3 paths, with a `z-breathe` animation (opacity pulse every 2.5s).
+  - Brand primary color: `oklch(0.6 0.2 295)` — a violet/purple.
+  - Premium gradient (from `text-gradient-premium` in globals.css): `linear-gradient(135deg, oklch(0.95 0.004 270) 0%, oklch(0.7 0.2 295) 60%, oklch(0.68 0.12 200) 100%)` — light → violet → cyan.
+  - Brand name: "GuardianX Academy", tagline: "Master cybersecurity with expert instructors", subtitle: "Cyber Security Training in India".
+  - Cert tracks: CEH, CISSP, CCNA, CCNP, RHCSA, OSCP, CISM, WAPT, Security+, CyberArk PAM.
+- Created `public/guardianx-hero-logo.html` — a self-contained, zero-dependency HTML page (20.8 KB, 610 lines) that showcases the hero logo and provides 3 download options:
+  1. **Download this HTML** — saves the entire page as `guardianx-hero-logo.html` via Blob + `<a download>`.
+  2. **Download SVG logo** — exports the logo mark as `guardianx-logo.svg` (with the breathe animation CSS embedded).
+  3. **Download PNG (1024px)** — rasterizes the SVG to a 1024×1024 PNG via canvas `toBlob()`.
+- Page contents:
+  - Animated Z logo mark (140px) with pulsing violet glow behind it.
+  - "GuardianX" wordmark (clamp 2.5–3.75rem) with the premium gradient on the "X".
+  - "ACADEMY" badge (monospace, letter-spacing 0.35em, cyan border).
+  - Tagline with gradient "cybersecurity" accent.
+  - Subtitle line with cert track list.
+  - 10 certification pills (monospace, hover turns them violet).
+  - 4 logo variant cards: Dark (#0a0a0f), Light (#f8fafc with dark Z), Violet (gradient), Gradient (violet→cyan).
+  - Footer note explaining usage.
+  - Atmospheric background: radial violet + cyan glows, subtle grid with center mask.
+- Design details:
+  - Backdrop-filter blur on the hero stage card.
+  - Gradient border glow behind the hero stage (pseudo-element with blur).
+  - `prefers-reduced-motion` support — disables breathe + pulse animations.
+  - Responsive: mobile padding + smaller logo (96px) on <640px.
+  - Accessible: `role="img"` + `aria-label` on the logo SVG, `aria-label`s on regions, semantic `<main>`/`<section>`/`<h1>`.
+- Verified via agent-browser:
+  - Page renders at `http://localhost:3000/guardianx-hero-logo.html` with 200 status.
+  - Full accessibility snapshot confirms all elements present: logo image, "GuardianX" h1, ACADEMY badge, tagline, subtitle, 10 cert pills, 3 download buttons, 4 variant cards.
+  - All 3 download buttons click successfully with 0 console errors and 0 page errors.
+  - Full page screenshot is 391KB (rich, fully-rendered content).
+
+Stage Summary:
+- **1 file created**: `public/guardianx-hero-logo.html` (610 lines, 20.8 KB, self-contained).
+- **1 commit pushed**: `bd991ca` — feat: add downloadable GuardianX hero logo HTML page.
+- **Accessible at**: `https://academy.guardianx.cloud/guardianx-hero-logo.html` (once Vercel builds + deploys).
+- **3 download options**: HTML (self-save), SVG (logo mark), PNG (1024×1024 rasterized via canvas).
+- **0 external dependencies** — all CSS, SVG, and JS inline. Works offline.
+- **Verified end-to-end** via agent-browser: renders correctly, all buttons functional, 0 errors.
+

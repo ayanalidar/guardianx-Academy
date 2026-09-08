@@ -49,7 +49,10 @@ const LEVEL_STYLES: Record<string, { badge: string; dot: string }> = {
   Advanced: { badge: "border-violet-500/40 text-violet-300 bg-violet-500/10", dot: "bg-violet-400" },
 }
 
-/* Career Path Selector - interactive filter shortcuts */
+/* Career Path Selector - interactive filter shortcuts.
+ * Each path aggregates one or more underlying course categories so the count
+ * shown on the card reflects all relevant courses (e.g. "Offensive Security"
+ * includes both Ethical Hacking and Penetration Testing tracks). */
 const CAREER_PATHS = [
   {
     title: "Offensive Security",
@@ -59,7 +62,7 @@ const CAREER_PATHS = [
     tint: "bg-violet-500/10",
     barColor: "bg-violet-500",
     glow: "shadow-[0_0_30px_-8px] shadow-violet-500/30",
-    categoryFilter: "Ethical Hacking",
+    categories: ["Ethical Hacking", "Penetration Testing", "Web Security"],
   },
   {
     title: "Defensive Security",
@@ -69,7 +72,7 @@ const CAREER_PATHS = [
     tint: "bg-cyan-500/10",
     barColor: "bg-cyan-500",
     glow: "shadow-[0_0_30px_-8px] shadow-cyan-500/30",
-    categoryFilter: "Networking",
+    categories: ["Networking", "Network Security", "Incident Response", "Malware Analysis", "Forensics"],
   },
   {
     title: "Cloud & Infrastructure",
@@ -79,7 +82,7 @@ const CAREER_PATHS = [
     tint: "bg-amber-500/10",
     barColor: "bg-amber-500",
     glow: "shadow-[0_0_30px_-8px] shadow-amber-500/30",
-    categoryFilter: "System Administration",
+    categories: ["System Administration", "Cloud Security"],
   },
   {
     title: "Governance & Risk",
@@ -89,9 +92,9 @@ const CAREER_PATHS = [
     tint: "bg-emerald-500/10",
     barColor: "bg-emerald-500",
     glow: "shadow-[0_0_30px_-8px] shadow-emerald-500/30",
-    categoryFilter: "Identity & Access",
+    categories: ["Identity & Access", "Security Management"],
   },
-]
+] as const
 
 /* Certification ticker - scrolling marquee */
 const CERT_TICKER = [
@@ -182,15 +185,15 @@ export function CourseCatalogView() {
             <p className="text-[10px] font-mono text-cyan-400 tracking-[0.25em] mb-3">CHOOSE YOUR PATH</p>
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {CAREER_PATHS.map((path, i) => {
-                const isActive = category === path.categoryFilter
+                const isActive = category !== "All" && path.categories.includes(category as never)
                 const Icon = path.icon
-                const count = path.categoryFilter === "All"
-                  ? courses.length
-                  : courses.filter(c => c.category === path.categoryFilter).length
+                const count = isLoading
+                  ? null
+                  : courses.filter(c => path.categories.includes(c.category as never)).length
                 return (
                   <button
                     key={path.title}
-                    onClick={() => setCategory(isActive ? "All" : path.categoryFilter)}
+                    onClick={() => setCategory(isActive ? "All" : path.categories[0])}
                     className={cn(
                       "group relative text-left rounded-xl border p-4 transition-all duration-300 overflow-hidden",
                       isActive
@@ -207,7 +210,7 @@ export function CourseCatalogView() {
                         <Icon className={cn("h-5 w-5", path.color)} />
                       </div>
                       <span className={cn("text-[10px] font-mono tabular-nums", path.color)}>
-                        {count} {count === 1 ? "COURSE" : "COURSES"}
+                        {count === null ? "…" : `${count} ${count === 1 ? "COURSE" : "COURSES"}`}
                       </span>
                     </div>
                     <h3 className="font-semibold text-sm mb-1">{path.title}</h3>

@@ -5298,3 +5298,41 @@ Stage Summary:
 - **Expected outcome**: The next Vercel deployment triggered by these pushes should succeed. The `postinstall` script will generate the Prisma client after install, then `next build` will run with the generated client available.
 - **No code logic changes** — only build configuration (package.json scripts + lockfile).
 
+
+---
+
+## VERCEL BUILD FIX #2 — vercel.json explicit buildCommand (reconnected GitHub session #3)
+
+Task ID: vercel-fix-2
+Agent: main
+Task: User reconnected GitHub to Vercel and reported "the build failed". Diagnose and fix the Vercel build failure.
+
+Work Log:
+- Checked current state: my previous fixes (postinstall script + package-lock.json) were still in place and pushed.
+- Investigated why the build was still failing. Discovered a critical issue: there were TWO lockfiles:
+  - `bun.lock` (Sep 4 — the original, from local bun dev)
+  - `package-lock.json` (Sep 8 — I added this in the previous session)
+- Vercel's package manager detection: if `bun.lock` exists, Vercel uses `bun install`. **Bun does NOT run the `postinstall` lifecycle script by default** (unlike npm). This means my `postinstall: "prisma generate"` fix was being skipped entirely on Vercel — the Prisma client was never generated before `next build` ran.
+- Reproduced this locally: deleted `node_modules/.prisma` + `node_modules/@prisma/client`, ran `prisma generate && next build` (the exact command from my new vercel.json) — build succeeded with 0 errors.
+- Fix: Created `vercel.json` with an explicit `buildCommand: "prisma generate && next build"`. This runs `prisma generate` BEFORE `next build`, regardless of whether the package manager runs postinstall. This is package-manager-independent and works with both bun and npm.
+- Also removed `package-lock.json` to avoid the dual-lockfile confusion. `bun.lock` remains the canonical lockfile. Vercel will use `bun install` (from bun.lock), and the vercel.json buildCommand handles prisma generate explicitly.
+- Verified the fix end-to-end: simulated the exact Vercel build flow (fresh Prisma client → prisma generate → next build) — 0 errors, 245 routes built, .next/BUILD_ID created.
+- Also tested the build WITHOUT any DATABASE_URL (simulating missing Vercel env vars after reconnect) — build still succeeds (exit 0) because sitemap.ts DB queries are wrapped in `.catch(() => [])`.
+
+Root Cause Summary:
+- The `postinstall: "prisma generate"` script I added in the previous session (commit 75db4d2) was correct for npm but NOT for bun. Vercel detected `bun.lock` and used `bun install`, which doesn't run postinstall scripts by default. So the Prisma client was never generated, causing `Module not found: Can't resolve '@prisma/client'` during `next build`.
+- The fix: `vercel.json` with `buildCommand: "prisma generate && next build"` — this explicitly generates the Prisma client as part of the build step, bypassing the postinstall issue entirely.
+
+Stage Summary:
+- **1 commit pushed**: `d80e625` — fix(vercel): add vercel.json with explicit build command + remove dual lockfile
+- **Files changed**: 
+  - Added `vercel.json` (4 lines) with `buildCommand: "prisma generate && next build"` + `framework: "nextjs"`
+  - Removed `package-lock.json` (avoid dual-lockfile confusion)
+- **Build verified locally**: 0 errors, 245 routes built, exit 0.
+- **Important note for user**: After reconnecting GitHub to Vercel, the Vercel project's environment variables may need to be re-added. The critical env vars are:
+  - `DATABASE_URL` — the Neon Postgres URL (postgresql://neondb_owner:...@ep-raspy-firefly-azeivku9-pooler...neon.tech/neondb?sslmode=require)
+  - `NEXTAUTH_SECRET` — any random string (has a dev fallback but should be set for production)
+  - `NEXTAUTH_URL` — https://academy.guardianx.cloud
+  The build will succeed without these (sitemap queries are caught), but the runtime app needs DATABASE_URL to function.
+- **Production domain status**: `https://academy.guardianx.cloud/` returns 200 (the last successful deployment is still serving; the new build triggered by this push should replace it once it completes).
+

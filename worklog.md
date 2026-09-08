@@ -5261,3 +5261,40 @@ Stage Summary:
 - **0 lint errors**, 0 new tsc errors, 0 runtime errors in dev log.
 - **Known stable state**: the dev server dies between separate bash tool invocations (sandbox limitation — background processes don't survive across calls). Workaround: start dev + run all verification in a single bash command. This is a tooling constraint, not a code issue.
 
+
+---
+
+## VERCEL BUILD FIX — postinstall + package-lock (GitHub reconnected session #2)
+
+Task ID: vercel-fix-1
+Agent: main
+Task: User reported "https://vercel.com/ayan-arham/guardianx-academy all latest deployes are with error" — diagnose and fix the Vercel build failures.
+
+Work Log:
+- Investigated the Vercel deployment failures by reproducing the build locally.
+- First ran `next build` locally with the existing local Prisma client — it succeeded, which was misleading because the local `node_modules/.prisma/client/` was already generated from prior dev work.
+- To simulate Vercel's fresh install (where `node_modules` is installed from scratch), deleted `node_modules/.prisma` + `node_modules/@prisma/client` and re-ran `next build`. This reproduced the exact Vercel error: `Module not found: Can't resolve '@prisma/client'`.
+- Root cause: The `package.json` had no `postinstall` script. On Vercel, after `npm/bun install` runs, the `@prisma/client` package exists but has no generated client code. The Prisma client must be generated via `prisma generate` before `next build` can import it. Locally this worked because `prisma generate` had been run manually during development, and the generated client persists in `node_modules/.prisma/`.
+- Fix 1: Added `"postinstall": "prisma generate"` to the `scripts` section of `package.json`. Vercel runs this automatically after install, so the Prisma client is generated before `next build` runs.
+- Fix 2: Committed `package-lock.json` (was previously untracked) to lock all dependency versions for reproducible Vercel builds. This prevents transitive dependency drift from causing build failures.
+- Verified the fix by simulating the exact Vercel build flow:
+  1. Deleted `node_modules/.prisma` + `node_modules/@prisma/client` (simulate fresh install)
+  2. Ran `prisma generate` (simulate postinstall)
+  3. Ran `next build` (what Vercel runs)
+  4. Build succeeded with 0 errors, 245 routes built, `.next/BUILD_ID` created.
+- Also confirmed:
+  - `src/lib/db.ts` resolves DATABASE_URL correctly on Vercel (uses `process.env.DATABASE_URL` which Vercel injects; the `.env` file read fallback is dev-only and safely no-ops on Vercel).
+  - `src/app/sitemap.ts` (static `○`) does DB calls at build time but wraps them in `.catch(() => [])` so they won't crash the build even if the DB is unreachable — and with the Prisma client generated, the import itself won't fail.
+  - `next.config.ts` has `typescript: { ignoreBuildErrors: true }` so the pre-existing 179 tsc errors don't block the Vercel build (only ESLint errors would, and there are 0).
+  - The `start` script (`bun .next/standalone/server.js`) is not used by Vercel — Vercel uses its own serverless runtime for Next.js apps — so the missing `output: 'standalone'` config doesn't affect Vercel deployments.
+
+Stage Summary:
+- **2 commits pushed to GitHub**:
+  1. `75db4d2` — fix(vercel): add postinstall script to generate Prisma client
+  2. `21da50d` — chore: add package-lock.json for reproducible Vercel builds
+- **Root cause identified**: Missing `postinstall: "prisma generate"` script — Vercel's fresh install had no generated Prisma client, causing `Module not found: Can't resolve '@prisma/client'` during `next build`.
+- **Fix verified end-to-end**: Simulated the exact Vercel build flow locally (fresh install → prisma generate → next build) and confirmed 0 errors, 245 routes built, BUILD_ID created.
+- **Production domain status**: `https://academy.guardianx.cloud/` returns 200 (working). The Vercel deployment URL `https://guardianx-academy-ayan-arham.vercel.app/` returns 302 (redirect to login — expected for the Vercel app alias before the custom domain is attached).
+- **Expected outcome**: The next Vercel deployment triggered by these pushes should succeed. The `postinstall` script will generate the Prisma client after install, then `next build` will run with the generated client available.
+- **No code logic changes** — only build configuration (package.json scripts + lockfile).
+

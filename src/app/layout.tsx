@@ -217,7 +217,7 @@ export default function RootLayout({
               url: "https://academy.guardianx.cloud",
               potentialAction: {
                 "@type": "SearchAction",
-                target: "https://academy.guardianx.cloud/#/catalog?q={search_term_string}",
+                target: "https://academy.guardianx.cloud/courses?q={search_term_string}",
                 "query-input": "required name=search_term_string",
               },
             }),

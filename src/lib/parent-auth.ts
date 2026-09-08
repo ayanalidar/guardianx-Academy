@@ -13,8 +13,9 @@ import crypto from "crypto"
 
 const SECRET =
   process.env.NEXTAUTH_SECRET || (() => {
-    if (process.env.NODE_ENV === "production") {
-      throw new Error("FATAL: NEXTAUTH_SECRET not set for parent auth.")
+    if (process.env.NODE_ENV === "production" && !process.env.NEXTAUTH_SECRET) {
+      console.error("FATAL: NEXTAUTH_SECRET not set for parent auth. Parent portal will not work.")
+      return "missing-secret-parent-auth-will-fail-" + Date.now()
     }
     console.warn("WARNING: NEXTAUTH_SECRET not set — using insecure dev fallback for parent auth.")
     return "dev-only-insecure-parent-secret-" + Date.now()

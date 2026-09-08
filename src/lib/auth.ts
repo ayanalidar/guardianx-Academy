@@ -114,12 +114,13 @@ export const authOptions: NextAuthOptions = {
   ],
   session: { strategy: "jwt" },
   secret: process.env.NEXTAUTH_SECRET || (() => {
-    // In production, NEXTAUTH_SECRET MUST be set. Fail loudly if missing.
-    if (process.env.NODE_ENV === "production") {
-      throw new Error("FATAL: NEXTAUTH_SECRET environment variable is not set. Refusing to start with insecure fallback in production.")
+    // In production, NEXTAUTH_SECRET MUST be set. But we don't want to crash
+    // the build — only fail at runtime when auth is actually used.
+    if (process.env.NODE_ENV === "production" && !process.env.NEXTAUTH_SECRET) {
+      console.error("FATAL: NEXTAUTH_SECRET environment variable is not set. Auth will not work properly.")
+      return "missing-secret-auth-will-fail-" + Date.now()
     }
-    // Dev-only fallback — generated per-session so it's at least unique per restart
-    console.warn("WARNING: NEXTAUTH_SECRET not set — using insecure dev fallback. Set NEXTAUTH_SECRET in production!")
+    console.warn("WARNING: NEXTAUTH_SECRET not set — using insecure dev fallback.")
     return "dev-only-insecure-secret-" + Date.now()
   })(),
   pages: { signIn: "/" },

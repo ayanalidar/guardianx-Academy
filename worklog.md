@@ -5444,3 +5444,40 @@ Stage Summary:
 - **Accessible via**: INSTITUTIONS mega-menu → "Open Schooling" OR direct URL `/institutions/open-schooling` OR hash URL `#/institutions-open-schooling`.
 - **0 lint errors**, 0 runtime errors, 0 new tsc errors.
 
+
+---
+
+## OPEN SCHOOLING — separate tab + remove BOSSE mentions (session #6)
+
+Task ID: open-schooling-2
+Agent: main
+Task: User requested two changes: (1) Open Schooling link should open in a separate browser tab with detailed info, (2) remove all BOSSE mentions — present as generic "Open Schooling".
+
+Work Log:
+- Added optional `external?: boolean` flag to the `MegaMenuItem` interface in `src/components/platform/public-header.tsx`.
+- Marked the Open Schooling item with `external: true` in the INSTITUTIONS mega-menu. Updated its description from "Complete 10th & 12th via BOSSE" → "Complete 10th & 12th through open schooling".
+- Added `handleExternalNavigate` helper that uses `window.open(url, "_blank", "noopener,noreferrer")` to open the page in a new browser tab. URL is built deterministically from the view name: `institutions-open-schooling` → `/institutions/open-schooling`.
+- Added a unified `onItemClick` helper that picks internal navigation vs external based on the item flag. Both the mobile accordion menu and the desktop dropdown menu now use `onItemClick` instead of `handleNavigate` directly.
+- Added an `ExternalLink` icon (from lucide-react) next to the title of external menu items so users get a visual cue that the link opens in a new tab. Imported `ExternalLink` and rendered it inline with `item.external && <ExternalLink className="h-3 w-3 ...">`.
+- Removed all BOSSE mentions from source (15 replacements across 6 files):
+  - `src/views/open-schooling.tsx` (10 mentions): hero eyebrow "OPEN SCHOOLING · BOSSE" → "OPEN SCHOOLING", 8 FAQ Q&A rewritten to reference "open schooling" / "the board" instead of "BOSSE", form subtitle "complete your BOSSE registration" → "complete your registration", message placeholder "NIOS vs BOSSE preference" → "board preference", consent text "your BOSSE registration" → "your open schooling registration".
+  - `src/app/institutions/open-schooling/page.tsx`: title "Complete 10th & 12th via BOSSE" → "Complete 10th & 12th"; description rewritten to remove "BOSSE — the Board of Open Schooling & Skill Education".
+  - `src/views/admin-open-schooling-leads.tsx`: subtitle "via BOSSE" → "through open schooling".
+  - `src/app/api/open-schooling/leads/route.ts`: header comment "via BOSSE" → "via open schooling".
+  - `prisma/schema.prisma`: OpenSchoolingLead model comments "BOSSE" → "open schooling".
+- Verified 0 BOSSE mentions remain in source via `grep -rniE "bosse" src/ prisma/schema.prisma` → empty.
+- Verified end-to-end:
+  - `/institutions/open-schooling → 200`
+  - Page title: "Open Schooling — Complete 10th & 12th | GuardianX Academy" (no BOSSE)
+  - Page content: "Open Schooling" appears 10×, "BOSSE" appears 0×
+  - POST /api/open-schooling/leads → 201 with lead ID (form still works)
+  - Lint: 0 errors (1 pre-existing warning in src/lib/db.ts)
+- Note: The "open in new tab" behavior uses `window.open` which is standard browser API and works reliably in production. The agent-browser could not fully verify the new-tab behavior in the sandbox because the dev server dies between separate bash tool invocations (known sandbox limitation) — but the underlying JS + URL routing is correct and confirmed via curl (200) + page metadata check.
+
+Stage Summary:
+- **6 modified files**, 0 new files.
+- **1 commit pushed**: `cb338e8` — feat(open-schooling): open in separate tab + remove BOSSE mentions
+- **Open in separate tab**: implemented via `external: true` flag on the menu item + `window.open(url, "_blank", "noopener,noreferrer")` + ExternalLink icon visual cue.
+- **BOSSE removed**: 15 mentions across 6 files (view, route page, admin view, API, schema comments) — all replaced with generic "open schooling" / "the board" phrasing. 0 BOSSE mentions remain in source.
+- **0 lint errors**, 0 runtime errors in dev log.
+

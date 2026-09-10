@@ -5386,3 +5386,61 @@ Stage Summary:
 - **0 external dependencies** — all CSS, SVG, and JS inline. Works offline.
 - **Verified end-to-end** via agent-browser: renders correctly, all buttons functional, 0 errors.
 
+
+---
+
+## OPEN SCHOOLING TAB — BOSSE 10th & 12th Registration (session #5)
+
+Task ID: open-schooling-1
+Agent: main
+Task: User asked to add a new "Open Schooling" tab where students can register for 10th & 12th, referencing https://www.bosse.ac.in/ (BOSSE — Board of Open Schooling & Skill Education). User accepted my recommendation: add to INSTITUTIONS mega-menu + lead-capture form (no payment) + BOSSE focus + GuardianX as facilitation center.
+
+Work Log:
+- Researched BOSSE via web search: recognized by NEP 2020 + COBSE, valid for govt jobs + higher ed, 2 exam sessions (Jan & Jul), fees ~₹1000 registration + ₹2000/subject (10th) or ₹2500/subject (12th) + exam fees, 5-year validity, DigiLocker certificates. Required docs: Aadhaar, previous marksheet, photo, address proof, DOB proof.
+- Added `OpenSchoolingLead` model to prisma/schema.prisma (personal details, course 10th/12th, status pipeline NEW→CONTACTED→ENROLLED→LOST, admin notes, source, timestamps + indexes on status/course/createdAt). Pushed to Neon Postgres via `prisma db push` with inline DATABASE_URL.
+- Created public API: `POST /api/open-schooling/leads` — validates name (min 2 chars), email (regex), phone (10-digit Indian mobile), course (10th|12th). In-memory rate limit (5 submissions per 10 min per IP). Returns 201 + lead ID on success, 400 on validation error, 429 on rate limit.
+- Created admin APIs (ADMIN-only, 401 for unauthorized):
+  - `GET /api/admin/open-schooling/leads` — list with filters (status, course, search across name/email/phone) + groupBy status counts
+  - `PATCH /api/admin/open-schooling/leads/[id]` — update status + admin notes
+  - `DELETE /api/admin/open-schooling/leads/[id]` — hard-delete (with confirm in UI)
+- Created public view `src/views/open-schooling.tsx` (~600 lines, 7 sections):
+  1. Hero — "Complete your 10th & 12th through Open Schooling" + 3 CTAs + recognition badges (NEP 2020 / COBSE / DigiLocker)
+  2. Who it's for — 4 cards (school dropouts, working professionals, sports persons/artists, failed regular boards)
+  3. How it works — 4 numbered steps with connecting line (Register → Study → Exam → Certificate)
+  4. Courses & fees — 10-row comparison table (10th vs 12th: eligibility, min age, qualification, subjects, registration fee, per-subject fee, exam fee, sessions, validity, recognition)
+  5. Documents required — 5-card checklist (Aadhaar, marksheet, photo, address proof, DOB proof)
+  6. FAQ — 8-question accordion (govt jobs, JEE/NEET, failing subjects, changing subjects, certificate delivery, missing docs, class attendance, NIOS alternative)
+  7. Registration form — course toggle (10th/12th visual buttons), name, email, phone, DOB, city, state, qualification select, message textarea. POSTs to /api/open-schooling/leads. Shows success + error banners. Rate-limit aware.
+- Created admin view `src/views/admin-open-schooling-leads.tsx` (~400 lines):
+  - 4 status stat cards (NEW/CONTACTED/ENROLLED/LOST) with counts from groupBy
+  - Search by name/email/phone + filter by status + filter by course
+  - Auto-refresh every 30s so new leads appear without manual reload
+  - Lead list with avatar, name, status badge (colored dot), email/phone/city, course badge, qualification, relative timestamp
+  - Detail dialog: all lead info (email, phone, course, DOB, city, state, qualification, source, student message) + 4-button status updater + admin notes textarea (5000 char limit) + delete with confirm
+- Created route page `src/app/institutions/open-schooling/page.tsx` — static metadata (SEO title + description) + PublicPageShell wrapper.
+- Wiring (5 files modified):
+  - `src/store/app-store.ts` — added `institutions-open-schooling` + `admin-open-schooling-leads` to View union
+  - `src/lib/url-router.ts` — added both to knownViews allowlist
+  - `src/app/page.tsx` — imported both views + added render conditionals
+  - `src/components/platform/public-header.tsx` — added GraduationCap import + "Open Schooling" as 4th item in INSTITUTIONS mega-menu (icon: GraduationCap, desc: "Complete 10th & 12th via BOSSE")
+  - `src/components/platform/app-shell.tsx` — added "Open Schooling Leads" to ADMIN_NAV (icon: GraduationCap, after SEO Optimization)
+- Verified end-to-end:
+  - `GET /institutions/open-schooling → 200` (direct URL works)
+  - `POST /api/open-schooling/leads → 201` with `{"ok":true,"id":"cmtv6e3s5..."}` (form submission works)
+  - `POST` with invalid email → 400 "A valid email is required"
+  - `POST` with invalid course → 400 "Course must be '10th' or '12th'"
+  - `GET /api/admin/open-schooling/leads → 401` (admin auth works)
+  - Agent-browser snapshot confirmed all 7 sections render: hero h1 "Complete your 10th & 12th through Open Schooling", all 3 hero CTAs (Register for 10th / Register for 12th / Talk to a counsellor), "Built for every kind of learner", "Four simple steps to your certificate", "Compare 10th vs 12th", "Keep these ready", "Questions, answered", recognition badges (NEP 2020 / COBSE / DigiLocker), all 4 audience cards, all 4 step headings
+- Lint: 0 errors (1 pre-existing warning in src/lib/db.ts — same baseline as every prior agent)
+- Dev log: 0 errors
+
+Stage Summary:
+- **6 new files** + **6 modified files** (wiring).
+- **3 new API routes** (1 public POST + 3 admin: GET list / PATCH update / DELETE) + **1 new DB model** (OpenSchoolingLead) + **2 new views** (public open-schooling + admin leads).
+- **1 commit pushed**: `18e7c54` — feat: add Open Schooling tab — BOSSE 10th & 12th registration
+- **All 7 public sections shipped**: hero, who it's for, how it works, courses & fees comparison, documents required, FAQ, registration form.
+- **Admin leads dashboard**: full CRUD (list/search/filter + update status/notes + delete) with 4-status pipeline.
+- **Lead-capture flow**: student fills form → lead saved to DB → admin sees it in dashboard (auto-refresh 30s) → admin contacts student to complete BOSSE registration + collect documents + take payment manually.
+- **Accessible via**: INSTITUTIONS mega-menu → "Open Schooling" OR direct URL `/institutions/open-schooling` OR hash URL `#/institutions-open-schooling`.
+- **0 lint errors**, 0 runtime errors, 0 new tsc errors.
+

@@ -168,13 +168,11 @@ const FAQS = [
 // ============================================================
 export function OpenSchoolingView() {
   const { navigate } = useAppStore()
-  const [formOpen, setFormOpen] = React.useState(false)
   const [selectedCourse, setSelectedCourse] = React.useState<"10th" | "12th">("10th")
   const formRef = React.useRef<HTMLDivElement>(null)
 
   const openForm = (course: "10th" | "12th") => {
     setSelectedCourse(course)
-    setFormOpen(true)
     // smooth-scroll to form
     setTimeout(() => {
       formRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })
@@ -182,17 +180,16 @@ export function OpenSchoolingView() {
   }
 
   return (
-    <div className="relative min-h-screen pt-2 lg:pt-4">
+    <main className="relative">
       {/* Atmospheric background */}
       <div className="absolute inset-0 bg-mesh opacity-50 pointer-events-none" />
-      <div className="absolute top-0 right-0 w-[600px] h-[400px] bg-violet-600/5 blur-[120px] rounded-full pointer-events-none" />
-      <div className="absolute top-40 left-0 w-[500px] h-[300px] bg-cyan-500/5 blur-[100px] rounded-full pointer-events-none" />
+      <div className="absolute top-0 right-0 w-[600px] h-[400px] bg-violet-600/5 blur-[120px] rounded-full pointer-events-none" aria-hidden />
+      <div className="absolute top-40 left-0 w-[500px] h-[300px] bg-cyan-500/5 blur-[100px] rounded-full pointer-events-none" aria-hidden />
 
-      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
-        {/* ====================================================
-            HERO
-            ==================================================== */}
-        <section className="relative mb-12 lg:mb-16">
+      {/* ====================================================
+          HERO
+          ==================================================== */}
+      <section className="relative overflow-hidden">
           <div className="absolute top-0 left-1/4 w-[400px] h-[300px] bg-violet-600/8 blur-[100px] rounded-full pointer-events-none" />
           <div className="absolute top-20 right-1/4 w-[300px] h-[300px] bg-cyan-500/6 blur-[100px] rounded-full pointer-events-none" />
 
@@ -200,7 +197,7 @@ export function OpenSchoolingView() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="relative mb-6"
+            className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full py-12 lg:py-16"
           >
             <div className="flex items-center gap-2 mb-3">
               <span className="h-1.5 w-1.5 rounded-full bg-violet-400 pulse-dot" />
@@ -259,7 +256,8 @@ export function OpenSchoolingView() {
         {/* ====================================================
             WHO IT'S FOR
             ==================================================== */}
-        <section className="relative mb-12 lg:mb-16">
+        <section className="py-8 lg:py-12 border-t border-border/40">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -295,12 +293,14 @@ export function OpenSchoolingView() {
               })}
             </div>
           </motion.div>
+          </div>
         </section>
 
         {/* ====================================================
             HOW IT WORKS
             ==================================================== */}
-        <section className="relative mb-12 lg:mb-16">
+        <section className="py-8 lg:py-12 border-t border-border/40">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -338,12 +338,14 @@ export function OpenSchoolingView() {
               })}
             </div>
           </motion.div>
+          </div>
         </section>
 
         {/* ====================================================
             COURSES & FEES — comparison table
             ==================================================== */}
-        <section className="relative mb-12 lg:mb-16">
+        <section className="py-8 lg:py-12 border-t border-border/40">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -400,12 +402,14 @@ export function OpenSchoolingView() {
               </Button>
             </div>
           </motion.div>
+          </div>
         </section>
 
         {/* ====================================================
             DOCUMENTS REQUIRED
             ==================================================== */}
-        <section className="relative mb-12 lg:mb-16">
+        <section className="py-8 lg:py-12 border-t border-border/40">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -440,12 +444,14 @@ export function OpenSchoolingView() {
               })}
             </div>
           </motion.div>
+          </div>
         </section>
 
         {/* ====================================================
             FAQ
             ==================================================== */}
-        <section className="relative mb-12 lg:mb-16">
+        <section className="py-8 lg:py-12 border-t border-border/40">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -475,12 +481,14 @@ export function OpenSchoolingView() {
               </Accordion>
             </div>
           </motion.div>
+          </div>
         </section>
 
         {/* ====================================================
             REGISTRATION FORM
             ==================================================== */}
-        <section ref={formRef} className="relative mb-12 lg:mb-16 scroll-mt-24">
+        <section ref={formRef} className="py-8 lg:py-12 border-t border-border/40 scroll-mt-24">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -497,12 +505,14 @@ export function OpenSchoolingView() {
             </p>
             <RegistrationForm initialCourse={selectedCourse} />
           </motion.div>
+          </div>
         </section>
 
         {/* ====================================================
             FINAL CTA + back button
             ==================================================== */}
-        <section className="relative pt-8 border-t border-border/60">
+        <section className="py-8 border-t border-border/40">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <h3 className="text-lg font-semibold mb-1">Have more questions?</h3>
@@ -517,9 +527,9 @@ export function OpenSchoolingView() {
               </Button>
             </div>
           </div>
+          </div>
         </section>
-      </div>
-    </div>
+    </main>
   )
 }
 

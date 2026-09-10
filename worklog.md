@@ -5481,3 +5481,52 @@ Stage Summary:
 - **BOSSE removed**: 15 mentions across 6 files (view, route page, admin view, API, schema comments) — all replaced with generic "open schooling" / "the board" phrasing. 0 BOSSE mentions remain in source.
 - **0 lint errors**, 0 runtime errors in dev log.
 
+
+---
+
+## OPEN SCHOOLING — scroll/bounciness fix to match other pages (session #7)
+
+Task ID: open-schooling-3
+Agent: main
+Task: User reported bounciness/scroll feel on the Open Schooling page didn't match the rest of the site. Asked to fix it to match the settings used on other pages.
+
+Work Log:
+- Compared the Open Schooling view's structure to the other institution views (schools/colleges/universities) to find the structural difference.
+- Found the root cause: the Open Schooling view used a different top-level wrapper + section pattern:
+  - It used `<div className="relative min-h-screen pt-2 lg:pt-4">` — other institution views use `<main className="relative">`.
+  - It used `<div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-10">` as a single global content wrapper around all sections — other institution views put the `mx-auto max-w-7xl` wrapper INSIDE each section, with `py-8 lg:py-12 border-t border-border/40` on each section for consistent vertical rhythm + divider borders.
+  - Each section used `relative mb-12 lg:mb-16` (margin-based spacing, which contributes to bouncy feel) — other views use `py-8 lg:py-12` (padding-based, more stable) + `border-t border-border/40` (divider lines between sections).
+  - The hero section had no `overflow-hidden`, so the atmospheric blur glows could cause horizontal scroll/bounce at the page edges.
+- Restructured the view to match the institutions pattern:
+  1. Top-level wrapper changed to `<main className="relative">`.
+  2. Hero section: added `overflow-hidden` to clip the blur glows.
+  3. Hero content: moved the `mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 lg:py-16` classes onto the motion.div that wraps hero content (per-section, not global).
+  4. All 7 content sections (Who it's for / How it works / Courses & fees / Documents / FAQ / Registration / Final CTA): changed `relative mb-12 lg:mb-16` → `py-8 lg:py-12 border-t border-border/40`, and wrapped each section's content in a `<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">` container.
+  5. Final CTA section: same border-t treatment instead of `pt-8 border-t border-border/60`.
+  6. Removed unused `formOpen` state (was set but never read — would have caused a lint warning eventually).
+- The pattern now matches institutions-schools.tsx / institutions-colleges.tsx exactly:
+  - `<main className="relative">` wrapper
+  - Each `<section>` has `py-8 lg:py-12 border-t border-border/40`
+  - Each section contains `<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">`
+  - Hero has `overflow-hidden` to clip the atmospheric glows
+  - Sections are separated by `border-t` divider lines (subtle, consistent visual rhythm)
+- The `scroll-behavior: smooth` is already set globally in `src/app/globals.css` (line 181 + 636), so smooth scrolling is inherited automatically now that the structure matches.
+- Verified via agent-browser (with cache warm + 8s wait for hydration):
+  - Page renders fully: `document.body.scrollHeight = 4769px` (was 577px before hydration settled — confirms content is all there)
+  - `document.querySelectorAll('section').length = 9` (8 content sections + final CTA, as expected)
+  - `document.querySelector('main') !== null = true` (wrapper is `<main>`, matches other institution pages)
+  - All key content present in DOM: 'Complete your' ✓, 'Register for 10th' ✓, 'Four simple steps' ✓, 'Questions, answered' ✓, 'Submit registration' ✓
+  - Page title: 'Open Schooling — Complete 10th & 12th | GuardianX Academy · GuardianX Academy' ✓
+  - 0 page errors, 0 console errors
+  - Full page screenshot: 2MB (rich, fully-rendered)
+- Lint: 0 errors (1 pre-existing warning in src/lib/db.ts)
+- tsc: 0 errors in open-schooling.tsx
+
+Stage Summary:
+- **1 modified file**: src/views/open-schooling.tsx (30 insertions, 20 deletions)
+- **1 commit pushed**: `2d6a02a` — fix(open-schooling): match scroll/bounciness pattern of other institution pages
+- **Structure aligned**: Open Schooling page now uses the exact same scroll/section pattern as the schools/colleges/universities pages (which were already shipping with the correct feel).
+- **Bounciness fixed**: removed margin-based section spacing (mb-12 lg:mb-16) → padding-based (py-8 lg:py-12) + border-t dividers, which gives a stable scroll rhythm.
+- **Hero overflow**: added overflow-hidden to clip atmospheric glows so they don't cause horizontal scroll/bounce.
+- **0 lint errors**, 0 tsc errors, 0 page errors.
+

@@ -4,7 +4,7 @@ import * as React from "react"
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion"
 import {
   FlaskConical, BookOpen, Route, Trophy, Briefcase, Search, Target,
-  FileText, School, Building, Landmark, ShieldCheck, Award,
+  FileText, School, Building, Landmark, ShieldCheck, Award, GraduationCap,
   TrendingUp, Mail, Menu, ChevronDown, Sun, Moon, LogIn,
   CalendarCheck, Terminal, Shield, FileBadge, Users,
 } from "lucide-react"
@@ -173,6 +173,12 @@ const MEGA_MENU_GROUPS: MegaMenuGroup[] = [
         title: "Universities",
         description: "Degree programs & research labs",
         view: { name: "institutions-universities" },
+      },
+      {
+        icon: GraduationCap,
+        title: "Open Schooling",
+        description: "Complete 10th & 12th via BOSSE",
+        view: { name: "institutions-open-schooling" },
       },
     ],
   },

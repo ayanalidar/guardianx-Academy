@@ -16,6 +16,7 @@ export type View =
   | { name: "institutions-schools" }
   | { name: "institutions-colleges" }
   | { name: "institutions-universities" }
+  | { name: "institutions-open-schooling" }
   | { name: "dashboard" }
   | { name: "catalog" }
   | { name: "batches" }
@@ -80,6 +81,7 @@ export type View =
   | { name: "admin-platform-health" }
   | { name: "admin-notifications" }
   | { name: "admin-coupons" }
+  | { name: "admin-open-schooling-leads" }
   | { name: "support" }
   // Public instructors + events (master-prompt §25 / §36)
   | { name: "instructors" }

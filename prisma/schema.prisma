@@ -130,6 +130,40 @@ model SchoolMember {
   @@unique([schoolId, userId])
 }
 
+// ============================================================
+// Open Schooling — lead-capture for BOSSE 10th & 12th registration
+// ============================================================
+// Students who want to complete 10th (Secondary) or 12th (Senior Secondary)
+// through BOSSE (Board of Open Schooling & Skill Education) register interest
+// via the public "Open Schooling" tab. Admins follow up to complete the
+// actual BOSSE registration, collect documents, and take payment manually.
+model OpenSchoolingLead {
+  id             String   @id @default(cuid())
+  // Personal details
+  name           String
+  email          String
+  phone          String
+  dateOfBirth    String?  // YYYY-MM-DD (collected for eligibility check)
+  // Course interest
+  course         String   // "10th" | "12th"
+  city           String?
+  state          String?
+  qualification   String?  // previous education (e.g. "8th pass", "10th pass", "B.Com")
+  // Optional message from the student
+  message        String?
+  // Lead pipeline status — managed by admins
+  status         String   @default("NEW") // NEW | CONTACTED | ENROLLED | LOST
+  adminNotes     String?  // internal notes set by admins
+  // Metadata
+  source         String   @default("WEBSITE") // WEBSITE | WHATSAPP | REFERRAL
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([status])
+  @@index([course])
+  @@index([createdAt])
+}
+
 model Batch {
   id            String   @id @default(cuid())
   schoolId      String

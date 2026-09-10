@@ -130,6 +130,7 @@ export function hashToView(hash: string): View {
   const knownViews: View["name"][] = [
     "home", "impact", "contact", "login", "institutions",
     "institutions-schools", "institutions-colleges", "institutions-universities",
+    "institutions-open-schooling",
     "dashboard", "catalog", "batches", "learning", "notes", "live",
     "labs", "certificates", "achievements", "leaderboard", "instructor",
     "school", "admin", "community", "profile", "assignments", "messaging",
@@ -144,6 +145,7 @@ export function hashToView(hash: string): View {
     "admin-cert-bulk", "admin-email-campaign", "admin-instructor-assignment",
     "admin-audit-log", "admin-platform-health", "admin-notifications",
     "admin-coupons",
+    "admin-open-schooling-leads",
     "support", "verify",
     "instructors", "events",
     "blog",

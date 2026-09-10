@@ -5,7 +5,7 @@ import { withErrorHandler } from "@/lib/session"
 export const runtime = "nodejs"
 
 /* POST /api/open-schooling/leads
- * Public endpoint — anyone can submit a lead to register for 10th/12th via BOSSE.
+ * Public endpoint — anyone can submit a lead to register for 10th/12th via open schooling.
  * Rate-limited in-memory per IP (5 submissions per 10 minutes) to prevent spam.
  *
  * Body: {

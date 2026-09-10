@@ -131,12 +131,12 @@ model SchoolMember {
 }
 
 // ============================================================
-// Open Schooling — lead-capture for BOSSE 10th & 12th registration
+// Open Schooling — lead-capture for 10th & 12th registration
 // ============================================================
 // Students who want to complete 10th (Secondary) or 12th (Senior Secondary)
-// through BOSSE (Board of Open Schooling & Skill Education) register interest
-// via the public "Open Schooling" tab. Admins follow up to complete the
-// actual BOSSE registration, collect documents, and take payment manually.
+// through open schooling register interest via the public "Open Schooling"
+// tab. Admins follow up to complete the actual registration, collect
+// documents, and take payment manually.
 model OpenSchoolingLead {
   id             String   @id @default(cuid())
   // Personal details

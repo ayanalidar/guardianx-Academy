@@ -2,9 +2,9 @@ import { PublicPageShell } from "@/components/platform/public-page-shell"
 import { OpenSchoolingView } from "@/views/open-schooling"
 
 export const metadata = {
-  title: "Open Schooling — Complete 10th & 12th via BOSSE | GuardianX Academy",
+  title: "Open Schooling — Complete 10th & 12th | GuardianX Academy",
   description:
-    "Complete your 10th (Secondary) or 12th (Senior Secondary) through BOSSE — the Board of Open Schooling & Skill Education. Recognized by NEP 2020 and COBSE. Valid for higher education and government jobs. Register online — our counsellor contacts you within 24 hours.",
+    "Complete your 10th (Secondary) or 12th (Senior Secondary) through open schooling. Recognized by NEP 2020 and COBSE. Valid for higher education and government jobs. Register online — our counsellor contacts you within 24 hours.",
 }
 
 export default function Page() {

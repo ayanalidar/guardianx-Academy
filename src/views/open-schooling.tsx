@@ -93,7 +93,7 @@ const STEPS = [
   {
     icon: BookOpen,
     title: "Study at your pace",
-    desc: "Get BOSSE study material (printed + online), access video lectures, and prepare on your own schedule. 5-year registration validity.",
+    desc: "Get study material (printed + online), access video lectures, and prepare on your own schedule. 5-year registration validity.",
   },
   {
     icon: CalendarDays,
@@ -130,16 +130,16 @@ const DOCUMENTS = [
 
 const FAQS = [
   {
-    q: "Is BOSSE certificate valid for government jobs?",
-    a: "Yes. BOSSE (Board of Open Schooling & Skill Education, Sikkim) is recognized by COBSE (Council of Boards of School Education in India) and aligned with NEP 2020. Its certificates are valid for government jobs, higher education, and competitive exams across India.",
+    q: "Is the open schooling certificate valid for government jobs?",
+    a: "Yes. Open schooling certificates are recognized by COBSE (Council of Boards of School Education in India) and aligned with NEP 2020. They are valid for government jobs, higher education, and competitive exams across India.",
   },
   {
-    q: "Can I appear for JEE / NEET / UPSC after completing 12th from BOSSE?",
-    a: "Yes. BOSSE 12th is recognized equivalent to other boards (CBSE / ICSE / NIOS). You are eligible for JEE, NEET, CUET, UPSC, SSC, and all other entrance exams that require a 12th pass certificate.",
+    q: "Can I appear for JEE / NEET / UPSC after completing 12th through open schooling?",
+    a: "Yes. The 12th certificate from open schooling is recognized equivalent to other boards (CBSE / ICSE). You are eligible for JEE, NEET, CUET, UPSC, SSC, and all other entrance exams that require a 12th pass certificate.",
   },
   {
     q: "What if I fail a subject?",
-    a: "You can re-appear for that subject in the next exam cycle (January or July). BOSSE allows up to 4 attempts within the 5-year registration validity. You do not need to re-enrol — just pay the exam fee per subject again.",
+    a: "You can re-appear for that subject in the next exam cycle (January or July). Open schooling allows up to 4 attempts within the 5-year registration validity. You do not need to re-enrol — just pay the exam fee per subject again.",
   },
   {
     q: "Can I change subjects after registration?",
@@ -147,19 +147,19 @@ const FAQS = [
   },
   {
     q: "How do I receive my certificate?",
-    a: "Your digital certificate is issued via DigiLocker (the Government of India's digital wallet) and is also downloadable from the BOSSE student portal. Printed certificates can be collected from our office or delivered by post on request.",
+    a: "Your digital certificate is issued via DigiLocker (the Government of India's digital wallet) and is also downloadable from the student portal. Printed certificates can be collected from our office or delivered by post on request.",
   },
   {
     q: "I don't have my 8th / 10th marksheet. Can I still apply?",
-    a: "For 10th, BOSSE accepts alternative proofs of having studied up to 8th level (school leaving certificate, transfer certificate, or an affidavit). For 12th, you must submit your 10th pass certificate. Our counsellor can guide you on the exact alternatives available.",
+    a: "For 10th, the board accepts alternative proofs of having studied up to 8th level (school leaving certificate, transfer certificate, or an affidavit). For 12th, you must submit your 10th pass certificate. Our counsellor can guide you on the exact alternatives available.",
   },
   {
     q: "Do I need to attend any classes?",
-    a: "No. Open schooling is self-paced — you study on your own using the material BOSSE provides. However, GuardianX offers optional weekend doubt-clearing sessions (online + offline) for students who want extra help. These are free for students who register through us.",
+    a: "No. Open schooling is self-paced — you study on your own using the study material provided. However, GuardianX offers optional weekend doubt-clearing sessions (online + offline) for students who want extra help. These are free for students who register through us.",
   },
   {
-    q: "What about NIOS? Can I apply through GuardianX for NIOS too?",
-    a: "Yes. GuardianX facilitates registration for both BOSSE and NIOS (National Institute of Open Schooling). Mention your preference in the registration form's message field, or ask our counsellor when they call you.",
+    q: "Can I apply through GuardianX for NIOS too?",
+    a: "Yes. GuardianX facilitates registration for both open schooling boards available in India. Mention your preference in the registration form's message field, or ask our counsellor when they call you.",
   },
 ]
 
@@ -204,7 +204,7 @@ export function OpenSchoolingView() {
           >
             <div className="flex items-center gap-2 mb-3">
               <span className="h-1.5 w-1.5 rounded-full bg-violet-400 pulse-dot" />
-              <span className="text-[10px] font-mono text-violet-300/80 tracking-[0.3em]">OPEN SCHOOLING · BOSSE</span>
+              <span className="text-[10px] font-mono text-violet-300/80 tracking-[0.3em]">OPEN SCHOOLING</span>
             </div>
             <h1 className="text-[clamp(2.5rem,7vw,5rem)] font-bold leading-[0.9] tracking-[-0.04em] mb-4 text-balance">
               Complete your{" "}
@@ -492,7 +492,7 @@ export function OpenSchoolingView() {
               Start your <span className="text-gradient-premium">registration</span>.
             </h2>
             <p className="text-muted-foreground mb-6 max-w-2xl">
-              Fill this form and our counsellor will contact you within 24 hours to complete your BOSSE registration.
+              Fill this form and our counsellor will contact you within 24 hours to complete your registration.
               No payment required at this stage.
             </p>
             <RegistrationForm initialCourse={selectedCourse} />
@@ -748,7 +748,7 @@ function RegistrationForm({ initialCourse }: { initialCourse: "10th" | "12th" })
             id="os-msg"
             value={form.message}
             onChange={(e) => update("message", e.target.value)}
-            placeholder="Anything you'd like our counsellor to know? (e.g. preferred exam session, subject choices, NIOS vs BOSSE preference)"
+            placeholder="Anything you'd like our counsellor to know? (e.g. preferred exam session, subject choices, board preference)"
             rows={3}
             className="bg-background/50 resize-none"
           />
@@ -791,7 +791,7 @@ function RegistrationForm({ initialCourse }: { initialCourse: "10th" | "12th" })
             )}
           </Button>
           <p className="text-[11px] text-muted-foreground leading-relaxed">
-            By submitting, you agree to be contacted by GuardianX about your BOSSE registration. We do not share your data with third parties.
+            By submitting, you agree to be contacted by GuardianX about your open schooling registration. We do not share your data with third parties.
           </p>
         </div>
       </form>

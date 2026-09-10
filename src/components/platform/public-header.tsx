@@ -5,6 +5,7 @@ import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-
 import {
   FlaskConical, BookOpen, Route, Trophy, Briefcase, Search, Target,
   FileText, School, Building, Landmark, ShieldCheck, Award, GraduationCap,
+  ExternalLink,
   TrendingUp, Mail, Menu, ChevronDown, Sun, Moon, LogIn,
   CalendarCheck, Terminal, Shield, FileBadge, Users,
 } from "lucide-react"
@@ -35,6 +36,10 @@ interface MegaMenuItem {
   title: string
   description: string
   view: View
+  // When true, clicking opens the page in a new browser tab (target=_blank)
+  // instead of navigating the current tab. Used for items that are
+  // conceptually separate landing pages (e.g. Open Schooling).
+  external?: boolean
 }
 
 interface MegaMenuGroup {
@@ -177,8 +182,9 @@ const MEGA_MENU_GROUPS: MegaMenuGroup[] = [
       {
         icon: GraduationCap,
         title: "Open Schooling",
-        description: "Complete 10th & 12th via BOSSE",
+        description: "Complete 10th & 12th through open schooling",
         view: { name: "institutions-open-schooling" },
+        external: true,
       },
     ],
   },
@@ -287,6 +293,31 @@ export function PublicHeader() {
       setMobileOpen(false)
     },
     [navigate]
+  )
+
+  // For external menu items (e.g. Open Schooling landing page): open the
+  // dedicated Next.js route in a new browser tab + close the dropdown.
+  // We use the view name to build the URL — `/institutions-open-schooling`
+  // is served by `src/app/institutions/open-schooling/page.tsx`.
+  const handleExternalNavigate = React.useCallback(
+    (v: View) => {
+      const slug = v.name.replace(/^institutions-/, "")
+      // `institutions-open-schooling` → `institutions/open-schooling`
+      const url = `/institutions/${slug}`
+      window.open(url, "_blank", "noopener,noreferrer")
+      setOpenMenuId(null)
+      setMobileOpen(false)
+    },
+    []
+  )
+
+  // Unified click handler — picks internal vs external based on the item flag.
+  const onItemClick = React.useCallback(
+    (item: MegaMenuItem) => {
+      if (item.external) handleExternalNavigate(item.view)
+      else handleNavigate(item.view)
+    },
+    [handleNavigate, handleExternalNavigate]
   )
 
   const isViewActive = React.useCallback((v: View) => view.name === v.name, [view.name])
@@ -480,7 +511,7 @@ export function PublicHeader() {
                               <button
                                 key={item.title}
                                 type="button"
-                                onClick={() => handleNavigate(item.view)}
+                                onClick={() => onItemClick(item)}
                                 className={cn(
                                   "flex items-start gap-3 p-2 rounded-lg text-left transition-colors",
                                   "hover:bg-accent/60",
@@ -490,9 +521,10 @@ export function PublicHeader() {
                                 <div className="h-8 w-8 shrink-0 rounded-lg flex items-center justify-center bg-violet-500/10 text-violet-300">
                                   <item.icon className="h-4 w-4" />
                                 </div>
-                                <div className="min-w-0">
-                                  <div className="text-sm font-semibold leading-tight text-foreground">
+                                <div className="min-w-0 flex-1">
+                                  <div className="text-sm font-semibold leading-tight text-foreground flex items-center gap-1.5">
                                     {item.title}
+                                    {item.external && <ExternalLink className="h-3 w-3 text-muted-foreground shrink-0" />}
                                   </div>
                                   <div className="text-xs text-muted-foreground mt-0.5 leading-snug">
                                     {item.description}
@@ -563,7 +595,7 @@ export function PublicHeader() {
                       key={item.title}
                       type="button"
                       role="menuitem"
-                      onClick={() => handleNavigate(item.view)}
+                      onClick={() => onItemClick(item)}
                       className={cn(
                         "flex items-start gap-3 p-3 rounded-lg text-left transition-all group/item",
                         "hover:bg-accent/60",
@@ -579,9 +611,10 @@ export function PublicHeader() {
                       >
                         <item.icon className="h-4 w-4" />
                       </div>
-                      <div className="min-w-0">
-                        <div className="text-sm font-semibold leading-tight text-foreground">
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-semibold leading-tight text-foreground flex items-center gap-1.5">
                           {item.title}
+                          {item.external && <ExternalLink className="h-3 w-3 text-muted-foreground shrink-0" />}
                         </div>
                         <div className="text-xs text-muted-foreground mt-0.5 leading-snug">
                           {item.description}

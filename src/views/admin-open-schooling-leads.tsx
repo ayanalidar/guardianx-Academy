@@ -126,7 +126,7 @@ export function AdminOpenSchoolingLeadsView() {
           <h1 className="text-2xl font-bold tracking-tight">Open Schooling Leads</h1>
         </div>
         <p className="text-sm text-muted-foreground">
-          Students who registered interest in completing 10th or 12th via BOSSE. Contact them to complete registration.
+          Students who registered interest in completing 10th or 12th through open schooling. Contact them to complete registration.
         </p>
       </div>
 

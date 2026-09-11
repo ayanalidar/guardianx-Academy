@@ -47,6 +47,7 @@ export function PublicFooter() {
         { label: "Cyber Range", view: { name: "cyber-range" } },
         { label: "CTF Arena", view: { name: "ctf-platform" } },
         { label: "Challenges", view: { name: "weekly-challenges" } },
+        { label: "Awareness Quiz", view: { name: "cyber-quiz" } },
       ],
     },
     {

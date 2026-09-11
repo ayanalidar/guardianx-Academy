@@ -8,6 +8,7 @@ import {
   Radio, FlaskConical, Award, Users, User, LogOut, Menu, X,
   Search, Sun, Moon, Bell, Terminal, ChevronRight, Settings,
   Trophy, Zap, Flame, Crown, CheckCheck, Sparkles, Presentation,
+  Brain,
   ClipboardList, MessageSquare, UsersRound, CalendarClock, Building2,
   Briefcase, FileText, Mic, Target, Network, Server, Bug, Camera,
   Code2, ShieldAlert, BarChart3, PenLine, Heart, FileEdit,
@@ -108,6 +109,9 @@ const ADMIN_NAV: NavItem[] = [
   { label: "SEO Optimization", icon: Search, view: { name: "admin-seo" } },
   { label: "Open Schooling Leads", icon: GraduationCap, view: { name: "admin-open-schooling-leads" } },
   { label: "Corporate Training Leads", icon: Building2, view: { name: "admin-corporate-leads" } },
+  { label: "Quiz Questions", icon: Brain, view: { name: "admin-cyber-quiz-questions" } },
+  { label: "Quiz Attempts", icon: Trophy, view: { name: "admin-cyber-quiz-attempts" } },
+  { label: "Quiz Certificates", icon: Award, view: { name: "admin-cyber-quiz-certs" } },
 ]
 
 // Keep legacy NAV_ITEMS for backwards compat (mobile menu etc)

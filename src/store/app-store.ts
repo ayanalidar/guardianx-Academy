@@ -18,6 +18,11 @@ export type View =
   | { name: "institutions-universities" }
   | { name: "institutions-open-schooling" }
   | { name: "corporate-training" }
+  | { name: "cyber-quiz" }
+  | { name: "cyber-quiz-runner"; difficulty: "Easy" | "Hard" | "Advanced" }
+  | { name: "cyber-quiz-results"; attemptId: string }
+  | { name: "cyber-quiz-certificate"; credentialId: string }
+  | { name: "cyber-quiz-progress"; credentialId: string }
   | { name: "dashboard" }
   | { name: "catalog" }
   | { name: "batches" }
@@ -84,6 +89,9 @@ export type View =
   | { name: "admin-coupons" }
   | { name: "admin-open-schooling-leads" }
   | { name: "admin-corporate-leads" }
+  | { name: "admin-cyber-quiz-questions" }
+  | { name: "admin-cyber-quiz-attempts" }
+  | { name: "admin-cyber-quiz-certs" }
   | { name: "support" }
   // Public instructors + events (master-prompt §25 / §36)
   | { name: "instructors" }

@@ -5590,3 +5590,35 @@ Stage Summary:
 - **Footer fix**: the footer "Corporate Training" link previously routed to the Schools page (wrong); now routes to the dedicated Corporate Training page.
 - **0 lint errors**, 0 runtime errors, 0 new tsc errors.
 
+
+---
+Task ID: quiz-questions-1
+Agent: question-writer
+Task: Write 100 cyber security awareness quiz questions for the public Cyber Security Foundation quiz.
+
+Work Log:
+- Read worklog.md (last 200 lines) to understand GuardianX Academy context (Next.js 16 + TypeScript + Prisma + Neon Postgres cyber security training platform). Inspected existing prisma/seed-quizzes.ts for style conventions and checked prisma/schema.prisma — confirmed QuizQuestion model does not yet exist (task spec explicitly said NOT to modify schema; only the seed data file is the deliverable).
+- Planned the 100-question matrix: 8 categories with exact counts (Phishing 13, Passwords 13, Social Engineering 12, Web Safety 12, Mobile Security 12, Data Privacy 12, Malware 13, Wi-Fi Safety 13 = 100) × 3 difficulties (Easy 40% / Hard 36% / Advanced 24%, matching the required ~40/35/25 split).
+- Pre-planned answer-letter distribution per question (A/B/C/D = 24/27/24/25 — near-balanced so test-takers can't pattern-match) by mapping each planned letter to its slot before drafting each question.
+- Drafted all 100 questions with realistic, general-public scenarios (email, SMS, social media, public Wi-Fi, app permissions, USB drops, hotel networks, breach DBs, GDPR/CCPA rights). Avoided CEH/CISSP-level specifics (e.g., not asking about SMB ports) per the spec — every question is accessible to IT freshers/students/everyday users.
+- Fact-checked each correct answer against authoritative sources in my training data: NIST SP 800-63B (no forced periodic password changes), GDPR Article 33 (72-hour breach notification) + Article 17 (right to erasure), CPRA 2023 (sale vs. share), KRACK 2017 (WPA2 4-way handshake), Cialdini's 6 persuasion principles (Reciprocity), OWASP password hashing recommendations (argon2id primary, bcrypt fallback), WPA3 SAE (Dragonfly) prevents offline dictionary attacks, Mimikatz LSASS credential dumping, double-extortion ransomware (Maze/LockBit/BlackCat), Apple App Privacy labels include third-party SDK data collection, TLS CAs verify domain control not brand ownership, FIDO2/WebAuthn origin binding for phishing resistance.
+- Crafted plausible distractors for every question — no obviously-wrong joke options. Each question has exactly one correct answer.
+- Wrote 1-2 sentence educational explanations per question that teach WHY the correct answer is right + (where relevant) why distractors are wrong, so review mode is pedagogically useful.
+- Wrote file to /home/z/my-project/prisma/quiz-seed.ts in the exact format specified: SeedQuestion interface (with category/difficulty unions, A/B/C/D correctAnswer) + QUIZ_QUESTIONS array of 100 typed objects, organized into 8 commented sections with per-question number comments (1..100) for easy review/auditing.
+- Verified the file end-to-end via a Node + TypeScript-transpile harness:
+  - `npx tsc --noEmit --skipLibCheck prisma/quiz-seed.ts` → 0 errors, 0 warnings (clean TypeScript).
+  - Transpiled + executed module to count questions, validate every required field is present and has a valid value, and tally distributions.
+  - Result: 100 questions, 0 invalid fields.
+- Did NOT run any seed scripts, did NOT modify prisma/schema.prisma, did NOT push to DB — strictly the seed data file as instructed.
+
+Stage Summary:
+- File created: prisma/quiz-seed.ts
+- Total questions: 100
+- Category distribution: Phishing 13, Passwords 13, Social Engineering 12, Web Safety 12, Mobile Security 12, Data Privacy 12, Malware 13, Wi-Fi Safety 13 (sum 100 — exact match to spec).
+- Difficulty distribution: Easy 40 (40%), Hard 36 (36%), Advanced 24 (24%) — matches required ~40/35/25 split.
+- Per-category difficulty breakdown: each category has Easy 5; Phishing/Passwords/Malware/Wi-Fi have Hard 5 + Advanced 3; Social Engineering/Web Safety/Mobile Security/Data Privacy have Hard 4 + Advanced 3.
+- Answer-letter distribution: A 24, B 27, C 24, D 25 — near-balanced to prevent pattern-matching by test-takers.
+- TypeScript: 0 compile errors (verified via tsc --noEmit).
+- 0 invalid fields across all 100 question objects (all 9 required fields present with valid enum values).
+- All 100 questions are general-public level with realistic scenarios, plausible distractors, exactly one correct answer, and 1-2 sentence educational explanations.
+- Ready for the seed script (separate task) to insert these into the QuizQuestion Prisma model once that model is added to schema.prisma.

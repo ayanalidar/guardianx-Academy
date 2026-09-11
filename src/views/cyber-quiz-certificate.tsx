@@ -1,0 +1,295 @@
+"use client"
+
+import * as React from "react"
+import { motion } from "framer-motion"
+import { useAppStore } from "@/store/app-store"
+import { useQuery } from "@tanstack/react-query"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
+import {
+  Award, ShieldCheck, Loader2, AlertCircle, ArrowLeft, ArrowRight,
+  Linkedin, MessageCircle, Download, CheckCircle2, Fingerprint,
+  Sparkles, Calendar, Hash,
+} from "lucide-react"
+import { toast } from "sonner"
+
+interface CertResponse {
+  certificate: {
+    credentialId: string
+    candidateName: string
+    email: string
+    difficulty: string
+    score: number
+    totalQuestions: number
+    percentage: number
+    issueDate: string
+    verificationHash: string
+    verificationUrl: string | null
+    status: string
+  }
+  domainScores: Record<string, { correct: number; total: number }>
+}
+
+const DIFFICULTY_LABELS: Record<string, string> = {
+  Easy: "Foundational",
+  Hard: "Intermediate",
+  Advanced: "Expert",
+}
+
+export function CyberQuizCertificateView() {
+  const { view, navigate } = useAppStore()
+  const credentialId = (view as any)?.credentialId as string
+
+  const { data, isLoading, error } = useQuery<CertResponse>({
+    queryKey: ["cyber-quiz-cert", credentialId],
+    queryFn: async () => {
+      const r = await fetch(`/api/cyber-quiz/certificate/${credentialId}`)
+      if (!r.ok) throw new Error("Certificate not found")
+      return r.json()
+    },
+    enabled: !!credentialId,
+  })
+
+  const certRef = React.useRef<HTMLDivElement>(null)
+  const [downloading, setDownloading] = React.useState(false)
+
+  if (isLoading) {
+    return (
+      <main className="relative min-h-[60vh] flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-violet-400" />
+      </main>
+    )
+  }
+
+  if (error || !data) {
+    return (
+      <main className="relative min-h-[60vh] flex items-center justify-center">
+        <div className="text-center max-w-md">
+          <AlertCircle className="h-8 w-8 text-rose-400 mx-auto mb-3" />
+          <p className="text-sm font-medium mb-1">Certificate not found</p>
+          <p className="text-xs text-muted-foreground mb-4">The credential ID may be invalid or revoked.</p>
+          <Button onClick={() => navigate({ name: "verify" })} variant="outline" size="sm">
+            <Fingerprint className="h-4 w-4 mr-1.5" /> Verify a certificate
+          </Button>
+        </div>
+      </main>
+    )
+  }
+
+  const { certificate: cert, domainScores } = data
+  const issueDate = new Date(cert.issueDate).toLocaleDateString("en-IN", {
+    day: "numeric", month: "long", year: "numeric",
+  })
+
+  const handleDownload = async () => {
+    if (!certRef.current) return
+    setDownloading(true)
+    try {
+      // Dynamic import to avoid bundling jspdf + html2canvas for the whole app
+      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+        import("html2canvas"),
+        import("jspdf"),
+      ])
+      const canvas = await html2canvas(certRef.current, {
+        scale: 2,
+        backgroundColor: "#0a0a0f",
+        useCORS: true,
+        logging: false,
+      })
+      const imgData = canvas.toDataURL("image/png")
+      const pdf = new jsPDF({
+        orientation: "landscape",
+        unit: "px",
+        format: [canvas.width, canvas.height],
+      })
+      pdf.addImage(imgData, "PNG", 0, 0, canvas.width, canvas.height)
+      pdf.save(`${cert.credentialId}.pdf`)
+      toast.success("Certificate downloaded as PDF")
+    } catch (e) {
+      console.error("PDF download failed:", e)
+      toast.error("PDF download failed. Please try the screenshot instead.")
+    } finally {
+      setDownloading(false)
+    }
+  }
+
+  const shareText = `I earned the Cyber Security Foundation Certificate (${cert.difficulty} level) from GuardianX Academy with a score of ${cert.percentage}%! Verify it here: ${cert.verificationUrl || `https://academy.guardianx.cloud/verify?id=${cert.credentialId}`}`
+
+  const shareLinkedIn = () => {
+    const url = encodeURIComponent(cert.verificationUrl || `https://academy.guardianx.cloud/verify?id=${cert.credentialId}`)
+    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}`, "_blank", "noopener,noreferrer")
+  }
+
+  const shareWhatsApp = () => {
+    window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, "_blank", "noopener,noreferrer")
+  }
+
+  const copyLink = () => {
+    const link = cert.verificationUrl || `https://academy.guardianx.cloud/verify?id=${cert.credentialId}`
+    navigator.clipboard.writeText(link)
+    toast.success("Verification link copied!")
+  }
+
+  const passClass = cert.percentage >= 75 ? "from-emerald-500/20" : cert.percentage >= 50 ? "from-violet-500/20" : "from-amber-500/20"
+
+  return (
+    <main className="relative min-h-screen pb-16">
+      {/* Atmospheric background */}
+      <div className="absolute inset-0 bg-mesh opacity-50 pointer-events-none" />
+      <div className="absolute top-0 right-0 w-[600px] h-[400px] bg-violet-600/8 blur-[120px] rounded-full pointer-events-none" aria-hidden />
+      <div className="absolute top-40 left-0 w-[500px] h-[300px] bg-cyan-500/6 blur-[100px] rounded-full pointer-events-none" aria-hidden />
+
+      <div className="relative z-10 mx-auto max-w-5xl px-4 sm:px-6 py-8">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="text-center mb-6"
+        >
+          <div className="inline-flex p-3 rounded-full bg-violet-500/10 mb-4 shadow-[0_0_30px_-8px] shadow-violet-500/40">
+            <Award className="h-8 w-8 text-violet-400" />
+          </div>
+          <h1 className="text-2xl lg:text-3xl font-bold mb-1">Your certificate is ready</h1>
+          <p className="text-sm text-muted-foreground">Share it, download it, or verify it anytime.</p>
+        </motion.div>
+
+        {/* Action bar (above the cert) */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.1 }}
+          className="flex flex-wrap items-center justify-center gap-2 mb-6"
+        >
+          <Button onClick={shareLinkedIn} variant="outline" size="sm" className="border-[#0A66C2]/40 hover:bg-[#0A66C2]/10 hover:text-[#0A66C2]">
+            <Linkedin className="h-4 w-4 mr-1.5" /> Share to LinkedIn
+          </Button>
+          <Button onClick={shareWhatsApp} variant="outline" size="sm" className="border-emerald-500/40 hover:bg-emerald-500/10 hover:text-emerald-400">
+            <MessageCircle className="h-4 w-4 mr-1.5" /> Share to WhatsApp
+          </Button>
+          <Button onClick={handleDownload} disabled={downloading} size="sm" className="bg-gradient-to-r from-violet-600 to-violet-500 text-white">
+            {downloading ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : <Download className="h-4 w-4 mr-1.5" />}
+            Download PDF
+          </Button>
+          <Button onClick={copyLink} variant="ghost" size="sm">
+            <Fingerprint className="h-4 w-4 mr-1.5" /> Copy verify link
+          </Button>
+        </motion.div>
+
+        {/* ===== Certificate (the printable design) ===== */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.96 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.15 }}
+          ref={certRef}
+          className="relative aspect-[1.414/1] w-full max-w-4xl mx-auto rounded-2xl overflow-hidden bg-gradient-to-br from-[#0d0d18] via-[#13132a] to-[#0a0a14] border-2 border-violet-500/30 shadow-2xl shadow-violet-500/20"
+        >
+          {/* Inner border */}
+          <div className="absolute inset-3 rounded-xl border border-violet-500/20" />
+          {/* Corner flourishes */}
+          <div className="absolute top-6 left-6 w-16 h-16 border-t-2 border-l-2 border-violet-400/40 rounded-tl-xl" />
+          <div className="absolute top-6 right-6 w-16 h-16 border-t-2 border-r-2 border-violet-400/40 rounded-tr-xl" />
+          <div className="absolute bottom-6 left-6 w-16 h-16 border-b-2 border-l-2 border-violet-400/40 rounded-bl-xl" />
+          <div className="absolute bottom-6 right-6 w-16 h-16 border-b-2 border-r-2 border-violet-400/40 rounded-br-xl" />
+
+          {/* Glow blobs */}
+          <div className="absolute top-0 left-1/4 w-[300px] h-[200px] bg-violet-600/10 blur-[80px] rounded-full pointer-events-none" />
+          <div className="absolute bottom-0 right-1/4 w-[300px] h-[200px] bg-cyan-500/8 blur-[80px] rounded-full pointer-events-none" />
+
+          {/* Content */}
+          <div className="relative h-full flex flex-col items-center justify-center text-center px-12 py-10">
+            {/* Top: brand */}
+            <div className="flex items-center gap-2.5 mb-6">
+              <img src="/guardianx-logo-v2.png" alt="GuardianX" className="h-10 w-10 object-contain" style={{ filter: "drop-shadow(0 0 8px rgba(124,58,237,0.5))" }} />
+              <div className="text-left">
+                <div className="text-lg font-bold leading-none">
+                  Guardian<span className="text-violet-400">X</span>
+                </div>
+                <div className="text-[8px] font-mono text-muted-foreground tracking-[0.3em] mt-0.5">ACADEMY</div>
+              </div>
+            </div>
+
+            {/* Certificate of completion */}
+            <div className="text-[10px] font-mono text-violet-300/80 tracking-[0.4em] uppercase mb-3">
+              Certificate of Completion
+            </div>
+
+            <h2 className="text-2xl lg:text-4xl font-bold tracking-tight mb-2 text-balance">
+              <span className="text-gradient-premium">Cyber Security Foundation</span>
+            </h2>
+
+            <p className="text-[10px] text-muted-foreground font-mono tracking-[0.25em] uppercase mb-6">
+              {DIFFICULTY_LABELS[cert.difficulty] || cert.difficulty} Level
+            </p>
+
+            {/* "This certifies that" */}
+            <p className="text-xs text-muted-foreground mb-3">
+              This is to certify that
+            </p>
+
+            {/* Candidate name */}
+            <div className="text-3xl lg:text-5xl font-bold mb-2 bg-gradient-to-r from-white via-violet-100 to-cyan-200 bg-clip-text text-transparent">
+              {cert.candidateName}
+            </div>
+
+            <div className="h-px w-64 bg-gradient-to-r from-transparent via-violet-400/40 to-transparent mb-4" />
+
+            {/* "has successfully completed..." */}
+            <p className="text-xs text-muted-foreground max-w-md leading-relaxed mb-6">
+              has successfully completed the Cyber Security Foundation awareness quiz
+              with a score of <span className="font-semibold text-foreground">{cert.score}/{cert.totalQuestions}</span> ({cert.percentage}%)
+              across 8 cyber security domains.
+            </p>
+
+            {/* Bottom row: date + credential ID + signature */}
+            <div className="flex items-end justify-between w-full max-w-2xl mt-auto">
+              <div className="text-left">
+                <div className="text-[8px] font-mono text-muted-foreground tracking-[0.2em] uppercase mb-1">Issue date</div>
+                <div className="text-xs font-semibold">{issueDate}</div>
+              </div>
+              <div className="text-center">
+                {/* Verification seal */}
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full border-2 border-violet-400/40 bg-violet-500/5 mb-1">
+                  <ShieldCheck className="h-7 w-7 text-violet-400" />
+                </div>
+                <div className="text-[8px] font-mono text-muted-foreground tracking-[0.2em] uppercase">
+                  Verified
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-[8px] font-mono text-muted-foreground tracking-[0.2em] uppercase mb-1">Credential ID</div>
+                <div className="text-xs font-mono font-semibold text-violet-300">{cert.credentialId}</div>
+              </div>
+            </div>
+
+            {/* Verification URL at bottom */}
+            <div className="absolute bottom-4 left-0 right-0 text-center">
+              <div className="text-[8px] font-mono text-muted-foreground/60 tracking-wider">
+                Verify at {cert.verificationUrl || `academy.guardianx.cloud/verify?id=${cert.credentialId}`}
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Below the cert: quick links */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.3 }}
+          className="flex flex-wrap items-center justify-center gap-3 mt-6"
+        >
+          <Button onClick={() => navigate({ name: "cyber-quiz-progress", credentialId: cert.credentialId } as any)} variant="outline" size="sm" className="border-violet-500/30 hover:bg-violet-500/10">
+            View progress report <ArrowRight className="h-4 w-4 ml-1.5" />
+          </Button>
+          <Button onClick={() => navigate({ name: "verify" })} variant="ghost" size="sm">
+            <Fingerprint className="h-4 w-4 mr-1.5" /> Verify page
+          </Button>
+          <Button onClick={() => navigate({ name: "cyber-quiz" })} variant="ghost" size="sm">
+            <ArrowLeft className="h-4 w-4 mr-1.5" /> Back to quiz
+          </Button>
+        </motion.div>
+      </div>
+    </main>
+  )
+}

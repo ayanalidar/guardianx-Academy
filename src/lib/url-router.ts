@@ -55,6 +55,14 @@ export function viewToHash(view: View): string {
       return `/blog/${encodeURIComponent(view.slug)}`
     case "cert-landing":
       return `/cert/${encodeURIComponent(view.certSlug)}`
+    case "cyber-quiz-runner":
+      return `/cyber-quiz/start/${encodeURIComponent(view.difficulty)}`
+    case "cyber-quiz-results":
+      return `/cyber-quiz/results/${encodeURIComponent(view.attemptId)}`
+    case "cyber-quiz-certificate":
+      return `/cyber-quiz/certificate/${encodeURIComponent(view.credentialId)}`
+    case "cyber-quiz-progress":
+      return `/cyber-quiz/progress/${encodeURIComponent(view.credentialId)}`
     default:
       return `/${view.name}`
   }
@@ -125,6 +133,31 @@ export function hashToView(hash: string): View {
     return { name: "cert-landing", certSlug: parts[1] }
   }
 
+  // Cyber quiz sub-routes:
+  // /cyber-quiz/start/<difficulty>     → runner
+  // /cyber-quiz/results/<attemptId>    → results
+  // /cyber-quiz/certificate/<credId>   → certificate
+  // /cyber-quiz/progress/<credId>      → progress report
+  // /cyber-quiz                       → landing
+  if (parts[0] === "cyber-quiz") {
+    if (parts[1] === "start" && parts[2]) {
+      const diff = parts[2] as "Easy" | "Hard" | "Advanced"
+      if (["Easy", "Hard", "Advanced"].includes(diff)) {
+        return { name: "cyber-quiz-runner", difficulty: diff }
+      }
+    }
+    if (parts[1] === "results" && parts[2]) {
+      return { name: "cyber-quiz-results", attemptId: parts[2] }
+    }
+    if (parts[1] === "certificate" && parts[2]) {
+      return { name: "cyber-quiz-certificate", credentialId: parts[2] }
+    }
+    if (parts[1] === "progress" && parts[2]) {
+      return { name: "cyber-quiz-progress", credentialId: parts[2] }
+    }
+    return { name: "cyber-quiz" }
+  }
+
   // /<view-name> — validate against the known set so we never produce
   // an unknown view from a user-typed URL.
   const knownViews: View["name"][] = [
@@ -132,6 +165,7 @@ export function hashToView(hash: string): View {
     "institutions-schools", "institutions-colleges", "institutions-universities",
     "institutions-open-schooling",
     "corporate-training",
+    "cyber-quiz",
     "dashboard", "catalog", "batches", "learning", "notes", "live",
     "labs", "certificates", "achievements", "leaderboard", "instructor",
     "school", "admin", "community", "profile", "assignments", "messaging",
@@ -148,6 +182,9 @@ export function hashToView(hash: string): View {
     "admin-coupons",
     "admin-open-schooling-leads",
     "admin-corporate-leads",
+    "admin-cyber-quiz-questions",
+    "admin-cyber-quiz-attempts",
+    "admin-cyber-quiz-certs",
     "support", "verify",
     "instructors", "events",
     "blog",

@@ -4,6 +4,7 @@ import * as React from "react"
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion"
 import {
   FlaskConical, BookOpen, Route, Trophy, Briefcase, Search, Target,
+  Brain,
   FileText, School, Building, Landmark, ShieldCheck, Award, GraduationCap,
   ExternalLink,
   TrendingUp, Mail, Menu, ChevronDown, Sun, Moon, LogIn,
@@ -112,6 +113,12 @@ const MEGA_MENU_GROUPS: MegaMenuGroup[] = [
         title: "Weekly Challenges",
         description: "New security challenges every week",
         view: { name: "weekly-challenges" },
+      },
+      {
+        icon: Brain,
+        title: "Cyber Awareness Quiz",
+        description: "Free public quiz + ₹199 certificate",
+        view: { name: "cyber-quiz" },
       },
     ],
   },

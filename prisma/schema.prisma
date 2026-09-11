@@ -198,6 +198,85 @@ model CorporateLead {
   @@index([createdAt])
 }
 
+// ============================================================
+// Cyber Security Foundation Quiz — public quiz + paid certificate
+// ============================================================
+// 100-question pool across 8 categories. Candidates pick difficulty
+// (Easy/Hard/Advanced), get 30 random questions, must score ≥50% to pass.
+// On pass + ₹199 payment, a verifiable certificate + progress report
+// auto-generate.
+
+model QuizQuestion {
+  id            String   @id @default(cuid())
+  category      String   // Phishing | Passwords | Social Engineering | Web Safety | Mobile Security | Data Privacy | Malware | Wi-Fi Safety
+  difficulty    String   // Easy | Hard | Advanced
+  question      String
+  optionA       String
+  optionB       String
+  optionC       String
+  optionD       String
+  correctAnswer String   // A | B | C | D
+  explanation   String?
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([category])
+  @@index([difficulty])
+  @@index([active])
+}
+
+model CyberQuizAttempt {
+  id             String   @id @default(cuid())
+  userId         String?  // null for guest attempts before payment
+  guestEmail     String?
+  guestName      String?
+  difficulty     String   // Easy | Hard | Advanced (candidate-selected)
+  questionIds    String   // JSON array of 30 question IDs shown
+  answers        String   // JSON array of { questionId, selected }
+  score          Int      // correct count
+  totalQuestions Int      // 30
+  percentage     Int      // 0-100
+  passed         Boolean  // percentage >= 50
+  // Per-category breakdown for the progress report
+  domainScores   String?  // JSON: { "Phishing": { correct: 3, total: 4 }, ... }
+  startedAt      DateTime @default(now())
+  completedAt    DateTime?
+  certificateId  String?  // linked CyberQuizCertificate.credentialId after payment
+  certificate    CyberQuizCertificate?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([userId])
+  @@index([guestEmail])
+  @@index([passed])
+  @@index([createdAt])
+}
+
+model CyberQuizCertificate {
+  id               String   @id @default(cuid())
+  credentialId     String   @unique // GX-QUIZ-YYYY-XXXX format
+  attemptId        String   @unique
+  attempt          CyberQuizAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  orderId          String?  // linked Order (the ₹199 payment)
+  candidateName    String
+  email            String
+  difficulty       String   // Easy | Hard | Advanced
+  score            Int      // correct count
+  totalQuestions   Int      // 30
+  percentage       Int      // 0-100
+  domainScores     String   // JSON: per-category breakdown for the progress report
+  issueDate        DateTime @default(now())
+  verificationHash String   @unique
+  verificationUrl  String?
+  status           String   @default("valid") // valid | revoked
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([email])
+  @@index([credentialId])
+}
+
 model Batch {
   id            String   @id @default(cuid())
   schoolId      String
@@ -1687,8 +1766,14 @@ model Order {
   couponCode  String?
   discount    Float    @default(0)
   finalAmount Float    @default(0)
+  // What this order is for — used by the quiz-cert flow to know it's a quiz payment
+  purpose       String  @default("COURSE") // COURSE | QUIZ_CERT
+  quizAttemptId String? // linked QuizAttempt (when purpose = QUIZ_CERT)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@index([purpose])
+  @@index([quizAttemptId])
 }
 
 model Coupon {

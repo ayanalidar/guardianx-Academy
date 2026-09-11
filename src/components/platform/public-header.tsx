@@ -186,6 +186,12 @@ const MEGA_MENU_GROUPS: MegaMenuGroup[] = [
         view: { name: "institutions-open-schooling" },
         external: true,
       },
+      {
+        icon: Briefcase,
+        title: "Corporate Training",
+        description: "Custom cyber training for teams",
+        view: { name: "corporate-training" },
+      },
     ],
   },
   {

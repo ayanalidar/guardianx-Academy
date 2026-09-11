@@ -63,7 +63,7 @@ export function PublicFooter() {
         { label: "Schools", view: { name: "institutions-schools" } },
         { label: "Colleges", view: { name: "institutions-colleges" } },
         { label: "Universities", view: { name: "institutions-universities" } },
-        { label: "Corporate Training", view: { name: "institutions" } },
+        { label: "Corporate Training", view: { name: "corporate-training" } },
         { label: "Partner With Us", view: { name: "contact" } },
       ],
     },

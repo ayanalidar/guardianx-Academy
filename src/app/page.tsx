@@ -15,6 +15,7 @@ import { InstitutionsSchoolsView } from "@/views/institutions-schools"
 import { InstitutionsCollegesView } from "@/views/institutions-colleges"
 import { InstitutionsUniversitiesView } from "@/views/institutions-universities"
 import { OpenSchoolingView } from "@/views/open-schooling"
+import { CorporateTrainingView } from "@/views/corporate-training"
 import { DashboardView } from "@/views/dashboard"
 import { CourseCatalogView } from "@/views/course-catalog"
 import { BatchesView } from "@/views/batches"
@@ -47,6 +48,7 @@ import { AffiliateView } from "@/views/affiliate"
 import { PricingView } from "@/views/pricing"
 import { AdminSeoView } from "@/views/admin-seo"
 import { AdminOpenSchoolingLeadsView } from "@/views/admin-open-schooling-leads"
+import { AdminCorporateLeadsView } from "@/views/admin-corporate-leads"
 import { CourseDetailView } from "@/views/course-detail"
 import { LessonView } from "@/views/lesson-view"
 import { MyLearningView } from "@/views/my-learning"
@@ -116,6 +118,7 @@ function ViewRouter() {
       {view.name === "institutions-colleges" && <InstitutionsCollegesView />}
       {view.name === "institutions-universities" && <InstitutionsUniversitiesView />}
       {view.name === "institutions-open-schooling" && <OpenSchoolingView />}
+      {view.name === "corporate-training" && <CorporateTrainingView />}
       {view.name === "dashboard" && <DashboardView />}
       {view.name === "catalog" && <CourseCatalogView />}
       {view.name === "batches" && <BatchesView />}
@@ -148,6 +151,7 @@ function ViewRouter() {
       {view.name === "pricing" && <PricingView />}
       {view.name === "admin-seo" && <AdminSeoView />}
       {view.name === "admin-open-schooling-leads" && <AdminOpenSchoolingLeadsView />}
+      {view.name === "admin-corporate-leads" && <AdminCorporateLeadsView />}
       {view.name === "course" && <CourseDetailView />}
       {view.name === "lesson" && <LessonView />}
       {view.name === "learning" && <MyLearningView />}

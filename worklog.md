@@ -5530,3 +5530,63 @@ Stage Summary:
 - **Hero overflow**: added overflow-hidden to clip atmospheric glows so they don't cause horizontal scroll/bounce.
 - **0 lint errors**, 0 tsc errors, 0 page errors.
 
+
+---
+
+## CORPORATE TRAINING — dedicated B2B page + lead capture (session #8)
+
+Task ID: corporate-training-1
+Agent: main
+Task: User reported the footer "Corporate Training" link should open its own screen with its data. Chose Option C (full marketing page + lead-capture form) from the suggestion list.
+
+Work Log:
+- Discovered the footer "Corporate Training" link was routing to `{name:'institutions'}` which renders the Schools view (wrong page). Built a dedicated Corporate Training page instead.
+- Added `CorporateLead` model to prisma/schema.prisma (companyName, contactName, workEmail, phone, teamSize, trainingInterest as comma-separated string, timeline, message, status pipeline NEW→CONTACTED→CONVERTED→LOST, adminNotes, source, timestamps + indexes on status/companyName/createdAt). Pushed to Neon Postgres via `prisma db push` with inline DATABASE_URL.
+- Created public API: `POST /api/corporate-training/leads` — validates companyName (min 2), contactName (min 2), workEmail (regex), phone (10-digit Indian mobile), teamSize (one of 1-10/11-50/51-200/200+), trainingInterest (required string), timeline (one of immediate/1-3 months/exploring). In-memory rate limit (5 submissions per 10 min per IP). Returns 201 + lead ID on success, 400 on validation error, 429 on rate limit.
+- Created admin APIs (ADMIN-only, 401 for unauthorized):
+  - `GET /api/admin/corporate-training/leads` — list with filters (status, teamSize, search across companyName/contactName/workEmail/phone) + groupBy status counts
+  - `PATCH /api/admin/corporate-training/leads/[id]` — update status + admin notes
+  - `DELETE /api/admin/corporate-training/leads/[id]` — hard-delete (with confirm in UI)
+- Created public view `src/views/corporate-training.tsx` (~600 lines, 7 sections):
+  1. Hero — "Upskill your entire security team" + Request a proposal / Talk to our team CTAs + recognition strip (Custom curriculum / On-site + virtual / L&D reporting)
+  2. Who it's for — 4 cards (SOC teams, IT & Engineering, GRC & Compliance, Leadership)
+  3. What's included — 6 cards (Custom curriculum, Flexible delivery, Dedicated batches, Hands-on labs, Assessments + reporting, Certification)
+  4. Pricing — 3 tiers (Per-seat / Per-cohort [highlighted with "MOST POPULAR" badge] / Enterprise) with feature checklists + CTAs (Request a quote / Request a proposal / Talk to sales). No real price numbers — all "request a quote" per user's decision.
+  5. Case studies — placeholder section (4-segment grid: Fintech / Healthcare / SaaS / BFSI with descriptors; "Engagements under NDA" headline since real logos aren't shared publicly)
+  6. FAQ — 8-question accordion (custom curriculum, on-site outside Bengaluru, certificates, sample curriculum, min batch size, annual contracts, tabletop exercises, what happens after inquiry)
+  7. Lead-capture form — companyName, contactName, workEmail, phone, teamSize select (4 options), trainingInterest multi-select chips (6 options: SOC/IT/GRC/Leadership/Custom/NotSure), timeline select (3 options), message textarea. POSTs to /api/corporate-training/leads. Success + error banners. Rate-limit aware. Submit button disabled until teamSize + at least 1 trainingInterest selected. Pre-fills message when a pricing tier CTA is clicked (e.g. "Interested in the Per-cohort engagement tier. Please share a tailored proposal.").
+- Created admin view `src/views/admin-corporate-leads.tsx` (~400 lines):
+  - 4 status stat cards (NEW/CONTACTED/CONVERTED/LOST) with counts from groupBy
+  - Search by companyName/contactName/workEmail/phone + filter by status + filter by teamSize
+  - Auto-refresh every 30s so new leads appear without manual reload
+  - Lead list with avatar (company initial), companyName, status badge (colored dot), teamSize badge, email/phone/contact info, training interest tags, relative timestamp
+  - Detail dialog: all lead info + training interest badges + message + 4-button status updater + admin notes textarea (5000 char) + delete with confirm
+- Created route page `src/app/corporate-training/page.tsx` — static metadata (SEO title + description) + PublicPageShell wrapper.
+- Wiring (5 files modified):
+  - `src/store/app-store.ts` — added `corporate-training` + `admin-corporate-leads` to View union
+  - `src/lib/url-router.ts` — added both to knownViews allowlist
+  - `src/app/page.tsx` — imported both views + added render conditionals
+  - `src/components/platform/public-footer.tsx` — updated Corporate Training link from `{name:'institutions'}` → `{name:'corporate-training'}` (was showing the wrong page)
+  - `src/components/platform/public-header.tsx` — added Corporate Training as 5th item in INSTITUTIONS mega-menu (icon Briefcase, desc "Custom cyber training for teams", NOT external — opens in same tab consistent with schools/colleges/universities)
+  - `src/components/platform/app-shell.tsx` — added "Corporate Training Leads" to ADMIN_NAV (icon Building2, after Open Schooling Leads)
+- Verified end-to-end:
+  - `GET /corporate-training → 200` (direct URL works)
+  - `POST /api/corporate-training/leads → 201` with `{"ok":true,"id":"cmtweexeo..."}` (form submission works)
+  - Page title: "Corporate Training — Cyber Security Training for Teams | GuardianX Academy"
+  - Agent-browser snapshot confirmed all sections render: hero h1 "Upskill your entire security team", Request a proposal button, Company name form field, Submit inquiry button correctly disabled until teamSize + trainingInterests filled
+  - Lint: 0 errors (1 pre-existing warning in src/lib/db.ts)
+  - Dev log: 0 errors
+- Note: Same as Open Schooling — the page is client-rendered so curl returns the SPA shell, but agent-browser confirmed full hydration + all 7 sections + form present.
+- Note: Corporate Training opens in the SAME tab (not external/new tab like Open Schooling) because it's part of the institution offerings and should feel native to the site navigation. Only Open Schooling is marked `external: true` because it's a distinct landing-page-style entry.
+
+Stage Summary:
+- **6 new files** + **6 modified files** (wiring).
+- **3 new API routes** (1 public POST + 3 admin: GET list / PATCH update / DELETE) + **1 new DB model** (CorporateLead) + **2 new views** (public corporate-training + admin corporate-leads).
+- **1 commit pushed**: `ac3c77b` — feat: add Corporate Training page — dedicated B2B landing + lead capture
+- **All 7 public sections shipped**: hero, who it's for, what's included, pricing tiers, case studies, FAQ, lead form.
+- **Admin leads dashboard**: full CRUD (list/search/filter + update status/notes + delete) with 4-status pipeline (NEW → CONTACTED → CONVERTED → LOST).
+- **Lead-capture flow**: company fills form → lead saved to DB → admin sees it in dashboard (auto-refresh 30s) → admin contacts to schedule scoping call → admin updates pipeline status + notes.
+- **Accessible via**: INSTITUTIONS mega-menu → "Corporate Training" (same tab) OR direct URL `/corporate-training` OR hash URL `#/corporate-training` OR footer INSTITUTIONS column → "Corporate Training".
+- **Footer fix**: the footer "Corporate Training" link previously routed to the Schools page (wrong); now routes to the dedicated Corporate Training page.
+- **0 lint errors**, 0 runtime errors, 0 new tsc errors.
+

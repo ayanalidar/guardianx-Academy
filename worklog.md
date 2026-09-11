@@ -5622,3 +5622,66 @@ Stage Summary:
 - 0 invalid fields across all 100 question objects (all 9 required fields present with valid enum values).
 - All 100 questions are general-public level with realistic scenarios, plausible distractors, exactly one correct answer, and 1-2 sentence educational explanations.
 - Ready for the seed script (separate task) to insert these into the QuizQuestion Prisma model once that model is added to schema.prisma.
+
+---
+
+## CYBER SECURITY FOUNDATION QUIZ — public quiz + certificate + progress report (session #9)
+
+Task ID: cyber-quiz-1
+Agent: main
+Task: User asked to add a cyber security quiz for the general public with 30 random questions, certificate generation upon successful completion (₹199), certificate name "CYBER SECURITY FOUNDATION", candidate-selected difficulty (Easy/Hard/Advanced), stunning certificate shareable to LinkedIn/WhatsApp/PDF, + a visually stunning progress report card with per-domain strengths (GuardianX branded, like colleges/institutions provide).
+
+Work Log:
+- Delegated the 100-question seed to a subagent (Task ID: quiz-questions-1) which wrote prisma/quiz-seed.ts with 100 fact-checked questions across 8 categories × 3 difficulties (Easy: 40, Hard: 36, Advanced: 24). Distribution: Phishing 13, Passwords 13, Social Engineering 12, Web Safety 12, Mobile Security 12, Data Privacy 12, Malware 13, Wi-Fi Safety 13. Answer-letter balance: A 24, B 27, C 24, D 25 (anti-pattern-match).
+- Added 3 new Prisma models:
+  - QuizQuestion (category, difficulty, question, 4 options, correctAnswer, explanation, active)
+  - CyberQuizAttempt (userId optional for guests, guestEmail, guestName, difficulty, questionIds JSON, answers JSON, score, totalQuestions, percentage, passed, domainScores JSON for progress report, certificateId link)
+  - CyberQuizCertificate (credentialId GX-QUIZ-YYYY-XXXX format, attemptId, orderId, candidateName, email, difficulty, score, totalQuestions, percentage, domainScores JSON, issueDate, verificationHash, verificationUrl, status)
+- Extended the existing Order model with `purpose` field (COURSE | QUIZ_CERT) + `quizAttemptId` link so quiz payments are recorded in the same table as course payments.
+- Pushed schema to Neon Postgres + regenerated Prisma client. Ran the seed script — 100 questions inserted successfully.
+- Created 6 public APIs:
+  - GET /api/cyber-quiz/questions?difficulty=Easy|Hard|Advanced — returns 30 random questions WITHOUT correctAnswer (prevents cheating). Difficulty curve: Easy mode = all Easy; Hard mode = mix of Easy+Hard; Advanced mode = Hard+Advanced (smooth difficulty progression, not a literal filter).
+  - POST /api/cyber-quiz/submit — accepts 30 answers, computes score + per-domain breakdown, creates CyberQuizAttempt, returns score + passed + domainScores (no correctAnswer in response).
+  - POST /api/cyber-quiz/checkout — captures candidate name+email+phone, auto-creates guest User if not logged in, creates ₹199 Order (purpose=QUIZ_CERT), returns mock Razorpay order details (real-mode ready when RAZORPAY_KEY_SECRET is set).
+  - POST /api/cyber-quiz/verify-payment — verifies payment (mock mode accepts any non-empty paymentId), marks Order as paid, auto-issues CyberQuizCertificate with credentialId (GX-QUIZ-YYYY-XXXX format), tamper-evident verificationHash (SHA-256), verificationUrl (https://academy.guardianx.cloud/verify?id=...), links cert back to attempt. Idempotent (won't double-issue if already exists).
+  - GET /api/cyber-quiz/certificate/[credentialId] — public fetch for certificate view + verify page. Returns cert + domainScores JSON for the progress report.
+  - GET /api/cyber-quiz/attempt/[attemptId] — public fetch for results page (score + domainScores, no correctAnswer).
+- Created 4 admin APIs (ADMIN-only, 401 for unauthorized): questions CRUD (GET list + POST create + PATCH update + DELETE), attempts list (with passed/difficulty/search filters), certificates list (with search by credentialId/email/name).
+- Created 4 public views:
+  1. CyberQuizLandingView (cyber-quiz-landing.tsx, ~400 lines) — hero ("Test your cyber awareness"), what you get (4 cards: verifiable cert, progress report, 30-min quiz, instant results), difficulty select (3 cards: Easy=Foundational / Hard=Intermediate / Advanced=Expert with visual active state + glow), 8 domains grid, 10-question FAQ accordion, final CTA.
+  2. CyberQuizRunnerView (cyber-quiz-runner.tsx, ~350 lines) — sticky top bar (difficulty badge + timer + progress bar), one-question-at-a-time flow with AnimatePresence transitions, 4 option buttons (A/B/C/D) with selected state, question nav grid (jump to any question, color-coded answered/current), confirm-submit dialog, auto-submit on time-out (30 min), error banner.
+  3. CyberQuizResultsView (cyber-quiz-results.tsx, ~400 lines) — pass/fail banner with Trophy/XCircle icon, domain breakdown bars (color-coded by score tier), pay wall form (name + email + phone), Razorpay checkout (mock mode auto-verifies in 1.5s, real mode loads Razorpay SDK + opens modal), auto-navigate to certificate on payment success, "Certificate already issued" state if user revisits.
+  4. CyberQuizCertificateView (cyber-quiz-certificate.tsx, ~300 lines) — STUNNING certificate design: dark gradient bg, inner border, corner flourishes, GuardianX logo + "ACADEMY" wordmark, "Certificate of Completion" eyebrow, "Cyber Security Foundation" h2 with premium gradient, difficulty level, candidate name in large gradient text, "has successfully completed..." with score, verification seal (ShieldCheck icon in a circle), issue date + credential ID (GX-QUIZ-YYYY-XXXX) + verification URL at bottom. Action bar: Share to LinkedIn (opens linkedin.com/sharing/share-offsite/?url=...), Share to WhatsApp (opens wa.me/?text=...), Download PDF (html2canvas + jsPDF, 2x scale, downloads as <credentialId>.pdf), Copy verify link.
+  5. CyberQuizProgressView (cyber-quiz-progress.tsx, ~350 lines) — STUNNING report card: GuardianX-branded header (logo + credential ID), candidate info grid (name/difficulty/score/issue date), overall verdict (tier-based copy: Strong/Good foundation/Passed with room to grow), RADAR CHART (recharts) showing 8-domain strength overview, detailed per-domain scores with progress bars + descriptions + strength-tier badges (Expert/Strong/Developing/Needs work), strongest + focus-area highlight cards, BAR CHART (recharts) comparing scores by domain (color-coded by tier), downloadable as PDF.
+- Created 3 admin views:
+  1. AdminCyberQuizQuestionsView — CRUD for questions (create/edit/delete with category/difficulty/question/4 options/correctAnswer/explanation/active), search + filter by category/difficulty, stats (total/Easy/Hard/Advanced counts).
+  2. AdminCyberQuizAttemptsView — list of all attempts with search + filter by passed/failed + difficulty, stats (total/passed/with-cert/pass-rate), each row shows candidate name/email/difficulty/score/pass-fail badge/credential ID if issued/timestamp.
+  3. AdminCyberQuizCertsView — list of all issued certificates with search by credential ID/name/email, stats (total issued/avg score/revenue ₹199*n), each row clickable → opens the certificate view.
+- Wiring (5 files modified):
+  - src/store/app-store.ts — added 6 new views to View union (cyber-quiz, cyber-quiz-runner with difficulty param, cyber-quiz-results with attemptId, cyber-quiz-certificate with credentialId, cyber-quiz-progress with credentialId, + 3 admin views admin-cyber-quiz-questions/attempts/certs)
+  - src/lib/url-router.ts — added 4 new hash sub-routes in viewToHash (cyber-quiz/start/<diff>, results/<id>, certificate/<id>, progress/<id>) + hashToView parsing for all 4 + added all 7 view names to knownViews allowlist
+  - src/app/page.tsx — imported all 7 views + added 7 render conditionals (with type guards "difficulty" in view / "attemptId" in view / "credentialId" in view)
+  - src/components/platform/public-header.tsx — added Brain icon import + "Cyber Awareness Quiz" as 5th item in PRACTICE mega-menu (icon: Brain, desc: "Free public quiz + ₹199 certificate")
+  - src/components/platform/public-footer.tsx — added "Awareness Quiz" to footer PRACTICE column
+  - src/components/platform/app-shell.tsx — added Brain icon import + 3 admin nav items (Quiz Questions/Quiz Attempts/Quiz Certificates with Brain/Trophy/Award icons)
+  - src/app/cyber-quiz/page.tsx — static route page with SEO metadata + PublicPageShell
+- Verified:
+  - GET /cyber-quiz → 200 (direct URL)
+  - GET /api/cyber-quiz/questions?difficulty=Easy → 30 questions, count: 30, no correctAnswer field in response
+  - GET /api/cyber-quiz/questions?difficulty=Advanced → 30 questions, difficulties: {Hard, Advanced} (smooth curve confirmed)
+  - GET /api/admin/cyber-quiz/questions without auth → 401
+  - Agent-browser: landing page renders all sections (hero h1 "Test your cyber awareness", Start the quiz button, 3 difficulty cards Easy/Hard/Advanced with descriptions, "Ready to test yourself?" final CTA)
+  - Page title: "Cyber Security Foundation Quiz — Free Public Quiz + ₹199 Certificate | GuardianX Academy"
+  - Lint: 0 errors (1 pre-existing warning in src/lib/db.ts)
+
+Stage Summary:
+- **16 new files** + **7 modified files** (wiring) + **1 subagent-produced seed file** (prisma/quiz-seed.ts, 100 questions).
+- **6 new public APIs** + **4 admin APIs** (questions CRUD + attempts list + certs list).
+- **3 new DB models** (QuizQuestion, CyberQuizAttempt, CyberQuizCertificate) + **Order model extended** (purpose + quizAttemptId).
+- **100 questions seeded** to Neon Postgres (8 categories × 3 difficulties).
+- **4 public views** (landing, runner, results, certificate, progress) + **3 admin views** (questions CRUD, attempts, certs).
+- **1 commit pushed**: `7d1eba5` — feat: Cyber Security Foundation public quiz + certificate + progress report
+- **Complete flow**: candidate picks difficulty → 30 random questions → 30-min timer → submit → score + domain breakdown → if passed pay ₹199 (Razorpay mock mode + real-mode ready) → auto-issue certificate (GX-QUIZ-YYYY-XXXX) + progress report → stunning certificate view with LinkedIn/WhatsApp share + PDF download → stunning progress report with radar chart + per-domain breakdown + PDF download.
+- **0 lint errors**, 0 new tsc errors.
+- Note: The agent-browser couldn't complete the runner flow end-to-end because the dev server dies between separate bash tool invocations (known sandbox limitation). But the landing page was verified to render correctly + the questions API was verified to return 30 random questions without leaking correctAnswer.
+

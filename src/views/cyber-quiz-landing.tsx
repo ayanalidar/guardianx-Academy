@@ -146,7 +146,12 @@ export function CyberQuizLandingView() {
   const [selectedDifficulty, setSelectedDifficulty] = React.useState<string | null>(null)
 
   const startQuiz = (difficulty: string) => {
-    navigate({ name: "cyber-quiz-runner", difficulty } as any)
+    // The landing page is served from the static route /cyber-quiz which
+    // doesn't participate in the SPA hash-routing ViewRouter. So we do a
+    // full navigation to the root with the runner hash — the root page
+    // (src/app/page.tsx) picks up the hash via hydrateFromHash() and
+    // renders the CyberQuizRunnerView.
+    window.location.href = `/#/cyber-quiz/start/${difficulty}`
   }
 
   return (

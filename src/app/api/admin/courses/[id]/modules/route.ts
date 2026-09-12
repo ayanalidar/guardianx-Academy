@@ -2,6 +2,34 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/session"
 
+// GET — list all modules + their lessons for a course (admin only)
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const user = await getCurrentUser()
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  if (user.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+
+  const course = await db.course.findUnique({ where: { id }, select: { id: true } })
+  if (!course) return NextResponse.json({ error: "Course not found" }, { status: 404 })
+
+  const modules = await db.module.findMany({
+    where: { courseId: id },
+    orderBy: { order: "asc" },
+    include: {
+      lessons: {
+        orderBy: { order: "asc" },
+        select: {
+          id: true, title: true, type: true, content: true,
+          pdfUrl: true, pdfPages: true, durationMin: true,
+          order: true, preview: true,
+        },
+      },
+    },
+  })
+
+  return NextResponse.json({ modules, count: modules.length })
+}
+
 // Create a new module in a course (admin only)
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params // course id

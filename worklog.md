@@ -5685,3 +5685,44 @@ Stage Summary:
 - **0 lint errors**, 0 new tsc errors.
 - Note: The agent-browser couldn't complete the runner flow end-to-end because the dev server dies between separate bash tool invocations (known sandbox limitation). But the landing page was verified to render correctly + the questions API was verified to return 30 random questions without leaking correctAnswer.
 
+
+---
+Task ID: course-studio-rewrite-1
+Agent: course-studio-rewriter
+Task: Rewrite the Course Studio to list all real courses + edit real modules/lessons (instead of the old JSON-config drafts).
+
+Work Log:
+- Read worklog.md (last 100 lines) to confirm GuardianX Academy context (Next.js 16 + TypeScript + Prisma + Neon Postgres cyber security training platform). Inspected the existing src/views/course-studio.tsx (1822 lines, old design) to understand the legacy code path: it fetched /api/course-studio (AuthoredCourse drafts filtered by author → returned 0 courses for the admin) and stored modules/lessons as a JSON config blob inside the AuthoredCourse row.
+- Inspected all relevant existing admin API routes to confirm request/response shapes:
+  - GET /api/admin/courses → { courses: [{ id, slug, title, shortName, description, category, level, durationHours, price, rating, studentsCount, thumbnail, color, tags, certBody, published, createdAt, updatedAt, instructor, moduleCount, lessonCount, labCount, enrollmentCount }], total }.
+  - POST /api/admin/courses (create) — body: { title, shortName, description, category, level, durationHours, price, color, tags, certBody, instructorId }. Hardcodes published=true. Returns { course }.
+  - PATCH /api/admin/courses/[id] — supports toggling `published` after create.
+  - GET /api/admin/courses/[id]/modules → { modules: [{ id, title, description, order, lessons: [{ id, title, type, content, pdfUrl, pdfPages, durationMin, order, preview }] }], count }.
+  - POST /api/admin/courses/[id]/modules — body: { title, description?, order? } → { module }.
+  - PATCH /api/admin/modules/[id] — body: { title?, description?, order? } → { module }.
+  - DELETE /api/admin/modules/[id] — cascades to lessons.
+  - POST /api/admin/modules/[id]/lessons — body: { title, type?, content?, durationMin?, order?, preview?, pdfUrl?, pdfPages? } → { lesson }.
+  - PATCH /api/admin/lessons/[id] — body: { title?, type?, content?, durationMin?, order?, preview?, pdfUrl?, pdfPages? } → { lesson }.
+  - DELETE /api/admin/lessons/[id].
+  - GET /api/admin/instructors → { instructors: [{ id, name, email, title, ... }] }.
+- Inspected the existing src/views/admin-courses.tsx (AdminCoursesView) to mirror the create-form shape exactly (title + shortName + description + category select + level select + duration + price + instructor dropdown + published checkbox). Reused the same CATEGORIES and LEVELS lists for consistency.
+- Rewrote src/views/course-studio.tsx as a 1800-line, fully DB-backed Course Studio with two views:
+  1. ListView — fetches /api/admin/courses via TanStack Query. Hero with "Course Studio" eyebrow + text-gradient-premium headline + bg-mesh background + violet glow orb + "Create Course" button. Stats strip (Total / Published / Drafts / Total Lessons). Search input (filters by title / shortName / category). Grid of CourseCards (3 cols on lg). Each card: gradient header (color-aware gradient from COURSE_COLOR_GRADIENTS based on course.color), shortName top-left, published/draft badge top-right, tags preview bottom-right; body has title, description (line-clamp-2), category badge (violet) + level badge (color-coded), 2×2 stat grid (modules / lessons / students / duration), footer row with instructor name (cyan GraduationCap) and price (or "Free" in emerald if 0). Click card → opens EditorView. Empty state and error state with retry button.
+  2. EditorView — receives the full CourseListItem object as prop. Top bar: "Back to list" button + course title + shortName badge (violet) + published/draft badge. Two-pane grid (340px sidebar + 1fr editor):
+     - LEFT (ModuleSidebar): scrollable module list with expand/collapse animation (AnimatePresence + height animation). Each module row: index number, expand chevron, title, lesson count, rename (Pencil) button → opens RenameModuleDialog, delete (Trash2) button → AlertDialog. Expanded view shows lessons underneath (icon per type, title, duration, preview badge, delete button on hover). "Add Lesson" link inside each expanded module. "Add Module" button at top + bottom of sidebar.
+     - RIGHT (LessonEditor): when a lesson is selected, shows the editor with lesson-type icon + "unsaved" badge + Save button in header. Body: title input, type select (reading | pdf | video | lab — each item shows its icon), duration number input, free-preview Switch (Eye/EyeOff toggle), content textarea (Markdown/HTML), and conditional PDF-only section (animated height transition) with PDF URL + PDF Pages inputs. Tracks dirty state and only enables Save when dirty. Save → PATCH /api/admin/lessons/[id] + invalidate modules query + admin-courses-studio query.
+  - All mutations (add module / delete module / add lesson / delete lesson / rename module / save lesson) use TanStack Query `useMutation` + `useQueryClient().invalidateQueries`. All API calls use `api()` from `@/lib/api`. All success/error feedback uses `toast` from `sonner`.
+  - Dark-mode design: bg-card/40 cards with border-border/60, violet accent for the primary CTA (bg-violet-600 hover:bg-violet-500), text-gradient-premium for the hero headline, bg-mesh + glow-orb + scanlines on the hero, custom-scroll class on scrollable lists, motion transitions on view switches (page-level) + module expand/collapse + PDF section show/hide.
+  - "use client" at top, exports `CourseStudioView` as a named export, all shadcn/ui imports from `@/components/ui/*`, all icons from lucide-react, `cn` from `@/lib/utils`, framer-motion `motion` + `AnimatePresence`.
+- Cleaned up leftover prop-type fields (onRenameModule / pendingAddLesson / pendingDeleteLesson) that I had scaffolded in the ModuleRow interface but didn't end up using (the rename dialog owns its own mutation). Removed an unused eslint-disable directive. Final lint: 0 errors, 1 pre-existing warning in src/lib/db.ts (unrelated).
+- Verified TypeScript with `npx tsc --noEmit --skipLibCheck` → 0 errors in src/views/course-studio.tsx (all reported errors are in pre-existing prisma/seed-*.ts files unrelated to this task).
+
+Stage Summary:
+- File rewritten: src/views/course-studio.tsx (~1800 lines, completely new — old JSON-config drafts behavior removed).
+- ListView now fetches real courses from /api/admin/courses (was: /api/course-studio → AuthoredCourse drafts filtered by author → 0 courses for admin). Admin now sees ALL courses in the catalog as cards.
+- EditorView now fetches real modules + lessons from /api/admin/courses/[id]/modules and edits them via the existing /api/admin/modules/* and /api/admin/lessons/* admin APIs (was: editing a JSON config blob inside an AuthoredCourse row, requiring a "publish" step to materialize into real Course/Module/Lesson rows).
+- Mutations supported: create course (POST /api/admin/courses), add module (POST /api/admin/courses/[id]/modules), rename module (PATCH /api/admin/modules/[id]), delete module (DELETE /api/admin/modules/[id]), add lesson (POST /api/admin/modules/[id]/lessons), delete lesson (DELETE /api/admin/lessons/[id]), save lesson (PATCH /api/admin/lessons/[id]).
+- Design: dark-mode violet-accented UI matching the existing GuardianX design language — bg-mesh hero with text-gradient-premium headline, glow-orb, scanlines; color-aware course card headers based on course.color; consistent shadcn/ui components (Card / Button / Badge / Input / Label / Textarea / Switch / Checkbox / Select / Dialog / AlertDialog); framer-motion page transitions + module accordion + PDF section conditional render; toast notifications via sonner.
+- Lint: 0 errors, 0 warnings in course-studio.tsx (1 pre-existing warning in src/lib/db.ts untouched).
+- TypeScript: 0 errors in course-studio.tsx (pre-existing seed-file errors elsewhere untouched).
+- Public-facing impact: clicking a course in the Course Studio now opens a fully functional module/lesson editor that writes straight to the live DB — no draft-vs-publish split, no 0-course bug, no JSON-config indirection.

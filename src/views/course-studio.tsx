@@ -10,9 +10,9 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Switch } from "@/components/ui/switch"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Select,
   SelectContent,
@@ -43,1028 +43,1360 @@ import {
   BookOpen,
   Plus,
   Trash2,
-  ChevronUp,
   ChevronDown,
+  ChevronRight,
   Save,
-  Rocket,
   FileText,
   FileVideo,
-  FileCode2,
   FlaskConical,
   Pencil,
   Eye,
-  Code2,
+  EyeOff,
   Layers,
   Clock,
-  GripVertical,
-  CheckCircle2,
-  CircleDot,
   Sparkles,
-  Settings2,
   ArrowLeft,
   RefreshCw,
-  Copy,
-  Download,
-  X,
+  Search,
   Loader2,
+  AlertTriangle,
+  CheckCircle2,
+  GraduationCap,
+  Users,
+  IndianRupee,
 } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 
 // ---------------------------------------------------------------------------
-// Types - mirror the API's config shape
+// Types
 // ---------------------------------------------------------------------------
 type LessonType = "reading" | "pdf" | "video" | "lab"
 
-interface LessonCfg {
+interface CourseListItem {
+  id: string
+  slug: string
+  title: string
+  shortName: string
+  description: string
+  category: string
+  level: string
+  durationHours: number
+  price: number
+  rating: number
+  studentsCount: number
+  thumbnail: string | null
+  color: string
+  tags: string
+  certBody: string | null
+  published: boolean
+  createdAt: string
+  updatedAt: string
+  instructor: { id: string; name: string; title: string | null; avatar: string | null } | null
+  moduleCount: number
+  lessonCount: number
+  labCount: number
+  enrollmentCount: number
+}
+
+interface AdminLesson {
   id: string
   title: string
   type: LessonType
   content: string
-  pdfUrl?: string | null
-  pdfPages?: number
+  pdfUrl: string | null
+  pdfPages: number
   durationMin: number
+  order: number
   preview: boolean
 }
 
-interface ModuleCfg {
+interface AdminModule {
   id: string
   title: string
-  description?: string
-  lessons: LessonCfg[]
+  description: string | null
+  order: number
+  lessons: AdminLesson[]
 }
 
-interface CourseConfig {
-  version: number
-  title: string
-  shortName: string
-  description: string
-  longDescription: string
-  category: string
-  level: "Beginner" | "Intermediate" | "Advanced"
-  durationHours: number
-  price: number
-  color: string
-  tags: string[]
-  certBody: string | null
-  thumbnail: string | null
-  modules: ModuleCfg[]
+interface InstructorOption {
+  id: string
+  name: string
+  email: string
+  title: string | null
 }
 
-const COURSE_COLORS = [
-  "violet",
-  "emerald",
-  "cyan",
-  "amber",
-  "rose",
-  "fuchsia",
-  "teal",
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+const CATEGORIES = [
+  "Ethical Hacking",
+  "Networking",
+  "Web Security",
+  "System Administration",
+  "Security Management",
+  "Identity & Access",
+  "Cloud Security",
+  "DevSecOps",
+  "Incident Response",
+  "General",
 ]
+
+const LEVELS = ["Beginner", "Intermediate", "Advanced"] as const
+const LESSON_TYPES: LessonType[] = ["reading", "pdf", "video", "lab"]
 
 const LESSON_TYPE_META: Record<
   LessonType,
-  { label: string; icon: any; color: string }
+  { label: string; icon: React.ComponentType<{ className?: string }>; color: string }
 > = {
-  reading: { label: "Reading", icon: FileText, color: "text-violet-400" },
-  pdf: { label: "PDF Material", icon: FileText, color: "text-cyan-400" },
-  video: { label: "Video", icon: FileVideo, color: "text-amber-400" },
-  lab: { label: "Lab", icon: FlaskConical, color: "text-emerald-400" },
+  reading: { label: "Reading", icon: FileText, color: "text-violet-300" },
+  pdf: { label: "PDF Material", icon: FileText, color: "text-cyan-300" },
+  video: { label: "Video", icon: FileVideo, color: "text-amber-300" },
+  lab: { label: "Lab", icon: FlaskConical, color: "text-emerald-300" },
 }
 
-function uid(prefix = "id") {
-  return `${prefix}_${Date.now().toString(36)}${Math.random()
-    .toString(36)
-    .slice(2, 7)}`
+const LEVEL_BADGE: Record<string, string> = {
+  Beginner: "border-emerald-500/40 text-emerald-300 bg-emerald-500/10",
+  Intermediate: "border-cyan-500/40 text-cyan-300 bg-cyan-500/10",
+  Advanced: "border-violet-500/40 text-violet-300 bg-violet-500/10",
+}
+
+const COURSE_COLOR_GRADIENTS: Record<string, string> = {
+  violet: "from-violet-500/30 via-violet-500/10 to-fuchsia-500/10",
+  emerald: "from-emerald-500/30 via-emerald-500/10 to-teal-500/10",
+  cyan: "from-cyan-500/30 via-cyan-500/10 to-blue-500/10",
+  amber: "from-amber-500/30 via-amber-500/10 to-orange-500/10",
+  rose: "from-rose-500/30 via-rose-500/10 to-pink-500/10",
+  fuchsia: "from-fuchsia-500/30 via-fuchsia-500/10 to-violet-500/10",
+  teal: "from-teal-500/30 via-teal-500/10 to-cyan-500/10",
+}
+
+function gradientFor(color: string | null | undefined) {
+  if (color && COURSE_COLOR_GRADIENTS[color]) return COURSE_COLOR_GRADIENTS[color]
+  return COURSE_COLOR_GRADIENTS.violet
 }
 
 // ---------------------------------------------------------------------------
 // Main view
 // ---------------------------------------------------------------------------
 export function CourseStudioView() {
-  const { user } = useUser()
-  const [selectedCourseId, setSelectedCourseId] = React.useState<string | null>(null)
+  const { user, isLoading: userLoading } = useUser()
+  const [selectedCourse, setSelectedCourse] = React.useState<CourseListItem | null>(null)
+
+  if (userLoading) {
+    return (
+      <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
+        <Skeleton className="h-28 w-full rounded-2xl" />
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-48 rounded-xl" />
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   if (!user) {
     return (
-      <Card className="p-12 text-center border-dashed">
-        <BookOpen className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-        <p className="font-medium mb-1">Sign in to access the Course Studio</p>
-        <p className="text-sm text-muted-foreground">
-          You need a GuardianX account to author courses.
-        </p>
-      </Card>
+      <div className="max-w-md mx-auto p-6">
+        <Card className="p-12 text-center border-dashed bg-card/40 border-border/60">
+          <BookOpen className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+          <p className="font-medium mb-1">Sign in to access the Course Studio</p>
+          <p className="text-sm text-muted-foreground">
+            You need a GuardianX admin account to manage courses.
+          </p>
+        </Card>
+      </div>
     )
   }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto p-4 sm:p-6">
-      {selectedCourseId ? (
-        <EditorView
-          courseId={selectedCourseId}
-          onBack={() => setSelectedCourseId(null)}
-        />
-      ) : (
-        <ListView onOpen={setSelectedCourseId} />
-      )}
+    <div className="max-w-7xl mx-auto p-4 sm:p-6">
+      <AnimatePresence mode="wait">
+        {selectedCourse ? (
+          <motion.div
+            key={`editor-${selectedCourse.id}`}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2 }}
+          >
+            <EditorView
+              course={selectedCourse}
+              onBack={() => setSelectedCourse(null)}
+            />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="list"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2 }}
+          >
+            <ListView onOpen={setSelectedCourse} />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
 
 // ---------------------------------------------------------------------------
-// List view - show all authored courses
+// List View
 // ---------------------------------------------------------------------------
-function ListView({ onOpen }: { onOpen: (id: string) => void }) {
+function ListView({ onOpen }: { onOpen: (c: CourseListItem) => void }) {
   const qc = useQueryClient()
-  const { data, isLoading } = useQuery<any>({
-    queryKey: ["course-studio-list"],
-    queryFn: () => api("/api/course-studio"),
-  })
-
+  const [search, setSearch] = React.useState("")
   const [createOpen, setCreateOpen] = React.useState(false)
-  const [newTitle, setNewTitle] = React.useState("")
-  const [newDesc, setNewDesc] = React.useState("")
-  const [newCategory, setNewCategory] = React.useState("Certification")
-  const [newLevel, setNewLevel] = React.useState<"Beginner" | "Intermediate" | "Advanced">("Beginner")
 
-  const createMutation = useMutation({
-    mutationFn: () =>
-      api<{ course: any }>("/api/course-studio", {
-        method: "POST",
-        body: JSON.stringify({
-          title: newTitle,
-          description: newDesc,
-          category: newCategory,
-          level: newLevel,
-        }),
-      }),
-    onSuccess: (data) => {
-      toast.success("Draft created - start building!")
-      qc.invalidateQueries({ queryKey: ["course-studio-list"] })
-      setCreateOpen(false)
-      setNewTitle("")
-      setNewDesc("")
-      setNewCategory("Certification")
-      setNewLevel("Beginner")
-      onOpen(data.course.id)
-    },
-    onError: (e: any) => toast.error(e.message || "Failed to create course"),
+  const { data, isLoading, isError, error, isFetching } = useQuery<{
+    courses: CourseListItem[]
+    total: number
+  }>({
+    queryKey: ["admin-courses-studio"],
+    queryFn: () => api("/api/admin/courses"),
+    refetchOnWindowFocus: false,
+    staleTime: 30_000,
   })
 
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) =>
-      api(`/api/course-studio/${id}`, { method: "DELETE" }),
-    onSuccess: () => {
-      toast.success("Course draft deleted")
-      qc.invalidateQueries({ queryKey: ["course-studio-list"] })
+  const { data: instructorData } = useQuery<{ instructors: InstructorOption[] }>({
+    queryKey: ["admin-instructors-studio"],
+    queryFn: async () => {
+      const j = await api<any>("/api/admin/instructors")
+      const list: InstructorOption[] = (j.instructors ?? []).map((i: any) => ({
+        id: i.id,
+        name: i.name,
+        email: i.email,
+        title: i.title ?? null,
+      }))
+      return { instructors: list }
     },
-    onError: (e: any) => toast.error(e.message || "Failed to delete"),
+    staleTime: 5 * 60_000,
   })
 
   const courses = data?.courses ?? []
-  const totals = data?.totals
+  const instructors = instructorData?.instructors ?? []
+
+  const filtered = React.useMemo(() => {
+    const q = search.trim().toLowerCase()
+    if (!q) return courses
+    return courses.filter(
+      (c) =>
+        c.title.toLowerCase().includes(q) ||
+        c.shortName.toLowerCase().includes(q) ||
+        c.category.toLowerCase().includes(q),
+    )
+  }, [courses, search])
+
+  const totalLessons = courses.reduce((acc, c) => acc + c.lessonCount, 0)
+  const publishedCount = courses.filter((c) => c.published).length
+  const draftCount = courses.length - publishedCount
+
+  const invalidateList = () => qc.invalidateQueries({ queryKey: ["admin-courses-studio"] })
 
   return (
     <div className="space-y-6">
       {/* Hero */}
       <div className="relative overflow-hidden rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-950/40 via-card to-card p-6 lg:p-8 scanlines">
-        <div className="absolute inset-0 bg-grid opacity-30" />
-        <div
-          className="glow-orb h-48 w-48 bg-violet-600/30"
-          style={{ top: "-20%", right: "-5%" }}
-        />
+        <div className="absolute inset-0 bg-mesh opacity-30 pointer-events-none" />
+        <div className="glow-orb h-48 w-48 bg-violet-600/30" style={{ top: "-20%", right: "-5%" }} />
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-3">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-violet-500/30 bg-violet-500/10 text-violet-400 text-xs font-mono">
-              <Sparkles className="h-3 w-3" /> COURSE AUTHORING STUDIO
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-violet-500/30 bg-violet-500/10 text-violet-300 text-xs font-mono">
+              <Sparkles className="h-3 w-3" /> COURSE STUDIO
             </div>
             <h1 className="text-2xl lg:text-3xl font-bold tracking-tight">
               Build your <span className="text-gradient-premium">cyber curriculum</span>
             </h1>
             <p className="text-muted-foreground text-sm max-w-xl">
-              Design modules, craft lessons, and publish production-ready
-              courses - visually, with a JSON-configurable backbone.
+              Manage every course in the catalog — design modules, craft lessons, and ship
+              production-ready content. All wired directly to the live database.
             </p>
           </div>
           <Button
             onClick={() => setCreateOpen(true)}
-            className="bg-violet-600 hover:bg-violet-500 btn-premium"
+            className="bg-violet-600 hover:bg-violet-500 btn-premium h-10 px-5"
           >
-            <Plus className="h-4 w-4 mr-2" /> New Draft
+            <Plus className="h-4 w-4 mr-2" /> Create Course
           </Button>
         </div>
       </div>
 
-      {/* Stat strip */}
+      {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <StatPill label="Total" value={totals?.total ?? 0} color="text-violet-400" />
-        <StatPill label="Drafts" value={totals?.drafts ?? 0} color="text-cyan-400" />
-        <StatPill label="In Review" value={totals?.review ?? 0} color="text-amber-400" />
-        <StatPill label="Published" value={totals?.published ?? 0} color="text-emerald-400" />
+        <StatTile
+          label="Total Courses"
+          value={courses.length}
+          icon={BookOpen}
+          tint="bg-violet-500/10 text-violet-300"
+        />
+        <StatTile
+          label="Published"
+          value={publishedCount}
+          icon={CheckCircle2}
+          tint="bg-emerald-500/10 text-emerald-300"
+        />
+        <StatTile
+          label="Drafts"
+          value={draftCount}
+          icon={Layers}
+          tint="bg-cyan-500/10 text-cyan-300"
+        />
+        <StatTile
+          label="Total Lessons"
+          value={totalLessons}
+          icon={FileText}
+          tint="bg-fuchsia-500/10 text-fuchsia-300"
+        />
       </div>
 
-      {/* AI Course Generator */}
-      <AICourseGenerator />
+      {/* Search */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="relative flex-1 min-w-[260px] max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <Input
+            placeholder="Search by title, short name, or category..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9 bg-card/40 border-border/60"
+          />
+        </div>
+        <div className="flex items-center gap-2 text-[10px] font-mono text-muted-foreground/70 ml-auto">
+          {isFetching && !isLoading && (
+            <span className="flex items-center gap-1">
+              <Loader2 className="h-3 w-3 animate-spin" /> SYNCING
+            </span>
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 text-muted-foreground hover:text-violet-300"
+            onClick={() => invalidateList()}
+          >
+            <RefreshCw className="h-3 w-3" />
+          </Button>
+        </div>
+      </div>
 
       {/* Course grid */}
       {isLoading ? (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} className="h-48" />
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-56 rounded-xl" />
           ))}
         </div>
-      ) : courses.length === 0 ? (
-        <Card className="bg-card shadow-lg p-12 text-center border-dashed">
-          <BookOpen className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-          <p className="font-medium mb-1">No course drafts yet</p>
+      ) : isError ? (
+        <Card className="p-12 text-center border-rose-500/30 bg-card/40">
+          <AlertTriangle className="h-10 w-10 text-rose-400 mx-auto mb-3" />
+          <p className="font-medium mb-1">Failed to load courses</p>
           <p className="text-sm text-muted-foreground mb-4">
-            Create your first draft to start building.
+            {(error as Error)?.message}
           </p>
-          <Button
-            onClick={() => setCreateOpen(true)}
-            className="bg-violet-600 hover:bg-violet-500"
-          >
-            <Plus className="h-4 w-4 mr-2" /> Create Draft
+          <Button onClick={() => invalidateList()} variant="outline">
+            <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Retry
           </Button>
+        </Card>
+      ) : filtered.length === 0 ? (
+        <Card className="p-12 text-center border-dashed bg-card/40">
+          <BookOpen className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+          <p className="font-medium mb-1">
+            {search ? "No courses match your search" : "No courses yet"}
+          </p>
+          <p className="text-sm text-muted-foreground mb-4">
+            {search
+              ? "Try a different search term."
+              : "Create your first course to populate the catalog."}
+          </p>
+          {!search && (
+            <Button
+              onClick={() => setCreateOpen(true)}
+              className="bg-violet-600 hover:bg-violet-500 btn-premium"
+            >
+              <Plus className="h-4 w-4 mr-2" /> Create Course
+            </Button>
+          )}
         </Card>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {courses.map((c: any) => (
-            <CourseCard
-              key={c.id}
-              course={c}
-              onOpen={() => onOpen(c.id)}
-              onDelete={() => deleteMutation.mutate(c.id)}
-              deleting={deleteMutation.isPending}
-            />
+          {filtered.map((c) => (
+            <CourseCard key={c.id} course={c} onOpen={() => onOpen(c)} />
           ))}
         </div>
       )}
 
       {/* Create dialog */}
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>New course draft</DialogTitle>
-            <DialogDescription>
-              Pick a title and basic metadata. You can refine everything
-              inside the studio editor.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label>Course Title</Label>
-              <Input
-                placeholder="e.g. Certified Ethical Hacker - CEH v13"
-                value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
-                minLength={3}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Short description</Label>
-              <Textarea
-                rows={3}
-                placeholder="A one-line description of what students will learn"
-                value={newDesc}
-                onChange={(e) => setNewDesc(e.target.value)}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label>Category</Label>
-                <Input
-                  placeholder="Certification"
-                  value={newCategory}
-                  onChange={(e) => setNewCategory(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Level</Label>
-                <Select
-                  value={newLevel}
-                  onValueChange={(v: any) => setNewLevel(v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Beginner">Beginner</SelectItem>
-                    <SelectItem value="Intermediate">Intermediate</SelectItem>
-                    <SelectItem value="Advanced">Advanced</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="outline">Cancel</Button>
-            </DialogClose>
-            <Button
-              onClick={() => createMutation.mutate()}
-              disabled={createMutation.isPending || newTitle.trim().length < 3}
-              className="bg-violet-600 hover:bg-violet-500"
-            >
-              {createMutation.isPending ? (
-                <>
-                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> Creating…
-                </>
-              ) : (
-                <>
-                  <Plus className="h-4 w-4 mr-2" /> Create Draft
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <CreateCourseDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        instructors={instructors}
+        onCreated={(course) => {
+          invalidateList()
+          setCreateOpen(false)
+          onOpen(course)
+        }}
+      />
     </div>
   )
 }
 
-function StatPill({ label, value, color }: { label: string; value: number; color: string }) {
+function StatTile({
+  label,
+  value,
+  icon: Icon,
+  tint,
+}: {
+  label: string
+  value: number
+  icon: React.ComponentType<{ className?: string }>
+  tint: string
+}) {
   return (
-    <Card className="bg-card shadow-lg p-4 flex items-center justify-between">
-      <div>
-        <div className={cn("text-2xl font-bold tabular-nums", color)}>{value}</div>
-        <div className="text-[10px] text-muted-foreground uppercase tracking-wider">{label}</div>
+    <Card className="bg-card/40 border-border/60 p-4 flex items-center gap-3">
+      <div className={cn("h-9 w-9 rounded-lg flex items-center justify-center shrink-0", tint)}>
+        <Icon className="h-4 w-4" />
       </div>
-      <Layers className={cn("h-5 w-5", color)} />
+      <div className="min-w-0">
+        <div className="text-xl font-bold tabular-nums leading-none">{value}</div>
+        <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider mt-1 truncate">
+          {label}
+        </div>
+      </div>
     </Card>
   )
 }
 
-function CourseCard({
-  course,
-  onOpen,
-  onDelete,
-  deleting,
-}: {
-  course: any
-  onOpen: () => void
-  onDelete: () => void
-  deleting: boolean
-}) {
-  const statusMeta: Record<string, { color: string; label: string }> = {
-    draft: { color: "text-cyan-400 border-cyan-500/30 bg-cyan-500/10", label: "Draft" },
-    review: { color: "text-amber-400 border-amber-500/30 bg-amber-500/10", label: "In Review" },
-    published: { color: "text-emerald-400 border-emerald-500/30 bg-emerald-500/10", label: "Published" },
-  }
-  const s = statusMeta[course.status] || statusMeta.draft
+function CourseCard({ course, onOpen }: { course: CourseListItem; onOpen: () => void }) {
   return (
-    <Card className="bg-card shadow-lg overflow-hidden group card-hover">
-      <div
-        className={cn(
-          "h-24 bg-gradient-to-br relative",
-          "from-violet-500/20 to-fuchsia-500/10"
-        )}
-      >
-        <div className="absolute inset-0 bg-grid opacity-40" />
+    <Card
+      onClick={onOpen}
+      className="bg-card/40 border-border/60 overflow-hidden cursor-pointer group hover:border-violet-500/40 hover:shadow-lg hover:shadow-violet-500/10 transition-all"
+    >
+      <div className={cn("h-24 bg-gradient-to-br relative", gradientFor(course.color))}>
+        <div className="absolute inset-0 bg-mesh opacity-40 pointer-events-none" />
         <div className="absolute top-3 right-3 flex items-center gap-2">
-          <Badge variant="outline" className={cn("text-[10px]", s.color)}>
-            {s.label}
+          <Badge
+            variant="outline"
+            className={cn(
+              "text-[9px] uppercase",
+              course.published
+                ? "border-emerald-500/40 text-emerald-300 bg-emerald-500/10"
+                : "border-zinc-500/40 text-zinc-300 bg-zinc-500/10",
+            )}
+          >
+            {course.published ? "Published" : "Draft"}
           </Badge>
         </div>
         <div className="absolute bottom-2 left-3">
-          <span className="text-xs font-mono text-violet-300/80 uppercase">
+          <span className="text-xs font-mono text-violet-200/80 uppercase tracking-wider">
             {course.shortName || "CRS"}
           </span>
         </div>
+        <div className="absolute bottom-2 right-3">
+          <span className="text-[9px] font-mono text-muted-foreground/80">
+            {(course.tags || "")
+              .split(",")
+              .map((t) => t.trim())
+              .filter(Boolean)
+              .slice(0, 2)
+              .map((t) => `#${t}`)
+              .join(" ")}
+          </span>
+        </div>
       </div>
-      <div className="p-4">
-        <h3 className="font-semibold truncate mb-1">{course.title}</h3>
-        <p className="text-xs text-muted-foreground mb-3">
-          {course.category} · {course.level}
-        </p>
-        <div className="flex items-center gap-3 text-[11px] text-muted-foreground mb-3">
+      <div className="p-4 space-y-3">
+        <div className="space-y-1">
+          <h3 className="font-semibold text-sm leading-tight line-clamp-2 group-hover:text-violet-300 transition-colors">
+            {course.title}
+          </h3>
+          {course.description && (
+            <p className="text-xs text-muted-foreground line-clamp-2">{course.description}</p>
+          )}
+        </div>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <Badge variant="outline" className="text-[9px] uppercase border-violet-500/30 text-violet-300 bg-violet-500/10">
+            {course.category}
+          </Badge>
+          <Badge variant="outline" className={cn("text-[9px] uppercase", LEVEL_BADGE[course.level] ?? LEVEL_BADGE.Beginner)}>
+            {course.level}
+          </Badge>
+        </div>
+        <div className="grid grid-cols-2 gap-2 text-[11px] text-muted-foreground">
           <span className="flex items-center gap-1">
             <Layers className="h-3 w-3" /> {course.moduleCount} modules
           </span>
           <span className="flex items-center gap-1">
             <FileText className="h-3 w-3" /> {course.lessonCount} lessons
           </span>
+          <span className="flex items-center gap-1">
+            <Users className="h-3 w-3" /> {course.enrollmentCount} students
+          </span>
+          <span className="flex items-center gap-1">
+            <Clock className="h-3 w-3" /> {course.durationHours}h
+          </span>
         </div>
-        <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            className="flex-1 border-violet-500/30 text-violet-300 hover:bg-violet-500/10"
-            onClick={onOpen}
-          >
-            <Pencil className="h-3.5 w-3.5 mr-1.5" /> Open
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            className="border-rose-500/30 text-rose-300 hover:bg-rose-500/10"
-            onClick={onDelete}
-            disabled={deleting}
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </Button>
+        <div className="flex items-center justify-between pt-1 border-t border-border/40">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
+            <GraduationCap className="h-3.5 w-3.5 text-cyan-300 shrink-0" />
+            <span className="truncate">{course.instructor?.name ?? "Unassigned"}</span>
+          </div>
+          <div className="flex items-center gap-1 text-xs font-medium tabular-nums">
+            {course.price === 0 ? (
+              <span className="text-emerald-300">Free</span>
+            ) : (
+              <span className="flex items-center">
+                <IndianRupee className="h-3 w-3" />
+                {course.price.toLocaleString("en-IN")}
+              </span>
+            )}
+          </div>
         </div>
-        <p className="text-[10px] text-muted-foreground mt-2">
-          Updated {new Date(course.updatedAt).toLocaleDateString()}
-        </p>
       </div>
     </Card>
   )
 }
 
 // ---------------------------------------------------------------------------
-// Editor view - three-pane visual builder
+// Create Course Dialog
 // ---------------------------------------------------------------------------
-function EditorView({ courseId, onBack }: { courseId: string; onBack: () => void }) {
-  const qc = useQueryClient()
-  const { data, isLoading, isError, error } = useQuery<any>({
-    queryKey: ["course-studio", courseId],
-    queryFn: () => api(`/api/course-studio/${courseId}`),
-    enabled: !!courseId,
-  })
+interface CreateForm {
+  title: string
+  shortName: string
+  description: string
+  category: string
+  level: string
+  durationHours: string
+  price: string
+  instructorId: string
+  published: boolean
+}
 
-  // Local working copy of the config (so the editor feels instant)
-  const [config, setConfig] = React.useState<CourseConfig | null>(null)
-  const [title, setTitle] = React.useState("")
-  const [status, setStatus] = React.useState<string>("draft")
-  const [version, setVersion] = React.useState(1)
+function emptyCreateForm(): CreateForm {
+  return {
+    title: "",
+    shortName: "",
+    description: "",
+    category: CATEGORIES[0]!,
+    level: LEVELS[0],
+    durationHours: "40",
+    price: "0",
+    instructorId: "",
+    published: true,
+  }
+}
 
-  const [selectedModuleId, setSelectedModuleId] = React.useState<string | null>(null)
-  const [selectedLessonId, setSelectedLessonId] = React.useState<string | null>(null)
-  const [rightTab, setRightTab] = React.useState<"preview" | "json" | "settings">("preview")
-  const [dirty, setDirty] = React.useState(false)
-  const [publishOpen, setPublishOpen] = React.useState(false)
+function CreateCourseDialog({
+  open,
+  onOpenChange,
+  instructors,
+  onCreated,
+}: {
+  open: boolean
+  onOpenChange: (o: boolean) => void
+  instructors: InstructorOption[]
+  onCreated: (c: CourseListItem) => void
+}) {
+  const [form, setForm] = React.useState<CreateForm>(emptyCreateForm())
+  const [submitting, setSubmitting] = React.useState(false)
+  const [formError, setFormError] = React.useState<string | null>(null)
 
-  // Sync server data → local state once
   React.useEffect(() => {
-    if (data?.course) {
-      const cfg = (data.course.config || {}) as CourseConfig
-      setConfig(cfg)
-      setTitle(data.course.title)
-      setStatus(data.course.status)
-      setVersion(data.course.version)
-      setDirty(false)
-      // Auto-select first module/lesson
-      if (cfg.modules?.length && !selectedModuleId) {
-        setSelectedModuleId(cfg.modules[0].id)
-        if (cfg.modules[0].lessons?.length && !selectedLessonId) {
-          setSelectedLessonId(cfg.modules[0].lessons[0].id)
-        }
-      }
+    if (open) {
+      setForm(emptyCreateForm())
+      setFormError(null)
     }
-  }, [data])
+  }, [open])
 
-  const patchMutation = useMutation({
-    mutationFn: (patch: any) =>
-      api(`/api/course-studio/${courseId}`, {
-        method: "PATCH",
-        body: JSON.stringify(patch),
-      }),
-    onSuccess: (res) => {
-      setDirty(false)
-      setStatus(res.course.status)
-      setVersion(res.course.version)
-      qc.invalidateQueries({ queryKey: ["course-studio-list"] })
-      toast.success("Saved")
-    },
-    onError: (e: any) => toast.error(e.message || "Save failed"),
-  })
+  // Pre-select first instructor if available
+  React.useEffect(() => {
+    if (open && !form.instructorId && instructors.length > 0) {
+      setForm((f) => ({ ...f, instructorId: instructors[0]!.id }))
+    }
+  }, [open, instructors, form.instructorId])
 
-  const publishMutation = useMutation({
-    mutationFn: () =>
-      api(`/api/course-studio/${courseId}`, {
-        method: "POST",
-        body: JSON.stringify({ force: true }),
-      }),
-    onSuccess: (res: any) => {
-      toast.success(
-        `Published! ${res.moduleCount} modules · ${res.lessonCount} lessons · v${res.version}`
-      )
-      setPublishOpen(false)
-      setStatus("published")
-      setVersion(res.version)
-      qc.invalidateQueries({ queryKey: ["course-studio", courseId] })
-      qc.invalidateQueries({ queryKey: ["course-studio-list"] })
-    },
-    onError: (e: any) => {
-      toast.error(e.message || "Publish failed")
-      setPublishOpen(false)
-    },
-  })
-
-  // ----- Mutators on the local config -----
-  const updateConfig = React.useCallback(
-    (updater: (prev: CourseConfig) => CourseConfig) => {
-      setConfig((prev) => (prev ? updater(prev) : prev))
-      setDirty(true)
-    },
-    []
-  )
-
-  const handleSave = () => {
-    if (!config) return
-    patchMutation.mutate({ config, title })
+  function validate(): string | null {
+    if (!form.title.trim()) return "Title is required"
+    if (!form.shortName.trim()) return "Short name (e.g. CEH) is required"
+    if (!form.instructorId) return "Instructor is required"
+    const dur = Number(form.durationHours)
+    if (!Number.isFinite(dur) || dur < 1) return "Duration must be a positive number"
+    const price = Number(form.price)
+    if (!Number.isFinite(price) || price < 0) return "Price must be a non-negative number"
+    return null
   }
 
+  async function handleSubmit() {
+    const err = validate()
+    if (err) {
+      setFormError(err)
+      return
+    }
+    setSubmitting(true)
+    setFormError(null)
+    try {
+      const created = await api<{ course: any }>("/api/admin/courses", {
+        method: "POST",
+        body: JSON.stringify({
+          title: form.title,
+          shortName: form.shortName,
+          description: form.description,
+          category: form.category,
+          level: form.level,
+          durationHours: Number(form.durationHours),
+          price: Number(form.price),
+          instructorId: form.instructorId,
+        }),
+      })
+      // The endpoint hardcodes published=true; toggle if user unchecked
+      if (!form.published && created.course?.id) {
+        await api(`/api/admin/courses/${created.course.id}`, {
+          method: "PATCH",
+          body: JSON.stringify({ published: false }),
+        })
+      }
+      toast.success(`Course "${form.shortName.toUpperCase()}" created`)
+      onCreated(created.course as unknown as CourseListItem)
+    } catch (e: any) {
+      setFormError(e.message || "Failed to create course")
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="bg-card border-border/60 max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-lg">
+            <BookOpen className="h-4 w-4 text-violet-300" /> Create Course
+          </DialogTitle>
+          <DialogDescription>
+            Add a new course to the catalog. The slug is auto-generated from the title.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          <div className="grid sm:grid-cols-3 gap-3">
+            <div className="sm:col-span-2 space-y-1.5">
+              <Label className="text-xs font-medium">Title</Label>
+              <Input
+                placeholder="e.g. Certified Ethical Hacker v13"
+                value={form.title}
+                onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+                className="bg-background/60 border-border/60"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium">Short Name</Label>
+              <Input
+                placeholder="CEH"
+                value={form.shortName}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, shortName: e.target.value.toUpperCase() }))
+                }
+                className="bg-background/60 border-border/60 font-mono"
+              />
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium">Description</Label>
+            <Textarea
+              placeholder="One-line course description shown in cards and search results."
+              value={form.description}
+              onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+              className="bg-background/60 border-border/60 min-h-[80px]"
+            />
+          </div>
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium">Category</Label>
+              <Select
+                value={form.category}
+                onValueChange={(v) => setForm((f) => ({ ...f, category: v }))}
+              >
+                <SelectTrigger className="bg-background/60 border-border/60">
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {CATEGORIES.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium">Level</Label>
+              <Select
+                value={form.level}
+                onValueChange={(v) => setForm((f) => ({ ...f, level: v }))}
+              >
+                <SelectTrigger className="bg-background/60 border-border/60">
+                  <SelectValue placeholder="Select level" />
+                </SelectTrigger>
+                <SelectContent>
+                  {LEVELS.map((l) => (
+                    <SelectItem key={l} value={l}>
+                      {l}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium">Duration (hours)</Label>
+              <Input
+                type="number"
+                min={1}
+                value={form.durationHours}
+                onChange={(e) => setForm((f) => ({ ...f, durationHours: e.target.value }))}
+                className="bg-background/60 border-border/60"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium">
+                Price (₹) <span className="text-muted-foreground font-normal">(0 = Free)</span>
+              </Label>
+              <Input
+                type="number"
+                min={0}
+                value={form.price}
+                onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
+                className="bg-background/60 border-border/60"
+              />
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium">Instructor</Label>
+            {instructors.length === 0 ? (
+              <p className="text-xs text-amber-300 border border-amber-500/30 bg-amber-500/10 rounded-lg px-3 py-2.5 flex items-center gap-2">
+                <AlertTriangle className="h-3.5 w-3.5" />
+                No instructors found. Assign an instructor first via Admin → Instructors.
+              </p>
+            ) : (
+              <Select
+                value={form.instructorId || "__NONE__"}
+                onValueChange={(v) =>
+                  setForm((f) => ({ ...f, instructorId: v === "__NONE__" ? "" : v }))
+                }
+              >
+                <SelectTrigger className="bg-background/60 border-border/60">
+                  <SelectValue placeholder="Select an instructor" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__NONE__">
+                    <span className="flex items-center gap-2 text-muted-foreground italic">
+                      <GraduationCap className="h-3.5 w-3.5" /> No instructor selected
+                    </span>
+                  </SelectItem>
+                  {instructors.map((i) => (
+                    <SelectItem key={i.id} value={i.id}>
+                      <span className="flex items-center gap-2">
+                        <GraduationCap className="h-3.5 w-3.5 text-cyan-300" />
+                        <span>{i.name}</span>
+                        {i.title && (
+                          <span className="text-[10px] text-muted-foreground">· {i.title}</span>
+                        )}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+          <div className="flex items-center justify-between rounded-lg border border-border/60 bg-background/40 px-3 py-2.5">
+            <div>
+              <div className="text-sm font-medium">Published</div>
+              <p className="text-[10px] text-muted-foreground">
+                Unpublished courses are drafts — hidden from the public catalog.
+              </p>
+            </div>
+            <Checkbox
+              checked={form.published}
+              onCheckedChange={(checked) => setForm((f) => ({ ...f, published: !!checked }))}
+            />
+          </div>
+          {formError && (
+            <div className="flex items-center gap-2 rounded-lg border border-rose-500/30 bg-rose-500/5 px-3 py-2 text-xs text-rose-300">
+              <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+              <span>{formError}</span>
+            </div>
+          )}
+        </div>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="outline" className="border-border/60" disabled={submitting}>
+              Cancel
+            </Button>
+          </DialogClose>
+          <Button
+            onClick={handleSubmit}
+            disabled={submitting}
+            className="bg-violet-600 hover:bg-violet-500 btn-premium"
+          >
+            {submitting ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+            ) : (
+              <Plus className="h-3.5 w-3.5 mr-1.5" />
+            )}
+            {submitting ? "Creating..." : "Create Course"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Editor View
+// ---------------------------------------------------------------------------
+function EditorView({
+  course,
+  onBack,
+}: {
+  course: CourseListItem
+  onBack: () => void
+}) {
+  const qc = useQueryClient()
+  const [selectedModuleId, setSelectedModuleId] = React.useState<string | null>(null)
+  const [selectedLessonId, setSelectedLessonId] = React.useState<string | null>(null)
+  const [expanded, setExpanded] = React.useState<Set<string>>(new Set())
+
+  const modulesKey = ["course-studio-modules", course.id]
+  const { data, isLoading, isError, error, refetch } = useQuery<{ modules: AdminModule[] }>({
+    queryKey: modulesKey,
+    queryFn: () => api(`/api/admin/courses/${course.id}/modules`),
+    enabled: !!course.id,
+  })
+
+  const modules = data?.modules ?? []
+
+  // Auto-expand first module + select first lesson on first load
+  React.useEffect(() => {
+    if (modules.length && expanded.size === 0) {
+      const first = modules[0]!
+      setExpanded(new Set([first.id]))
+      setSelectedModuleId(first.id)
+      if (first.lessons.length && !selectedLessonId) {
+        setSelectedLessonId(first.lessons[0]!.id)
+      }
+    }
+  }, [modules.length, expanded.size, selectedLessonId])
+
+  const toggleExpand = (moduleId: string) => {
+    setExpanded((prev) => {
+      const next = new Set(prev)
+      if (next.has(moduleId)) next.delete(moduleId)
+      else next.add(moduleId)
+      return next
+    })
+    setSelectedModuleId(moduleId)
+  }
+
+  // Find selected lesson across modules
+  const selectedModule = modules.find((m) => m.id === selectedModuleId) ?? null
+  const selectedLesson =
+    modules
+      .flatMap((m) => m.lessons)
+      .find((l) => l.id === selectedLessonId) ?? null
+
+  // ----- Mutations -----
+  const addModuleMutation = useMutation({
+    mutationFn: () =>
+      api<{ module: AdminModule }>(`/api/admin/courses/${course.id}/modules`, {
+        method: "POST",
+        body: JSON.stringify({ title: `Module ${modules.length + 1}` }),
+      }),
+    onSuccess: (res) => {
+      toast.success("Module added")
+      qc.invalidateQueries({ queryKey: modulesKey })
+      qc.invalidateQueries({ queryKey: ["admin-courses-studio"] })
+      const newId = res.module?.id
+      if (newId) {
+        setExpanded((prev) => new Set(prev).add(newId))
+        setSelectedModuleId(newId)
+        setSelectedLessonId(null)
+      }
+    },
+    onError: (e: any) => toast.error(e.message || "Failed to add module"),
+  })
+
+  const deleteModuleMutation = useMutation({
+    mutationFn: (moduleId: string) =>
+      api(`/api/admin/modules/${moduleId}`, { method: "DELETE" }),
+    onSuccess: (_res, moduleId) => {
+      toast.success("Module deleted")
+      qc.invalidateQueries({ queryKey: modulesKey })
+      qc.invalidateQueries({ queryKey: ["admin-courses-studio"] })
+      if (selectedModuleId === moduleId) {
+        setSelectedModuleId(null)
+        setSelectedLessonId(null)
+      }
+      setExpanded((prev) => {
+        const next = new Set(prev)
+        next.delete(moduleId)
+        return next
+      })
+    },
+    onError: (e: any) => toast.error(e.message || "Failed to delete module"),
+  })
+
+  const addLessonMutation = useMutation({
+    mutationFn: (moduleId: string) =>
+      api<{ lesson: AdminLesson }>(`/api/admin/modules/${moduleId}/lessons`, {
+        method: "POST",
+        body: JSON.stringify({ title: "New Lesson", type: "reading" }),
+      }),
+    onSuccess: (res, moduleId) => {
+      toast.success("Lesson added")
+      qc.invalidateQueries({ queryKey: modulesKey })
+      qc.invalidateQueries({ queryKey: ["admin-courses-studio"] })
+      setExpanded((prev) => new Set(prev).add(moduleId))
+      setSelectedModuleId(moduleId)
+      const newId = res.lesson?.id
+      if (newId) setSelectedLessonId(newId)
+    },
+    onError: (e: any) => toast.error(e.message || "Failed to add lesson"),
+  })
+
+  const deleteLessonMutation = useMutation({
+    mutationFn: (lessonId: string) =>
+      api(`/api/admin/lessons/${lessonId}`, { method: "DELETE" }),
+    onSuccess: (_res, lessonId) => {
+      toast.success("Lesson deleted")
+      qc.invalidateQueries({ queryKey: modulesKey })
+      qc.invalidateQueries({ queryKey: ["admin-courses-studio"] })
+      if (selectedLessonId === lessonId) setSelectedLessonId(null)
+    },
+    onError: (e: any) => toast.error(e.message || "Failed to delete lesson"),
+  })
+
+  // ----- Render -----
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <Skeleton className="h-16 w-full" />
-        <div className="grid lg:grid-cols-[280px_1fr_320px] gap-4">
-          <Skeleton className="h-96" />
-          <Skeleton className="h-96" />
-          <Skeleton className="h-96" />
+        <Skeleton className="h-16 w-full rounded-xl" />
+        <div className="grid lg:grid-cols-[320px_1fr] gap-4">
+          <Skeleton className="h-[70vh] rounded-xl" />
+          <Skeleton className="h-[70vh] rounded-xl" />
         </div>
       </div>
     )
   }
 
-  if (isError || !config) {
+  if (isError) {
     return (
-      <Card className="p-8 text-center border-rose-500/30">
-        <p className="font-medium text-rose-400 mb-2">Failed to load course</p>
-        <p className="text-sm text-muted-foreground mb-4">
-          {(error as Error)?.message}
-        </p>
-        <Button onClick={onBack} variant="outline">
-          <ArrowLeft className="h-4 w-4 mr-2" /> Back to list
-        </Button>
+      <Card className="p-8 text-center border-rose-500/30 bg-card/40">
+        <AlertTriangle className="h-10 w-10 text-rose-400 mx-auto mb-3" />
+        <p className="font-medium text-rose-300 mb-2">Failed to load course content</p>
+        <p className="text-sm text-muted-foreground mb-4">{(error as Error)?.message}</p>
+        <div className="flex items-center justify-center gap-2">
+          <Button onClick={() => refetch()} variant="outline">
+            <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Retry
+          </Button>
+          <Button onClick={onBack} variant="ghost">
+            <ArrowLeft className="h-3.5 w-3.5 mr-1.5" /> Back to list
+          </Button>
+        </div>
       </Card>
     )
   }
 
-  const selectedModule = config.modules.find((m) => m.id === selectedModuleId) || null
-  const selectedLesson =
-    selectedModule?.lessons.find((l) => l.id === selectedLessonId) || null
-
-  const totalLessons = config.modules.reduce(
-    (a, m) => a + m.lessons.length,
-    0
-  )
-
-  // ----- Module / lesson operations -----
-  const addModule = () => {
-    const m: ModuleCfg = {
-      id: uid("m"),
-      title: `Module ${config.modules.length + 1}`,
-      description: "",
-      lessons: [],
-    }
-    updateConfig((prev) => ({ ...prev, modules: [...prev.modules, m] }))
-    setSelectedModuleId(m.id)
-    setSelectedLessonId(null)
-  }
-
-  const deleteModule = (id: string) => {
-    updateConfig((prev) => ({
-      ...prev,
-      modules: prev.modules.filter((m) => m.id !== id),
-    }))
-    if (selectedModuleId === id) {
-      setSelectedModuleId(null)
-      setSelectedLessonId(null)
-    }
-  }
-
-  const moveModule = (id: string, dir: -1 | 1) => {
-    updateConfig((prev) => {
-      const idx = prev.modules.findIndex((m) => m.id === id)
-      if (idx < 0) return prev
-      const newIdx = idx + dir
-      if (newIdx < 0 || newIdx >= prev.modules.length) return prev
-      const arr = [...prev.modules]
-      ;[arr[idx], arr[newIdx]] = [arr[newIdx], arr[idx]]
-      return { ...prev, modules: arr }
-    })
-  }
-
-  const addLesson = (moduleId: string) => {
-    const l: LessonCfg = {
-      id: uid("l"),
-      title: "New Lesson",
-      type: "reading",
-      content: "",
-      durationMin: 15,
-      preview: false,
-    }
-    updateConfig((prev) => ({
-      ...prev,
-      modules: prev.modules.map((m) =>
-        m.id === moduleId ? { ...m, lessons: [...m.lessons, l] } : m
-      ),
-    }))
-    setSelectedModuleId(moduleId)
-    setSelectedLessonId(l.id)
-  }
-
-  const deleteLesson = (moduleId: string, lessonId: string) => {
-    updateConfig((prev) => ({
-      ...prev,
-      modules: prev.modules.map((m) =>
-        m.id === moduleId
-          ? { ...m, lessons: m.lessons.filter((l) => l.id !== lessonId) }
-          : m
-      ),
-    }))
-    if (selectedLessonId === lessonId) setSelectedLessonId(null)
-  }
-
-  const moveLesson = (moduleId: string, lessonId: string, dir: -1 | 1) => {
-    updateConfig((prev) => ({
-      ...prev,
-      modules: prev.modules.map((m) => {
-        if (m.id !== moduleId) return m
-        const idx = m.lessons.findIndex((l) => l.id === lessonId)
-        if (idx < 0) return m
-        const newIdx = idx + dir
-        if (newIdx < 0 || newIdx >= m.lessons.length) return m
-        const arr = [...m.lessons]
-        ;[arr[idx], arr[newIdx]] = [arr[newIdx], arr[idx]]
-        return { ...m, lessons: arr }
-      }),
-    }))
-  }
-
-  const updateModule = (moduleId: string, patch: Partial<ModuleCfg>) => {
-    updateConfig((prev) => ({
-      ...prev,
-      modules: prev.modules.map((m) =>
-        m.id === moduleId ? { ...m, ...patch } : m
-      ),
-    }))
-  }
-
-  const updateLesson = (
-    moduleId: string,
-    lessonId: string,
-    patch: Partial<LessonCfg>
-  ) => {
-    updateConfig((prev) => ({
-      ...prev,
-      modules: prev.modules.map((m) =>
-        m.id === moduleId
-          ? {
-              ...m,
-              lessons: m.lessons.map((l) =>
-                l.id === lessonId ? { ...l, ...patch } : l
-              ),
-            }
-          : m
-      ),
-    }))
-  }
+  const totalLessons = modules.reduce((acc, m) => acc + m.lessons.length, 0)
 
   return (
     <div className="space-y-4">
-      {/* Top bar */}
+      {/* Top header */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
         <div className="flex items-center gap-3 min-w-0">
           <Button
             variant="outline"
             size="sm"
             onClick={onBack}
-            className="shrink-0"
+            className="shrink-0 border-border/60"
           >
-            <ArrowLeft className="h-3.5 w-3.5" />
+            <ArrowLeft className="h-3.5 w-3.5 mr-1.5" /> Back to list
           </Button>
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <Input
-                value={title}
-                onChange={(e) => {
-                  setTitle(e.target.value)
-                  setDirty(true)
-                }}
-                className="h-8 w-full sm:w-72 font-semibold text-base px-2"
-              />
+              <h2 className="text-lg font-semibold truncate">{course.title}</h2>
+              <Badge
+                variant="outline"
+                className="text-[10px] font-mono text-violet-300 border-violet-500/30 bg-violet-500/10 uppercase"
+              >
+                {course.shortName}
+              </Badge>
               <Badge
                 variant="outline"
                 className={cn(
-                  "text-[10px]",
-                  status === "published"
-                    ? "text-emerald-400 border-emerald-500/30"
-                    : status === "review"
-                    ? "text-amber-400 border-amber-500/30"
-                    : "text-cyan-400 border-cyan-500/30"
+                  "text-[10px] uppercase",
+                  course.published
+                    ? "border-emerald-500/40 text-emerald-300 bg-emerald-500/10"
+                    : "border-zinc-500/40 text-zinc-300 bg-zinc-500/10",
                 )}
               >
-                {status} · v{version}
+                {course.published ? "Published" : "Draft"}
               </Badge>
-              {dirty && (
-                <Badge variant="outline" className="text-[10px] text-amber-300">
-                  <CircleDot className="h-2.5 w-2.5 mr-1 animate-pulse" /> unsaved
-                </Badge>
-              )}
             </div>
             <p className="text-[11px] text-muted-foreground mt-1">
-              {config.modules.length} modules · {totalLessons} lessons ·{" "}
-              {config.durationHours}h
+              {modules.length} modules · {totalLessons} lessons · {course.durationHours}h ·{" "}
+              {course.instructor?.name ?? "Unassigned"}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleSave}
-            disabled={patchMutation.isPending || !dirty}
-            className="border-violet-500/30 text-violet-300 hover:bg-violet-500/10"
-          >
-            <Save className="h-3.5 w-3.5 mr-1.5" /> Save
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => setPublishOpen(true)}
-            disabled={publishMutation.isPending}
-            className="bg-emerald-600 hover:bg-emerald-500 btn-premium"
-          >
-            <Rocket className="h-3.5 w-3.5 mr-1.5" />
-            {publishMutation.isPending ? "Publishing…" : "Publish"}
-          </Button>
-        </div>
       </div>
 
-      {/* Three-pane editor */}
-      <div className="grid lg:grid-cols-[300px_1fr_340px] gap-4">
-        {/* LEFT - outline */}
-        <Card className="bg-card shadow-lg p-3 flex flex-col max-h-[80vh] overflow-hidden">
-          <div className="flex items-center justify-between px-2 py-2 mb-1">
-            <h3 className="text-sm font-semibold flex items-center gap-2">
-              <Layers className="h-4 w-4 text-violet-400" /> Outline
-            </h3>
+      {/* Two-pane editor */}
+      <div className="grid lg:grid-cols-[340px_1fr] gap-4">
+        {/* LEFT - module/lesson outline */}
+        <Card className="bg-card/40 border-border/60 flex flex-col max-h-[80vh] overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border/60">
+            <div className="flex items-center gap-2">
+              <Layers className="h-4 w-4 text-violet-300" />
+              <h3 className="text-sm font-semibold">Modules</h3>
+              <Badge variant="outline" className="text-[9px] font-mono text-muted-foreground">
+                {modules.length}
+              </Badge>
+            </div>
             <Button
               size="sm"
               variant="ghost"
-              className="h-7 px-2 text-violet-300 hover:bg-violet-500/10"
-              onClick={addModule}
+              className="h-7 px-2 text-violet-300 hover:bg-violet-500/10 hover:text-violet-200"
+              onClick={() => addModuleMutation.mutate()}
+              disabled={addModuleMutation.isPending}
             >
-              <Plus className="h-3.5 w-3.5 mr-1" /> Module
+              {addModuleMutation.isPending ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Plus className="h-3.5 w-3.5" />
+              )}
+              <span className="ml-1 hidden sm:inline">Add</span>
             </Button>
           </div>
-          <div className="flex-1 overflow-y-auto pr-1 space-y-2">
-            {config.modules.length === 0 && (
-              <div className="text-center py-8 text-xs text-muted-foreground">
-                No modules yet.
-                <br />
-                Click <b>+ Module</b> to start.
-              </div>
-            )}
-            {config.modules.map((m, mIdx) => {
-              const expanded = selectedModuleId === m.id
-              return (
-                <div
-                  key={m.id}
-                  className={cn(
-                    "rounded-lg border transition-colors",
-                    expanded
-                      ? "border-violet-500/40 bg-violet-500/5"
-                      : "border-border hover:border-violet-500/20"
-                  )}
-                >
-                  <div className="flex items-center gap-1 px-2 py-2">
-                    <button
-                      onClick={() =>
-                        setSelectedModuleId(expanded ? null : m.id)
-                      }
-                      className="flex items-center gap-2 flex-1 min-w-0 text-left"
-                    >
-                      <GripVertical className="h-3.5 w-3.5 text-muted-foreground/60 shrink-0" />
-                      <div className="min-w-0">
-                        <div className="text-xs font-mono text-muted-foreground">
-                          M{mIdx + 1}
-                        </div>
-                        <div className="text-sm font-medium truncate">
-                          {m.title || "Untitled"}
-                        </div>
-                      </div>
-                    </button>
-                    <div className="flex items-center gap-0.5">
-                      <button
-                        onClick={() => moveModule(m.id, -1)}
-                        disabled={mIdx === 0}
-                        className="p-1 rounded hover:bg-accent disabled:opacity-30"
-                        title="Move up"
-                      >
-                        <ChevronUp className="h-3 w-3" />
-                      </button>
-                      <button
-                        onClick={() => moveModule(m.id, 1)}
-                        disabled={mIdx === config.modules.length - 1}
-                        className="p-1 rounded hover:bg-accent disabled:opacity-30"
-                        title="Move down"
-                      >
-                        <ChevronDown className="h-3 w-3" />
-                      </button>
-                      <button
-                        onClick={() => deleteModule(m.id)}
-                        className="p-1 rounded hover:bg-rose-500/10 text-rose-400"
-                        title="Delete module"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </button>
-                    </div>
-                  </div>
-                  {expanded && (
-                    <div className="px-2 pb-2 space-y-1 border-t border-border/60 mt-1 pt-2">
-                      {m.lessons.length === 0 && (
-                        <div className="text-[10px] text-muted-foreground text-center py-2">
-                          No lessons yet
-                        </div>
-                      )}
-                      {m.lessons.map((l, lIdx) => {
-                        const meta = LESSON_TYPE_META[l.type]
-                        const Icon = meta.icon
-                        const active = selectedLessonId === l.id
-                        return (
-                          <div
-                            key={l.id}
-                            className={cn(
-                              "group flex items-center gap-1 px-1.5 py-1 rounded text-xs",
-                              active
-                                ? "bg-violet-500/15 text-violet-200"
-                                : "hover:bg-accent/40"
-                            )}
-                          >
-                            <button
-                              onClick={() => {
-                                setSelectedModuleId(m.id)
-                                setSelectedLessonId(l.id)
-                              }}
-                              className="flex items-center gap-1.5 flex-1 min-w-0 text-left"
-                            >
-                              <Icon className={cn("h-3 w-3 shrink-0", meta.color)} />
-                              <span className="truncate">
-                                <span className="text-muted-foreground mr-1">
-                                  {lIdx + 1}.
-                                </span>
-                                {l.title || "Untitled"}
-                              </span>
-                              {l.preview && (
-                                <Badge
-                                  variant="outline"
-                                  className="text-[8px] py-0 px-1 ml-1 text-amber-300"
-                                >
-                                  FREE
-                                </Badge>
-                              )}
-                            </button>
-                            <div className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 transition-opacity">
-                              <button
-                                onClick={() => moveLesson(m.id, l.id, -1)}
-                                disabled={lIdx === 0}
-                                className="p-0.5 rounded hover:bg-accent disabled:opacity-30"
-                              >
-                                <ChevronUp className="h-2.5 w-2.5" />
-                              </button>
-                              <button
-                                onClick={() => moveLesson(m.id, l.id, 1)}
-                                disabled={lIdx === m.lessons.length - 1}
-                                className="p-0.5 rounded hover:bg-accent disabled:opacity-30"
-                              >
-                                <ChevronDown className="h-2.5 w-2.5" />
-                              </button>
-                              <button
-                                onClick={() => deleteLesson(m.id, l.id)}
-                                className="p-0.5 rounded hover:bg-rose-500/10 text-rose-400"
-                              >
-                                <Trash2 className="h-2.5 w-2.5" />
-                              </button>
-                            </div>
-                          </div>
-                        )
-                      })}
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="w-full h-7 text-[11px] text-violet-300 hover:bg-violet-500/10"
-                        onClick={() => addLesson(m.id)}
-                      >
-                        <Plus className="h-3 w-3 mr-1" /> Add Lesson
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-        </Card>
 
-        {/* CENTER - editor */}
-        <Card className="bg-card shadow-lg p-5 max-h-[80vh] overflow-y-auto">
-          {!selectedModule ? (
-            <EmptyEditor
-              icon={Layers}
-              title="Select a module"
-              sub="Pick a module from the outline to edit its title, description, and lessons."
-            />
-          ) : !selectedLesson ? (
-            <ModuleEditor
-              module={selectedModule}
-              onUpdate={(patch) => updateModule(selectedModule.id, patch)}
-              onAddLesson={() => addLesson(selectedModule.id)}
-            />
-          ) : (
-            <LessonEditor
-              module={selectedModule}
-              lesson={selectedLesson}
-              onUpdateLesson={(patch) =>
-                updateLesson(selectedModule.id, selectedLesson.id, patch)
-              }
-              onBackToModule={() => setSelectedLessonId(null)}
-            />
+          <div className="flex-1 overflow-y-auto custom-scroll p-2 space-y-1.5">
+            {modules.length === 0 ? (
+              <div className="p-8 text-center">
+                <Layers className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                <p className="text-sm font-medium mb-1">No modules yet</p>
+                <p className="text-xs text-muted-foreground mb-4">
+                  Add your first module to start building lessons.
+                </p>
+                <Button
+                  size="sm"
+                  onClick={() => addModuleMutation.mutate()}
+                  disabled={addModuleMutation.isPending}
+                  className="bg-violet-600 hover:bg-violet-500"
+                >
+                  <Plus className="h-3.5 w-3.5 mr-1.5" /> Add Module
+                </Button>
+              </div>
+            ) : (
+              modules.map((m, idx) => (
+                <ModuleRow
+                  key={m.id}
+                  module={m}
+                  index={idx}
+                  expanded={expanded.has(m.id)}
+                  onToggle={() => toggleExpand(m.id)}
+                  selectedLessonId={selectedLessonId}
+                  onSelectLesson={(lessonId) => {
+                    setSelectedModuleId(m.id)
+                    setSelectedLessonId(lessonId)
+                  }}
+                  onAddLesson={() => addLessonMutation.mutate(m.id)}
+                  onDeleteLesson={(lessonId) => deleteLessonMutation.mutate(lessonId)}
+                  onDeleteModule={() => deleteModuleMutation.mutate(m.id)}
+                  courseId={course.id}
+                />
+              ))
+            )}
+          </div>
+
+          {modules.length > 0 && (
+            <div className="px-3 py-2.5 border-t border-border/60">
+              <Button
+                size="sm"
+                variant="outline"
+                className="w-full border-violet-500/30 text-violet-300 hover:bg-violet-500/10 hover:text-violet-200"
+                onClick={() => addModuleMutation.mutate()}
+                disabled={addModuleMutation.isPending}
+              >
+                {addModuleMutation.isPending ? (
+                  <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                ) : (
+                  <Plus className="h-3.5 w-3.5 mr-1.5" />
+                )}
+                Add Module
+              </Button>
+            </div>
           )}
         </Card>
 
-        {/* RIGHT - preview / json / settings */}
-        <Card className="bg-card shadow-lg p-0 max-h-[80vh] overflow-hidden flex flex-col">
-          <div className="flex border-b border-border">
-            <TabBtn
-              active={rightTab === "preview"}
-              onClick={() => setRightTab("preview")}
-              icon={Eye}
-              label="Preview"
+        {/* RIGHT - lesson editor */}
+        <Card className="bg-card/40 border-border/60 min-h-[60vh]">
+          {selectedLesson ? (
+            <LessonEditor
+              key={selectedLesson.id}
+              lesson={selectedLesson}
+              courseId={course.id}
             />
-            <TabBtn
-              active={rightTab === "json"}
-              onClick={() => setRightTab("json")}
-              icon={Code2}
-              label="JSON"
-            />
-            <TabBtn
-              active={rightTab === "settings"}
-              onClick={() => setRightTab("settings")}
-              icon={Settings2}
-              label="Settings"
-            />
-          </div>
-          <div className="flex-1 overflow-y-auto">
-            {rightTab === "preview" && (
-              <PreviewPane
-                config={config}
-                selectedModuleId={selectedModuleId}
-                selectedLessonId={selectedLessonId}
-              />
-            )}
-            {rightTab === "json" && (
-              <JsonPane
-                config={config}
-                onImport={(cfg) => {
-                  setConfig(cfg)
-                  setDirty(true)
-                  toast.success("Config imported from JSON")
-                }}
-              />
-            )}
-            {rightTab === "settings" && (
-              <SettingsPane
-                config={config}
-                onUpdate={(patch) => {
-                  updateConfig((prev) => ({ ...prev, ...patch }))
-                }}
-              />
-            )}
-          </div>
-          {/* Publish footer */}
-          <div className="border-t border-border p-3 bg-card/50">
-            <Button
-              onClick={() => setPublishOpen(true)}
-              disabled={publishMutation.isPending}
-              className="w-full bg-emerald-600 hover:bg-emerald-500 btn-premium"
-            >
-              <Rocket className="h-4 w-4 mr-2" />
-              {publishMutation.isPending ? "Publishing…" : "Publish Course"}
-            </Button>
-            <p className="text-[10px] text-muted-foreground text-center mt-2">
-              {status === "published"
-                ? "Re-publishing updates the live course."
-                : "Publishing creates a live Course + modules + lessons."}
-            </p>
-          </div>
+          ) : (
+            <div className="flex items-center justify-center h-full min-h-[60vh] p-12 text-center">
+              <div className="max-w-sm space-y-3">
+                <div className="h-14 w-14 rounded-2xl bg-violet-500/10 border border-violet-500/30 flex items-center justify-center mx-auto">
+                  <FileText className="h-6 w-6 text-violet-300" />
+                </div>
+                <h3 className="font-semibold">No lesson selected</h3>
+                <p className="text-sm text-muted-foreground">
+                  Pick a lesson from the sidebar to edit its content, or add a new lesson to a
+                  module to get started.
+                </p>
+              </div>
+            </div>
+          )}
         </Card>
       </div>
+    </div>
+  )
+}
 
-      {/* Publish confirm */}
-      <AlertDialog open={publishOpen} onOpenChange={setPublishOpen}>
-        <AlertDialogContent>
+// ---------------------------------------------------------------------------
+// Module Row (sidebar)
+// ---------------------------------------------------------------------------
+function ModuleRow({
+  module: m,
+  index,
+  expanded,
+  onToggle,
+  selectedLessonId,
+  onSelectLesson,
+  onAddLesson,
+  onDeleteLesson,
+  onDeleteModule,
+  courseId,
+}: {
+  module: AdminModule
+  index: number
+  expanded: boolean
+  onToggle: () => void
+  selectedLessonId: string | null
+  onSelectLesson: (lessonId: string) => void
+  onAddLesson: () => void
+  onDeleteLesson: (lessonId: string) => void
+  onDeleteModule: () => void
+  courseId: string
+}) {
+  const [renameOpen, setRenameOpen] = React.useState(false)
+  const [deleteModuleOpen, setDeleteModuleOpen] = React.useState(false)
+  const [deleteLessonId, setDeleteLessonId] = React.useState<string | null>(null)
+
+  return (
+    <div className="rounded-lg border border-border/40 bg-background/30 overflow-hidden">
+      {/* Module header (clickable to expand) */}
+      <div
+        onClick={onToggle}
+        className={cn(
+          "flex items-center gap-2 px-2.5 py-2.5 cursor-pointer hover:bg-muted/20 transition-colors",
+          expanded && "border-b border-border/40",
+        )}
+      >
+        <span className="text-[10px] font-mono text-muted-foreground/70 w-5 text-center shrink-0">
+          {String(index + 1).padStart(2, "0")}
+        </span>
+        {expanded ? (
+          <ChevronDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+        ) : (
+          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+        )}
+        <div className="min-w-0 flex-1">
+          <div className="text-sm font-medium truncate">{m.title}</div>
+          <div className="text-[10px] text-muted-foreground/80 flex items-center gap-1">
+            <FileText className="h-2.5 w-2.5" />
+            {m.lessons.length} lesson{m.lessons.length === 1 ? "" : "s"}
+          </div>
+        </div>
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-6 w-6 p-0 text-muted-foreground hover:text-violet-300 hover:bg-violet-500/10"
+          onClick={(e) => {
+            e.stopPropagation()
+            setRenameOpen(true)
+          }}
+          title="Rename module"
+        >
+          <Pencil className="h-3 w-3" />
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-6 w-6 p-0 text-muted-foreground hover:text-rose-300 hover:bg-rose-500/10"
+          onClick={(e) => {
+            e.stopPropagation()
+            setDeleteModuleOpen(true)
+          }}
+          title="Delete module"
+        >
+          <Trash2 className="h-3 w-3" />
+        </Button>
+      </div>
+
+      <AnimatePresence initial={false}>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="overflow-hidden"
+          >
+            <div className="p-1.5 space-y-0.5">
+              {m.lessons.length === 0 ? (
+                <div className="text-[11px] text-muted-foreground/70 px-3 py-2 italic">
+                  No lessons yet
+                </div>
+              ) : (
+                m.lessons.map((l, li) => {
+                  const meta = LESSON_TYPE_META[l.type] ?? LESSON_TYPE_META.reading
+                  const Icon = meta.icon
+                  const isSelected = l.id === selectedLessonId
+                  return (
+                    <div
+                      key={l.id}
+                      onClick={() => onSelectLesson(l.id)}
+                      className={cn(
+                        "group flex items-center gap-2 px-2.5 py-1.5 rounded-md cursor-pointer transition-colors",
+                        isSelected
+                          ? "bg-violet-500/15 border border-violet-500/30"
+                          : "hover:bg-muted/30 border border-transparent",
+                      )}
+                    >
+                      <span className="text-[9px] font-mono text-muted-foreground/60 w-5 text-center shrink-0">
+                        {String(li + 1).padStart(2, "0")}
+                      </span>
+                      <Icon className={cn("h-3.5 w-3.5 shrink-0", meta.color)} />
+                      <div className="min-w-0 flex-1">
+                        <div
+                          className={cn(
+                            "text-xs truncate",
+                            isSelected ? "text-violet-200 font-medium" : "text-foreground/90",
+                          )}
+                        >
+                          {l.title}
+                        </div>
+                        <div className="text-[9px] text-muted-foreground/80 flex items-center gap-1.5">
+                          <span className="flex items-center gap-0.5">
+                            <Clock className="h-2 w-2" />
+                            {l.durationMin}m
+                          </span>
+                          {l.preview && (
+                            <span className="flex items-center gap-0.5 text-amber-300">
+                              <Eye className="h-2 w-2" />
+                              preview
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-rose-300 hover:bg-rose-500/10"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setDeleteLessonId(l.id)
+                          setDeleteModuleOpen(false)
+                        }}
+                        title="Delete lesson"
+                      >
+                        <Trash2 className="h-2.5 w-2.5" />
+                      </Button>
+                    </div>
+                  )
+                })
+              )}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onAddLesson()
+                }}
+                disabled={false}
+                className="w-full mt-1 flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] text-muted-foreground hover:text-violet-300 hover:bg-violet-500/10 transition-colors"
+              >
+                <Plus className="h-3 w-3" /> Add Lesson
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Rename module dialog */}
+      <RenameModuleDialog
+        open={renameOpen}
+        onOpenChange={setRenameOpen}
+        module={m}
+        courseId={courseId}
+      />
+
+      {/* Delete module alert */}
+      <AlertDialog open={deleteModuleOpen} onOpenChange={setDeleteModuleOpen}>
+        <AlertDialogContent className="bg-card border-border/60">
           <AlertDialogHeader>
-            <AlertDialogTitle>Publish &quot;{title}&quot;?</AlertDialogTitle>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Trash2 className="h-4 w-4 text-rose-400" /> Delete module?
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              This will {status === "published" ? "update the existing" : "create a new"}{" "}
-              live Course with{" "}
-              <b className="text-foreground">
-                {config.modules.length} modules
-              </b>{" "}
-              and{" "}
-              <b className="text-foreground">{totalLessons} lessons</b>.
-              Students will be able to enroll immediately.
+              This will permanently delete{" "}
+              <span className="font-mono font-bold text-foreground">{m.title}</span> and all{" "}
+              <span className="font-bold text-foreground">{m.lessons.length}</span> lesson
+              {m.lessons.length === 1 ? "" : "s"} inside it. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel className="border-border/60">Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => publishMutation.mutate()}
-              className="bg-emerald-600 hover:bg-emerald-500"
+              onClick={() => {
+                onDeleteModule()
+                setDeleteModuleOpen(false)
+              }}
+              className="bg-rose-600 hover:bg-rose-500 text-rose-50"
             >
-              <Rocket className="h-4 w-4 mr-2" /> Confirm Publish
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete lesson alert */}
+      <AlertDialog
+        open={!!deleteLessonId}
+        onOpenChange={(o) => !o && setDeleteLessonId(null)}
+      >
+        <AlertDialogContent className="bg-card border-border/60">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Trash2 className="h-4 w-4 text-rose-400" /> Delete lesson?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this lesson. Student progress linked to this lesson may
+              be affected. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-border/60">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteLessonId) {
+                  onDeleteLesson(deleteLessonId)
+                  setDeleteLessonId(null)
+                }
+              }}
+              className="bg-rose-600 hover:bg-rose-500 text-rose-50"
+            >
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -1074,749 +1406,397 @@ function EditorView({ courseId, onBack }: { courseId: string; onBack: () => void
 }
 
 // ---------------------------------------------------------------------------
-// Module editor (when a module is selected but no lesson)
+// Rename Module Dialog
 // ---------------------------------------------------------------------------
-function ModuleEditor({
+function RenameModuleDialog({
+  open,
+  onOpenChange,
   module: m,
-  onUpdate,
-  onAddLesson,
+  courseId,
 }: {
-  module: ModuleCfg
-  onUpdate: (patch: Partial<ModuleCfg>) => void
-  onAddLesson: () => void
+  open: boolean
+  onOpenChange: (o: boolean) => void
+  module: AdminModule
+  courseId: string
 }) {
-  return (
-    <div className="space-y-5">
-      <div className="flex items-center gap-2">
-        <Layers className="h-5 w-5 text-violet-400" />
-        <h3 className="font-semibold text-lg">Module Editor</h3>
-      </div>
-      <div className="space-y-2">
-        <Label>Module title</Label>
-        <Input
-          value={m.title}
-          onChange={(e) => onUpdate({ title: e.target.value })}
-          placeholder="e.g. Network Reconnaissance"
-        />
-      </div>
-      <div className="space-y-2">
-        <Label>Module description</Label>
-        <Textarea
-          rows={3}
-          value={m.description || ""}
-          onChange={(e) => onUpdate({ description: e.target.value })}
-          placeholder="What this module covers..."
-        />
-      </div>
-      <div className="border-t border-border pt-4">
-        <div className="flex items-center justify-between mb-3">
-          <h4 className="font-medium text-sm">
-            Lessons ({m.lessons.length})
-          </h4>
-          <Button
-            size="sm"
-            variant="outline"
-            className="border-violet-500/30 text-violet-300 hover:bg-violet-500/10"
-            onClick={onAddLesson}
-          >
-            <Plus className="h-3.5 w-3.5 mr-1" /> Add Lesson
-          </Button>
-        </div>
-        {m.lessons.length === 0 ? (
-          <div className="text-center py-8 text-sm text-muted-foreground border border-dashed rounded-lg">
-            No lessons yet. Add one to start teaching.
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {m.lessons.map((l, i) => (
-              <div
-                key={l.id}
-                className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 hover:bg-muted/60 transition-colors"
-              >
-                <span className="text-xs font-mono text-muted-foreground">
-                  {i + 1}.
-                </span>
-                <FileText className="h-3.5 w-3.5 text-violet-400" />
-                <span className="text-sm flex-1 truncate">{l.title}</span>
-                <Badge variant="outline" className="text-[9px]">
-                  {LESSON_TYPE_META[l.type].label}
-                </Badge>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-// ---------------------------------------------------------------------------
-// Lesson editor (when a lesson is selected)
-// ---------------------------------------------------------------------------
-function LessonEditor({
-  module: m,
-  lesson,
-  onUpdateLesson,
-  onBackToModule,
-}: {
-  module: ModuleCfg
-  lesson: LessonCfg
-  onUpdateLesson: (patch: Partial<LessonCfg>) => void
-  onBackToModule: () => void
-}) {
-  const meta = LESSON_TYPE_META[lesson.type]
-  const Icon = meta.icon
-  return (
-    <div className="space-y-5">
-      <div className="flex items-center gap-2">
-        <button
-          onClick={onBackToModule}
-          className="p-1 rounded hover:bg-accent text-muted-foreground"
-          title="Back to module"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </button>
-        <Icon className={cn("h-5 w-5", meta.color)} />
-        <h3 className="font-semibold text-lg">Lesson Editor</h3>
-        <Badge variant="outline" className="text-[10px] ml-auto">
-          {m.title}
-        </Badge>
-      </div>
-
-      <div className="space-y-2">
-        <Label>Lesson title</Label>
-        <Input
-          value={lesson.title}
-          onChange={(e) => onUpdateLesson({ title: e.target.value })}
-          placeholder="e.g. TCP Handshake & Port Scanning"
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-2">
-          <Label>Content type</Label>
-          <Select
-            value={lesson.type}
-            onValueChange={(v: LessonType) => onUpdateLesson({ type: v })}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {(Object.keys(LESSON_TYPE_META) as LessonType[]).map((t) => (
-                <SelectItem key={t} value={t}>
-                  {LESSON_TYPE_META[t].label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-2">
-          <Label>Duration (min)</Label>
-          <Input
-            type="number"
-            min={1}
-            value={lesson.durationMin}
-            onChange={(e) =>
-              onUpdateLesson({ durationMin: Number(e.target.value) || 15 })
-            }
-          />
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label>Content (markdown / text)</Label>
-        <Textarea
-          rows={10}
-          value={lesson.content}
-          onChange={(e) => onUpdateLesson({ content: e.target.value })}
-          placeholder="# Lesson heading
-
-Write your lesson content here. Markdown is supported."
-          className="font-mono text-sm"
-        />
-      </div>
-
-      {lesson.type === "pdf" && (
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-2 col-span-2">
-            <Label>PDF URL</Label>
-            <Input
-              value={lesson.pdfUrl || ""}
-              onChange={(e) =>
-                onUpdateLesson({ pdfUrl: e.target.value })
-              }
-              placeholder="/pdfs/lesson.pdf"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Pages</Label>
-            <Input
-              type="number"
-              min={0}
-              value={lesson.pdfPages || 0}
-              onChange={(e) =>
-                onUpdateLesson({
-                  pdfPages: Number(e.target.value) || 0,
-                })
-              }
-            />
-          </div>
-        </div>
-      )}
-
-      <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/60">
-        <div>
-          <div className="text-sm font-medium">Free preview</div>
-          <div className="text-xs text-muted-foreground">
-            Allow non-enrolled students to view this lesson
-          </div>
-        </div>
-        <Switch
-          checked={lesson.preview}
-          onCheckedChange={(v) => onUpdateLesson({ preview: v })}
-        />
-      </div>
-    </div>
-  )
-}
-
-// ---------------------------------------------------------------------------
-// Right pane - preview / json / settings
-// ---------------------------------------------------------------------------
-function TabBtn({
-  active,
-  onClick,
-  icon: Icon,
-  label,
-}: {
-  active: boolean
-  onClick: () => void
-  icon: any
-  label: string
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "flex-1 px-2 py-2.5 text-xs font-medium flex items-center justify-center gap-1.5 transition-colors",
-        active
-          ? "text-violet-400 bg-violet-500/5 border-b-2 border-violet-500"
-          : "text-muted-foreground hover:text-foreground hover:bg-accent/30"
-      )}
-    >
-      <Icon className="h-3.5 w-3.5" /> {label}
-    </button>
-  )
-}
-
-function PreviewPane({
-  config,
-  selectedModuleId,
-  selectedLessonId,
-}: {
-  config: CourseConfig
-  selectedModuleId: string | null
-  selectedLessonId: string | null
-}) {
-  const mod = config.modules.find((m) => m.id === selectedModuleId)
-  const lesson = mod?.lessons.find((l) => l.id === selectedLessonId)
-
-  return (
-    <div className="p-4 space-y-4">
-      <div>
-        <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
-          Course preview
-        </div>
-        <h3 className="font-bold text-lg leading-tight">
-          {config.title || "Untitled course"}
-        </h3>
-        <p className="text-xs text-muted-foreground mt-1">
-          {config.category} · {config.level} · {config.durationHours}h
-        </p>
-        {config.description && (
-          <p className="text-sm text-muted-foreground mt-2 line-clamp-3">
-            {config.description}
-          </p>
-        )}
-      </div>
-
-      <div className="border-t border-border pt-4">
-        <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">
-          {mod ? `Module · ${mod.title}` : "Pick a module"}
-        </div>
-        {lesson ? (
-          <div className="rounded-lg border border-violet-500/20 bg-violet-500/5 p-3">
-            <div className="flex items-center gap-2 mb-1">
-              {(() => {
-                const Icon = LESSON_TYPE_META[lesson.type].icon
-                return (
-                  <Icon
-                    className={cn(
-                      "h-3.5 w-3.5",
-                      LESSON_TYPE_META[lesson.type].color
-                    )}
-                  />
-                )
-              })()}
-              <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                {LESSON_TYPE_META[lesson.type].label}
-              </span>
-              <span className="text-[10px] text-muted-foreground ml-auto flex items-center gap-1">
-                <Clock className="h-3 w-3" /> {lesson.durationMin}m
-              </span>
-            </div>
-            <h4 className="font-semibold text-sm">{lesson.title}</h4>
-            {lesson.content ? (
-              <div className="mt-2 text-xs text-muted-foreground line-clamp-6 whitespace-pre-wrap">
-                {lesson.content}
-              </div>
-            ) : (
-              <p className="mt-2 text-xs text-muted-foreground italic">
-                No content yet.
-              </p>
-            )}
-            {lesson.preview && (
-              <Badge
-                variant="outline"
-                className="text-[9px] mt-2 text-amber-300"
-              >
-                Free preview
-              </Badge>
-            )}
-          </div>
-        ) : (
-          <p className="text-xs text-muted-foreground">
-            Select a lesson from the outline to preview it here.
-          </p>
-        )}
-      </div>
-
-      <div className="border-t border-border pt-4">
-        <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">
-          Curriculum
-        </div>
-        <div className="space-y-1.5">
-          {config.modules.map((m, i) => (
-            <div key={m.id} className="text-xs">
-              <div className="font-medium">
-                <span className="text-muted-foreground font-mono">
-                  {i + 1}.
-                </span>{" "}
-                {m.title}
-              </div>
-              <div className="pl-4 text-muted-foreground text-[11px]">
-                {m.lessons.length} lesson{m.lessons.length !== 1 ? "s" : ""}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function JsonPane({
-  config,
-  onImport,
-}: {
-  config: CourseConfig
-  onImport: (cfg: CourseConfig) => void
-}) {
-  const [text, setText] = React.useState("")
-  const [editing, setEditing] = React.useState(false)
+  const qc = useQueryClient()
+  const [title, setTitle] = React.useState(m.title)
+  const [description, setDescription] = React.useState(m.description ?? "")
+  const [submitting, setSubmitting] = React.useState(false)
+  const [error, setError] = React.useState<string | null>(null)
 
   React.useEffect(() => {
-    if (!editing) setText(JSON.stringify(config, null, 2))
-  }, [config, editing])
+    if (open) {
+      setTitle(m.title)
+      setDescription(m.description ?? "")
+      setError(null)
+    }
+  }, [open, m.title, m.description])
 
-  const copy = () => {
-    navigator.clipboard.writeText(text)
-    toast.success("JSON copied to clipboard")
-  }
-
-  const download = () => {
-    const blob = new Blob([text], { type: "application/json" })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = `${config.title || "course"}.json`
-    a.click()
-    URL.revokeObjectURL(url)
-  }
-
-  const importJson = () => {
+  async function handleSave() {
+    if (!title.trim()) {
+      setError("Title is required")
+      return
+    }
+    setSubmitting(true)
+    setError(null)
     try {
-      const parsed = JSON.parse(text)
-      onImport(parsed)
-      setEditing(false)
-    } catch (e) {
-      toast.error("Invalid JSON: " + (e as Error).message)
+      await api(`/api/admin/modules/${m.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ title: title.trim(), description }),
+      })
+      toast.success("Module updated")
+      qc.invalidateQueries({ queryKey: ["course-studio-modules", courseId] })
+      qc.invalidateQueries({ queryKey: ["admin-courses-studio"] })
+      onOpenChange(false)
+    } catch (e: any) {
+      setError(e.message || "Failed to update module")
+    } finally {
+      setSubmitting(false)
     }
   }
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center gap-1 p-2 border-b border-border">
-        <Button
-          size="sm"
-          variant="ghost"
-          className="h-7 text-[11px]"
-          onClick={copy}
-        >
-          <Copy className="h-3 w-3 mr-1" /> Copy
-        </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          className="h-7 text-[11px]"
-          onClick={download}
-        >
-          <Download className="h-3 w-3 mr-1" /> Download
-        </Button>
-        <div className="flex-1" />
-        {editing ? (
-          <>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-7 text-[11px]"
-              onClick={() => {
-                setEditing(false)
-                setText(JSON.stringify(config, null, 2))
-              }}
-            >
-              <X className="h-3 w-3 mr-1" /> Cancel
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="bg-card border-border/60 max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Pencil className="h-4 w-4 text-violet-300" /> Rename Module
+          </DialogTitle>
+          <DialogDescription>Update the title and description of this module.</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3 py-2">
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium">Title</Label>
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="bg-background/60 border-border/60"
+              placeholder="e.g. Introduction to Network Security"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium">Description</Label>
+            <Textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="bg-background/60 border-border/60 min-h-[80px]"
+              placeholder="Short description of what this module covers."
+            />
+          </div>
+          {error && (
+            <div className="flex items-center gap-2 rounded-lg border border-rose-500/30 bg-rose-500/5 px-3 py-2 text-xs text-rose-300">
+              <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+        </div>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="outline" className="border-border/60" disabled={submitting}>
+              Cancel
             </Button>
-            <Button
-              size="sm"
-              className="h-7 text-[11px] bg-violet-600 hover:bg-violet-500"
-              onClick={importJson}
-            >
-              <CheckCircle2 className="h-3 w-3 mr-1" /> Apply
-            </Button>
-          </>
-        ) : (
+          </DialogClose>
+          <Button
+            onClick={handleSave}
+            disabled={submitting}
+            className="bg-violet-600 hover:bg-violet-500"
+          >
+            {submitting ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+            ) : (
+              <Save className="h-3.5 w-3.5 mr-1.5" />
+            )}
+            Save Changes
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Lesson Editor (right panel)
+// ---------------------------------------------------------------------------
+function LessonEditor({ lesson, courseId }: { lesson: AdminLesson; courseId: string }) {
+  const qc = useQueryClient()
+  const modulesKey = ["course-studio-modules", courseId]
+
+  // Local working copy
+  const [title, setTitle] = React.useState(lesson.title)
+  const [type, setType] = React.useState<LessonType>(lesson.type)
+  const [content, setContent] = React.useState(lesson.content ?? "")
+  const [durationMin, setDurationMin] = React.useState(String(lesson.durationMin ?? 15))
+  const [preview, setPreview] = React.useState(!!lesson.preview)
+  const [pdfUrl, setPdfUrl] = React.useState(lesson.pdfUrl ?? "")
+  const [pdfPages, setPdfPages] = React.useState(String(lesson.pdfPages ?? 0))
+  const [dirty, setDirty] = React.useState(false)
+  const [error, setError] = React.useState<string | null>(null)
+
+  // Reset local state when lesson prop changes
+  React.useEffect(() => {
+    setTitle(lesson.title)
+    setType(lesson.type)
+    setContent(lesson.content ?? "")
+    setDurationMin(String(lesson.durationMin ?? 15))
+    setPreview(!!lesson.preview)
+    setPdfUrl(lesson.pdfUrl ?? "")
+    setPdfPages(String(lesson.pdfPages ?? 0))
+    setDirty(false)
+    setError(null)
+  }, [lesson.id, lesson.title, lesson.type, lesson.content, lesson.durationMin, lesson.preview, lesson.pdfUrl, lesson.pdfPages])
+
+  const markDirty = () => setDirty(true)
+
+  const saveMutation = useMutation({
+    mutationFn: () =>
+      api<{ lesson: AdminLesson }>(`/api/admin/lessons/${lesson.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          title: title.trim(),
+          type,
+          content,
+          durationMin: Number(durationMin) || 0,
+          preview,
+          ...(type === "pdf" ? { pdfUrl, pdfPages: Number(pdfPages) || 0 } : {}),
+        }),
+      }),
+    onSuccess: () => {
+      toast.success("Lesson saved")
+      setDirty(false)
+      qc.invalidateQueries({ queryKey: modulesKey })
+      qc.invalidateQueries({ queryKey: ["admin-courses-studio"] })
+    },
+    onError: (e: any) => {
+      toast.error(e.message || "Failed to save lesson")
+      setError(e.message || "Failed to save lesson")
+    },
+  })
+
+  const handleSave = () => {
+    if (!title.trim()) {
+      setError("Lesson title is required")
+      return
+    }
+    setError(null)
+    saveMutation.mutate()
+  }
+
+  const meta = LESSON_TYPE_META[type] ?? LESSON_TYPE_META.reading
+  const Icon = meta.icon
+
+  return (
+    <div className="flex flex-col h-full max-h-[80vh]">
+      {/* Header */}
+      <div className="flex items-center justify-between gap-3 px-5 py-3.5 border-b border-border/60">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center bg-muted/30 border border-border/40")}>
+            <Icon className={cn("h-4 w-4", meta.color)} />
+          </div>
+          <div className="min-w-0">
+            <h3 className="text-sm font-semibold truncate">Lesson Editor</h3>
+            <p className="text-[10px] text-muted-foreground font-mono">
+              ID: {lesson.id.slice(0, 8)}…
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          {dirty && (
+            <Badge variant="outline" className="text-[10px] text-amber-300 border-amber-500/30 bg-amber-500/10">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-400 mr-1 animate-pulse" /> unsaved
+            </Badge>
+          )}
           <Button
             size="sm"
-            variant="ghost"
-            className="h-7 text-[11px] text-violet-300"
-            onClick={() => setEditing(true)}
+            onClick={handleSave}
+            disabled={saveMutation.isPending || !dirty}
+            className="bg-violet-600 hover:bg-violet-500 btn-premium"
           >
-            <Pencil className="h-3 w-3 mr-1" /> Edit
-          </Button>
-        )}
-      </div>
-      <textarea
-        value={text}
-        onChange={(e) => {
-          setText(e.target.value)
-          setEditing(true)
-        }}
-        readOnly={!editing}
-        className={cn(
-          "flex-1 p-3 bg-transparent font-mono text-[11px] leading-relaxed resize-none outline-none",
-          editing ? "bg-muted/30" : ""
-        )}
-        style={{ minHeight: 300 }}
-      />
-      <p className="text-[10px] text-muted-foreground p-2 border-t border-border">
-        {editing
-          ? "Edit JSON and click Apply to import changes into the editor."
-          : "Read-only. Click Edit to modify the config directly."}
-      </p>
-    </div>
-  )
-}
-
-function SettingsPane({
-  config,
-  onUpdate,
-}: {
-  config: CourseConfig
-  onUpdate: (patch: Partial<CourseConfig>) => void
-}) {
-  return (
-    <div className="p-4 space-y-4">
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-        Course settings
-      </div>
-
-      <div className="space-y-2">
-        <Label className="text-xs">Short name</Label>
-        <Input
-          value={config.shortName}
-          onChange={(e) => onUpdate({ shortName: e.target.value })}
-          maxLength={6}
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label className="text-xs">Category</Label>
-        <Input
-          value={config.category}
-          onChange={(e) => onUpdate({ category: e.target.value })}
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-2">
-          <Label className="text-xs">Level</Label>
-          <Select
-            value={config.level}
-            onValueChange={(v: any) => onUpdate({ level: v })}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Beginner">Beginner</SelectItem>
-              <SelectItem value="Intermediate">Intermediate</SelectItem>
-              <SelectItem value="Advanced">Advanced</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-2">
-          <Label className="text-xs">Duration (h)</Label>
-          <Input
-            type="number"
-            min={1}
-            value={config.durationHours}
-            onChange={(e) =>
-              onUpdate({ durationHours: Number(e.target.value) || 40 })
-            }
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-2">
-          <Label className="text-xs">Price</Label>
-          <Input
-            type="number"
-            min={0}
-            value={config.price}
-            onChange={(e) =>
-              onUpdate({ price: Number(e.target.value) || 0 })
-            }
-          />
-        </div>
-        <div className="space-y-2">
-          <Label className="text-xs">Cert body</Label>
-          <Input
-            value={config.certBody || ""}
-            onChange={(e) => onUpdate({ certBody: e.target.value || null })}
-            placeholder="EC-Council"
-          />
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label className="text-xs">Accent color</Label>
-        <div className="flex flex-wrap gap-2">
-          {COURSE_COLORS.map((c) => (
-            <button
-              key={c}
-              onClick={() => onUpdate({ color: c })}
-              className={cn(
-                "h-7 w-7 rounded-full border-2 transition-transform",
-                `bg-${c}-500`,
-                config.color === c
-                  ? "border-foreground scale-110"
-                  : "border-transparent hover:scale-105"
-              )}
-              title={c}
-            />
-          ))}
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label className="text-xs">Tags (comma separated)</Label>
-        <Input
-          value={config.tags.join(", ")}
-          onChange={(e) =>
-            onUpdate({
-              tags: e.target.value
-                .split(",")
-                .map((t) => t.trim())
-                .filter(Boolean),
-            })
-          }
-          placeholder="networking, security, offensive"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label className="text-xs">Long description</Label>
-        <Textarea
-          rows={5}
-          value={config.longDescription || ""}
-          onChange={(e) => onUpdate({ longDescription: e.target.value })}
-          placeholder="Full course description shown on the course detail page..."
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label className="text-xs">Thumbnail URL (optional)</Label>
-        <Input
-          value={config.thumbnail || ""}
-          onChange={(e) => onUpdate({ thumbnail: e.target.value || null })}
-          placeholder="/thumbnails/ceh.png"
-        />
-      </div>
-    </div>
-  )
-}
-
-function EmptyEditor({
-  icon: Icon,
-  title,
-  sub,
-}: {
-  icon: any
-  title: string
-  sub: string
-}) {
-  return (
-    <div className="h-full min-h-[60vh] flex flex-col items-center justify-center text-center p-8">
-      <div className="inline-flex p-4 rounded-2xl bg-violet-500/10 mb-4">
-        <Icon className="h-8 w-8 text-violet-400" />
-      </div>
-      <h3 className="font-semibold mb-1">{title}</h3>
-      <p className="text-sm text-muted-foreground max-w-sm">{sub}</p>
-    </div>
-  )
-}
-
-/* ============================================================
-   AI Course Generator — multi-agent LLM-powered course creation
-   ============================================================ */
-function AICourseGenerator() {
-  const qc = useQueryClient()
-  const [open, setOpen] = React.useState(false)
-  const [certSlug, setCertSlug] = React.useState("ceh")
-  const [audience, setAudience] = React.useState("Beginner")
-  const [level, setLevel] = React.useState<"Beginner" | "Intermediate" | "Advanced">("Beginner")
-  const [duration, setDuration] = React.useState(40)
-  const [instructorId, setInstructorId] = React.useState("")
-  const [result, setResult] = React.useState<any>(null)
-
-  // Fetch instructors for the dropdown
-  const { data: instrData } = useQuery<any>({
-    queryKey: ["ai-gen-instructors"],
-    queryFn: async () => {
-      try {
-        const res = await fetch("/api/admin/instructors")
-        if (!res.ok) return { instructors: [] }
-        return res.json()
-      } catch { return { instructors: [] } }
-    },
-  })
-
-  const generateMutation = useMutation({
-    mutationFn: async () => {
-      const res = await fetch("/api/ai-course-generator", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ certificationSlug: certSlug, audience, level, durationHours: duration, instructorId }),
-        credentials: "include",
-      })
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: "Failed" }))
-        throw new Error(err.error || "Failed to generate course")
-      }
-      return res.json()
-    },
-    onSuccess: (data) => {
-      setResult(data)
-      toast.success("Course generated successfully!")
-      qc.invalidateQueries({ queryKey: ["course-studio-list"] })
-    },
-    onError: (e: any) => toast.error(e.message || "Failed to generate course"),
-  })
-
-  return (
-    <Card className="border-violet-500/30 bg-gradient-to-br from-violet-950/30 via-card to-card overflow-hidden">
-      <div className="p-5 lg:p-6">
-        <div className="flex items-start gap-4">
-          <div className="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-violet-500/10 text-violet-300 shrink-0">
-            <Sparkles className="h-6 w-6" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="font-bold text-lg mb-1">AI Course Generator</h3>
-            <p className="text-sm text-muted-foreground mb-3">
-              Generate a complete course from a certification using multi-agent LLM orchestration — curriculum, lessons, quizzes, and assessments.
-            </p>
-            <Button onClick={() => setOpen(o => !o)} variant="outline" size="sm" className="border-violet-500/30 text-violet-300 hover:bg-violet-500/10">
-              <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-              {open ? "Hide" : "Generate with AI"}
-            </Button>
-          </div>
-        </div>
-
-        {open && (
-          <div className="mt-4 pt-4 border-t border-violet-500/20 space-y-4">
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground">Certification Slug</label>
-                <Input value={certSlug} onChange={(e) => setCertSlug(e.target.value)} placeholder="ceh, security-plus, ccna..." className="font-mono text-sm" />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground">Assign Instructor</label>
-                <Select value={instructorId} onValueChange={setInstructorId}>
-                  <SelectTrigger className="h-9"><SelectValue placeholder="Select instructor" /></SelectTrigger>
-                  <SelectContent>
-                    {(instrData?.instructors ?? []).map((i: any) => (
-                      <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground">Audience</label>
-                <Input value={audience} onChange={(e) => setAudience(e.target.value)} placeholder="Beginner, Working Professional..." />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground">Level</label>
-                <Select value={level} onValueChange={(v: any) => setLevel(v)}>
-                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Beginner">Beginner</SelectItem>
-                    <SelectItem value="Intermediate">Intermediate</SelectItem>
-                    <SelectItem value="Advanced">Advanced</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground">Duration (hours)</label>
-                <Input type="number" value={duration} onChange={(e) => setDuration(Number(e.target.value))} min={1} max={200} />
-              </div>
-            </div>
-
-            <Button
-              onClick={() => generateMutation.mutate()}
-              disabled={generateMutation.isPending || !certSlug || !instructorId}
-              className="bg-violet-600 hover:bg-violet-500 btn-premium w-full"
-            >
-              {generateMutation.isPending ? (
-                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Generating... (this can take 1-2 minutes)</>
-              ) : (
-                <><Sparkles className="h-4 w-4 mr-2" /> Generate Course</>
-              )}
-            </Button>
-
-            {result && (
-              <div className="mt-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4">
-                <p className="font-semibold text-emerald-300 mb-2">✓ Course Generated</p>
-                <pre className="text-xs text-muted-foreground overflow-auto max-h-60">
-                  {JSON.stringify(result, null, 2)}
-                </pre>
-              </div>
+            {saveMutation.isPending ? (
+              <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+            ) : (
+              <Save className="h-3.5 w-3.5 mr-1.5" />
             )}
+            Save
+          </Button>
+        </div>
+      </div>
+
+      {/* Body */}
+      <div className="flex-1 overflow-y-auto custom-scroll p-5 space-y-5">
+        {/* Title */}
+        <div className="space-y-1.5">
+          <Label htmlFor="lesson-title" className="text-xs font-medium">
+            Lesson Title
+          </Label>
+          <Input
+            id="lesson-title"
+            value={title}
+            onChange={(e) => {
+              setTitle(e.target.value)
+              markDirty()
+            }}
+            className="bg-background/60 border-border/60"
+            placeholder="e.g. Introduction to Phishing Attacks"
+          />
+        </div>
+
+        {/* Type + Duration */}
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="lesson-type" className="text-xs font-medium">
+              Type
+            </Label>
+            <Select
+              value={type}
+              onValueChange={(v) => {
+                setType(v as LessonType)
+                markDirty()
+              }}
+            >
+              <SelectTrigger id="lesson-type" className="bg-background/60 border-border/60">
+                <SelectValue placeholder="Select type" />
+              </SelectTrigger>
+              <SelectContent>
+                {LESSON_TYPES.map((t) => {
+                  const M = LESSON_TYPE_META[t]
+                  const TIcon = M.icon
+                  return (
+                    <SelectItem key={t} value={t}>
+                      <span className="flex items-center gap-2">
+                        <TIcon className={cn("h-3.5 w-3.5", M.color)} />
+                        {M.label}
+                      </span>
+                    </SelectItem>
+                  )
+                })}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="lesson-duration" className="text-xs font-medium">
+              Duration (minutes)
+            </Label>
+            <Input
+              id="lesson-duration"
+              type="number"
+              min={0}
+              value={durationMin}
+              onChange={(e) => {
+                setDurationMin(e.target.value)
+                markDirty()
+              }}
+              className="bg-background/60 border-border/60"
+            />
+          </div>
+        </div>
+
+        {/* Preview switch */}
+        <div className="flex items-center justify-between rounded-lg border border-border/60 bg-background/40 px-3 py-2.5">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="h-8 w-8 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center shrink-0">
+              {preview ? (
+                <Eye className="h-4 w-4 text-amber-300" />
+              ) : (
+                <EyeOff className="h-4 w-4 text-muted-foreground" />
+              )}
+            </div>
+            <div className="min-w-0">
+              <div className="text-sm font-medium">Free Preview</div>
+              <p className="text-[10px] text-muted-foreground">
+                Allow non-enrolled students to view this lesson for free.
+              </p>
+            </div>
+          </div>
+          <Switch checked={preview} onCheckedChange={(v) => { setPreview(v); markDirty() }} />
+        </div>
+
+        {/* Content */}
+        <div className="space-y-1.5">
+          <Label htmlFor="lesson-content" className="text-xs font-medium">
+            Content (Markdown / HTML)
+          </Label>
+          <Textarea
+            id="lesson-content"
+            value={content}
+            onChange={(e) => {
+              setContent(e.target.value)
+              markDirty()
+            }}
+            className="bg-background/60 border-border/60 min-h-[240px] font-mono text-xs"
+            placeholder={"# Introduction\n\nWrite your lesson content here...\n\n- bullet\n- bullet"}
+          />
+          <p className="text-[10px] text-muted-foreground">
+            Markdown and HTML are supported. For reading lessons this is the page content; for
+            video lessons include an embed URL; for labs include lab instructions.
+          </p>
+        </div>
+
+        {/* PDF-specific fields */}
+        <AnimatePresence initial={false}>
+          {type === "pdf" && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+            >
+              <div className="space-y-4 p-4 rounded-lg border border-cyan-500/30 bg-cyan-500/5">
+                <div className="flex items-center gap-2 text-xs text-cyan-300 font-mono uppercase tracking-wider">
+                  <FileText className="h-3.5 w-3.5" /> PDF Material
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="lesson-pdf-url" className="text-xs font-medium">
+                    PDF URL
+                  </Label>
+                  <Input
+                    id="lesson-pdf-url"
+                    value={pdfUrl}
+                    onChange={(e) => {
+                      setPdfUrl(e.target.value)
+                      markDirty()
+                    }}
+                    className="bg-background/60 border-border/60"
+                    placeholder="https://example.com/lesson.pdf"
+                  />
+                  <p className="text-[10px] text-muted-foreground">
+                    Direct URL to the PDF file. Will be embedded in the lesson viewer with a
+                    page-by-page reader.
+                  </p>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="lesson-pdf-pages" className="text-xs font-medium">
+                    PDF Page Count
+                  </Label>
+                  <Input
+                    id="lesson-pdf-pages"
+                    type="number"
+                    min={0}
+                    value={pdfPages}
+                    onChange={(e) => {
+                      setPdfPages(e.target.value)
+                      markDirty()
+                    }}
+                    className="bg-background/60 border-border/60"
+                  />
+                  <p className="text-[10px] text-muted-foreground">
+                    Used for progress tracking and to size the reader.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Error */}
+        {error && (
+          <div className="flex items-center gap-2 rounded-lg border border-rose-500/30 bg-rose-500/5 px-3 py-2 text-xs text-rose-300">
+            <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+            <span>{error}</span>
           </div>
         )}
       </div>
-    </Card>
+    </div>
   )
 }

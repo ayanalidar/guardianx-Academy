@@ -1,10 +1,9 @@
 "use client"
 
 import * as React from "react"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { motion } from "framer-motion"
 import { useAppStore } from "@/store/app-store"
-import { api } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -15,13 +14,10 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
 import {
   ArrowLeft, Calendar, ChevronLeft, ChevronRight, Clock,
   Users, Video, MapPin, User, Plus, Pencil, Trash2, X, Loader2, AlertTriangle,
-  Download, ExternalLink, Search, FileText, Check, Link as LinkIcon,
-  Briefcase, Linkedin, Phone, MessageSquare,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -594,23 +590,73 @@ export function BatchCalendarView() {
         )}
       </div>
 
-      {/* ----------------------------- batch detail modal with tabs ----------------------------- */}
+      {/* ----------------------------- batch detail modal ----------------------------- */}
       {selectedBatch && (
-        <BatchDetailDialog
-          batch={selectedBatch}
-          onClose={() => setSelectedBatch(null)}
-          onEdit={() => {
-            setEditOpen(true)
-            setEditingBatch(selectedBatch)
-            setForm(formFromBatch(selectedBatch))
-            setSelectedBatch(null)
-          }}
-          onDelete={() => {
-            setDeletingBatch(selectedBatch)
-            setDeleteOpen(true)
-            setSelectedBatch(null)
-          }}
-        />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setSelectedBatch(null)}>
+          <Card className="max-w-md w-full p-6" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4 gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <Badge className={cn("text-xs text-white border-0", certColorClass(selectedBatch.certification))}>
+                  {selectedBatch.certification}
+                </Badge>
+                <Badge variant="outline" className="text-[10px]">{selectedBatch.mode}</Badge>
+              </div>
+              <Button size="sm" variant="ghost" onClick={() => setSelectedBatch(null)} className="h-7 w-7 p-0">✕</Button>
+            </div>
+            <h2 className="text-lg font-bold mb-3">{selectedBatch.name}</h2>
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center gap-2 text-muted-foreground"><User className="h-4 w-4 shrink-0" /> {selectedBatch.instructor}</div>
+              <div className="flex items-center gap-2 text-muted-foreground"><Clock className="h-4 w-4 shrink-0" /> {selectedBatch.schedule}</div>
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Calendar className="h-4 w-4 shrink-0" /> Starts {selectedBatch.startDate}
+              </div>
+              <div className="flex items-center gap-2 text-muted-foreground">
+                {selectedBatch.mode === "Live Online" ? <Video className="h-4 w-4 shrink-0" /> : <MapPin className="h-4 w-4 shrink-0" />} {selectedBatch.mode}
+              </div>
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Users className="h-4 w-4 shrink-0" /> {selectedBatch.enrolled} / {selectedBatch.seats} enrolled
+              </div>
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Badge variant="outline" className="text-[10px]">{selectedBatch.level}</Badge>
+                <Badge variant="outline" className="text-[10px]">{selectedBatch.status}</Badge>
+                {selectedBatch.featured && <Badge variant="outline" className="text-[10px] border-violet-500/40 text-violet-300">Featured</Badge>}
+                {!selectedBatch.published && <Badge variant="outline" className="text-[10px] border-amber-500/40 text-amber-300">Unpublished</Badge>}
+              </div>
+              {selectedBatch.description && (
+                <p className="text-xs text-muted-foreground leading-relaxed pt-2 border-t border-border/40">
+                  {selectedBatch.description}
+                </p>
+              )}
+            </div>
+            <div className="mt-4 pt-4 border-t border-border/40 flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex-1"
+                onClick={() => {
+                  setEditOpen(true)
+                  setEditingBatch(selectedBatch)
+                  setForm(formFromBatch(selectedBatch))
+                  setSelectedBatch(null)
+                }}
+              >
+                <Pencil className="h-3 w-3 mr-1.5" /> Edit
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-rose-500/30 text-rose-300 hover:bg-rose-500/10 hover:text-rose-200"
+                onClick={() => {
+                  setDeletingBatch(selectedBatch)
+                  setDeleteOpen(true)
+                  setSelectedBatch(null)
+                }}
+              >
+                <Trash2 className="h-3 w-3 mr-1.5" /> Delete
+              </Button>
+            </div>
+          </Card>
+        </div>
       )}
 
       {/* ----------------------------- Create Batch Dialog ----------------------------- */}
@@ -847,429 +893,6 @@ function BatchFormFields({
         <p className="text-[10px] text-muted-foreground">
           Paste the Google Form URL for this batch's enrollment. Users will see an "Enroll" button linking to this form.
         </p>
-      </div>
-    </div>
-  )
-}
-
-// ============================================================
-// BatchDetailDialog — tabbed batch detail with Overview / Leads / Form Setup
-// ============================================================
-function BatchDetailDialog({
-  batch,
-  onClose,
-  onEdit,
-  onDelete,
-}: {
-  batch: TrainingBatch
-  onClose: () => void
-  onEdit: () => void
-  onDelete: () => void
-}) {
-  return (
-    <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-3xl max-h-[85vh] overflow-hidden flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 flex-wrap">
-            <Badge className={cn("text-xs text-white border-0", certColorClass(batch.certification))}>
-              {batch.certification}
-            </Badge>
-            <span className="truncate">{batch.name}</span>
-          </DialogTitle>
-          <DialogDescription className="flex items-center gap-3 flex-wrap mt-1">
-            <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {batch.schedule}</span>
-            <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> {batch.startDate}</span>
-            <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {batch.enrolled}/{batch.seats}</span>
-          </DialogDescription>
-        </DialogHeader>
-
-        <Tabs defaultValue="overview" className="flex-1 flex flex-col overflow-hidden">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="leads">Leads</TabsTrigger>
-            <TabsTrigger value="form">Google Form</TabsTrigger>
-          </TabsList>
-
-          {/* Overview tab */}
-          <TabsContent value="overview" className="flex-1 overflow-y-auto pr-1">
-            <div className="space-y-2 text-sm py-2">
-              <div className="flex items-center gap-2 text-muted-foreground"><User className="h-4 w-4 shrink-0" /> {batch.instructor}</div>
-              <div className="flex items-center gap-2 text-muted-foreground"><Clock className="h-4 w-4 shrink-0" /> {batch.schedule}</div>
-              <div className="flex items-center gap-2 text-muted-foreground"><Calendar className="h-4 w-4 shrink-0" /> Starts {batch.startDate}</div>
-              <div className="flex items-center gap-2 text-muted-foreground">
-                {batch.mode === "Live Online" ? <Video className="h-4 w-4 shrink-0" /> : <MapPin className="h-4 w-4 shrink-0" />} {batch.mode}
-              </div>
-              <div className="flex items-center gap-2 text-muted-foreground"><Users className="h-4 w-4 shrink-0" /> {batch.enrolled} / {batch.seats} enrolled</div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <Badge variant="outline" className="text-[10px]">{batch.level}</Badge>
-                <Badge variant="outline" className="text-[10px]">{batch.status}</Badge>
-                {batch.featured && <Badge variant="outline" className="text-[10px] border-violet-500/40 text-violet-300">Featured</Badge>}
-                {!batch.published && <Badge variant="outline" className="text-[10px] border-amber-500/40 text-amber-300">Unpublished</Badge>}
-              </div>
-              {batch.description && (
-                <p className="text-xs text-muted-foreground leading-relaxed pt-2 border-t border-border/40">{batch.description}</p>
-              )}
-            </div>
-            <div className="mt-4 pt-4 border-t border-border/40 flex gap-2">
-              <Button size="sm" variant="outline" className="flex-1" onClick={onEdit}>
-                <Pencil className="h-3 w-3 mr-1.5" /> Edit
-              </Button>
-              <Button size="sm" variant="outline" className="border-rose-500/30 text-rose-300 hover:bg-rose-500/10 hover:text-rose-200" onClick={onDelete}>
-                <Trash2 className="h-3 w-3 mr-1.5" /> Delete
-              </Button>
-            </div>
-          </TabsContent>
-
-          {/* Leads tab */}
-          <TabsContent value="leads" className="flex-1 overflow-hidden flex flex-col">
-            <BatchLeadsTab batchId={batch.id} />
-          </TabsContent>
-
-          {/* Google Form Setup tab */}
-          <TabsContent value="form" className="flex-1 overflow-y-auto pr-1">
-            <GoogleFormSetupTab batch={batch} />
-          </TabsContent>
-        </Tabs>
-      </DialogContent>
-    </Dialog>
-  )
-}
-
-// ============================================================
-// BatchLeadsTab — shows leads for this batch only
-// ============================================================
-interface BatchLead {
-  id: string
-  name: string
-  whatsappNumber: string
-  linkedinProfile: string | null
-  professionalStatus: string | null
-  jobRole: string | null
-  status: string
-  adminNotes: string | null
-  source: string
-  createdAt: string
-}
-
-const LEAD_STATUSES = [
-  { value: "New", color: "text-blue-300", bg: "bg-blue-500/10", border: "border-blue-500/30", dot: "bg-blue-400" },
-  { value: "Contacted", color: "text-cyan-300", bg: "bg-cyan-500/10", border: "border-cyan-500/30", dot: "bg-cyan-400" },
-  { value: "Qualified", color: "text-violet-300", bg: "bg-violet-500/10", border: "border-violet-500/30", dot: "bg-violet-400" },
-  { value: "Enrolled", color: "text-emerald-300", bg: "bg-emerald-500/10", border: "border-emerald-500/30", dot: "bg-emerald-400" },
-  { value: "Lost", color: "text-rose-300", bg: "bg-rose-500/10", border: "border-rose-500/30", dot: "bg-rose-400" },
-]
-
-function BatchLeadsTab({ batchId }: { batchId: string }) {
-  const queryClient = useQueryClient()
-  const [statusFilter, setStatusFilter] = React.useState("ALL")
-  const [search, setSearch] = React.useState("")
-  const [selectedLead, setSelectedLead] = React.useState<BatchLead | null>(null)
-
-  const queryKey = React.useMemo(() => ["batch-leads", batchId, statusFilter], [batchId, statusFilter])
-
-  const { data, isLoading } = useQuery<{ leads: BatchLead[]; count: number; byStatus: Record<string, number> }>({
-    queryKey,
-    queryFn: () => {
-      const params = new URLSearchParams()
-      if (statusFilter !== "ALL") params.set("status", statusFilter)
-      return api(`/api/admin/training-batches/${batchId}/leads?${params.toString()}`)
-    },
-    refetchInterval: 30000,
-  })
-
-  const leads = data?.leads ?? []
-  const byStatus = data?.byStatus ?? { New: 0, Contacted: 0, Qualified: 0, Enrolled: 0, Lost: 0 }
-
-  const filteredLeads = search.trim()
-    ? leads.filter((l) =>
-        l.name.toLowerCase().includes(search.toLowerCase()) ||
-        l.whatsappNumber.includes(search) ||
-        (l.linkedinProfile || "").toLowerCase().includes(search.toLowerCase()) ||
-        (l.jobRole || "").toLowerCase().includes(search.toLowerCase())
-      )
-    : leads
-
-  return (
-    <div className="flex flex-col h-full">
-      {/* Stats */}
-      <div className="grid grid-cols-5 gap-2 mb-3">
-        {LEAD_STATUSES.map((s) => (
-          <div key={s.value} className={cn("rounded-lg border p-2 text-center", s.border, s.bg)}>
-            <div className="text-lg font-bold tabular-nums">{byStatus[s.value] || 0}</div>
-            <div className="text-[8px] font-mono uppercase tracking-wider text-muted-foreground">{s.value}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Search + filter */}
-      <div className="flex gap-2 mb-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-          <Input placeholder="Search by name, WhatsApp, LinkedIn, role..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8 h-9 text-sm" />
-        </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-32 h-9 text-sm"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="ALL">All</SelectItem>
-            {LEAD_STATUSES.map((s) => <SelectItem key={s.value} value={s.value}>{s.value}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Leads list */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar rounded-lg border border-border/60">
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
-        ) : filteredLeads.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <Users className="h-8 w-8 text-muted-foreground/40 mb-2" />
-            <p className="text-xs font-medium text-muted-foreground">No leads yet</p>
-            <p className="text-[10px] text-muted-foreground/70 mt-0.5">Leads will appear here when someone fills the batch's Google Form</p>
-          </div>
-        ) : (
-          <div className="divide-y divide-border/40">
-            {filteredLeads.map((lead) => {
-              const statusMeta = LEAD_STATUSES.find((s) => s.value === lead.status) || LEAD_STATUSES[0]
-              return (
-                <button
-                  key={lead.id}
-                  onClick={() => setSelectedLead(lead)}
-                  className="w-full p-3 hover:bg-violet-500/[0.03] transition-colors text-left"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-start gap-2.5 min-w-0 flex-1">
-                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-violet-500/10 text-violet-300 font-semibold text-xs shrink-0">
-                        {lead.name.charAt(0).toUpperCase()}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                          <span className="font-medium text-xs truncate">{lead.name}</span>
-                          <Badge variant="outline" className={cn("text-[8px] shrink-0", statusMeta.color, statusMeta.border, statusMeta.bg)}>
-                            <span className={cn("h-1 w-1 rounded-full mr-1", statusMeta.dot)} />
-                            {lead.status}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-2 text-[10px] text-muted-foreground flex-wrap">
-                          <span className="flex items-center gap-0.5"><Phone className="h-2.5 w-2.5" /> {lead.whatsappNumber}</span>
-                          {lead.jobRole && <span className="flex items-center gap-0.5"><Briefcase className="h-2.5 w-2.5" /> {lead.jobRole}</span>}
-                          {lead.professionalStatus && <span>· {lead.professionalStatus}</span>}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </button>
-              )
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* Lead detail dialog */}
-      {selectedLead && (
-        <LeadDetailDialog
-          lead={selectedLead}
-          batchId={batchId}
-          onClose={() => setSelectedLead(null)}
-          onUpdated={() => {
-            queryClient.invalidateQueries({ queryKey: ["batch-leads", batchId] })
-          }}
-        />
-      )}
-    </div>
-  )
-}
-
-// ============================================================
-// LeadDetailDialog — view + edit a single lead
-// ============================================================
-function LeadDetailDialog({ lead, batchId, onClose, onUpdated }: { lead: BatchLead; batchId: string; onClose: () => void; onUpdated: () => void }) {
-  const queryClient = useQueryClient()
-  const [status, setStatus] = React.useState(lead.status)
-  const [adminNotes, setAdminNotes] = React.useState(lead.adminNotes || "")
-  const [saving, setSaving] = React.useState(false)
-  const hasChanges = status !== lead.status || adminNotes !== (lead.adminNotes || "")
-
-  const handleSave = async () => {
-    setSaving(true)
-    try {
-      await api(`/api/admin/training-batches/${batchId}/leads/${lead.id}`, {
-        method: "PATCH",
-        body: JSON.stringify({ status, adminNotes }),
-      })
-      toast.success("Lead updated")
-      onUpdated()
-      onClose()
-    } catch (e: any) {
-      toast.error(e?.message || "Update failed")
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const handleDelete = async () => {
-    if (!confirm("Delete this lead?")) return
-    try {
-      await api(`/api/admin/training-batches/${batchId}/leads/${lead.id}`, { method: "DELETE" })
-      toast.success("Lead deleted")
-      onUpdated()
-      onClose()
-    } catch (e: any) {
-      toast.error(e?.message || "Delete failed")
-    }
-  }
-
-  return (
-    <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">{lead.name}</DialogTitle>
-          <DialogDescription>Lead from {lead.source} · {new Date(lead.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-3 py-2">
-          {/* Lead fields */}
-          <div className="grid grid-cols-2 gap-3">
-            <InfoRow icon={Phone} label="WhatsApp" value={lead.whatsappNumber} />
-            <InfoRow icon={Briefcase} label="Job role" value={lead.jobRole || "—"} />
-            <InfoRow icon={User} label="Status" value={lead.professionalStatus || "—"} />
-            <InfoRow icon={Linkedin} label="LinkedIn" value={lead.linkedinProfile ? "View profile" : "—"} link={lead.linkedinProfile || undefined} />
-          </div>
-
-          {/* Status updater */}
-          <div className="border-t border-border/60 pt-3">
-            <Label className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1.5 block">Pipeline status</Label>
-            <div className="grid grid-cols-5 gap-1.5">
-              {LEAD_STATUSES.map((s) => (
-                <button
-                  key={s.value}
-                  onClick={() => setStatus(s.value)}
-                  className={cn(
-                    "flex flex-col items-center gap-0.5 rounded-lg border px-1 py-1.5 text-[9px] font-medium transition-all",
-                    status === s.value ? cn(s.bg, s.color, s.border) : "border-border/60 bg-card/40 hover:bg-muted/20 text-muted-foreground"
-                  )}
-                >
-                  {s.value}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Admin notes */}
-          <div>
-            <Label htmlFor="lead-notes" className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1.5 block">Admin notes</Label>
-            <Textarea id="lead-notes" value={adminNotes} onChange={(e) => setAdminNotes(e.target.value)} rows={3} placeholder="Call notes, follow-up reminders..." className="resize-none text-sm" maxLength={5000} />
-          </div>
-        </div>
-
-        <DialogFooter className="flex items-center justify-between flex-row flex-wrap gap-2">
-          <Button variant="ghost" size="sm" onClick={handleDelete} className="text-rose-400 hover:text-rose-300 hover:bg-rose-500/10">
-            <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete
-          </Button>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={onClose}>Close</Button>
-            <Button size="sm" onClick={handleSave} disabled={!hasChanges || saving} className="bg-gradient-to-r from-violet-600 to-violet-500 text-white">
-              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Check className="h-3.5 w-3.5 mr-1" />} Save
-            </Button>
-          </div>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  )
-}
-
-function InfoRow({ icon: Icon, label, value, link }: { icon: any; label: string; value: string; link?: string }) {
-  return (
-    <div className="rounded-lg border border-border/40 bg-muted/10 p-2.5">
-      <div className="flex items-center gap-1 mb-0.5">
-        <Icon className="h-3 w-3 text-muted-foreground" />
-        <span className="text-[8px] font-mono uppercase tracking-wider text-muted-foreground">{label}</span>
-      </div>
-      {link ? (
-        <a href={link} target="_blank" rel="noopener noreferrer" className="text-xs text-violet-300 hover:underline flex items-center gap-1">
-          {value} <ExternalLink className="h-2.5 w-2.5" />
-        </a>
-      ) : (
-        <div className="text-xs font-medium truncate">{value}</div>
-      )}
-    </div>
-  )
-}
-
-// ============================================================
-// GoogleFormSetupTab — per-batch Apps Script + form URL
-// ============================================================
-function GoogleFormSetupTab({ batch }: { batch: TrainingBatch }) {
-  const queryClient = useQueryClient()
-  const [formUrl, setFormUrl] = React.useState(batch.googleFormUrl || "")
-  const [saving, setSaving] = React.useState(false)
-
-  const handleSaveUrl = async () => {
-    setSaving(true)
-    try {
-      await api(`/api/admin/training-batches/${batch.id}`, {
-        method: "PATCH",
-        body: JSON.stringify({ googleFormUrl: formUrl.trim() || null }),
-      })
-      toast.success("Google Form URL saved")
-      queryClient.invalidateQueries({ queryKey: ["admin-training-batches"] })
-    } catch (e: any) {
-      toast.error(e?.message || "Save failed")
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const scriptUrl = `/api/admin/training-batches/${batch.id}/apps-script`
-
-  return (
-    <div className="space-y-5 py-2">
-      {/* Download Apps Script */}
-      <div className="rounded-lg border border-violet-500/30 bg-violet-500/5 p-4">
-        <div className="flex items-start gap-2.5 mb-3">
-          <FileText className="h-5 w-5 text-violet-300 shrink-0 mt-0.5" />
-          <div>
-            <h3 className="text-sm font-semibold">Per-batch Apps Script</h3>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Download a customized Google Apps Script with this batch's ID baked in. No manual editing needed.</p>
-          </div>
-        </div>
-        <a href={scriptUrl} target="_blank" rel="noopener noreferrer">
-          <Button className="bg-gradient-to-r from-violet-600 to-violet-500 text-white" size="sm">
-            <Download className="h-3.5 w-3.5 mr-1.5" /> Download Apps Script (.gs)
-          </Button>
-        </a>
-      </div>
-
-      {/* Setup checklist */}
-      <div>
-        <h4 className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-3">Setup checklist</h4>
-        <ol className="space-y-2 text-xs text-muted-foreground">
-          <li className="flex gap-2"><span className="text-violet-300 font-mono">1.</span> Create a Google Form at <a href="https://forms.new" target="_blank" rel="noreferrer" className="text-violet-300 hover:underline flex items-center gap-0.5">forms.new <ExternalLink className="h-2.5 w-2.5" /></a></li>
-          <li className="flex gap-2"><span className="text-violet-300 font-mono">2.</span> Add these 5 questions: Name, WhatsApp number (with country code), LinkedIn profile link, Current professional status, Current job role</li>
-          <li className="flex gap-2"><span className="text-violet-300 font-mono">3.</span> Click the 3-dot menu → Script Editor → paste the downloaded script → Save</li>
-          <li className="flex gap-2"><span className="text-violet-300 font-mono">4.</span> Run "setupTriggers" and grant permissions</li>
-          <li className="flex gap-2"><span className="text-violet-300 font-mono">5.</span> Copy the Google Form URL → paste it below → Save</li>
-          <li className="flex gap-2"><span className="text-violet-300 font-mono">6.</span> Leads from this form will now appear in the "Leads" tab above</li>
-        </ol>
-      </div>
-
-      {/* Google Form URL */}
-      <div className="space-y-1.5">
-        <Label className="text-xs font-medium">Google Form URL</Label>
-        <Input
-          value={formUrl}
-          onChange={(e) => setFormUrl(e.target.value)}
-          placeholder="https://forms.gle/..."
-          className="text-sm"
-        />
-        <p className="text-[10px] text-muted-foreground">Paste the Google Form URL here. An "Enroll" button will appear on the public batches page.</p>
-        {formUrl && (
-          <a href={formUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[11px] text-violet-300 hover:underline mt-1">
-            <ExternalLink className="h-3 w-3" /> Open form
-          </a>
-        )}
-        <Button onClick={handleSaveUrl} disabled={saving || formUrl === (batch.googleFormUrl || "")} size="sm" className="mt-2 bg-gradient-to-r from-violet-600 to-violet-500 text-white">
-          {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Check className="h-3.5 w-3.5 mr-1" />} Save URL
-        </Button>
       </div>
     </div>
   )

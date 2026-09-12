@@ -132,12 +132,32 @@ export function CourseCatalogView() {
   const featured = courses[0]
   const rest = courses.slice(1)
 
-  // Aggregate stats
-  const totalStudents = courses.reduce((acc, c) => acc + (c.studentsCount || 0), 0)
-  const avgRating = courses.length > 0
-    ? (courses.reduce((acc, c) => acc + (c.rating || 0), 0) / courses.length)
-    : 0
-  const totalLabs = 31 // GuardianX cyber range lab count (platform-wide)
+  // Fetch platform stats (editable from admin → Platform Stats view).
+  // These power the 4-card stats strip below the hero so the admin can
+  // control the numbers without touching code.
+  const { data: statsData } = useQuery<{ stats: { key: string; value: string; suffix: string | null }[] }>({
+    queryKey: ["platform-stats"],
+    queryFn: async () => {
+      const res = await fetch("/api/platform-stats")
+      if (!res.ok) return { stats: [] }
+      const j = await res.json()
+      return { stats: j.stats ?? [] }
+    },
+    staleTime: 60_000,
+  })
+  const platformStats = statsData?.stats ?? []
+  const getStat = (key: string, fallback: string) =>
+    platformStats.find((s) => s.key === key)?.value ?? fallback
+  const getSuffix = (key: string, fallback: string = "") =>
+    platformStats.find((s) => s.key === key)?.suffix ?? fallback
+
+  // Stats strip values — prefer the editable platform stats, fall back to
+  // computed values if the API hasn't loaded yet.
+  const totalCourses = parseInt(getStat("course_count", "0")) || courses.length || 27
+  const totalStudents = getStat("learner_count", "5")
+  const practiceLabs = getStat("lab_count", "31")
+  const avgRating = getStat("avg_rating", "5")
+  const avgRatingSuffix = getSuffix("avg_rating", "/5")
 
   return (
     <div className="relative min-h-screen pt-2 lg:pt-4">
@@ -235,10 +255,10 @@ export function CourseCatalogView() {
             transition={{ duration: 0.4, delay: 0.3 }}
             className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6"
           >
-            <StatCard icon={BookOpen} label="Total Courses" value={courses.length || 27} color="text-violet-300" tint="bg-violet-500/10" />
-            <StatCard icon={Users} label="Total Students" value={totalStudents || 12000} color="text-cyan-300" tint="bg-cyan-500/10" />
-            <StatCard icon={FlaskConical} label="Practice Labs" value={totalLabs} color="text-amber-300" tint="bg-amber-500/10" />
-            <StatCard icon={Star} label="Avg Rating" value={Math.round(avgRating || 4.7)} suffix="/5" color="text-emerald-300" tint="bg-emerald-500/10" />
+            <StatCard icon={BookOpen} label="Total Courses" value={totalCourses} color="text-violet-300" tint="bg-violet-500/10" />
+            <StatCard icon={Users} label="Total Students" value={totalStudents} color="text-cyan-300" tint="bg-cyan-500/10" />
+            <StatCard icon={FlaskConical} label="Practice Labs" value={practiceLabs} color="text-amber-300" tint="bg-amber-500/10" />
+            <StatCard icon={Star} label="Avg Rating" value={avgRating} suffix={avgRatingSuffix} color="text-emerald-300" tint="bg-emerald-500/10" />
           </motion.div>
 
           {/* Certification ticker - scrolling marquee */}
@@ -395,8 +415,12 @@ export function CourseCatalogView() {
 function StatCard({
   icon: Icon, label, value, color, tint, suffix,
 }: {
-  icon: typeof BookOpen; label: string; value: number; color: string; tint: string; suffix?: string
+  icon: typeof BookOpen; label: string; value: number | string; color: string; tint: string; suffix?: string
 }) {
+  // If the value is a plain integer, animate it via the Counter. Otherwise
+  // (e.g. "5", "1,240", "5/5") just render the string as-is.
+  const numericValue = typeof value === "number" ? value : parseInt(String(value).replace(/[^0-9]/g, "")) || 0
+  const isPlainNumber = typeof value === "number" || /^\d+$/.test(String(value))
   return (
     <div className="rounded-xl border border-border/60 bg-card shadow-lg p-5 flex items-center gap-4 hover:border-violet-500/30 transition-colors">
       <div className={cn("inline-flex p-3 rounded-lg shrink-0", tint)}>
@@ -404,7 +428,7 @@ function StatCard({
       </div>
       <div className="min-w-0">
         <div className="text-2xl lg:text-3xl font-bold tabular-nums leading-none mb-1">
-          <Counter value={value} suffix={suffix} />
+          {isPlainNumber ? <Counter value={numericValue} suffix={suffix} /> : <span>{value}{suffix}</span>}
         </div>
         <div className="text-[10px] text-muted-foreground uppercase tracking-wider truncate">{label}</div>
       </div>

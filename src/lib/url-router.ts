@@ -185,6 +185,7 @@ export function hashToView(hash: string): View {
     "admin-cyber-quiz-questions",
     "admin-cyber-quiz-attempts",
     "admin-cyber-quiz-certs",
+    "admin-platform-stats",
     "support", "verify",
     "instructors", "events",
     "blog",

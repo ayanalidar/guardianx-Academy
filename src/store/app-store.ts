@@ -92,6 +92,7 @@ export type View =
   | { name: "admin-cyber-quiz-questions" }
   | { name: "admin-cyber-quiz-attempts" }
   | { name: "admin-cyber-quiz-certs" }
+  | { name: "admin-platform-stats" }
   | { name: "support" }
   // Public instructors + events (master-prompt §25 / §36)
   | { name: "instructors" }

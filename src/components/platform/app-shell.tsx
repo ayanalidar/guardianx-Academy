@@ -112,6 +112,7 @@ const ADMIN_NAV: NavItem[] = [
   { label: "Quiz Questions", icon: Brain, view: { name: "admin-cyber-quiz-questions" } },
   { label: "Quiz Attempts", icon: Trophy, view: { name: "admin-cyber-quiz-attempts" } },
   { label: "Quiz Certificates", icon: Award, view: { name: "admin-cyber-quiz-certs" } },
+  { label: "Platform Stats", icon: BarChart3, view: { name: "admin-platform-stats" } },
 ]
 
 // Keep legacy NAV_ITEMS for backwards compat (mobile menu etc)

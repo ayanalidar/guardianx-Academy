@@ -392,6 +392,7 @@ export function HomeView() {
     borderColor: string
     btnClass: string
     almostFull?: boolean
+    featured?: boolean
   }
   const { data: batchesData } = useQuery<{ batches: TrainingBatchRow[]; count: number } | null>({
     queryKey: ["home-training-batches"],
@@ -409,7 +410,14 @@ export function HomeView() {
   const displayBatches: TrainingBatchRow[] = React.useMemo(() => {
     const api = batchesData?.batches
     if (api && api.length > 0) {
-      return api.map((b) => ({
+      // Sort featured batches to the front so the admin's "featured" toggle
+      // actually controls homepage placement. Non-featured batches fill
+      // remaining slots so the section never goes blank.
+      const sorted = [...api].sort((a, b) => {
+        if (a.featured === b.featured) return 0
+        return a.featured ? -1 : 1
+      })
+      return sorted.map((b) => ({
         ...b,
         almostFull: (b.seats - (b.enrolled ?? 0)) <= 2 || b.status === "Almost Full",
       }))

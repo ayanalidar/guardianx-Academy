@@ -1709,8 +1709,40 @@ model TrainingBatch {
   featured        Boolean  @default(false)          // show on homepage
   order           Int      @default(0)              // sort order
   published       Boolean  @default(true)
+  googleFormUrl   String?                            // the Google Form URL for enrollment (per-batch)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+
+  batchLeads      BatchLead[]
+}
+
+// ============================================================
+// BatchLead — per-batch enrollment leads from Google Forms
+// ============================================================
+// Each batch has its own Google Form with a per-batch Apps Script.
+// When someone fills the form, the script sends the lead to
+// /api/crm/batch-webhook with the batchId. The lead is saved here
+// and visible only on that batch's "Leads" tab in the admin.
+model BatchLead {
+  id                 String   @id @default(cuid())
+  batchId            String
+  batch              TrainingBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  // ── Form fields (the 5 questions on the Google Form) ──
+  name               String
+  whatsappNumber     String              // with country code
+  linkedinProfile    String?             // LinkedIn URL
+  professionalStatus String?             // Student | Working Professional | Freelancer | Job Seeker | Other
+  jobRole            String?             // current designation
+  // ── Admin pipeline ──
+  status             String   @default("New") // New | Contacted | Qualified | Enrolled | Lost
+  adminNotes         String?
+  source             String   @default("Google Form")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([batchId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 // ============================================================

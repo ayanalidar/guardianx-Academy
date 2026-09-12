@@ -43,6 +43,7 @@ const UPDATABLE_STRING_FIELDS = [
   "borderColor",
   "btnClass",
   "description",
+  "googleFormUrl",
 ] as const
 
 const UPDATABLE_INT_FIELDS = ["seats", "enrolled", "order"] as const

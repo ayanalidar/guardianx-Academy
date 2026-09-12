@@ -131,6 +131,7 @@ export const GET = withErrorHandler(async () => {
       featured: true,
       order: true,
       published: true,
+      googleFormUrl: true,
     },
   })
 
@@ -163,6 +164,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
     featured,
     order,
     published,
+    googleFormUrl,
   } = body as {
     certification?: string
     name?: string
@@ -180,6 +182,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
     featured?: boolean
     order?: number
     published?: boolean
+    googleFormUrl?: string
   }
 
   if (!certification?.trim()) return NextResponse.json({ error: "Certification required" }, { status: 400 })
@@ -215,6 +218,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
       featured: Boolean(featured),
       order: Number.isFinite(Number(order)) ? Number(order) : 0,
       published: published !== undefined ? Boolean(published) : true,
+      googleFormUrl: googleFormUrl?.trim() || null,
     },
   })
 

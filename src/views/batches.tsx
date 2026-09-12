@@ -64,6 +64,7 @@ interface Batch {
   levelBorder: string
   borderColor: string
   btnClass: string
+  googleFormUrl?: string | null
   // for the schedule filter
   scheduleType: "weekday" | "weekend" | "morning" | "evening" | "late-night"
 }
@@ -141,6 +142,7 @@ function normalizeBatch(raw: {
     levelBorder: raw.levelBorder,
     borderColor: raw.borderColor,
     btnClass: raw.btnClass,
+    googleFormUrl: raw.googleFormUrl ?? null,
     scheduleType: deriveScheduleType(raw.schedule),
   }
 }
@@ -217,6 +219,7 @@ export function BatchesView() {
     levelTint: string
     levelBorder: string
     borderColor: string
+    googleFormUrl?: string | null
     btnClass: string
     almostFull?: boolean
   }
@@ -603,15 +606,28 @@ export function BatchesView() {
                       </div>
                     </dl>
 
-                    <Button
-                      onClick={() => navigate({ name: "contact" })}
-                      className={cn("w-full btn-premium", b.btnClass)}
-                      size="sm"
-                      aria-label={`Enroll in ${b.name}`}
-                    >
-                      ENROLL NOW
-                      <ArrowRight className="size-4 ml-2" aria-hidden />
-                    </Button>
+                    {b.googleFormUrl ? (
+                      <a href={b.googleFormUrl} target="_blank" rel="noopener noreferrer" className="block w-full">
+                        <Button
+                          className={cn("w-full btn-premium", b.btnClass)}
+                          size="sm"
+                          aria-label={`Enroll in ${b.name}`}
+                        >
+                          ENROLL NOW
+                          <ArrowRight className="size-4 ml-2" aria-hidden />
+                        </Button>
+                      </a>
+                    ) : (
+                      <Button
+                        onClick={() => navigate({ name: "contact" })}
+                        className={cn("w-full btn-premium", b.btnClass)}
+                        size="sm"
+                        aria-label={`Enroll in ${b.name}`}
+                      >
+                        ENROLL NOW
+                        <ArrowRight className="size-4 ml-2" aria-hidden />
+                      </Button>
+                    )}
                   </motion.div>
                 ))}
               </div>

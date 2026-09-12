@@ -106,6 +106,13 @@ const ExamDetailView = dynamic(() => import("@/views/exam-detail").then(m => ({ 
 const PUBLIC_VIEWS = new Set([
   "home", "impact", "contact", "institutions", "institutions-schools",
   "institutions-colleges", "institutions-universities",
+  "institutions-open-schooling",
+  "corporate-training",
+  "cyber-quiz",
+  "cyber-quiz-runner",
+  "cyber-quiz-results",
+  "cyber-quiz-certificate",
+  "cyber-quiz-progress",
   "catalog", "batches", "course", "cyber-range", "learning-paths", "skill-tree",
   "exams", "credentials", "support", "verify",
   "instructors", "instructor-detail", "events", "event-detail",

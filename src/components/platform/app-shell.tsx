@@ -92,6 +92,7 @@ const INSTRUCTOR_NAV: NavItem[] = [
 const ADMIN_NAV: NavItem[] = [
   { label: "Admin Console", icon: Shield, view: { name: "admin" } },
   { label: "Courses", icon: BookOpen, view: { name: "admin-courses" } },
+  { label: "Course Studio", icon: PenLine, view: { name: "course-studio" } },
   { label: "Content Studio (CMS)", icon: FileEdit, view: { name: "cms" } },
   { label: "Invoice Generator", icon: FileText, view: { name: "invoice-generator" } },
   { label: "Proposal Maker", icon: FileText, view: { name: "proposal-maker" } },

@@ -55,3 +55,4 @@ server.log
 
 # Agent-browser test screenshots
 test-*.png
+upload/

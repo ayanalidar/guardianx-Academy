@@ -35,10 +35,9 @@ export async function POST(req: NextRequest) {
     if (!body) return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
 
     // Verify webhook token
-    const webhookSecret = process.env.CRM_WEBHOOK_SECRET || (process.env.NODE_ENV === "production" ? null : "guardianx-crm-webhook-2025")
-    if (!webhookSecret) {
-      return NextResponse.json({ error: "CRM_WEBHOOK_SECRET not configured" }, { status: 500 })
-    }
+    // Falls back to the hardcoded token that the Apps Script sends.
+    // The user can override by setting CRM_WEBHOOK_SECRET on Vercel.
+    const webhookSecret = process.env.CRM_WEBHOOK_SECRET || "guardianx-crm-webhook-2025"
     if (body.token !== webhookSecret) {
       return NextResponse.json({ error: "Invalid webhook token" }, { status: 401 })
     }

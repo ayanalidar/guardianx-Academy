@@ -76,7 +76,7 @@ function setupTriggers() {
   triggers.forEach(function(t) { ScriptApp.deleteTrigger(t); });
   ScriptApp.newTrigger("onFormSubmit")
     .forForm(FormApp.getActiveForm())
-    .onSubmit()
+    .onFormSubmit()
     .create();
   Logger.log("Trigger set up! Leads will sync to batch: " + BATCH_NAME);
 }

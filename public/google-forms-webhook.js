@@ -41,7 +41,7 @@ function setupTriggers() {
   // Create new trigger on form submit
   ScriptApp.newTrigger("onFormSubmit")
     .forForm(FormApp.getActiveForm())
-    .onSubmit()
+    .onFormSubmit()
     .create();
   
   Logger.log("Trigger set up successfully! Form responses will now sync to GuardianX CRM.");

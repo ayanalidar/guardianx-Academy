@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer"
+import { createHash } from "crypto"
 
 /**
  * GuardianX email service — sends transactional emails via SMTP.
@@ -112,4 +113,22 @@ export function leadNotificationEmailTemplate(type: string, fields: { label: str
   <p style="color: #6b7280; font-size: 12px; margin-top: 24px;">View this lead in the admin panel at academy.guardianx.cloud</p>
 </div>
 `
+}
+
+/**
+ * Generate a tamper-evident verification hash for a certificate.
+ * Used by the certificate issuance + verification endpoints.
+ *
+ * Hash = SHA-256(credentialId | userId | courseId | issuedAt)
+ */
+export function generateVerificationHash(
+  credentialId: string,
+  userId: string,
+  courseId: string,
+  issuedAt: Date | string
+): string {
+  const iso = typeof issuedAt === "string" ? issuedAt : issuedAt.toISOString()
+  return createHash("sha256")
+    .update(`${credentialId}|${userId}|${courseId}|${iso}`)
+    .digest("hex")
 }

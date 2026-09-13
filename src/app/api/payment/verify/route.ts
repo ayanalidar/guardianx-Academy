@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser, withErrorHandler } from "@/lib/session"
+import { createHmac, timingSafeEqual } from "crypto"
 
 export const runtime = "nodejs"
 
@@ -8,20 +9,8 @@ export const runtime = "nodejs"
  * -----------------------
  * Requires auth. Accepts { orderId, razorpayPaymentId, razorpaySignature }.
  *
- * In production, this would verify the HMAC SHA-256 signature using the
- * Razorpay key secret:
- *   const body = `${razorpayOrderId}|${razorpayPaymentId}`
- *   const expected = crypto.createHmac("sha256", KEY_SECRET).update(body).digest("hex")
- *   if (expected !== razorpaySignature) → fail
- *
- * For now (mock mode), we accept any non-empty paymentId/signature and:
- *   1. Mark the Order as "paid".
- *   2. If the Order has a courseId, enroll the student (create Enrollment if
- *      not present, increment Course.studentsCount).
- *   3. Award 25 XP via the gamification engine (course_enrolled).
- *   4. Increment the coupon's usedCount if a coupon was applied.
- *
- * Returns { success: true, enrollment }
+ * If RAZORPAY_KEY_SECRET is set: verifies the HMAC SHA-256 signature.
+ * If not set: falls back to mock mode (accepts any non-empty values).
  */
 export const POST = withErrorHandler(async (req: NextRequest) => {
   const user = await getCurrentUser()
@@ -40,14 +29,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
   if (!razorpayPaymentId) return NextResponse.json({ error: "razorpayPaymentId is required" }, { status: 400 })
   if (!razorpaySignature) return NextResponse.json({ error: "razorpaySignature is required" }, { status: 400 })
 
-  // Real signature verification would go here. In mock mode we accept any
-  // non-empty values so the flow can be exercised end-to-end.
-  // To enable real verification, set RAZORPAY_KEY_SECRET in .env and add:
-  //   const crypto = require("crypto")
-  //   const expected = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET!)
-  //     .update(`${order.razorpayOrderId}|${razorpayPaymentId}`).digest("hex")
-  //   if (expected !== razorpaySignature) return 400
-
+  // Load the order first — we need razorpayOrderId for signature verification
   const order = await db.order.findUnique({ where: { id: orderId } })
   if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 })
   if (order.userId !== user.id) {
@@ -56,6 +38,21 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
   if (order.status === "paid") {
     return NextResponse.json({ error: "Order already paid" }, { status: 400 })
   }
+
+  // --- Signature verification ---
+  const keySecret = process.env.RAZORPAY_KEY_SECRET
+  if (keySecret) {
+    // Real verification: HMAC SHA-256 of `razorpayOrderId|razorpayPaymentId`
+    const expected = createHmac("sha256", keySecret)
+      .update(`${order.razorpayOrderId}|${razorpayPaymentId}`)
+      .digest("hex")
+    const expectedBuf = Buffer.from(expected, "hex")
+    const providedBuf = Buffer.from(razorpaySignature, "hex")
+    if (expectedBuf.length !== providedBuf.length || !timingSafeEqual(expectedBuf, providedBuf)) {
+      return NextResponse.json({ error: "Payment signature verification failed" }, { status: 400 })
+    }
+  }
+  // If keySecret is not set, we're in mock mode — accept any non-empty values
 
   // Mark order as paid + store payment details
   await db.order.update({

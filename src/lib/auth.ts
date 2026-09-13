@@ -1,8 +1,10 @@
 import type { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import GoogleProvider from "next-auth/providers/google"
+import EmailProvider from "next-auth/providers/email"
 import bcrypt from "bcryptjs"
 import { db } from "@/lib/db"
+import { sendEmail, magicLinkEmailTemplate } from "@/lib/email"
 
 // Rate limiting for login attempts (in-memory, per IP)
 const LOGIN_RATE_LIMIT_WINDOW = 60 * 1000 // 1 minute
@@ -111,6 +113,36 @@ export const authOptions: NextAuthOptions = {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
       allowDangerousEmailAccountLinking: true,
     }),
+
+    // Email (magic link) provider — passwordless login
+    // User enters email → gets a login link → clicks → logged in
+    // Requires SMTP env vars (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD)
+    // If SMTP not configured, the provider is silently skipped
+    ...(process.env.SMTP_HOST ? [EmailProvider({
+      server: {
+        host: process.env.SMTP_HOST,
+        port: parseInt(process.env.SMTP_PORT || "465", 10),
+        auth: {
+          user: process.env.SMTP_USER!,
+          pass: process.env.SMTP_PASSWORD!,
+        },
+      },
+      from: process.env.EMAIL_FROM || process.env.SMTP_USER,
+      maxAge: 24 * 60 * 60, // 24 hours
+      // Custom sendMagicLink — uses our branded email template
+      async sendVerificationRequest({ identifier: email, url, token, theme }) {
+        // Look up the user to personalize the email
+        const user = await db.user.findUnique({ where: { email: email.toLowerCase() } })
+        const name = user?.name || "there"
+        await sendEmail({
+          to: email,
+          subject: "Your GuardianX Academy login link",
+          html: magicLinkEmailTemplate(name, url),
+        })
+      },
+      // Auto-create a STUDENT account on first magic-link login
+      // (same pattern as Google OAuth)
+    })] : []),
   ],
   session: { strategy: "jwt" },
   secret: process.env.NEXTAUTH_SECRET || (() => {
@@ -139,6 +171,21 @@ export const authOptions: NextAuthOptions = {
               role: "STUDENT",
               title: "Student",
               avatar: user.image || null,
+            },
+          })
+        }
+      }
+      // For Email (magic link): auto-create a STUDENT account on first login
+      if (account?.provider === "email" && user.email) {
+        const existing = await db.user.findUnique({ where: { email: user.email.toLowerCase() } })
+        if (!existing) {
+          await db.user.create({
+            data: {
+              email: user.email.toLowerCase(),
+              name: user.name || user.email.split("@")[0],
+              passwordHash: bcrypt.hashSync(Math.random().toString(36).slice(-12), 12),
+              role: "STUDENT",
+              title: "Student",
             },
           })
         }

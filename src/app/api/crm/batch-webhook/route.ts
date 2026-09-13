@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
+import { notifyAdmins, leadNotificationEmailTemplate } from "@/lib/email"
 
 export const runtime = "nodejs"
 
@@ -74,6 +75,19 @@ export async function POST(req: NextRequest) {
         source: "Google Form",
       },
     })
+
+    // --- email notification to admins ---
+    await notifyAdmins(
+      `New Batch Lead — ${batch.name} (${batch.certification}) — ${lead.name}`,
+      leadNotificationEmailTemplate(`Batch Lead — ${batch.name}`, [
+        { label: "Name", value: String(lead.name).trim() },
+        { label: "WhatsApp", value: String(lead.whatsappNumber).trim() },
+        { label: "LinkedIn", value: lead.linkedinProfile ? String(lead.linkedinProfile).trim() : "—" },
+        { label: "Status", value: lead.professionalStatus ? String(lead.professionalStatus).trim() : "—" },
+        { label: "Job role", value: lead.jobRole ? String(lead.jobRole).trim() : "—" },
+        { label: "Batch", value: `${batch.name} (${batch.certification})` },
+      ])
+    )
 
     return NextResponse.json({ ok: true, id: batchLead.id }, { status: 201 })
   } catch (error: any) {

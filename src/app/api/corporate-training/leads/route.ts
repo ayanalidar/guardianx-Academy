@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { withErrorHandler } from "@/lib/session"
+import { notifyAdmins, leadNotificationEmailTemplate } from "@/lib/email"
 
 export const runtime = "nodejs"
 
@@ -105,6 +106,21 @@ export const POST = withErrorHandler(async (req) => {
       source: "WEBSITE",
     },
   })
+
+  // --- email notification to admins ---
+  await notifyAdmins(
+    `New Corporate Training Lead — ${companyName}`,
+    leadNotificationEmailTemplate("Corporate Training Lead", [
+      { label: "Company", value: companyName.trim() },
+      { label: "Contact", value: contactName.trim() },
+      { label: "Email", value: workEmail.trim() },
+      { label: "Phone", value: cleanPhone },
+      { label: "Team size", value: teamSize },
+      { label: "Interest", value: trainingInterest.trim() },
+      { label: "Timeline", value: timeline || "—" },
+      { label: "Message", value: message?.trim() || "—" },
+    ])
+  )
 
   return NextResponse.json({ ok: true, id: lead.id }, { status: 201 })
 })

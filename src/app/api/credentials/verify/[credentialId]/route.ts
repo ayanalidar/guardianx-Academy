@@ -24,32 +24,64 @@ export const runtime = "nodejs"
 export async function GET(_req: Request, { params }: { params: Promise<{ credentialId: string }> }) {
   try {
     const { credentialId } = await params
+
+    // ── Check GuardianCredential (GX-CERT-XXXX format) ──
     const cred = await db.guardianCredential.findUnique({
       where: { credentialId },
       include: { certification: true },
     })
 
-    if (!cred) {
-      return NextResponse.json({ valid: false, credential: null })
+    if (cred) {
+      return NextResponse.json({
+        valid: cred.status === "valid",
+        credential: {
+          credentialId: cred.credentialId,
+          candidateName: cred.candidateName,
+          certificationName: cred.certification.name,
+          certificationSlug: cred.certification.slug,
+          certificationLevel: cred.certification.level,
+          score: cred.score,
+          issueDate: cred.issueDate,
+          expiryDate: cred.expiryDate,
+          status: cred.status,
+          skillsAssessed: JSON.parse(cred.skillsAssessed || "[]"),
+          examType: cred.examType,
+          verificationHash: cred.verificationHash,
+        },
+      })
     }
 
-    return NextResponse.json({
-      valid: cred.status === "valid",
-      credential: {
-        credentialId: cred.credentialId,
-        candidateName: cred.candidateName,
-        certificationName: cred.certification.name,
-        certificationSlug: cred.certification.slug,
-        certificationLevel: cred.certification.level,
-        score: cred.score,
-        issueDate: cred.issueDate,
-        expiryDate: cred.expiryDate,
-        status: cred.status, // valid | expired | revoked | suspended
-        skillsAssessed: JSON.parse(cred.skillsAssessed || "[]"),
-        examType: cred.examType,
-        verificationHash: cred.verificationHash,
-      },
-    })
+    // ── Check CyberQuizCertificate (GX-QUIZ-XXXX format) ──
+    if (credentialId.startsWith("GX-QUIZ-")) {
+      const quizCert = await db.cyberQuizCertificate.findUnique({
+        where: { credentialId },
+      })
+
+      if (quizCert) {
+        return NextResponse.json({
+          valid: quizCert.status === "valid",
+          credential: {
+            credentialId: quizCert.credentialId,
+            candidateName: quizCert.candidateName,
+            certificationName: "Cyber Security Foundation",
+            certificationSlug: "cyber-security-foundation",
+            certificationLevel: quizCert.difficulty,
+            score: quizCert.score,
+            totalQuestions: quizCert.totalQuestions,
+            percentage: quizCert.percentage,
+            issueDate: quizCert.issueDate,
+            expiryDate: null,
+            status: quizCert.status,
+            examType: "online-quiz",
+            verificationHash: quizCert.verificationHash,
+            verificationUrl: quizCert.verificationUrl,
+          },
+        })
+      }
+    }
+
+    // ── Not found in either table ──
+    return NextResponse.json({ valid: false, credential: null })
   } catch (err) {
     console.error("[api/credentials/verify] error:", err)
     return NextResponse.json(

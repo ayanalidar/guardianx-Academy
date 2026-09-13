@@ -1928,6 +1928,7 @@ interface BatchItem {
   enrolled: number
   level: string
   status: string
+  googleFormUrl?: string | null
 }
 function BatchSchedulePreview({
   courseId,
@@ -2046,21 +2047,29 @@ function BatchSchedulePreview({
                     </div>
                   </div>
 
-                  <Button
-                    size="sm"
-                    className="w-full bg-violet-600 hover:bg-violet-500"
-                    onClick={() => {
-                      if (!user) {
-                        navigate({ name: "login" })
-                        return
-                      }
-                      toast.success(`Enrollment requested for ${b.name}`, {
-                        description: `${startDate?.toLocaleDateString() ?? ""} · ${b.mode ?? ""} · ${b.instructor ?? ""}`,
-                      })
-                    }}
-                  >
-                    Enroll in this batch <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
-                  </Button>
+                  {b.googleFormUrl ? (
+                    <a href={b.googleFormUrl} target="_blank" rel="noopener noreferrer" className="block w-full">
+                      <Button size="sm" className="w-full bg-violet-600 hover:bg-violet-500">
+                        Enroll via Google Form <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
+                      </Button>
+                    </a>
+                  ) : (
+                    <Button
+                      size="sm"
+                      className="w-full bg-violet-600 hover:bg-violet-500"
+                      onClick={() => {
+                        if (!user) {
+                          navigate({ name: "login" })
+                          return
+                        }
+                        toast.success(`Enrollment requested for ${b.name}`, {
+                          description: `${startDate?.toLocaleDateString() ?? ""} · ${b.mode ?? ""} · ${b.instructor ?? ""}`,
+                        })
+                      }}
+                    >
+                      Enroll in this batch <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
+                    </Button>
+                  )}
                 </motion.div>
               )
             })}

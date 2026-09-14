@@ -9,84 +9,88 @@ import { ErrorBoundary } from "@/components/platform/error-boundary"
 import { useAppStore } from "@/store/app-store"
 import { hydrateFromHash } from "@/store/app-store"
 import { HomeView } from "@/views/home"
-import { ImpactView } from "@/views/impact"
-import { ContactView } from "@/views/contact"
-import { InstitutionsSchoolsView } from "@/views/institutions-schools"
-import { InstitutionsCollegesView } from "@/views/institutions-colleges"
-import { InstitutionsUniversitiesView } from "@/views/institutions-universities"
-import { OpenSchoolingView } from "@/views/open-schooling"
-import { CorporateTrainingView } from "@/views/corporate-training"
-import { CyberQuizLandingView } from "@/views/cyber-quiz-landing"
-import { CyberQuizRunnerView } from "@/views/cyber-quiz-runner"
-import { CyberQuizResultsView } from "@/views/cyber-quiz-results"
-import { CyberQuizCertificateView } from "@/views/cyber-quiz-certificate"
-import { CyberQuizProgressView } from "@/views/cyber-quiz-progress"
-import { DashboardView } from "@/views/dashboard"
-import { CourseCatalogView } from "@/views/course-catalog"
-import { BatchesView } from "@/views/batches"
-import { ExamsView } from "@/views/exams"
-import { CredentialsView } from "@/views/credentials"
-import { VerifyView } from "@/views/verify"
-import { InvoiceGeneratorView } from "@/views/invoice-generator"
-import { ProposalMakerView } from "@/views/proposal-maker"
-import { LeadCrmView } from "@/views/admin-lead-crm"
-import { BatchCalendarView } from "@/views/admin-batch-calendar"
-import { StudentProgressView } from "@/views/admin-student-progress"
-import { RevenueAnalyticsView } from "@/views/admin-revenue"
-import { CertBulkIssuanceView } from "@/views/admin-cert-bulk"
-import { EmailCampaignView } from "@/views/admin-email-campaign"
-import { InstructorAssignmentView } from "@/views/admin-instructor-assignment"
-import { AuditLogView } from "@/views/admin-audit-log"
-import { PlatformHealthView } from "@/views/admin-platform-health"
-import { NotificationCenterView } from "@/views/admin-notifications"
-import { AdminCouponsView } from "@/views/admin-coupons"
-import { SupportView } from "@/views/support"
-import { InstructorsView } from "@/views/instructors"
-import { InstructorDetailView } from "@/views/instructor-detail"
-import { EventsView } from "@/views/events"
-import { EventDetailView } from "@/views/event-detail"
-import { BlogView } from "@/views/blog"
-import { BlogPostView } from "@/views/blog-post"
-import { CertLandingView } from "@/views/cert-landing"
-import { AdminCoursesView } from "@/views/admin-courses"
-import { AffiliateView } from "@/views/affiliate"
-import { PricingView } from "@/views/pricing"
-import { AdminSeoView } from "@/views/admin-seo"
-import { AdminOpenSchoolingLeadsView } from "@/views/admin-open-schooling-leads"
-import { AdminCorporateLeadsView } from "@/views/admin-corporate-leads"
-import { AdminCyberQuizQuestionsView } from "@/views/admin-cyber-quiz-questions"
-import { AdminCyberQuizAttemptsView } from "@/views/admin-cyber-quiz-attempts"
-import { AdminCyberQuizCertsView } from "@/views/admin-cyber-quiz-certs"
-import { AdminPlatformStatsView } from "@/views/admin-platform-stats"
-import { AdminSettingsView } from "@/views/admin-settings"
-import { CourseDetailView } from "@/views/course-detail"
-import { LessonView } from "@/views/lesson-view"
-import { MyLearningView } from "@/views/my-learning"
-import { MyNotesView } from "@/views/my-notes"
-import { LiveSessionsView } from "@/views/live-sessions"
-import { LabsView } from "@/views/labs"
-import { LabDetailView } from "@/views/lab-detail"
-import { CertificatesView } from "@/views/certificates"
-import { AchievementsView } from "@/views/achievements"
-import { LeaderboardView } from "@/views/leaderboard"
-import { InstructorDashboardView } from "@/views/instructor-dashboard"
-import { SchoolDashboardView } from "@/views/school-dashboard"
-import { AdminDashboardView } from "@/views/admin-dashboard"
-import { CommunityView } from "@/views/community"
-import { ProfileView } from "@/views/profile"
-import { AssignmentsView } from "@/views/assignments"
-import { MessagingView } from "@/views/messaging"
-import { StudyGroupsView } from "@/views/study-groups"
-import { OfficeHoursView } from "@/views/office-hours"
-import { BookSessionView } from "@/views/book-session"
-// New feature views (heavy) — lazy-loaded with ssr:false for faster initial page render
-import { AIAssistantView } from "@/views/ai-assistant"
-import { ThreatFeedView } from "@/views/threat-feed"
-import { CodeReviewView } from "@/views/code-review"
-import { CareerPlannerView } from "@/views/career-planner"
-import { JobBoardView } from "@/views/job-board"
-import { ParentPortalView } from "@/views/parent-portal"
-import { CMSDashboardView } from "@/views/cms-dashboard"
+
+// ── Lazy-loaded views (only loaded when the user navigates to them) ──
+// This dramatically reduces the initial JS bundle — the homepage only loads
+// the HomeView, not the 3,235-line CourseDetailView or 1,805-line DashboardView.
+const ImpactView = dynamic(() => import("@/views/impact").then(m => ({ default: m.ImpactView })), { ssr: false })
+const ContactView = dynamic(() => import("@/views/contact").then(m => ({ default: m.ContactView })), { ssr: false })
+const InstitutionsSchoolsView = dynamic(() => import("@/views/institutions-schools").then(m => ({ default: m.InstitutionsSchoolsView })), { ssr: false })
+const InstitutionsCollegesView = dynamic(() => import("@/views/institutions-colleges").then(m => ({ default: m.InstitutionsCollegesView })), { ssr: false })
+const InstitutionsUniversitiesView = dynamic(() => import("@/views/institutions-universities").then(m => ({ default: m.InstitutionsUniversitiesView })), { ssr: false })
+const OpenSchoolingView = dynamic(() => import("@/views/open-schooling").then(m => ({ default: m.OpenSchoolingView })), { ssr: false })
+const CorporateTrainingView = dynamic(() => import("@/views/corporate-training").then(m => ({ default: m.CorporateTrainingView })), { ssr: false })
+const CyberQuizLandingView = dynamic(() => import("@/views/cyber-quiz-landing").then(m => ({ default: m.CyberQuizLandingView })), { ssr: false })
+const CyberQuizRunnerView = dynamic(() => import("@/views/cyber-quiz-runner").then(m => ({ default: m.CyberQuizRunnerView })), { ssr: false })
+const CyberQuizResultsView = dynamic(() => import("@/views/cyber-quiz-results").then(m => ({ default: m.CyberQuizResultsView })), { ssr: false })
+const CyberQuizCertificateView = dynamic(() => import("@/views/cyber-quiz-certificate").then(m => ({ default: m.CyberQuizCertificateView })), { ssr: false })
+const CyberQuizProgressView = dynamic(() => import("@/views/cyber-quiz-progress").then(m => ({ default: m.CyberQuizProgressView })), { ssr: false })
+const DashboardView = dynamic(() => import("@/views/dashboard").then(m => ({ default: m.DashboardView })), { ssr: false })
+const CourseCatalogView = dynamic(() => import("@/views/course-catalog").then(m => ({ default: m.CourseCatalogView })), { ssr: false })
+const BatchesView = dynamic(() => import("@/views/batches").then(m => ({ default: m.BatchesView })), { ssr: false })
+const ExamsView = dynamic(() => import("@/views/exams").then(m => ({ default: m.ExamsView })), { ssr: false })
+const CredentialsView = dynamic(() => import("@/views/credentials").then(m => ({ default: m.CredentialsView })), { ssr: false })
+const VerifyView = dynamic(() => import("@/views/verify").then(m => ({ default: m.VerifyView })), { ssr: false })
+const InvoiceGeneratorView = dynamic(() => import("@/views/invoice-generator").then(m => ({ default: m.InvoiceGeneratorView })), { ssr: false })
+const ProposalMakerView = dynamic(() => import("@/views/proposal-maker").then(m => ({ default: m.ProposalMakerView })), { ssr: false })
+const LeadCrmView = dynamic(() => import("@/views/admin-lead-crm").then(m => ({ default: m.LeadCrmView })), { ssr: false })
+const BatchCalendarView = dynamic(() => import("@/views/admin-batch-calendar").then(m => ({ default: m.BatchCalendarView })), { ssr: false })
+const StudentProgressView = dynamic(() => import("@/views/admin-student-progress").then(m => ({ default: m.StudentProgressView })), { ssr: false })
+// All remaining views — lazy-loaded for performance
+const RevenueAnalyticsView = dynamic(() => import("@/views/admin-revenue").then(m => ({ default: m.RevenueAnalyticsView })), { ssr: false })
+const CertBulkIssuanceView = dynamic(() => import("@/views/admin-cert-bulk").then(m => ({ default: m.CertBulkIssuanceView })), { ssr: false })
+const EmailCampaignView = dynamic(() => import("@/views/admin-email-campaign").then(m => ({ default: m.EmailCampaignView })), { ssr: false })
+const InstructorAssignmentView = dynamic(() => import("@/views/admin-instructor-assignment").then(m => ({ default: m.InstructorAssignmentView })), { ssr: false })
+const AuditLogView = dynamic(() => import("@/views/admin-audit-log").then(m => ({ default: m.AuditLogView })), { ssr: false })
+const PlatformHealthView = dynamic(() => import("@/views/admin-platform-health").then(m => ({ default: m.PlatformHealthView })), { ssr: false })
+const NotificationCenterView = dynamic(() => import("@/views/admin-notifications").then(m => ({ default: m.NotificationCenterView })), { ssr: false })
+const AdminCouponsView = dynamic(() => import("@/views/admin-coupons").then(m => ({ default: m.AdminCouponsView })), { ssr: false })
+const SupportView = dynamic(() => import("@/views/support").then(m => ({ default: m.SupportView })), { ssr: false })
+const InstructorsView = dynamic(() => import("@/views/instructors").then(m => ({ default: m.InstructorsView })), { ssr: false })
+const InstructorDetailView = dynamic(() => import("@/views/instructor-detail").then(m => ({ default: m.InstructorDetailView })), { ssr: false })
+const EventsView = dynamic(() => import("@/views/events").then(m => ({ default: m.EventsView })), { ssr: false })
+const EventDetailView = dynamic(() => import("@/views/event-detail").then(m => ({ default: m.EventDetailView })), { ssr: false })
+const BlogView = dynamic(() => import("@/views/blog").then(m => ({ default: m.BlogView })), { ssr: false })
+const BlogPostView = dynamic(() => import("@/views/blog-post").then(m => ({ default: m.BlogPostView })), { ssr: false })
+const CertLandingView = dynamic(() => import("@/views/cert-landing").then(m => ({ default: m.CertLandingView })), { ssr: false })
+const AdminCoursesView = dynamic(() => import("@/views/admin-courses").then(m => ({ default: m.AdminCoursesView })), { ssr: false })
+const AffiliateView = dynamic(() => import("@/views/affiliate").then(m => ({ default: m.AffiliateView })), { ssr: false })
+const PricingView = dynamic(() => import("@/views/pricing").then(m => ({ default: m.PricingView })), { ssr: false })
+const AdminSeoView = dynamic(() => import("@/views/admin-seo").then(m => ({ default: m.AdminSeoView })), { ssr: false })
+const AdminOpenSchoolingLeadsView = dynamic(() => import("@/views/admin-open-schooling-leads").then(m => ({ default: m.AdminOpenSchoolingLeadsView })), { ssr: false })
+const AdminCorporateLeadsView = dynamic(() => import("@/views/admin-corporate-leads").then(m => ({ default: m.AdminCorporateLeadsView })), { ssr: false })
+const AdminCyberQuizQuestionsView = dynamic(() => import("@/views/admin-cyber-quiz-questions").then(m => ({ default: m.AdminCyberQuizQuestionsView })), { ssr: false })
+const AdminCyberQuizAttemptsView = dynamic(() => import("@/views/admin-cyber-quiz-attempts").then(m => ({ default: m.AdminCyberQuizAttemptsView })), { ssr: false })
+const AdminCyberQuizCertsView = dynamic(() => import("@/views/admin-cyber-quiz-certs").then(m => ({ default: m.AdminCyberQuizCertsView })), { ssr: false })
+const AdminPlatformStatsView = dynamic(() => import("@/views/admin-platform-stats").then(m => ({ default: m.AdminPlatformStatsView })), { ssr: false })
+const AdminSettingsView = dynamic(() => import("@/views/admin-settings").then(m => ({ default: m.AdminSettingsView })), { ssr: false })
+const CourseDetailView = dynamic(() => import("@/views/course-detail").then(m => ({ default: m.CourseDetailView })), { ssr: false })
+const LessonView = dynamic(() => import("@/views/lesson-view").then(m => ({ default: m.LessonView })), { ssr: false })
+const MyLearningView = dynamic(() => import("@/views/my-learning").then(m => ({ default: m.MyLearningView })), { ssr: false })
+const MyNotesView = dynamic(() => import("@/views/my-notes").then(m => ({ default: m.MyNotesView })), { ssr: false })
+const LiveSessionsView = dynamic(() => import("@/views/live-sessions").then(m => ({ default: m.LiveSessionsView })), { ssr: false })
+const LabsView = dynamic(() => import("@/views/labs").then(m => ({ default: m.LabsView })), { ssr: false })
+const LabDetailView = dynamic(() => import("@/views/lab-detail").then(m => ({ default: m.LabDetailView })), { ssr: false })
+const CertificatesView = dynamic(() => import("@/views/certificates").then(m => ({ default: m.CertificatesView })), { ssr: false })
+const AchievementsView = dynamic(() => import("@/views/achievements").then(m => ({ default: m.AchievementsView })), { ssr: false })
+const LeaderboardView = dynamic(() => import("@/views/leaderboard").then(m => ({ default: m.LeaderboardView })), { ssr: false })
+const InstructorDashboardView = dynamic(() => import("@/views/instructor-dashboard").then(m => ({ default: m.InstructorDashboardView })), { ssr: false })
+const SchoolDashboardView = dynamic(() => import("@/views/school-dashboard").then(m => ({ default: m.SchoolDashboardView })), { ssr: false })
+const AdminDashboardView = dynamic(() => import("@/views/admin-dashboard").then(m => ({ default: m.AdminDashboardView })), { ssr: false })
+const CommunityView = dynamic(() => import("@/views/community").then(m => ({ default: m.CommunityView })), { ssr: false })
+const ProfileView = dynamic(() => import("@/views/profile").then(m => ({ default: m.ProfileView })), { ssr: false })
+const AssignmentsView = dynamic(() => import("@/views/assignments").then(m => ({ default: m.AssignmentsView })), { ssr: false })
+const MessagingView = dynamic(() => import("@/views/messaging").then(m => ({ default: m.MessagingView })), { ssr: false })
+const StudyGroupsView = dynamic(() => import("@/views/study-groups").then(m => ({ default: m.StudyGroupsView })), { ssr: false })
+const OfficeHoursView = dynamic(() => import("@/views/office-hours").then(m => ({ default: m.OfficeHoursView })), { ssr: false })
+const BookSessionView = dynamic(() => import("@/views/book-session").then(m => ({ default: m.BookSessionView })), { ssr: false })
+const AIAssistantView = dynamic(() => import("@/views/ai-assistant").then(m => ({ default: m.AIAssistantView })), { ssr: false })
+const ThreatFeedView = dynamic(() => import("@/views/threat-feed").then(m => ({ default: m.ThreatFeedView })), { ssr: false })
+const CodeReviewView = dynamic(() => import("@/views/code-review").then(m => ({ default: m.CodeReviewView })), { ssr: false })
+const CareerPlannerView = dynamic(() => import("@/views/career-planner").then(m => ({ default: m.CareerPlannerView })), { ssr: false })
+const JobBoardView = dynamic(() => import("@/views/job-board").then(m => ({ default: m.JobBoardView })), { ssr: false })
+const ParentPortalView = dynamic(() => import("@/views/parent-portal").then(m => ({ default: m.ParentPortalView })), { ssr: false })
+const CMSDashboardView = dynamic(() => import("@/views/cms-dashboard").then(m => ({ default: m.CMSDashboardView })), { ssr: false })
 const MockInterviewView = dynamic(() => import("@/views/mock-interview").then(m => ({ default: m.MockInterviewView })), { ssr: false })
 const ResumeBuilderView = dynamic(() => import("@/views/resume-builder").then(m => ({ default: m.ResumeBuilderView })), { ssr: false })
 const CTFPlatformView = dynamic(() => import("@/views/ctf-platform").then(m => ({ default: m.CTFPlatformView })), { ssr: false })
@@ -96,12 +100,12 @@ const LearningAnalyticsView = dynamic(() => import("@/views/learning-analytics")
 const SkillAssessmentsView = dynamic(() => import("@/views/skill-assessments").then(m => ({ default: m.SkillAssessmentsView })), { ssr: false })
 const PrerequisitesVisualizerView = dynamic(() => import("@/views/prerequisites-visualizer").then(m => ({ default: m.PrerequisitesVisualizerView })), { ssr: false })
 const LabSnapshotsView = dynamic(() => import("@/views/lab-snapshots").then(m => ({ default: m.LabSnapshotsView })), { ssr: false })
-const CyberRangeView = dynamic(() => import("@/views/cyber-range").then(m => ({ default: m.CyberRangeView })), { ssr: false })
-const LearningPathsView = dynamic(() => import("@/views/learning-paths").then(m => ({ default: m.LearningPathsView })), { ssr: false })
-const SkillTreeView = dynamic(() => import("@/views/skill-tree").then(m => ({ default: m.SkillTreeView })), { ssr: false })
 const BugBountyView = dynamic(() => import("@/views/bug-bounty").then(m => ({ default: m.BugBountyView })), { ssr: false })
 const CourseStudioView = dynamic(() => import("@/views/course-studio").then(m => ({ default: m.CourseStudioView })), { ssr: false })
 const ExamDetailView = dynamic(() => import("@/views/exam-detail").then(m => ({ default: m.ExamDetailView })), { ssr: false })
+const SkillTreeView = dynamic(() => import("@/views/skill-tree").then(m => ({ default: m.SkillTreeView })), { ssr: false })
+const CyberRangeView = dynamic(() => import("@/views/cyber-range").then(m => ({ default: m.CyberRangeView })), { ssr: false })
+const LearningPathsView = dynamic(() => import("@/views/learning-paths").then(m => ({ default: m.LearningPathsView })), { ssr: false })
 
 // Public views that show the header + footer (accessible without login)
 const PUBLIC_VIEWS = new Set([

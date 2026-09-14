@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser, withErrorHandler } from "@/lib/session"
 import { randomBytes } from "crypto"
+import { getSettings } from "@/lib/settings"
 
 export const runtime = "nodejs"
 
@@ -94,8 +95,9 @@ export const POST = withErrorHandler(async (req) => {
   })
 
   // --- Create the Razorpay order (real or mock) ---
-  const keyId = process.env.RAZORPAY_KEY_ID
-  const keySecret = process.env.RAZORPAY_KEY_SECRET
+  const s = await getSettings(["RAZORPAY_KEY_ID", "RAZORPAY_KEY_SECRET"])
+  const keyId = s.RAZORPAY_KEY_ID
+  const keySecret = s.RAZORPAY_KEY_SECRET
   const isMock = !keyId || !keySecret
 
   let razorpayOrderId: string

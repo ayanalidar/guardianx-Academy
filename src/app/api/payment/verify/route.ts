@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser, withErrorHandler } from "@/lib/session"
 import { createHmac, timingSafeEqual } from "crypto"
+import { getSetting } from "@/lib/settings"
 
 export const runtime = "nodejs"
 
@@ -40,7 +41,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
   }
 
   // --- Signature verification ---
-  const keySecret = process.env.RAZORPAY_KEY_SECRET
+  const keySecret = await getSetting("RAZORPAY_KEY_SECRET")
   if (keySecret) {
     // Real verification: HMAC SHA-256 of `razorpayOrderId|razorpayPaymentId`
     const expected = createHmac("sha256", keySecret)

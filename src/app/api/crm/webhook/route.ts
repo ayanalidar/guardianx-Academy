@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
+import { getSetting } from "@/lib/settings"
 
 export const runtime = "nodejs"
 
@@ -36,7 +37,7 @@ export async function POST(req: NextRequest) {
     // Verify webhook token
     // Falls back to the hardcoded token that the Apps Script sends.
     // The user can override by setting CRM_WEBHOOK_SECRET on Vercel.
-    const webhookSecret = process.env.CRM_WEBHOOK_SECRET || "guardianx-crm-webhook-2025"
+    const webhookSecret = await getSetting("CRM_WEBHOOK_SECRET") || "guardianx-crm-webhook-2025"
     if (body.token !== webhookSecret) {
       return NextResponse.json({ error: "Invalid webhook token" }, { status: 401 })
     }

@@ -7,6 +7,7 @@ import { api } from "@/lib/api"
 import { useAppStore } from "@/store/app-store"
 import { LEVEL_COLORS } from "@/lib/colors"
 import { useUser } from "@/hooks/use-user"
+import { useCurrency as useCurrencyHook } from "@/hooks/use-currency"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -189,6 +190,7 @@ export function CourseDetailView() {
   const courseId = view.name === "course" ? view.courseId : ""
   const { user } = useUser()
   const qc = useQueryClient()
+  const { formatPrice, isINR, currencyCode } = useCurrencyHook()
 
   // Refs for floating CTA visibility tracking
   const enrollCardRef = React.useRef<HTMLDivElement>(null)
@@ -579,7 +581,7 @@ export function CourseDetailView() {
                     <div className="space-y-5">
                       <div className="text-center pb-2">
                         <p className="text-[10px] font-mono text-muted-foreground tracking-[0.2em] mb-1">ONE-TIME PAYMENT</p>
-                        <div className="text-5xl font-bold text-gradient-premium tabular-nums">₹{course.price}</div>
+                        <div className="text-5xl font-bold text-gradient-premium tabular-nums">{formatPrice(course.price)}</div>
                       </div>
 
                       {prerequisites.length > 0 && (
@@ -802,7 +804,7 @@ export function CourseDetailView() {
                   onClick={handleEnroll}
                   disabled={enrollMutation.isPending}
                 >
-                  <GraduationCap className="h-5 w-5 mr-2" /> {enrollMutation.isPending ? "Enrolling..." : `Enroll for ₹${course.price}`}
+                  <GraduationCap className="h-5 w-5 mr-2" /> {enrollMutation.isPending ? "Enrolling..." : `Enroll for ${formatPrice(course.price)}`}
                 </Button>
               )}
               <Button
@@ -889,6 +891,7 @@ function CheckoutDialog({
   isApplyingCoupon: boolean
   isPaying: boolean
 }) {
+  const { formatPrice, isINR } = useCurrencyHook()
   const originalPrice = Number(course?.price ?? 0)
   const applied = couponState.status === "applied"
   const discount = applied ? couponState.discount : 0
@@ -927,18 +930,15 @@ function CheckoutDialog({
             <div className="space-y-2 pt-2 border-t border-border/40">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Original price</span>
-                <span className="font-mono tabular-nums flex items-center">
-                  <IndianRupee className="h-3.5 w-3.5" />
-                  {originalPrice.toFixed(2)}
-                </span>
+                <span className="font-mono tabular-nums">{formatPrice(originalPrice)}</span>
               </div>
               {applied && (
                 <>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-emerald-300 flex items-center gap-1">
-                      <Percent className="h-3 w-3" /> Discount ({couponState.type === "percentage" ? `${couponState.value}%` : `₹${couponState.value}`})
+                      <Percent className="h-3 w-3" /> Discount ({couponState.type === "percentage" ? `${couponState.value}%` : formatPrice(couponState.value)})
                     </span>
-                    <span className="font-mono tabular-nums text-emerald-300">− ₹{discount.toFixed(2)}</span>
+                    <span className="font-mono tabular-nums text-emerald-300">− {formatPrice(discount)}</span>
                   </div>
                   <div className="text-[10px] text-muted-foreground flex items-center gap-1">
                     <Ticket className="h-3 w-3 text-emerald-300" />
@@ -948,11 +948,17 @@ function CheckoutDialog({
               )}
               <div className="flex items-center justify-between pt-2 border-t border-border/40">
                 <span className="text-sm font-medium">Total payable</span>
-                <span className="text-2xl font-bold tabular-nums text-gradient-premium flex items-center">
-                  <IndianRupee className="h-5 w-5" />
-                  {finalAmount.toFixed(2)}
+                <span className="text-2xl font-bold tabular-nums text-gradient-premium">
+                  {formatPrice(finalAmount)}
                 </span>
               </div>
+              {/* INR payment note for non-INR users */}
+              {!isINR && (
+                <div className="text-[10px] text-muted-foreground flex items-center gap-1 pt-1">
+                  <ShieldCheck className="h-3 w-3 text-violet-300" />
+                  Payment processed in INR (₹{finalAmount.toLocaleString("en-IN")}). Your bank will convert at their rate.
+                </div>
+              )}
             </div>
           </div>
 
@@ -1028,7 +1034,7 @@ function CheckoutDialog({
             ) : (
               <IndianRupee className="h-3.5 w-3.5 mr-1.5" />
             )}
-            {isPaying ? "Processing…" : `Pay ₹${finalAmount.toFixed(2)}`}
+            {isPaying ? "Processing…" : `Pay ${formatPrice(finalAmount)}`}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -2989,7 +2995,7 @@ function FloatingEnrollCTA({
                 <div className="flex items-center gap-3 shrink-0">
                   <div className="text-right hidden sm:block">
                     <div className="text-[10px] font-mono text-muted-foreground tracking-wider">ONE-TIME</div>
-                    <div className="text-lg font-bold text-gradient-premium tabular-nums">₹{course.price}</div>
+                    <div className="text-lg font-bold text-gradient-premium tabular-nums">{formatPrice(course.price)}</div>
                   </div>
                   <Button
                     className="bg-violet-600 hover:bg-violet-500"

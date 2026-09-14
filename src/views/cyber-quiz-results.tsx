@@ -3,6 +3,7 @@
 import * as React from "react"
 import { motion } from "framer-motion"
 import { useAppStore } from "@/store/app-store"
+import { useCurrency as useCurrencyHook } from "@/hooks/use-currency"
 import { useQuery, useMutation } from "@tanstack/react-query"
 import { api } from "@/lib/api"
 import { Button } from "@/components/ui/button"
@@ -40,6 +41,7 @@ const DOMAINS = ["Phishing", "Passwords", "Social Engineering", "Web Safety", "M
 
 export function CyberQuizResultsView() {
   const { view, navigate } = useAppStore()
+  const { formatPrice, isINR } = useCurrencyHook()
   const attemptId = (view as any)?.attemptId as string
 
   const { data, isLoading, error } = useQuery<{ attempt: Attempt }>({
@@ -333,7 +335,7 @@ function PassedResultsView({ attempt, attemptId }: { attempt: Attempt; attemptId
             <h3 className="text-lg font-semibold">Unlock your certificate + progress report</h3>
           </div>
           <p className="text-sm text-muted-foreground mb-5">
-            Pay ₹199 to instantly generate your verifiable Cyber Security Foundation certificate + the detailed progress report. Shareable to LinkedIn + WhatsApp, downloadable as PDF.
+            Pay {formatPrice(199)} to instantly generate your verifiable Cyber Security Foundation certificate + the detailed progress report. Shareable to LinkedIn + WhatsApp, downloadable as PDF.
           </p>
 
           {/* What's included */}
@@ -385,12 +387,12 @@ function PassedResultsView({ attempt, attemptId }: { attempt: Attempt; attemptId
 
               <div className="flex items-center justify-between pt-2">
                 <div>
-                  <div className="text-2xl font-bold">₹199</div>
+                  <div className="text-2xl font-bold">{formatPrice(199)}</div>
                   <div className="text-[10px] text-muted-foreground">One-time · lifetime certificate</div>
                 </div>
                 <Button type="submit" disabled={checkoutMutation.isPending} className="bg-gradient-to-r from-violet-600 to-violet-500 text-white">
                   {checkoutMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />}
-                  Pay ₹199 + get certificate
+                  Pay {formatPrice(199)} + get certificate
                 </Button>
               </div>
             </form>

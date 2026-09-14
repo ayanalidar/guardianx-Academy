@@ -123,7 +123,7 @@ export const SETTING_DEFINITIONS = [
   // Google OAuth
   { key: "GOOGLE_CLIENT_ID", label: "Google Client ID", category: "auth", isSecret: false, placeholder: "xxx.apps.googleusercontent.com", description: "From Google Cloud Console → Credentials" },
   { key: "GOOGLE_CLIENT_SECRET", label: "Google Client Secret", category: "auth", isSecret: true, placeholder: "••••••••••", description: "From Google Cloud Console → Credentials" },
-] as const
+]
 
 export type SettingCategory = "payment" | "email" | "crm" | "tracking" | "auth"
 

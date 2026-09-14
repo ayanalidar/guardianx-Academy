@@ -167,6 +167,20 @@ function safeParseTags(tags?: string | null): string[] {
     .filter(Boolean)
 }
 
+// Load the Razorpay checkout SDK script
+function loadRazorpayScript(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const existing = document.getElementById("razorpay-script")
+    if (existing) { resolve(); return }
+    const script = document.createElement("script")
+    script.id = "razorpay-script"
+    script.src = "https://checkout.razorpay.com/v1/checkout.js"
+    script.onload = () => resolve()
+    script.onerror = () => reject(new Error("Failed to load Razorpay SDK"))
+    document.body.appendChild(script)
+  })
+}
+
 // ============================================================
 // MAIN VIEW
 // ============================================================
@@ -243,31 +257,67 @@ export function CourseDetailView() {
 
   const payMutation = useMutation({
     mutationFn: (vars: { couponCode?: string }) =>
-      api<{ orderId: string; amount: number; currency: string; razorpayOrderId: string; mock: boolean }>(
+      api<{ orderId: string; amount: number; currency: string; razorpayOrderId: string; keyId: string | null; mock: boolean }>(
         "/api/payment/create-order",
         {
           method: "POST",
           body: JSON.stringify({ courseId, couponCode: vars.couponCode }),
         },
       ).then(async (createRes) => {
-        // Mock payment: in production, this is where Razorpay's checkout.js
-        // would open its modal and return a paymentId + signature after the
-        // user completes the bank/UPI/Card flow. For now we generate mock
-        // values so the verify endpoint accepts the request end-to-end.
-        const razorpayPaymentId = `pay_mock_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`
-        const razorpaySignature = `sig_mock_${Math.random().toString(36).slice(2, 14)}`
-        const verifyRes = await api<{ success: boolean; enrollment: any }>(
-          "/api/payment/verify",
-          {
-            method: "POST",
-            body: JSON.stringify({
-              orderId: createRes.orderId,
-              razorpayPaymentId,
-              razorpaySignature,
-            }),
-          },
-        )
-        return { ...verifyRes, paidAmount: createRes.amount }
+        if (createRes.mock) {
+          // Mock mode — no Razorpay keys configured
+          const razorpayPaymentId = `pay_mock_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`
+          const razorpaySignature = `sig_mock_${Math.random().toString(36).slice(2, 14)}`
+          const verifyRes = await api<{ success: boolean; enrollment: any }>(
+            "/api/payment/verify",
+            {
+              method: "POST",
+              body: JSON.stringify({ orderId: createRes.orderId, razorpayPaymentId, razorpaySignature }),
+            },
+          )
+          return { ...verifyRes, paidAmount: createRes.amount }
+        }
+
+        // Real Razorpay — load the SDK + open the checkout modal
+        await loadRazorpayScript()
+        return new Promise<{ success: boolean; enrollment: any; paidAmount: number }>((resolve, reject) => {
+          // @ts-ignore
+          const rzp = new window.Razorpay({
+            key: createRes.keyId,
+            amount: Math.round(createRes.amount * 100), // paise
+            currency: createRes.currency,
+            name: "GuardianX Academy",
+            description: course?.title || "Course Enrollment",
+            order_id: createRes.razorpayOrderId,
+            handler: async (response: any) => {
+              try {
+                const verifyRes = await api<{ success: boolean; enrollment: any }>(
+                  "/api/payment/verify",
+                  {
+                    method: "POST",
+                    body: JSON.stringify({
+                      orderId: createRes.orderId,
+                      razorpayPaymentId: response.razorpay_payment_id,
+                      razorpaySignature: response.razorpay_signature,
+                    }),
+                  },
+                )
+                resolve({ ...verifyRes, paidAmount: createRes.amount })
+              } catch (e: any) {
+                reject(new Error(e?.message || "Payment verification failed"))
+              }
+            },
+            prefill: {
+              name: user?.name || "",
+              email: user?.email || "",
+            },
+            theme: { color: "#7c3aed" },
+            modal: {
+              ondismiss: () => reject(new Error("Payment cancelled")),
+            },
+          })
+          rzp.open()
+        })
       }),
     onSuccess: (data) => {
       toast.success("Payment successful! Enrolled — redirecting…")
@@ -529,7 +579,7 @@ export function CourseDetailView() {
                     <div className="space-y-5">
                       <div className="text-center pb-2">
                         <p className="text-[10px] font-mono text-muted-foreground tracking-[0.2em] mb-1">ONE-TIME PAYMENT</p>
-                        <div className="text-5xl font-bold text-gradient-premium tabular-nums">${course.price}</div>
+                        <div className="text-5xl font-bold text-gradient-premium tabular-nums">₹{course.price}</div>
                       </div>
 
                       {prerequisites.length > 0 && (
@@ -752,7 +802,7 @@ export function CourseDetailView() {
                   onClick={handleEnroll}
                   disabled={enrollMutation.isPending}
                 >
-                  <GraduationCap className="h-5 w-5 mr-2" /> {enrollMutation.isPending ? "Enrolling..." : `Enroll for $${course.price}`}
+                  <GraduationCap className="h-5 w-5 mr-2" /> {enrollMutation.isPending ? "Enrolling..." : `Enroll for ₹${course.price}`}
                 </Button>
               )}
               <Button
@@ -2939,7 +2989,7 @@ function FloatingEnrollCTA({
                 <div className="flex items-center gap-3 shrink-0">
                   <div className="text-right hidden sm:block">
                     <div className="text-[10px] font-mono text-muted-foreground tracking-wider">ONE-TIME</div>
-                    <div className="text-lg font-bold text-gradient-premium tabular-nums">${course.price}</div>
+                    <div className="text-lg font-bold text-gradient-premium tabular-nums">₹{course.price}</div>
                   </div>
                   <Button
                     className="bg-violet-600 hover:bg-violet-500"

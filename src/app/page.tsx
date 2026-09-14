@@ -58,6 +58,7 @@ import { AdminCyberQuizQuestionsView } from "@/views/admin-cyber-quiz-questions"
 import { AdminCyberQuizAttemptsView } from "@/views/admin-cyber-quiz-attempts"
 import { AdminCyberQuizCertsView } from "@/views/admin-cyber-quiz-certs"
 import { AdminPlatformStatsView } from "@/views/admin-platform-stats"
+import { AdminSettingsView } from "@/views/admin-settings"
 import { CourseDetailView } from "@/views/course-detail"
 import { LessonView } from "@/views/lesson-view"
 import { MyLearningView } from "@/views/my-learning"
@@ -177,6 +178,7 @@ function ViewRouter() {
       {view.name === "admin-cyber-quiz-attempts" && <AdminCyberQuizAttemptsView />}
       {view.name === "admin-cyber-quiz-certs" && <AdminCyberQuizCertsView />}
       {view.name === "admin-platform-stats" && <AdminPlatformStatsView />}
+      {view.name === "admin-settings" && <AdminSettingsView />}
       {view.name === "course" && <CourseDetailView />}
       {view.name === "lesson" && <LessonView />}
       {view.name === "learning" && <MyLearningView />}

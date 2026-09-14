@@ -1892,3 +1892,19 @@ model SubscriptionPlan {
   active      Boolean  @default(true)
   createdAt   DateTime @default(now())
 }
+
+// ============================================================
+// PlatformSetting — admin-configurable keys/secrets stored in the DB
+// ============================================================
+// Stores Razorpay keys, SMTP settings, CRM webhook token, Sentry DSN,
+// Google OAuth keys, etc. The admin enters these via the Platform
+// Settings page — no need to touch Vercel env vars for most settings.
+// The getSetting() helper reads from here first, falls back to env vars.
+model PlatformSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique  // "RAZORPAY_KEY_ID", "SMTP_HOST", etc.
+  value     String             // the actual value
+  category  String             // "payment" | "email" | "crm" | "tracking" | "auth"
+  isSecret  Boolean  @default(false)  // masks value in UI
+  updatedAt DateTime @updatedAt
+}

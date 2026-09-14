@@ -93,15 +93,43 @@ export const POST = withErrorHandler(async (req) => {
     },
   })
 
-  // Create the Order (mock Razorpay order ID)
-  const mockRzpId = "order_" + randomBytes(12).toString("hex")
+  // --- Create the Razorpay order (real or mock) ---
+  const keyId = process.env.RAZORPAY_KEY_ID
+  const keySecret = process.env.RAZORPAY_KEY_SECRET
+  const isMock = !keyId || !keySecret
+
+  let razorpayOrderId: string
+
+  if (isMock) {
+    razorpayOrderId = "order_" + randomBytes(12).toString("hex")
+  } else {
+    // Real Razorpay — create order via REST API
+    const auth = Buffer.from(`${keyId}:${keySecret}`).toString("base64")
+    const res = await fetch("https://api.razorpay.com/v1/orders", {
+      method: "POST",
+      headers: { "Authorization": `Basic ${auth}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        amount: CERT_PRICE * 100, // paise
+        currency: "INR",
+        receipt: `quiz_${attemptId.slice(-8)}_${Date.now()}`,
+        notes: { attemptId, difficulty: attempt.difficulty },
+      }),
+    })
+    if (!res.ok) {
+      console.error("[quiz-checkout] Razorpay order creation failed:", await res.text())
+      return NextResponse.json({ error: "Failed to create payment order" }, { status: 500 })
+    }
+    const rzpOrder = await res.json()
+    razorpayOrderId = rzpOrder.id
+  }
+
   const order = await db.order.create({
     data: {
       userId,
       amount: CERT_PRICE,
       currency: "INR",
       status: "created",
-      razorpayOrderId: mockRzpId,
+      razorpayOrderId,
       finalAmount: CERT_PRICE,
       purpose: "QUIZ_CERT",
       quizAttemptId: attemptId,
@@ -112,9 +140,9 @@ export const POST = withErrorHandler(async (req) => {
     orderId: order.id,
     amount: CERT_PRICE,
     currency: "INR",
-    razorpayOrderId: mockRzpId,
-    keyId: process.env.RAZORPAY_KEY_ID || "rzp_test_mock",
-    mock: !process.env.RAZORPAY_KEY_SECRET,
+    razorpayOrderId,
+    keyId: keyId || "rzp_test_mock",
+    mock: isMock,
     attemptId,
     name: name.trim(),
     email: email.trim().toLowerCase(),

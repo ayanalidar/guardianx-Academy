@@ -7,11 +7,8 @@ export const runtime = "nodejs"
 /* POST /api/payment/create-order
  * -----------------------------
  * Requires auth. Accepts { courseId, couponCode? } and creates an Order
- * record with status="created". Since we don't have real Razorpay keys yet,
- * we return a MOCK razorpayOrderId — the verify endpoint will accept any
- * paymentId/signature for now. The full flow is ready: when RAZORPAY_KEY_ID
- * and RAZORPAY_KEY_SECRET are added to .env, swap the mock block for a real
- * `razorpay.orders.create()` call.
+ * record + a real Razorpay order (when RAZORPAY_KEY_ID + RAZORPAY_KEY_SECRET
+ * are set). Falls back to mock mode if keys are not configured.
  *
  * Returns: { orderId, amount, currency, razorpayOrderId, keyId, mock }
  */
@@ -84,8 +81,36 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
     appliedCouponCode = code
   }
 
-  // Create the Order row. We store finalAmount as the figure the client pays
-  // (in INR — Razorpay expects paise but our public API surfaces INR).
+  // --- Create the Razorpay order (real or mock) ---
+  const keyId = process.env.RAZORPAY_KEY_ID
+  const keySecret = process.env.RAZORPAY_KEY_SECRET
+  const isMock = !keyId || !keySecret
+
+  let razorpayOrderId: string
+
+  if (isMock) {
+    razorpayOrderId = `order_mock_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`
+  } else {
+    // Real Razorpay — create order via REST API
+    const auth = Buffer.from(`${keyId}:${keySecret}`).toString("base64")
+    const res = await fetch("https://api.razorpay.com/v1/orders", {
+      method: "POST",
+      headers: { "Authorization": `Basic ${auth}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        amount: Math.round(finalAmount * 100), // paise
+        currency: "INR",
+        receipt: `course_${courseId?.slice(-8) || "enroll"}_${Date.now()}`,
+        notes: { courseId: courseId || "", userId: user.id, courseTitle },
+      }),
+    })
+    if (!res.ok) {
+      console.error("[payment] Razorpay order creation failed:", await res.text())
+      return NextResponse.json({ error: "Failed to create payment order" }, { status: 500 })
+    }
+    const rzpOrder = await res.json()
+    razorpayOrderId = rzpOrder.id
+  }
+
   const order = await db.order.create({
     data: {
       userId: user.id,
@@ -97,9 +122,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
       couponCode: appliedCouponCode,
       discount,
       finalAmount,
-      // Mock Razorpay order ID — format mimics real Razorpay (order_XXXXX).
-      // Replace with a real `razorpay.orders.create()` call once keys are set.
-      razorpayOrderId: `order_mock_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`,
+      razorpayOrderId,
     },
   })
 
@@ -109,7 +132,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
     amount: finalAmount,
     currency: order.currency,
     courseTitle,
-    keyId: process.env.RAZORPAY_KEY_ID ?? null,
-    mock: true,
+    keyId: keyId ?? null,
+    mock: isMock,
   })
 })

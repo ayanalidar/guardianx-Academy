@@ -61,8 +61,10 @@ const TYPE_ACCENTS: Record<string, { tint: string; text: string; border: string;
 }
 
 export function EventsView() {
-  const { navigate } = useAppStore()
-  const [filter, setFilter] = React.useState<FilterKey>("all")
+  const { navigate, view } = useAppStore()
+  // Read the filter from the view prop (set by footer links: Workshops → "workshop", Webinars → "webinar")
+  const initialFilter = (view as any)?.filter as FilterKey | undefined
+  const [filter, setFilter] = React.useState<FilterKey>(initialFilter && FILTERS.some(f => f.key === initialFilter) ? initialFilter : "all")
 
   const { data, isLoading, isError } = useQuery<{ events: EventRow[]; count: number }>({
     queryKey: ["public-events"],

@@ -82,8 +82,8 @@ export function PublicFooter() {
       title: "RESOURCES",
       links: [
         { label: "Events", view: { name: "events" } },
-        { label: "Workshops", view: { name: "events" } },
-        { label: "Webinars", view: { name: "events" } },
+        { label: "Workshops", view: { name: "events", filter: "workshop" } },
+        { label: "Webinars", view: { name: "events", filter: "webinar" } },
         { label: "Help", view: { name: "support" } },
       ],
     },

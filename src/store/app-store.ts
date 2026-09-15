@@ -94,11 +94,12 @@ export type View =
   | { name: "admin-cyber-quiz-certs" }
   | { name: "admin-platform-stats" }
   | { name: "admin-settings" }
+  | { name: "admin-events" }
   | { name: "support" }
   // Public instructors + events (master-prompt §25 / §36)
   | { name: "instructors" }
   | { name: "instructor-detail"; instructorId: string }
-  | { name: "events" }
+  | { name: "events"; filter?: string }
   | { name: "event-detail"; eventSlug: string }
   | { name: "blog" }
   | { name: "blog-post"; slug: string }

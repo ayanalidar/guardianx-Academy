@@ -182,6 +182,60 @@ function loadRazorpayScript(): Promise<void> {
   })
 }
 
+// Small inline currency picker — appears next to the price
+function CurrencyPicker() {
+  const [open, setOpen] = React.useState(false)
+  const [current, setCurrent] = React.useState({ code: "USD", symbol: "$" })
+
+  React.useEffect(() => {
+    const stored = localStorage.getItem("guardianx-currency") || "USD"
+    const symbols: Record<string, string> = { INR: "₹", USD: "$", EUR: "€", GBP: "£", AED: "AED ", SGD: "S$", AUD: "A$", CAD: "C$" }
+    setCurrent({ code: stored, symbol: symbols[stored] || "$" })
+  }, [])
+
+  const options = [
+    { code: "INR", symbol: "₹", label: "INR" },
+    { code: "USD", symbol: "$", label: "USD" },
+    { code: "EUR", symbol: "€", label: "EUR" },
+    { code: "GBP", symbol: "£", label: "GBP" },
+    { code: "AED", symbol: "AED", label: "AED" },
+    { code: "SGD", symbol: "S$", label: "SGD" },
+  ]
+
+  return (
+    <div className="relative inline-block mt-1">
+      <button
+        onClick={() => setOpen(!open)}
+        className="text-[10px] font-mono text-muted-foreground hover:text-foreground transition-colors underline decoration-dotted underline-offset-2"
+      >
+        Showing in {current.symbol}{current.code} · change
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute left-1/2 -translate-x-1/2 top-full mt-1 z-50 rounded-lg border border-border/60 bg-popover shadow-lg p-1 min-w-[80px]">
+            {options.map((opt) => (
+              <button
+                key={opt.code}
+                onClick={() => {
+                  localStorage.setItem("guardianx-currency", opt.code)
+                  setCurrent({ code: opt.code, symbol: opt.symbol })
+                  setOpen(false)
+                  window.location.reload()
+                }}
+                className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs hover:bg-accent/60 transition-colors"
+              >
+                <span className="font-mono w-8 text-left">{opt.symbol}</span>
+                <span className="font-mono">{opt.label}</span>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
 // ============================================================
 // MAIN VIEW
 // ============================================================
@@ -582,6 +636,7 @@ export function CourseDetailView() {
                       <div className="text-center pb-2">
                         <p className="text-[10px] font-mono text-muted-foreground tracking-[0.2em] mb-1">ONE-TIME PAYMENT</p>
                         <div className="text-5xl font-bold text-gradient-premium tabular-nums">{formatPrice(course.price)}</div>
+                        <CurrencyPicker />
                       </div>
 
                       {prerequisites.length > 0 && (

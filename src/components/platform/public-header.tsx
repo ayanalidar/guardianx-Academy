@@ -379,11 +379,6 @@ export function PublicHeader() {
           </div>
         </motion.button>
 
-        {/* ===== Global search (between logo and nav) — hidden on mobile ===== */}
-        <div className="hidden lg:block flex-1 max-w-md mx-4">
-          <GlobalSearch />
-        </div>
-
         {/* ===== Desktop mega-menu nav (center) ===== */}
         <nav
           className="hidden lg:flex items-center gap-0.5"
@@ -444,43 +439,6 @@ export function PublicHeader() {
 
         {/* ===== Right actions ===== */}
         <div className="flex items-center gap-2 shrink-0">
-          {mounted && (
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="h-8 w-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-all"
-              aria-label="Toggle theme"
-            >
-              <AnimatePresence mode="wait">
-                {theme === "dark" ? (
-                  <motion.div
-                    key="sun"
-                    initial={{ rotate: -90, opacity: 0 }}
-                    animate={{ rotate: 0, opacity: 1 }}
-                    exit={{ rotate: 90, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <Sun className="h-4 w-4" />
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="moon"
-                    initial={{ rotate: 90, opacity: 0 }}
-                    animate={{ rotate: 0, opacity: 1 }}
-                    exit={{ rotate: -90, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <Moon className="h-4 w-4" />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.button>
-          )}
-
-          {/* Currency toggle */}
-          <CurrencyToggle />
-
           <Button
             size="sm"
             onClick={() => handleNavigate({ name: "login" })}

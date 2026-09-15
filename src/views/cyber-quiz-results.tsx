@@ -389,6 +389,20 @@ function PassedResultsView({ attempt, attemptId }: { attempt: Attempt; attemptId
                 <div>
                   <div className="text-2xl font-bold">{formatPrice(199)}</div>
                   <div className="text-[10px] text-muted-foreground">One-time · lifetime certificate</div>
+                  <button
+                    onClick={() => {
+                      const opts = ["INR", "USD", "EUR", "GBP", "AED", "SGD"]
+                      const symbols: Record<string, string> = { INR: "₹", USD: "$", EUR: "€", GBP: "£", AED: "AED ", SGD: "S$" }
+                      const current = localStorage.getItem("guardianx-currency") || "USD"
+                      const idx = opts.indexOf(current)
+                      const next = opts[(idx + 1) % opts.length]
+                      localStorage.setItem("guardianx-currency", next)
+                      window.location.reload()
+                    }}
+                    className="text-[10px] font-mono text-muted-foreground hover:text-foreground transition-colors underline decoration-dotted underline-offset-2 mt-1"
+                  >
+                    Change currency
+                  </button>
                 </div>
                 <Button type="submit" disabled={checkoutMutation.isPending} className="bg-gradient-to-r from-violet-600 to-violet-500 text-white">
                   {checkoutMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />}

@@ -568,7 +568,7 @@ function FeaturedCourse({ course }: { course: CourseItem }) {
           <FeaturedMeta
             icon={Tag}
             label="Price"
-            value={course.price && course.price > 0 ? `$${course.price}` : "Free"}
+            value={course.price && course.price > 0 ? `₹${course.price.toLocaleString("en-IN")}` : "Free"}
             highlight
           />
         </div>
@@ -663,7 +663,7 @@ function CourseCard({ course, index }: { course: CourseItem; index: number }) {
                 ? "bg-amber-500/15 border-amber-500/40 text-amber-200"
                 : "bg-emerald-500/15 border-emerald-500/40 text-emerald-200"
             )}>
-              {course.price && course.price > 0 ? `$${course.price}` : "FREE"}
+              {course.price && course.price > 0 ? `₹${course.price.toLocaleString("en-IN")}` : "FREE"}
             </span>
           </div>
         </div>

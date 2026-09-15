@@ -1685,6 +1685,7 @@ model LeadStatusHistory {
 // ============================================================
 model TrainingBatch {
   id              String   @id @default(cuid())
+  slug            String   @unique @default("batch")    // URL-friendly identifier for shareable links
   certification   String   @default("")             // e.g. "CompTIA Security+", "CEH", "CCNA", "CISSP"
   name            String   @default("")             // e.g. "Security+ Weekend Batch"
   schedule        String   @default("")             // human-readable schedule

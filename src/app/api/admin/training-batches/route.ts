@@ -165,6 +165,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
     order,
     published,
     googleFormUrl,
+    slug,
   } = body as {
     certification?: string
     name?: string
@@ -183,10 +184,18 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
     order?: number
     published?: boolean
     googleFormUrl?: string
+    slug?: string
   }
 
   if (!certification?.trim()) return NextResponse.json({ error: "Certification required" }, { status: 400 })
   if (!name?.trim()) return NextResponse.json({ error: "Batch name required" }, { status: 400 })
+
+  // Auto-generate slug from name if not provided
+  const finalSlug = (slug?.trim() || name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")).slice(0, 80)
+
+  // Check slug uniqueness
+  const existingSlug = await db.trainingBatch.findUnique({ where: { slug: finalSlug } })
+  if (existingSlug) return NextResponse.json({ error: "A batch with this slug already exists. Please use a different slug." }, { status: 400 })
   if (!schedule?.trim()) return NextResponse.json({ error: "Schedule required" }, { status: 400 })
   if (!startDate?.trim()) return NextResponse.json({ error: "Start date required" }, { status: 400 })
   if (!instructor?.trim()) return NextResponse.json({ error: "Instructor required" }, { status: 400 })
@@ -200,6 +209,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
 
   const created = await db.trainingBatch.create({
     data: {
+      slug: finalSlug,
       certification: certification.trim(),
       name: name.trim(),
       schedule: schedule.trim(),

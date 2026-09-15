@@ -24,6 +24,7 @@ export const GET = withErrorHandler(
 // PATCH /api/admin/training-batches/[id] — update any fields on a training batch.
 // Requires ADMIN.
 const UPDATABLE_STRING_FIELDS = [
+  "slug",
   "certification",
   "name",
   "schedule",

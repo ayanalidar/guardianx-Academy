@@ -29,6 +29,7 @@ const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
  * ---------------------------------------------------------------- */
 type TrainingBatch = {
   id: string
+  slug: string
   certification: string
   name: string
   schedule: string
@@ -49,6 +50,7 @@ type TrainingBatch = {
 }
 
 type BatchForm = {
+  slug: string
   certification: string
   name: string
   schedule: string
@@ -116,6 +118,7 @@ function deriveDays(schedule: string): number[] {
 
 function emptyForm(): BatchForm {
   return {
+    slug: "",
     certification: "",
     name: "",
     schedule: "",
@@ -137,6 +140,7 @@ function emptyForm(): BatchForm {
 
 function formFromBatch(b: TrainingBatch): BatchForm {
   return {
+    slug: b.slug || "",
     certification: b.certification,
     name: b.name,
     schedule: b.schedule,
@@ -741,6 +745,21 @@ function BatchFormFields({
 }) {
   return (
     <div className="space-y-4 py-2">
+      {/* Slug — auto-generated from name */}
+      <div>
+        <Label className="text-xs">Slug (URL) *</Label>
+        <Input
+          value={form.slug}
+          onChange={(e) => setForm({ ...form, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "") })}
+          placeholder="auto-generated from name"
+          className="font-mono text-sm"
+        />
+        {form.slug && (
+          <p className="text-[10px] text-muted-foreground mt-1">
+            Shareable link: academy.guardianx.cloud/batches/{form.slug}
+          </p>
+        )}
+      </div>
       <div>
         <Label className="text-xs">Certification *</Label>
         <Input
@@ -753,7 +772,12 @@ function BatchFormFields({
         <Label className="text-xs">Batch Name *</Label>
         <Input
           value={form.name}
-          onChange={(e) => setForm({ ...form, name: e.target.value })}
+          onChange={(e) => {
+            const name = e.target.value
+            // Auto-generate slug from name if slug is empty or was auto-generated
+            const autoSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")
+            setForm({ ...form, name, slug: form.slug || autoSlug })
+          }}
           placeholder="e.g. Security+ Weekend Batch"
         />
       </div>

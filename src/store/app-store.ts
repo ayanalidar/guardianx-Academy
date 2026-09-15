@@ -95,6 +95,8 @@ export type View =
   | { name: "admin-platform-stats" }
   | { name: "admin-settings" }
   | { name: "admin-events" }
+  | { name: "admin-learning-paths" }
+  | { name: "admin-jobs" }
   | { name: "support" }
   // Public instructors + events (master-prompt §25 / §36)
   | { name: "instructors" }

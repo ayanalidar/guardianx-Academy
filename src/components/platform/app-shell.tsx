@@ -16,6 +16,7 @@ import {
   Calendar, TrendingUp, DollarSign, UserCog, Activity, Mail,
   Ticket,
   Gift,
+  Route,
 } from "lucide-react"
 import { useAppStore, type View } from "@/store/app-store"
 import { useUser } from "@/hooks/use-user"
@@ -54,7 +55,8 @@ const STUDENT_NAV: NavItem[] = [
   { label: "Threat Feed", icon: ShieldAlert, view: { name: "threat-feed" } },
   { label: "Code Review", icon: Code2, view: { name: "code-review" } },
   { label: "CTF Platform", icon: Trophy, view: { name: "ctf-platform" } },
-  { label: "Weekly Challenge", icon: Zap, view: { name: "weekly-challenges" } },
+  // Weekly Challenges hidden — no content seeded yet. Re-enable when ready.
+  // { label: "Weekly Challenge", icon: Zap, view: { name: "weekly-challenges" } },
   { label: "Team Missions", icon: UsersRound, view: { name: "team-missions" } },
   { label: "Bug Bounty", icon: Bug, view: { name: "bug-bounty" } },
   { label: "Analytics", icon: BarChart3, view: { name: "learning-analytics" } },
@@ -116,6 +118,8 @@ const ADMIN_NAV: NavItem[] = [
   { label: "Platform Stats", icon: BarChart3, view: { name: "admin-platform-stats" } },
   { label: "Settings", icon: Settings, view: { name: "admin-settings" } },
   { label: "Events Manager", icon: Calendar, view: { name: "admin-events" } },
+  { label: "Learning Paths", icon: Route, view: { name: "admin-learning-paths" } },
+  { label: "Jobs Board", icon: Briefcase, view: { name: "admin-jobs" } },
 ]
 
 // Keep legacy NAV_ITEMS for backwards compat (mobile menu etc)

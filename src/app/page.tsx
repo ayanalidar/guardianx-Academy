@@ -65,6 +65,8 @@ const AdminCyberQuizCertsView = dynamic(() => import("@/views/admin-cyber-quiz-c
 const AdminPlatformStatsView = dynamic(() => import("@/views/admin-platform-stats").then(m => ({ default: m.AdminPlatformStatsView })), { ssr: false })
 const AdminSettingsView = dynamic(() => import("@/views/admin-settings").then(m => ({ default: m.AdminSettingsView })), { ssr: false })
 const AdminEventsView = dynamic(() => import("@/views/admin-events").then(m => ({ default: m.AdminEventsView })), { ssr: false })
+const AdminJobsView = dynamic(() => import("@/views/admin-jobs").then(m => ({ default: m.AdminJobsView })), { ssr: false })
+const AdminLearningPathsView = dynamic(() => import("@/views/admin-learning-paths").then(m => ({ default: m.AdminLearningPathsView })), { ssr: false })
 const CourseDetailView = dynamic(() => import("@/views/course-detail").then(m => ({ default: m.CourseDetailView })), { ssr: false })
 const LessonView = dynamic(() => import("@/views/lesson-view").then(m => ({ default: m.LessonView })), { ssr: false })
 const MyLearningView = dynamic(() => import("@/views/my-learning").then(m => ({ default: m.MyLearningView })), { ssr: false })
@@ -185,6 +187,8 @@ function ViewRouter() {
       {view.name === "admin-platform-stats" && <AdminPlatformStatsView />}
       {view.name === "admin-settings" && <AdminSettingsView />}
       {view.name === "admin-events" && <AdminEventsView />}
+      {view.name === "admin-learning-paths" && <AdminLearningPathsView />}
+      {view.name === "admin-jobs" && <AdminJobsView />}
       {view.name === "course" && <CourseDetailView />}
       {view.name === "lesson" && <LessonView />}
       {view.name === "learning" && <MyLearningView />}

@@ -46,7 +46,8 @@ export function PublicFooter() {
         { label: "Labs", view: { name: "labs" } },
         { label: "Cyber Range", view: { name: "cyber-range" } },
         { label: "CTF Arena", view: { name: "ctf-platform" } },
-        { label: "Challenges", view: { name: "weekly-challenges" } },
+        // Challenges hidden — no content seeded yet
+        // { label: "Challenges", view: { name: "weekly-challenges" } },
         { label: "Awareness Quiz", view: { name: "cyber-quiz" } },
       ],
     },

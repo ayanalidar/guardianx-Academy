@@ -422,8 +422,9 @@ export function HomeView() {
         almostFull: (b.seats - (b.enrolled ?? 0)) <= 2 || b.status === "Almost Full",
       }))
     }
-    // Static fallback — already has `almostFull`.
-    return UPCOMING_BATCHES as unknown as TrainingBatchRow[]
+    // No fallback — if the API returns no batches, show nothing.
+    // The section will display "No live batches scheduled right now."
+    return []
   }, [batchesData])
 
   // Normalize platform stats into the same shape as the fallback TRUST_STATS

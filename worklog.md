@@ -5726,3 +5726,111 @@ Stage Summary:
 - Lint: 0 errors, 0 warnings in course-studio.tsx (1 pre-existing warning in src/lib/db.ts untouched).
 - TypeScript: 0 errors in course-studio.tsx (pre-existing seed-file errors elsewhere untouched).
 - Public-facing impact: clicking a course in the Course Studio now opens a fully functional module/lesson editor that writes straight to the live DB — no draft-vs-publish split, no 0-course bug, no JSON-config indirection.
+
+---
+Task ID: admin-learning-paths-1
+Agent: admin-learning-paths-builder
+Task: Build admin CRUD for Learning Paths (mirroring the Events Manager pattern).
+
+Work Log:
+- Read last 50 lines of worklog.md to confirm GuardianX Academy context (Next.js 16 + TS + Prisma + Neon Postgres cyber security training platform). Read the existing Events Manager pattern files end-to-end (src/views/admin-events.tsx, src/app/api/admin/events/route.ts, src/app/api/admin/events/[id]/route.ts) to mirror structure exactly.
+- Read the LearningPath Prisma model (prisma/schema.prisma lines 1369-1392) to confirm field names + defaults: slug (unique), title, subtitle?, description, vertical (default "cyber"), icon (default "Route"), color (default "text-violet-300"), tint (default "bg-violet-500/10"), difficulty (Beginner|Intermediate|Advanced), duration (default "12 weeks"), skillsCount, labsCount, xpReward (default 5000), careerOutcome?, skills (JSON array string), courses (JSON array string), order, published, featured. Also read the public GET /api/learning-paths route to confirm the response shape ({ learningPaths: [...] }) and that skills/courses are stored as JSON array strings.
+- Created src/app/api/admin/learning-paths/route.ts:
+  - GET — ADMIN-only (getCurrentUser + role check). Returns ALL learning paths (incl. unpublished) ordered by [order asc, createdAt asc]. Response: { learningPaths, count }.
+  - POST — ADMIN-only. Creates a new learning path. Validates title + slug required, checks slug uniqueness. Accepts skills/courses as either pre-stringified strings or arrays (normalizes to JSON.stringify). Applies model defaults for vertical/icon/color/tint/difficulty/duration/xpReward. published defaults to true, featured defaults to false. Response: { learningPath } with 201.
+- Created src/app/api/admin/learning-paths/[id]/route.ts:
+  - PATCH — ADMIN-only. Updates any provided fields. String fields trimmed; null allowed for nullable subtitle/careerOutcome. skills/courses accept string-or-array. Numeric fields (skillsCount, labsCount, xpReward, order) coerced via Number(). published/featured coerced via Boolean(). Checks slug uniqueness on change (excluding self). Response: { learningPath }.
+  - DELETE — ADMIN-only. Deletes the learning path by id. Response: { ok: true }.
+- Created src/views/admin-learning-paths.tsx (AdminLearningPathsView named export, "use client"):
+  - Mirrors admin-events.tsx structure: header with Route icon + "New Learning Path" violet-gradient button; list rendered as divide-y rows inside a rounded border/bg-card container; loading spinner; empty state; per-row icon (uses the path's tint+color classes), title + badges (vertical, difficulty color-coded, Featured star, Unpublished amber), subtitle line-clamp, stat row (duration Clock, skillsCount Zap, labsCount FlaskConical, xpReward Trophy, slug mono), edit + delete ghost buttons.
+  - Create/Edit Dialog (max-w-2xl, max-h-85vh scroll): title+slug (auto-slugify), subtitle, description textarea, difficulty select + vertical select, icon/color/tint inputs (3-col), duration+skillsCount+labsCount (3-col), xpReward+careerOutcome (2-col), skills comma-separated input (with helper note about JSON storage), courses comma-separated input, featured checkbox + published checkbox + order number input. Save button violet-gradient with spinner.
+  - Delete AlertDialog with confirmation.
+  - TanStack Query: useQuery for ["admin-learning-paths"], useMutation for save (POST or PATCH) + delete (DELETE). On success invalidates both ["admin-learning-paths"] and ["learning-paths"] (public) query keys. Toast feedback via sonner.
+  - itemToForm() helper parses the stored JSON-array strings back to comma-separated for editing; saveMutation converts comma-separated back to JSON.stringify(arr.split(",").map(trim).filter(Boolean)).
+  - Cleaned up unused imports (Card, Eye, useAppStore/navigate) before lint. Final imports: React, TanStack Query, api, shadcn/ui (Button/Input/Textarea/Label/Badge/Checkbox/Select/Dialog/AlertDialog), cn, lucide-react (Route/Plus/Pencil/Trash2/Loader2/Star/EyeOff/Zap/FlaskConical/Trophy/Clock), sonner toast.
+- Wired the new view into the SPA:
+  - src/store/app-store.ts — added `| { name: "admin-learning-paths" }` to the View union immediately after `| { name: "admin-events" }`.
+  - src/lib/url-router.ts — added `"admin-learning-paths"` to the knownViews array immediately after `"admin-events"`.
+  - src/app/page.tsx — added `const AdminLearningPathsView = dynamic(() => import("@/views/admin-learning-paths").then(m => ({ default: m.AdminLearningPathsView })), { ssr: false })` immediately after the AdminEventsView dynamic import; added `{view.name === "admin-learning-paths" && <AdminLearningPathsView />}` immediately after the admin-events render line.
+  - src/components/platform/app-shell.tsx — added `Route` to the lucide-react import block (it was not previously imported); added `{ label: "Learning Paths", icon: Route, view: { name: "admin-learning-paths" } }` to ADMIN_NAV immediately after the Events Manager entry.
+- Lint: `bun run lint` → 0 errors, 0 warnings in new/edited files (1 pre-existing warning in src/lib/db.ts untouched).
+- Dev log: server running clean on port 3000, no compilation errors related to the new routes/view.
+
+Stage Summary:
+- 4 files created: src/app/api/admin/learning-paths/route.ts (GET+POST), src/app/api/admin/learning-paths/[id]/route.ts (PATCH+DELETE), src/views/admin-learning-paths.tsx (AdminLearningPathsView).
+- 4 files edited: src/store/app-store.ts (View union), src/lib/url-router.ts (knownViews), src/app/page.tsx (dynamic import + render), src/components/platform/app-shell.tsx (Route import + ADMIN_NAV entry).
+- Full admin CRUD for Learning Paths: list (with featured/published/difficulty badges + stat row), create (with auto-slugify + JSON-array skills/courses conversion), edit (loads existing values, parses JSON back to comma-separated), delete (with confirmation).
+- Admin-only access enforced via getCurrentUser + role==="ADMIN" check on all 4 endpoints.
+- Mirrors the Events Manager pattern exactly (same component set, same mutation/query structure, same toast feedback, same dialog/alertdialog usage, same violet-gradient primary CTA).
+- Lint: 0 errors. Admins can now reach the view via the sidebar "Learning Paths" entry under the admin section.
+
+---
+
+## ADMIN JOBS CRUD — Jobs Board Manager (session #10)
+
+Task ID: admin-jobs-1
+Agent: admin-jobs-builder
+
+Task: Build admin CRUD for the Job model, following the EXACT pattern of the existing Events Manager (src/views/admin-events.tsx + /api/admin/events/route.ts + /api/admin/events/[id]/route.ts).
+
+Work Log:
+- Read worklog.md (last 50 lines) for project context (Next.js 16 + TypeScript + Prisma + Neon Postgres cyber security training platform — GuardianX Academy).
+- Inspected the existing Events Manager files to mirror the pattern:
+  - src/views/admin-events.tsx (367 lines) — list view (divide-y rows + violet accent icon + badge cluster + edit/delete ghost buttons), Create/Edit Dialog (max-w-2xl, max-h-85vh, scrollable), Delete AlertDialog, TanStack Query useMutation + invalidateQueries on ["admin-events"] + ["events"], `api()` from @/lib/api, `toast` from sonner, shadcn/ui Dialog/AlertDialog/Input/Textarea/Label/Select/Checkbox/Badge/Card/Button, `cn` from @/lib/utils.
+  - src/app/api/admin/events/route.ts — GET (ADMIN-only, returns all incl. unpublished, orderBy) + POST (ADMIN-only, validates required fields, hardcodes sensible defaults).
+  - src/app/api/admin/events/[id]/route.ts — PATCH (whitelist of updatable fields, trims strings, casts booleans/numbers) + DELETE.
+  - Both use `getCurrentUser` + `withErrorHandler` from `@/lib/session`, `db` from `@/lib/db`, `runtime = "nodejs"`, role check `user.role !== "ADMIN"` → 403.
+- Inspected prisma/schema.prisma model Job (lines 953-971). ACTUAL fields (the task description's "salaryMin/salaryMax/currency/experienceMin/experienceMax/postedAt/featured/category" list did NOT match the real schema — used the real schema):
+  - id (String, cuid)
+  - title (String, required)
+  - company (String, required)
+  - companyLogo (String?)
+  - location (String, required)
+  - remote (Boolean, default false)
+  - type (String, default "full-time") — full-time | part-time | contract | internship
+  - salary (String, default "") — free text e.g. "₹8-15 LPA"
+  - description (String, required)
+  - requirements (String, default "")
+  - requiredCerts (String, default "[]") — JSON array string
+  - requiredSkills (String, default "[]") — JSON array string
+  - postedById (String, FK → User) — forced to current admin's id on create
+  - postedBy (User relation)
+  - status (String, default "active") — active | closed | draft
+  - applications (JobApplication[] relation, onDelete: Cascade)
+  - createdAt (DateTime, default now())
+
+### Files Created
+1. **src/app/api/admin/jobs/route.ts** (GET + POST):
+   - GET: ADMIN-only (401 if no user, 403 if non-admin). Returns ALL jobs (incl. draft/closed) ordered by status asc + createdAt desc. Includes `postedBy` (id, name, email) and `_count.applications` via Prisma `include`. Serializes to a flat array with ISO createdAt + camelCase `applicationCount`.
+   - POST: ADMIN-only. Validates title/company/location required (400 otherwise). Normalizes `requiredCerts` + `requiredSkills` — accepts (a) real JS arrays → JSON.stringify, (b) "[...]" JSON strings → validated + reused, (c) comma/newline-separated strings → split + JSON.stringify. Hardcodes `postedById: user.id` (never trusts client). Returns 201 + { job }.
+2. **src/app/api/admin/jobs/[id]/route.ts** (PATCH + DELETE):
+   - PATCH: ADMIN-only. Whitelisted string-field list (title, company, companyLogo, location, type, salary, description, requirements, status) — trims strings, nullifies empty companyLogo. Casts `remote` to Boolean, normalizes `requiredCerts` + `requiredSkills` via the same helper. Returns { job }.
+   - DELETE: ADMIN-only. Cascade-deletes applications automatically (schema-level onDelete: Cascade). Returns { ok: true }.
+3. **src/views/admin-jobs.tsx** (AdminJobsView, named export, ~330 lines):
+   - Mirrors the admin-events.tsx structure exactly: header with violet Briefcase icon + "Jobs Board Manager" title + "New Job" violet-gradient button; stats strip (5 cards: Total / Active / Drafts / Closed / Applications); search input + status filter Select; rounded-xl border-border/60 bg-card/40 list container with divide-y rows; empty + loading states.
+   - Each row: company logo (or Building2 fallback icon in a violet-tinted square) + title + badge cluster (type / status with color-coded class — emerald for active, amber for draft, muted for closed / "Remote" cyan badge if remote / application-count violet badge if > 0) + meta line (company · location · salary · "Posted by NAME"). Edit (Pencil) + Delete (Trash2, rose-tinted hover) ghost buttons.
+   - Create/Edit Dialog (max-w-2xl, max-h-85vh, scrollable): title (required) / company (required) + company-logo-URL / location (required) + remote-Checkbox / type-Select (full-time | part-time | contract | internship) + status-Select (active | closed | draft) + salary-Input / description-Textarea / requirements-Textarea / requiredSkills-Input (comma-separated, helper note "Stored as JSON array") / requiredCerts-Input (comma-separated, helper note). Cancel + violet-gradient Save button with Loader2 spinner when pending.
+   - Delete AlertDialog: shows job title + company + warns about N applications being deleted if > 0.
+   - TanStack Query: `useQuery({ queryKey: ["admin-jobs"], queryFn: () => api("/api/admin/jobs") })`, saveMutation (POST or PATCH based on `editing`), deleteMutation. Both invalidate `["admin-jobs"]` + `["jobs"]` (the public jobs board query) on success. Toast feedback via sonner.
+   - Helper functions: `parseJsonArray` (defensive JSON parse → array), `jsonArrayToText` (renders stored JSON-array string back to comma-separated text for the editor when editing an existing job), `statusBadgeClass` (color-coded status badge), `typeLabel` (humanizes "full-time" → "Full-Time"), `emptyForm` (default form state).
+   - "use client" at top. All shadcn/ui imports from @/components/ui/*. All icons from lucide-react. `cn` from @/lib/utils. Dark-theme violet accents matching the rest of the admin shell.
+
+### Wiring (4 files modified)
+1. **src/store/app-store.ts** — added `| { name: "admin-jobs" }` to the View union immediately after `{ name: "admin-learning-paths" }` (which itself was already present right after `admin-events`).
+2. **src/lib/url-router.ts** — added `"admin-jobs"` to the `knownViews` allowlist immediately after `"admin-learning-paths"`. (No new hash sub-route needed — admin-jobs is a flat `#/admin-jobs` route handled by the default `/<view-name>` branch.)
+3. **src/app/page.tsx** — added `const AdminJobsView = dynamic(() => import("@/views/admin-jobs").then(m => ({ default: m.AdminJobsView })), { ssr: false })` right after the AdminEventsView dynamic import, and `{view.name === "admin-jobs" && <AdminJobsView />}` right after the admin-learning-paths render conditional.
+4. **src/components/platform/app-shell.tsx** — added `{ label: "Jobs Board", icon: Briefcase, view: { name: "admin-jobs" } }` to the end of ADMIN_NAV (after "Learning Paths"). `Briefcase` was already imported from lucide-react.
+
+### Notes
+- The task description listed Job fields that didn't match the real schema (salaryMin, salaryMax, currency, experienceMin, experienceMax, skills, postedAt, status, featured, category). The actual Prisma schema has salary (free text String), requiredCerts + requiredSkills (JSON-array strings), remote (Boolean), status (active | closed | draft), and createdAt. I built against the real schema (the task explicitly said to read the schema first) — the admin form covers every real field.
+- No data cleanup was needed — the task said to leave existing jobs alone and let the admin edit/delete from the UI.
+- `postedById` is always set to the current admin's id on create (server-side, never trusts the client). It is NOT editable from the form.
+- `requiredCerts` + `requiredSkills` round-trip cleanly: stored as JSON array strings in DB, displayed as comma-separated text in the form, re-normalized back to JSON arrays on save (the API accepts both formats defensively).
+
+Stage Summary:
+- **3 new files** + **4 modified files** (wiring).
+- **2 new admin API routes** (jobs GET + POST, jobs/[id] PATCH + DELETE) — all ADMIN-only with 401/403 guards.
+- **1 new admin view** (AdminJobsView) following the exact Events Manager pattern.
+- **Lint**: 0 errors, 0 warnings in any new file (1 pre-existing warning in src/lib/db.ts untouched).
+- **TypeScript**: 0 errors in any new file (verified via `npx tsc --noEmit --skipLibCheck` on the full project — no admin-jobs-related errors).
+- Admin can now: list all jobs (incl. drafts/closed) with search + status filter, see application counts per job + total applications across all jobs, create new jobs, edit any field, delete jobs (cascade-deletes applications with a warning in the confirm dialog), all from the "Jobs Board" item in the admin sidebar.

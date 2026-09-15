@@ -108,12 +108,13 @@ const MEGA_MENU_GROUPS: MegaMenuGroup[] = [
         description: "Compete in capture-the-flag challenges",
         view: { name: "ctf-platform" },
       },
-      {
-        icon: Target,
-        title: "Weekly Challenges",
-        description: "New security challenges every week",
-        view: { name: "weekly-challenges" },
-      },
+      // Weekly Challenges hidden — no content seeded yet. Re-enable when ready.
+      // {
+      //   icon: Target,
+      //   title: "Weekly Challenges",
+      //   description: "New security challenges every week",
+      //   view: { name: "weekly-challenges" },
+      // },
       {
         icon: Brain,
         title: "Cyber Awareness Quiz",

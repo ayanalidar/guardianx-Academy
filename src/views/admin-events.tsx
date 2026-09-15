@@ -121,8 +121,8 @@ export function AdminEventsView() {
 
   const handleSave = () => {
     if (!form.title?.trim()) { toast.error("Title is required"); return }
-    if (!form.slug?.trim()) { form.slug = slugify(form.title || ""); }
-    saveMutation.mutate(form)
+    const finalForm = { ...form, slug: form.slug?.trim() || slugify(form.title || "") }
+    saveMutation.mutate(finalForm)
   }
 
   const isOpen = editing || creating

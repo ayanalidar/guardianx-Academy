@@ -261,6 +261,12 @@ function PassedResultsView({ attempt, attemptId }: { attempt: Attempt; attemptId
         contact: form.phone || undefined,
       },
       theme: { color: "#7c3aed" },
+      modal: {
+        ondismiss: () => {
+          setPaymentStep("form")
+          setErrorMsg("Payment cancelled. You can try again.")
+        },
+      },
     })
     rzp.open()
   }

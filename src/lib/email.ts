@@ -1,42 +1,76 @@
 import nodemailer from "nodemailer"
 import { createHash } from "crypto"
+import { getSettings } from "@/lib/settings"
 
 /**
  * GuardianX email service — sends transactional emails via SMTP.
  *
- * Configuration via env vars:
- *   SMTP_HOST       — e.g. "smtp.hostinger.com"
- *   SMTP_PORT       — e.g. 465 (SSL) or 587 (STARTTLS)
- *   SMTP_USER       — full email address, e.g. "noreply@academy.guardianx.cloud"
- *   SMTP_PASSWORD   — the mailbox password
- *   EMAIL_FROM      — sender display, e.g. "GuardianX Academy <noreply@academy.guardianx.cloud>"
- *   EMAIL_TO_ADMINS — comma-separated admin notification emails, e.g. "admin@academy.guardianx.cloud"
+ * Reads SMTP settings from the Platform Settings DB (admin-configurable)
+ * first, falls back to env vars. If neither is configured, emails are
+ * silently skipped.
  *
- * If SMTP vars are not set, emails are silently skipped (the app still works,
- * just no email notifications). This is intentional — dev environments don't
- * need email, and production can set the vars when ready.
+ * Settings: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, EMAIL_FROM, EMAIL_TO_ADMINS
  */
 
 let _transporter: nodemailer.Transporter | null = null
+let _cachedSettings: { host: string; port: number; user: string; pass: string; from: string; admins: string } | null = null
+let _settingsCheckedAt = 0
+const SETTINGS_CACHE_TTL = 5 * 60 * 1000 // 5 minutes
 
-function getTransporter(): nodemailer.Transporter | null {
+/** Fetch SMTP settings from DB (via getSetting) → fall back to env vars */
+async function getEmailSettings() {
+  // Check cache
+  if (_cachedSettings && Date.now() - _settingsCheckedAt < SETTINGS_CACHE_TTL) {
+    return _cachedSettings
+  }
+
+  const s = await getSettings([
+    "SMTP_HOST", "SMTP_PORT", "SMTP_USER", "SMTP_PASSWORD",
+    "EMAIL_FROM", "EMAIL_TO_ADMINS",
+  ])
+
+  const host = s.SMTP_HOST || process.env.SMTP_HOST
+  const port = parseInt(s.SMTP_PORT || process.env.SMTP_PORT || "465", 10)
+  const user = s.SMTP_USER || process.env.SMTP_USER
+  const pass = s.SMTP_PASSWORD || process.env.SMTP_PASSWORD
+  const from = s.EMAIL_FROM || process.env.EMAIL_FROM || user || "noreply@guardianx.cloud"
+  const admins = s.EMAIL_TO_ADMINS || process.env.EMAIL_TO_ADMINS || ""
+
+  if (!host || !user || !pass) {
+    _cachedSettings = null
+    _settingsCheckedAt = Date.now()
+    return null
+  }
+
+  _cachedSettings = { host, port, user, pass, from, admins }
+  _settingsCheckedAt = Date.now()
+  return _cachedSettings
+}
+
+/** Clear the cached transporter + settings (called when admin updates settings) */
+export function clearEmailCache() {
+  _transporter = null
+  _cachedSettings = null
+  _settingsCheckedAt = 0
+}
+
+async function getTransporter(): Promise<nodemailer.Transporter | null> {
   if (_transporter) return _transporter
-  const host = process.env.SMTP_HOST
-  const port = parseInt(process.env.SMTP_PORT || "465", 10)
-  const user = process.env.SMTP_USER
-  const pass = process.env.SMTP_PASSWORD
-  if (!host || !user || !pass) return null
+  const settings = await getEmailSettings()
+  if (!settings) return null
   _transporter = nodemailer.createTransport({
-    host,
-    port,
-    secure: port === 465,
-    auth: { user, pass },
+    host: settings.host,
+    port: settings.port,
+    secure: settings.port === 465,
+    auth: { user: settings.user, pass: settings.pass },
   })
   return _transporter
 }
 
-export function isEmailConfigured(): boolean {
-  return !!getTransporter()
+/** Check if email is configured (checks DB first, then env) */
+export async function isEmailConfigured(): Promise<boolean> {
+  const settings = await getEmailSettings()
+  return !!settings
 }
 
 export async function sendEmail({
@@ -50,14 +84,19 @@ export async function sendEmail({
   html: string
   text?: string
 }): Promise<boolean> {
-  const t = getTransporter()
-  if (!t) {
+  const [t, settings] = await Promise.all([getTransporter(), getEmailSettings()])
+  if (!t || !settings) {
     console.warn("[email] SMTP not configured — skipping email to:", to)
     return false
   }
   try {
-    const from = process.env.EMAIL_FROM || process.env.SMTP_USER || "noreply@guardianx.cloud"
-    await t.sendMail({ from, to, subject, html, text: text || html.replace(/<[^>]*>/g, "") })
+    await t.sendMail({
+      from: settings.from,
+      to,
+      subject,
+      html,
+      text: text || html.replace(/<[^>]*>/g, ""),
+    })
     return true
   } catch (err) {
     console.error("[email] Failed to send email:", err)
@@ -65,14 +104,11 @@ export async function sendEmail({
   }
 }
 
-/**
- * Send a notification email to the admin team when a new lead comes in.
- * Uses EMAIL_TO_ADMINS env var (comma-separated list).
- */
+/** Send a notification email to the admin team */
 export async function notifyAdmins(subject: string, html: string): Promise<boolean> {
-  const recipients = process.env.EMAIL_TO_ADMINS
-  if (!recipients) return false
-  return sendEmail({ to: recipients, subject, html })
+  const settings = await getEmailSettings()
+  if (!settings?.admins) return false
+  return sendEmail({ to: settings.admins, subject, html })
 }
 
 /**

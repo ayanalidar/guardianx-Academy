@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser, withErrorHandler } from "@/lib/session"
 import { SETTING_DEFINITIONS, clearSettingsCache } from "@/lib/settings"
+import { clearEmailCache } from "@/lib/email"
 
 export const runtime = "nodejs"
 
@@ -83,6 +84,7 @@ export const PUT = withErrorHandler(async (req) => {
 
   // Clear the in-memory cache so changes take effect immediately
   clearSettingsCache()
+  clearEmailCache()
 
   return NextResponse.json({ ok: true, updated: updates.length })
 })

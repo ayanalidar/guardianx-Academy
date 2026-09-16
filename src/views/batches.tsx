@@ -44,6 +44,7 @@ import {
 
 interface Batch {
   id: string
+  slug?: string
   certification: string
   certGroup: string
   name: string
@@ -143,6 +144,7 @@ function normalizeBatch(raw: {
     borderColor: raw.borderColor,
     btnClass: raw.btnClass,
     googleFormUrl: raw.googleFormUrl ?? null,
+    slug: raw.slug ?? raw.id,
     scheduleType: deriveScheduleType(raw.schedule),
   }
 }
@@ -220,6 +222,7 @@ export function BatchesView() {
     levelBorder: string
     borderColor: string
     googleFormUrl?: string | null
+    slug?: string
     btnClass: string
     almostFull?: boolean
   }
@@ -606,28 +609,42 @@ export function BatchesView() {
                       </div>
                     </dl>
 
-                    {b.googleFormUrl ? (
-                      <a href={b.googleFormUrl} target="_blank" rel="noopener noreferrer" className="block w-full">
+                    <div className="flex gap-2">
+                      {b.slug && (
+                        <a href={`/batches/${b.slug}`} className="flex-1">
+                          <Button
+                            variant="outline"
+                            className="w-full btn-premium"
+                            size="sm"
+                            aria-label={`View details for ${b.name}`}
+                          >
+                            VIEW DETAILS
+                          </Button>
+                        </a>
+                      )}
+                      {b.googleFormUrl ? (
+                        <a href={b.googleFormUrl} target="_blank" rel="noopener noreferrer" className="flex-1">
+                          <Button
+                            className={cn("w-full btn-premium", b.btnClass)}
+                            size="sm"
+                            aria-label={`Enroll in ${b.name}`}
+                          >
+                            ENROLL NOW
+                            <ArrowRight className="size-4 ml-2" aria-hidden />
+                          </Button>
+                        </a>
+                      ) : (
                         <Button
-                          className={cn("w-full btn-premium", b.btnClass)}
+                          onClick={() => navigate({ name: "contact" })}
+                          className={cn("flex-1 btn-premium", b.btnClass)}
                           size="sm"
                           aria-label={`Enroll in ${b.name}`}
                         >
                           ENROLL NOW
                           <ArrowRight className="size-4 ml-2" aria-hidden />
                         </Button>
-                      </a>
-                    ) : (
-                      <Button
-                        onClick={() => navigate({ name: "contact" })}
-                        className={cn("w-full btn-premium", b.btnClass)}
-                        size="sm"
-                        aria-label={`Enroll in ${b.name}`}
-                      >
-                        ENROLL NOW
-                        <ArrowRight className="size-4 ml-2" aria-hidden />
-                      </Button>
-                    )}
+                      )}
+                    </div>
                   </motion.div>
                 ))}
               </div>

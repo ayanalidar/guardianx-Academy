@@ -1974,6 +1974,7 @@ function LabIntegrationPreview({
 // ============================================================
 interface BatchItem {
   id: string
+  slug?: string
   certification: string
   name: string
   schedule: string
@@ -2103,29 +2104,38 @@ function BatchSchedulePreview({
                     </div>
                   </div>
 
-                  {b.googleFormUrl ? (
-                    <a href={b.googleFormUrl} target="_blank" rel="noopener noreferrer" className="block w-full">
-                      <Button size="sm" className="w-full bg-violet-600 hover:bg-violet-500">
-                        Enroll via Google Form <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
+                  <div className="flex gap-2">
+                    {b.slug && (
+                      <a href={`/batches/${b.slug}`} className="flex-1">
+                        <Button size="sm" variant="outline" className="w-full">
+                          View Details
+                        </Button>
+                      </a>
+                    )}
+                    {b.googleFormUrl ? (
+                      <a href={b.googleFormUrl} target="_blank" rel="noopener noreferrer" className="flex-1">
+                        <Button size="sm" className="w-full bg-violet-600 hover:bg-violet-500">
+                          Enroll <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
+                        </Button>
+                      </a>
+                    ) : (
+                      <Button
+                        size="sm"
+                        className="flex-1 bg-violet-600 hover:bg-violet-500"
+                        onClick={() => {
+                          if (!user) {
+                            navigate({ name: "login" })
+                            return
+                          }
+                          toast.success(`Enrollment requested for ${b.name}`, {
+                            description: `${startDate?.toLocaleDateString() ?? ""} · ${b.mode ?? ""} · ${b.instructor ?? ""}`,
+                          })
+                        }}
+                      >
+                        Enroll <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
                       </Button>
-                    </a>
-                  ) : (
-                    <Button
-                      size="sm"
-                      className="w-full bg-violet-600 hover:bg-violet-500"
-                      onClick={() => {
-                        if (!user) {
-                          navigate({ name: "login" })
-                          return
-                        }
-                        toast.success(`Enrollment requested for ${b.name}`, {
-                          description: `${startDate?.toLocaleDateString() ?? ""} · ${b.mode ?? ""} · ${b.instructor ?? ""}`,
-                        })
-                      }}
-                    >
-                      Enroll in this batch <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
-                    </Button>
-                  )}
+                    )}
+                  </div>
                 </motion.div>
               )
             })}

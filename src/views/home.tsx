@@ -373,6 +373,7 @@ export function HomeView() {
    * ---------------------------------------------------------------------- */
   type TrainingBatchRow = {
     id?: string
+    slug?: string
     certification: string
     name: string
     schedule: string
@@ -784,15 +785,28 @@ export function HomeView() {
                   </div>
                 </dl>
 
-                <Button
-                  onClick={() => navigate({ name: "batches" })}
-                  className={cn("w-full btn-premium", b.btnClass)}
-                  size="sm"
-                  aria-label={`View ${b.name}`}
-                >
-                  VIEW BATCH
-                  <ArrowRight className="size-4 ml-2" aria-hidden />
-                </Button>
+                {b.slug ? (
+                  <a href={`/batches/${b.slug}`} className="block w-full">
+                    <Button
+                      className={cn("w-full btn-premium", b.btnClass)}
+                      size="sm"
+                      aria-label={`View ${b.name}`}
+                    >
+                      VIEW BATCH
+                      <ArrowRight className="size-4 ml-2" aria-hidden />
+                    </Button>
+                  </a>
+                ) : (
+                  <Button
+                    onClick={() => navigate({ name: "batches" })}
+                    className={cn("w-full btn-premium", b.btnClass)}
+                    size="sm"
+                    aria-label={`View ${b.name}`}
+                  >
+                    VIEW BATCH
+                    <ArrowRight className="size-4 ml-2" aria-hidden />
+                  </Button>
+                )}
               </motion.div>
             ))}
           </div>

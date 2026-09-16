@@ -723,6 +723,42 @@ function CourseFormDialog({
             />
           </div>
 
+          {/* Long Description */}
+          <div className="space-y-1.5">
+            <Label htmlFor="course-long-desc" className="text-xs font-medium">Long Description</Label>
+            <Textarea
+              id="course-long-desc"
+              placeholder="Full course description shown on the course detail page. This drives the 'What you'll learn' section."
+              value={form.longDescription}
+              onChange={(e) => setForm((f) => ({ ...f, longDescription: e.target.value }))}
+              className="bg-background/60 border-border/60 min-h-[120px]"
+            />
+          </div>
+
+          {/* Tags + Cert Body */}
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="course-tags" className="text-xs font-medium">Tags (comma-separated)</Label>
+              <Input
+                id="course-tags"
+                placeholder="OWASP, Penetration Testing, Web Security"
+                value={form.tags}
+                onChange={(e) => setForm((f) => ({ ...f, tags: e.target.value }))}
+                className="bg-background/60 border-border/60"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="course-cert" className="text-xs font-medium">Certification Body</Label>
+              <Input
+                id="course-cert"
+                placeholder="e.g. EC-Council, CompTIA, ISC2"
+                value={form.certBody || ""}
+                onChange={(e) => setForm((f) => ({ ...f, certBody: e.target.value }))}
+                className="bg-background/60 border-border/60"
+              />
+            </div>
+          </div>
+
           {/* Category + Level */}
           <div className="grid sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">

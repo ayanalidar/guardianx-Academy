@@ -19,6 +19,7 @@ import {
 } from "lucide-react"
 import { useAppStore, type View } from "@/store/app-store"
 import { useUser } from "@/hooks/use-user"
+import { useBatchLeadNotifications } from "@/hooks/use-batch-lead-notifications"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -302,6 +303,9 @@ function MobileNav() {
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  // Push notifications for admin — polls for new batch leads
+  useBatchLeadNotifications()
+
   return (
     <div className="min-h-screen flex bg-background">
       {/* Desktop sidebar */}

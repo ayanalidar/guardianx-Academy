@@ -24,7 +24,7 @@ import {
   Calendar, ChevronRight, Clock, Crosshair, Crown, Flame, FlaskConical,
   GraduationCap, Library, Radar as RadarIcon, Shield, ShieldCheck, StickyNote,
   Target, Terminal, TrendingUp, Trophy, Zap, PlayCircle, AlertCircle,
-  Video, FileText, Hourglass, BarChart2,
+  Video, FileText, Hourglass, BarChart2, Sparkles,
 } from "lucide-react"
 import { useAppStore } from "@/store/app-store"
 import { useUser } from "@/hooks/use-user"
@@ -372,6 +372,11 @@ export function DashboardView() {
             loading={userLoading || meLoading}
           />
         </ScrollReveal>
+
+        {/* ====================================================
+            2c. QUICK WIDGETS - Batch schedule + Recommended course
+            ==================================================== */}
+        <QuickWidgets userId={user?.id} navigate={navigate} />
 
         {/* ====================================================
             3. MAIN GRID - LEFT (60%) + RIGHT (40%)
@@ -1801,5 +1806,90 @@ function UpcomingDeadlines({
         </Card>
       )}
     </section>
+  )
+}
+
+// ============================================================
+// QuickWidgets — batch schedule + recommended next course
+// ============================================================
+function QuickWidgets({ userId, navigate }: { userId?: string; navigate: any }) {
+  // Fetch upcoming batches
+  const { data: batchesData } = useQuery<{ batches: any[] }>({
+    queryKey: ["dashboard-batches"],
+    queryFn: async () => {
+      try {
+        const res = await fetch("/api/training-batches")
+        if (!res.ok) return { batches: [] }
+        return res.json()
+      } catch { return { batches: [] } }
+    },
+    staleTime: 60_000,
+  })
+  const upcomingBatches = (batchesData?.batches ?? []).slice(0, 2)
+
+  // Fetch recommended courses (not enrolled)
+  const { data: recData } = useQuery<{ courses: any[] }>({
+    queryKey: ["dashboard-recommended"],
+    queryFn: async () => {
+      try {
+        const res = await fetch("/api/courses?limit=3")
+        if (!res.ok) return { courses: [] }
+        return res.json()
+      } catch { return { courses: [] } }
+    },
+    staleTime: 60_000,
+  })
+  const recommended = (recData?.courses ?? []).slice(0, 2)
+
+  if (upcomingBatches.length === 0 && recommended.length === 0) return null
+
+  return (
+    <div className="grid sm:grid-cols-2 gap-4">
+      {/* Upcoming batches */}
+      {upcomingBatches.length > 0 && (
+        <Card className="p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-violet-300" />
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Your Batch Schedule</h3>
+          </div>
+          {upcomingBatches.map((b) => (
+            <div key={b.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-violet-500/5 transition-colors cursor-pointer" onClick={() => b.slug && (window.location.href = `/batches/${b.slug}`)}>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium truncate">{b.name}</div>
+                <div className="text-[10px] text-muted-foreground flex items-center gap-2 mt-0.5">
+                  <Clock className="h-2.5 w-2.5" /> {b.startDate || "TBA"}
+                  <span>·</span>
+                  <Video className="h-2.5 w-2.5" /> {b.mode}
+                </div>
+              </div>
+              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            </div>
+          ))}
+        </Card>
+      )}
+
+      {/* Recommended courses */}
+      {recommended.length > 0 && (
+        <Card className="p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-cyan-300" />
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Recommended Next</h3>
+          </div>
+          {recommended.map((c) => (
+            <div key={c.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-violet-500/5 transition-colors cursor-pointer" onClick={() => navigate({ name: "course", courseId: c.id })}>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium truncate">{c.title}</div>
+                <div className="text-[10px] text-muted-foreground flex items-center gap-2 mt-0.5">
+                  <BookOpen className="h-2.5 w-2.5" /> {c.category}
+                  <span>·</span>
+                  <span className="capitalize">{c.level}</span>
+                </div>
+              </div>
+              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            </div>
+          ))}
+        </Card>
+      )}
+    </div>
   )
 }

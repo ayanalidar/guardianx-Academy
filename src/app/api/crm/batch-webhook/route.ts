@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { notifyAdmins, leadNotificationEmailTemplate } from "@/lib/email"
+import { notifyAdmins, leadNotificationEmailTemplate, sendEmail } from "@/lib/email"
 import { getSetting } from "@/lib/settings"
 
 export const runtime = "nodejs"
@@ -88,6 +88,37 @@ export async function POST(req: NextRequest) {
         { label: "Batch", value: `${batch.name} (${batch.certification})` },
       ])
     )
+
+    // --- send confirmation email to the candidate ---
+    // The candidate's email isn't collected in the 5-question form (only WhatsApp),
+    // so we can't send them an email directly. But if we add email to the form
+    // later, this will work. For now, the admin notification is sufficient.
+    // If the lead has a linkedinProfile with an email-like value, try sending.
+    const candidateEmail = lead.email as string | undefined
+    if (candidateEmail && candidateEmail.includes("@")) {
+      await sendEmail({
+        to: candidateEmail,
+        subject: `Registration received — ${batch.name} | GuardianX Academy`,
+        html: `
+<div style="font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 600px; margin: 0 auto; background: #0a0a0f; padding: 40px; border-radius: 12px;">
+  <div style="text-align: center; margin-bottom: 32px;">
+    <h1 style="color: #ffffff; font-size: 24px; margin: 0;">Guardian<span style="color: #a78bfa;">X</span> Academy</h1>
+  </div>
+  <h2 style="color: #ffffff; font-size: 18px; margin-bottom: 16px;">Registration Received ✅</h2>
+  <p style="color: #9ca3af; font-size: 14px; line-height: 1.6;">Hi ${String(lead.name).trim()},</p>
+  <p style="color: #9ca3af; font-size: 14px; line-height: 1.6;">We've received your registration for <strong style="color: #a78bfa;">${batch.name}</strong> (${batch.certification}). Our team will contact you on WhatsApp within 24 hours to complete the enrollment process.</p>
+  <div style="background: #11111a; border-radius: 8px; padding: 16px; margin: 24px 0;">
+    <p style="color: #6b7280; font-size: 12px; margin: 0;">Batch details:</p>
+    <p style="color: #ffffff; font-size: 14px; margin: 4px 0 0 0;">${batch.name}</p>
+    <p style="color: #9ca3af; font-size: 12px; margin: 2px 0 0 0;">${batch.schedule || ""} · ${batch.startDate || ""} · ${batch.mode}</p>
+  </div>
+  <p style="color: #6b7280; font-size: 12px;">If you have questions, WhatsApp us or email hello@guardianx.in</p>
+  <hr style="border: none; border-top: 1px solid #1f2937; margin: 24px 0;" />
+  <p style="color: #4b5563; font-size: 11px;">GuardianX Academy · academy.guardianx.cloud</p>
+</div>
+`,
+      })
+    }
 
     return NextResponse.json({ ok: true, id: batchLead.id }, { status: 201 })
   } catch (error: any) {

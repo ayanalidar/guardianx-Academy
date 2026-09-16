@@ -27,6 +27,7 @@ import {
   TrendingUp, Rocket, Trophy, Network, Wrench, Brain, Crosshair,
   Code, Activity, Eye, KeyRound, Bug, X, Hexagon,
   Ticket, IndianRupee, Percent, Loader2,
+  Copy, MessageCircle, Linkedin,
 } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
@@ -399,9 +400,14 @@ export function CourseDetailView() {
   const { course, enrollment, lessonProgress, progressPct, totalLessons, completedLessons } = data
   const isEnrolled = !!enrollment
 
-  const goLesson = (lessonId: string) => {
+  const goLesson = (lessonId: string, isPreview?: boolean) => {
+    // Allow access to preview lessons without enrollment
+    if (isPreview) {
+      navigate({ name: "lesson", lessonId, courseId })
+      return
+    }
     if (!isEnrolled) {
-      toast.error("Enroll in this course to access lessons.")
+      toast.error("Enroll in this course to access lessons. Preview lessons are free!")
       return
     }
     navigate({ name: "lesson", lessonId, courseId })
@@ -561,7 +567,7 @@ export function CourseDetailView() {
                             for (const m of course.modules) {
                               for (const l of m.lessons) {
                                 if (!lessonProgress[l.id]?.completed) {
-                                  goLesson(l.id)
+                                  goLesson(l.id, l.preview)
                                   return
                                 }
                               }
@@ -787,7 +793,7 @@ export function CourseDetailView() {
                     for (const m of course.modules) {
                       for (const l of m.lessons) {
                         if (!lessonProgress[l.id]?.completed) {
-                          goLesson(l.id)
+                          goLesson(l.id, l.preview)
                           return
                         }
                       }
@@ -816,6 +822,43 @@ export function CourseDetailView() {
                 Browse Catalog <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             </div>
+
+            {/* Share buttons */}
+            <div className="flex items-center justify-center gap-2 mt-6">
+              <span className="text-[10px] font-mono text-muted-foreground tracking-wider">SHARE:</span>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-8 text-xs"
+                onClick={() => {
+                  navigator.clipboard.writeText(window.location.href)
+                  toast.success("Course link copied!")
+                }}
+              >
+                <Copy className="h-3 w-3 mr-1.5" /> Copy Link
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-8 text-xs text-emerald-400 hover:text-emerald-300"
+                onClick={() => {
+                  const text = `Check out this course: ${course.title} at GuardianX Academy. ${window.location.href}`
+                  window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer")
+                }}
+              >
+                <MessageCircle className="h-3 w-3 mr-1.5" /> WhatsApp
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-8 text-xs text-[#0A66C2] hover:text-[#0A66C2]"
+                onClick={() => {
+                  window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`, "_blank", "noopener,noreferrer")
+                }}
+              >
+                <Linkedin className="h-3 w-3 mr-1.5" /> LinkedIn
+              </Button>
+            </div>
           </div>
         </section>
       </div>
@@ -831,7 +874,7 @@ export function CourseDetailView() {
           for (const m of course.modules) {
             for (const l of m.lessons) {
               if (!lessonProgress[l.id]?.completed) {
-                goLesson(l.id)
+                goLesson(l.id, l.preview)
                 return
               }
             }
@@ -1473,7 +1516,7 @@ function CurriculumTimeline({
   course: any
   isEnrolled: boolean
   lessonProgress: Record<string, { completed: boolean; position: number }>
-  goLesson: (lessonId: string) => void
+  goLesson: (lessonId: string, isPreview?: boolean) => void
   totalLessons: number
   completedLessons: number
 }) {
@@ -1578,7 +1621,7 @@ function CurriculumTimeline({
                         return (
                           <button
                             key={l.id}
-                            onClick={() => goLesson(l.id)}
+                            onClick={() => goLesson(l.id, l.preview)}
                             className="group/lesson w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-violet-500/5 text-left transition-colors"
                           >
                             <span className="text-[9px] font-mono text-muted-foreground/40 w-6 shrink-0">

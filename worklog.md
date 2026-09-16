@@ -5726,3 +5726,102 @@ Stage Summary:
 - Lint: 0 errors, 0 warnings in course-studio.tsx (1 pre-existing warning in src/lib/db.ts untouched).
 - TypeScript: 0 errors in course-studio.tsx (pre-existing seed-file errors elsewhere untouched).
 - Public-facing impact: clicking a course in the Course Studio now opens a fully functional module/lesson editor that writes straight to the live DB — no draft-vs-publish split, no 0-course bug, no JSON-config indirection.
+
+---
+## Task verify-redesign-1 — VerifyView visual redesign (verify.tsx)
+
+**Agent:** frontend-design
+**File:** `src/views/verify.tsx` (full rewrite, ~860 lines)
+**Date:** $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+### Context read
+- Read last 30 lines of `/home/z/my-project/worklog.md` for project context (Course Studio redesign pattern — dark theme, violet accents, card-premium, text-gradient-premium, bg-mesh, glow-orb, scanlines, framer-motion).
+- Read existing `src/views/verify.tsx` to preserve all query/fetch logic (TanStack Query `useQuery`, fetch to `/api/credentials/verify/[credentialId]`, `navigate()` via `useAppStore`, `copyShareUrl()` via `navigator.clipboard` + `toast.success`).
+- Read `src/app/api/credentials/verify/[credentialId]/route.ts` to confirm the exact response shape — discovered quiz-cert branch returns `totalQuestions`, `percentage`, `verificationUrl` in addition to the base fields; guardian-cert branch returns `skillsAssessed` (array). Confirmed both branches always return HTTP 200 with `{ valid, credential }`.
+- Read `src/store/app-store.ts` line 76 — confirmed View type stays as `{ name: "verify"; credentialId?: string }`.
+- Inspected `src/components/platform/animated-logo.tsx` — chose the lightweight `AnimatedLogoMark` (static-with-hover-tilt) for both the hero brand and the certificate header band; pulls `/guardianx-logo-v2.png`.
+- Confirmed `src/app/globals.css` defines `.bg-mesh`, `.glow-orb`, `.text-gradient-premium`, `.card-premium`, `.btn-premium`, `.scanlines`, `.custom-scrollbar` — reused all of them.
+
+### Design delivered
+1. **Hero section** — branded & atmospheric:
+   - Layered bg-mesh + three violet/fuchsia/cyan glow-orbs + scanlines overlay.
+   - Centered GuardianX logo mark (AnimatedLogoMark, 42px) + "GuardianX" wordmark with violet accent.
+   - Violet-tinted outline badge: `<Fingerprint /> GUARDIANX CREDENTIAL VERIFIER`.
+   - Headline `Verify a credential.` with `text-gradient-premium` on the second word.
+   - Staggered framer-motion entrance (opacity + y, 0.45s cubic-bezier easing).
+2. **Search bar** — large, centered, premium:
+   - 2xl rounded container with `border-border/60 bg-card/60 backdrop-blur-xl`.
+   - Gradient glow ring (`from-violet-600/40 via-fuchsia-500/30 to-cyan-500/40`) appears on focus-within.
+   - `h-12 text-base font-mono` Input with leading Search icon, placeholder `"Enter your credential ID (e.g. GX-QUIZ-2026-A1B2)"` (matches task spec exactly).
+   - Violet `btn-premium` Verify button with `ScanLine` icon, animated spinner state while loading.
+   - Below: tri-mono micro-label row `PUBLIC · NO LOGIN REQUIRED · CRYPTO-SIGNED` with icons.
+3. **Verified result card** — certificate-preview aesthetic:
+   - Rounded-2xl, emerald-tinted border, ambient gradient + corner glow.
+   - **Top brand band**: AnimatedLogoMark + "GuardianX / CYBER SECURITY ACADEMY" + emerald VERIFIED pill.
+   - **Hero**: "CERTIFICATE OF ACHIEVEMENT" eyebrow → candidate name (3xl-4xl `text-gradient-premium`) → "has successfully completed the requirements for" → certification name with GraduationCap icon → level (violet) + examType (muted) badges.
+   - **ScoreRing** — custom SVG circular progress (120px) with gradient stroke, animated `strokeDashoffset` reveal (1.1s spring), center `%` + SCORE label. Color band varies by score: emerald ≥90 (DISTINCTION), cyan ≥75 (MERIT), violet ≥60 (PASS), amber otherwise.
+   - 2×2 fact grid: SCORE (`x / total` for quiz, `%` otherwise), GRADE (band label), ISSUED (formatted date), STATUS (capitalized emerald).
+   - Violet-tinted Credential ID block (monospace, select-all).
+   - Skills-assessed badges (emerald) — only renders when present (guardian certs).
+   - Verification hash (monospace, break-all).
+   - **"Verified by GuardianX" seal** — BadgeCheck icon with pulsing emerald status dot, "VALID UNTIL <date>" or "LIFETIME VALIDITY", and a "VERIFIED <today>" timestamp.
+   - Action footer: Copy share URL / Open certificate (if `verificationUrl`) / Browse Credentials (violet primary).
+4. **Revoked / Suspended / Expired card** — same premium shell with rose/amber palette, shield icon, explanation text, fact grid, credential ID, contact email.
+5. **Not found state** — clean centered card with glowing ShieldX emblem, "Credential not found" headline, "Check the ID and try again" hint (matches task spec verbatim), shows the looked-up ID, format hints for `GX-CERT-YYYY-XXXX` / `GX-QUIZ-YYYY-XXXX`, contact mailto.
+6. **Empty state** — animated rotating orbit dot around a violet Fingerprint emblem, "Ready to verify" headline, instructions, example ID format chips.
+7. **Loading state** — pulsing violet glow + spinning ring with ScanLine center icon + "VERIFYING <id>" mono + "CROSS-REFERENCING LEDGER · CHECKING SIGNATURE" sublabel.
+8. **Error state** — amber AlertTriangle card with "Verification unavailable" message.
+9. **Back nav** — ghost "Back to Credentials" button below a top-border separator.
+
+### Technical notes
+- All transitions via framer-motion `motion` + `AnimatePresence mode="wait"` (each result state has its own `key` so transitions cross-fade cleanly when the active ID changes).
+- TypeScript: widened the query generic to `useQuery<VerifyResponse | null>` with an explicit `queryFn` return type annotation `Promise<VerifyResponse | null>` — fixes the `NoInfer<TQueryFnData>` overload error that the narrower `useQuery<VerifyResponse>` produced (the queryFn legitimately returns `null` when `!activeId`). All other query/fetch logic preserved verbatim.
+- Reusable `Fact` primitive (icon + mono-caps label + value) and `ScoreRing` (SVG) sub-components; `formatDate()` helper using `toLocaleDateString("en-US", { year, month: "short", day })`.
+- Type extended to include optional `totalQuestions`, `percentage`, `verificationUrl` (all returned by the quiz-cert branch of the API). Existing `skillsAssessed`, `verificationHash`, `examType`, `certificationLevel`, `certificationSlug` preserved.
+- Kept `"use client"` at the top, exported `VerifyView` as named export, kept the same `useAppStore` `navigate()` call (`{ name: "verify", credentialId: trimmed }`) and `copyShareUrl()` logic.
+- All shadcn/ui imports from `@/components/ui/*` (Button, Badge, Input); all icons from `lucide-react`; `cn` from `@/lib/utils`; `AnimatedLogoMark` from `@/components/platform/animated-logo`; `toast` from `sonner`.
+
+### Verification
+- `bun run lint` → 0 errors, 1 pre-existing warning in `src/lib/db.ts` (unrelated).
+- `npx tsc --noEmit --skipLibCheck` → 0 errors in `src/views/verify.tsx`.
+- Dev server (`dev.log`) clean — no compile errors. Page will compile on-demand at `/#/verify`.
+- API contract unchanged: still GET `/api/credentials/verify/[credentialId]` (public, no auth), no schema/migration changes.
+
+### Public-facing impact
+- Verify page (`/#/verify` and `/#/verify/<id>`) now renders a hero-branded, atmospheric verifier with a large mono search bar and a stunning certificate-preview result card featuring an animated SVG score ring, GuardianX brand band, "Verified by GuardianX" seal with validity window, and graceful not-found / empty / loading / revoked / error states — replacing the previously plain functional card layout.
+
+---
+## referral-program-1 — Referral Program (student referral link + coupon rewards)
+
+### Database
+- Added `Referral` model to `prisma/schema.prisma` (id, referrerId, referredEmail?, referredUserId?, status, couponCode?, createdAt, updatedAt; indexes on referrerId + referredEmail). Added `referrals Referral[] @relation("referrer")` to `User`.
+- Ran `prisma db push --accept-data-loss` against the Neon Postgres pooler + `prisma generate`. Existing data preserved.
+
+### APIs (all use `getCurrentUser` + `withErrorHandler` from `@/lib/session`, `db` from `@/lib/db`)
+- POST `/api/referral/create` (auth) — idempotently returns the student's active PENDING referral (creates one if none). Response: `{ referralId, referralLink }` where link = `https://academy.guardianx.cloud/?ref=<referralId>`.
+- GET `/api/referral/my` (auth) — returns all referrals made by the user + stats `{ total, pending, enrolled, rewarded, expired }` + active `referralId`/`referralLink`.
+- POST `/api/referral/track` (public) — body `{ referralId, email, userId? }`. Validates PENDING status + anti-self-referral, allocates two unique reward Coupons (15% off, single-use, 90-day, any course), stamps the Referral as REWARDED with the referrer's coupon code. Idempotent on repeat calls.
+
+### Signup tracking
+- `src/app/api/auth/register/route.ts` — accepts optional `ref` field; after the user is created, if `ref` resolves to a PENDING Referral owned by a different user (anti-self-referral by id AND email), allocates two reward coupons + stamps the Referral as REWARDED. Failures are non-fatal (account already created).
+- `src/components/platform/auth-screen.tsx` — `handleRegister` reads `gx_ref` from localStorage and passes it as `ref` to `/api/auth/register`; clears `gx_ref` after a successful signup so it can't be reused.
+- `src/app/page.tsx` — added a `?ref=` URL-capture effect on first visit; if the URL contains a `?ref=<cuid>` it's persisted to `localStorage.gx_ref`. Survives SPA navigation from landing → auth screen.
+
+### Dashboard widget (`src/views/dashboard.tsx`)
+- New `ReferEarnPanel` + `ReferralStat` components, mounted at the TOP of the dashboard right column (above Daily Objective). Small card, not a full page.
+  - Gift icon + headline + "15% off both" explainer.
+  - 3-tile stat strip: Referrals / Enrolled / Rewards.
+  - Referral link display + Copy button (with checkmark confirmation + sonner toast).
+  - "Share on WhatsApp" button → opens `https://wa.me/?text=...` with the link pre-filled.
+  - Lazy "Get my referral link" CTA — only creates a Referral row when the student actually wants to share.
+  - Latest rewarded coupon badge — surfaces the referrer's coupon code once a referral converts.
+- Fetches `/api/referral/my` via TanStack Query + `api()` from `@/lib/api`. All success/error feedback via `toast` from `sonner`.
+- Design: dark theme + violet accents (card-premium + scanlines + violet glow orb), reuses the dashboard's `SectionHeader` / `TONE_MAP` for visual consistency. Added lucide-react imports (`Gift, Copy, Check, Users, UserCheck, Ticket, Send`) + `toast` from `sonner`.
+
+### Verification
+- `bun run lint` → 0 errors, 1 pre-existing warning in `src/lib/db.ts` (untouched).
+- `npx tsc --noEmit --skipLibCheck` → 0 errors in any of the changed/new files (pre-existing errors in unrelated files untouched).
+- Dev server log: clean compile + 200s.
+
+### Reward config
+- 15% off, single-use, 90-day validity, applies to any course (`courseId=null`). Both referrer and referred user receive the same reward.

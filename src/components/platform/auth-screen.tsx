@@ -219,10 +219,20 @@ export function AuthScreen() {
     e.preventDefault()
     setLoading(true)
     try {
+      // Capture referral id from localStorage (set by `?ref=` capture script
+      // in the homepage) so we can attribute the signup to the referrer.
+      let ref: string | undefined
+      try {
+        ref = window.localStorage.getItem("gx_ref") || undefined
+      } catch {
+        ref = undefined
+      }
       await api("/api/auth/register", {
         method: "POST",
-        body: JSON.stringify({ name: regName, email: regEmail, password: regPass, role: "STUDENT" }),
+        body: JSON.stringify({ name: regName, email: regEmail, password: regPass, role: "STUDENT", ref }),
       })
+      // Clear the stored ref so it can't be reused on a future signup.
+      try { window.localStorage.removeItem("gx_ref") } catch {}
       const res = await signIn("credentials", { email: regEmail, password: regPass, redirect: false })
       setLoading(false)
       if (res?.error) throw new Error(res.error)

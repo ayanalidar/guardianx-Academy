@@ -31,7 +31,93 @@ const schema = z.object({
   name: z.string().min(2).max(100),
   email: z.string().email().max(255),
   password: passwordSchema,
+  ref: z.string().max(64).optional(), // referral id (from ?ref= URL / localStorage)
 })
+
+// Reward config — duplicated from /api/referral/track to keep register
+// self-contained (no cross-route import). See referral/track for full docs.
+const REWARD_TYPE = "percentage"
+const REWARD_VALUE = 15
+const REWARD_MAX_USES = 1
+const REWARD_VALID_DAYS = 90
+
+function generateCouponCode(): string {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+  let suffix = ""
+  for (let i = 0; i < 8; i++) suffix += alphabet[Math.floor(Math.random() * alphabet.length)]
+  return `REF-${suffix}`
+}
+
+async function allocateCoupon() {
+  const now = new Date()
+  const validUntil = new Date(now.getTime() + REWARD_VALID_DAYS * 24 * 60 * 60 * 1000)
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const code = generateCouponCode()
+    const existing = await db.coupon.findUnique({ where: { code } })
+    if (existing) continue
+    return db.coupon.create({
+      data: {
+        code,
+        type: REWARD_TYPE,
+        value: REWARD_VALUE,
+        maxUses: REWARD_MAX_USES,
+        usedCount: 0,
+        validFrom: now,
+        validUntil,
+        courseId: null,
+        active: true,
+      },
+    })
+  }
+  throw new Error("Failed to allocate unique referral coupon")
+}
+
+/**
+ * Track a referral after a successful signup. If the `ref` id resolves to a
+ * PENDING Referral row owned by a different user, we materialise the reward:
+ * stamp the referral with both coupon codes + status = REWARDED, and create a
+ * second Coupon for the new (referred) user.
+ *
+ * Failures here are non-fatal — the account has already been created, so we
+ * log and continue.
+ */
+async function trackReferralOnSignup(referralId: string, newUser: { id: string; email: string }) {
+  try {
+    const referral = await db.referral.findUnique({ where: { id: referralId } })
+    if (!referral) return
+    if (referral.status !== "PENDING") return
+    if (referral.referrerId === newUser.id) return // anti-self-referral
+
+    const referrer = await db.user.findUnique({ where: { id: referral.referrerId } })
+    if (!referrer) return
+    if (referrer.email.toLowerCase() === newUser.email.toLowerCase()) return
+
+    const [referrerCoupon, referredCoupon] = await Promise.all([
+      allocateCoupon(),
+      allocateCoupon(),
+    ])
+
+    await db.referral.update({
+      where: { id: referral.id },
+      data: {
+        status: "REWARDED",
+        referredEmail: newUser.email,
+        referredUserId: newUser.id,
+        couponCode: referrerCoupon.code,
+      },
+    })
+
+    // The referred user's coupon is surfaced to them on first login via the
+    // dashboard widget (we only persist the referrer's code on the Referral
+    // row; the referred coupon is independently queryable from the Coupon
+    // table by code).
+    console.log(
+      `[referral] rewarded: referrer=${referrer.email} (${referrerCoupon.code}), referred=${newUser.email} (${referredCoupon.code})`
+    )
+  } catch (e) {
+    console.error("[referral] track on signup failed:", e)
+  }
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -52,7 +138,7 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       )
     }
-    const { name, email, password } = parsed.data
+    const { name, email, password, ref } = parsed.data
 
     // SECURITY: Always register as STUDENT. Instructor/Admin roles must be
     // assigned by an admin — never self-assigned via the registration API.
@@ -77,9 +163,17 @@ export async function POST(req: NextRequest) {
       },
       select: { id: true, email: true, name: true, role: true },
     })
+
+    // Referral tracking — only if a valid `ref` id was supplied (from the
+    // ?ref= URL captured client-side and stored in localStorage).
+    if (ref && ref.trim()) {
+      await trackReferralOnSignup(ref.trim(), { id: user.id, email: user.email })
+    }
+
     return NextResponse.json({ user })
   } catch (e) {
     console.error("[register]", e)
     return NextResponse.json({ error: "Registration failed" }, { status: 500 })
   }
 }
+

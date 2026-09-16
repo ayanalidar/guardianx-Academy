@@ -265,6 +265,22 @@ export default function Home() {
     hydrateFromHash()
   }, [])
 
+  // Capture referral id from `?ref=` query param on first visit. We store
+  // it in localStorage so the value survives the SPA navigation from the
+  // landing page to the auth screen, and is later attached to the
+  // /api/auth/register call (see auth-screen.handleRegister).
+  React.useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search)
+      const ref = params.get("ref")
+      if (ref && /^[a-z0-9]{20,30}$/i.test(ref)) {
+        window.localStorage.setItem("gx_ref", ref)
+      }
+    } catch {
+      // localStorage may be unavailable (private mode) — non-fatal.
+    }
+  }, [])
+
   // Check session via fetch instead of useSession hook (avoids CLIENT_FETCH_ERROR blocking).
   // Re-runs whenever the view name changes so that after a successful login +
   // navigate(), the session state is refreshed before the shell decision.

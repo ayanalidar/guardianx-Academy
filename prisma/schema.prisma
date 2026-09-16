@@ -87,6 +87,8 @@ model User {
   blogPosts            BlogPost[]
   // Affiliate program — one affiliate record per user (BATCH-5-FEATURES)
   affiliate            Affiliate?
+  // Referral program — referrals created by this user (referral-program-1)
+  referrals            Referral[] @relation("referrer")
 }
 
 // ============================================================
@@ -1907,4 +1909,24 @@ model PlatformSetting {
   category  String             // "payment" | "email" | "crm" | "tracking" | "auth"
   isSecret  Boolean  @default(false)  // masks value in UI
   updatedAt DateTime @updatedAt
+}
+
+// ============================================================
+// Referral Program — referral-program-1
+// ============================================================
+// Enrolled students share a unique referral link. When someone
+// enrolls via their link, both parties receive a discount coupon.
+model Referral {
+  id             String   @id @default(cuid())
+  referrerId     String   // the student who shared the link
+  referrer       User     @relation("referrer", fields: [referrerId], references: [id], onDelete: Cascade)
+  referredEmail  String?  // email of the person who was referred (null until they sign up)
+  referredUserId String?  // user ID of the referred person (null until they enroll)
+  status         String   @default("PENDING") // PENDING | ENROLLED | REWARDED | EXPIRED
+  couponCode     String?  // the coupon code generated as reward
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([referrerId])
+  @@index([referredEmail])
 }

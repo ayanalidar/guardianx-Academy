@@ -25,6 +25,7 @@ import {
   GraduationCap, Library, Radar as RadarIcon, Shield, ShieldCheck, StickyNote,
   Target, Terminal, TrendingUp, Trophy, Zap, PlayCircle, AlertCircle,
   Video, FileText, Hourglass, BarChart2, Sparkles,
+  Gift, Copy, Check, Users, UserCheck, Ticket, Send,
 } from "lucide-react"
 import { useAppStore } from "@/store/app-store"
 import { useUser } from "@/hooks/use-user"
@@ -36,6 +37,7 @@ import { Card } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
+import { toast } from "sonner"
 import { ScrollReveal } from "@/components/platform/motion-system"
 import {
   LabCard, type LabDifficulty, MissionCard, RankBadge, StatTile,
@@ -411,6 +413,11 @@ export function DashboardView() {
 
           {/* RIGHT COLUMN */}
           <div className="lg:col-span-2 space-y-6">
+            {/* REFER & EARN */}
+            <ScrollReveal>
+              <ReferEarnPanel />
+            </ScrollReveal>
+
             {/* DAILY OBJECTIVE */}
             <ScrollReveal>
               <DailyObjective labsSolvedToday={0} />
@@ -1354,6 +1361,230 @@ function EmptyState({
           {ctaLabel}
           <ArrowRight className="size-3.5" aria-hidden />
         </Button>
+      </div>
+    </div>
+  )
+}
+
+/* ============================================================
+   2a-bis. Refer & Earn — referral link + share + stats widget
+   ============================================================ */
+interface ReferralStats {
+  total: number
+  pending: number
+  enrolled: number
+  rewarded: number
+  expired: number
+}
+interface ReferralItem {
+  id: string
+  status: string
+  referredEmail: string | null
+  referredUserId: string | null
+  couponCode: string | null
+  createdAt: string
+  updatedAt: string
+}
+interface MyReferralResponse {
+  referrals: ReferralItem[]
+  stats: ReferralStats
+  referralId: string | null
+  referralLink: string | null
+}
+
+function ReferEarnPanel() {
+  const [copied, setCopied] = React.useState(false)
+
+  // Fetch the user's referrals + stats. We use a queryKey that won't collide
+  // with anything else and refetch on window focus so a freshly-rewarded
+  // referral shows up promptly.
+  const { data, isLoading, refetch } = useQuery<MyReferralResponse>({
+    queryKey: ["dashboard", "referral", "my"],
+    queryFn: () => api<MyReferralResponse>("/api/referral/my"),
+    staleTime: 30 * 1000,
+  })
+
+  // Lazily generate a referral link on first "Get link" interaction — most
+  // students won't need one until they decide to share, so we don't pre-create
+  // rows for every dashboard visit.
+  const [generating, setGenerating] = React.useState(false)
+  async function ensureLink() {
+    if (data?.referralLink) return
+    setGenerating(true)
+    try {
+      await api("/api/referral/create", { method: "POST" })
+      await refetch()
+    } catch (e: any) {
+      toast.error(e.message || "Failed to generate referral link")
+    } finally {
+      setGenerating(false)
+    }
+  }
+
+  const link = data?.referralLink ?? null
+  const stats = data?.stats ?? { total: 0, pending: 0, enrolled: 0, rewarded: 0, expired: 0 }
+
+  async function copyLink() {
+    if (!link) return
+    try {
+      await navigator.clipboard.writeText(link)
+      setCopied(true)
+      toast.success("Referral link copied to clipboard")
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      toast.error("Couldn't access clipboard — long-press the link to copy.")
+    }
+  }
+
+  function shareOnWhatsApp() {
+    if (!link) return
+    const text = `I'm training on GuardianX Academy — hands-on cyber security labs + certification prep. Sign up with my link and we both get a discount:\n${link}`
+    const url = `https://wa.me/?text=${encodeURIComponent(text)}`
+    window.open(url, "_blank", "noopener,noreferrer")
+  }
+
+  return (
+    <section aria-label="Refer and earn">
+      <SectionHeader icon={Gift} label="Refer & Earn" tone="violet" />
+      <div className="card-premium relative overflow-hidden rounded-xl p-5 scanlines">
+        {/* glow */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-10 -top-10 size-32 rounded-full opacity-30 blur-3xl"
+          style={{
+            background:
+              "radial-gradient(circle, oklch(0.7 0.18 295 / 0.4), transparent 70%)",
+          }}
+        />
+        <div className="relative z-10 space-y-4">
+          <div className="flex items-start gap-3">
+            <div
+              className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-violet-500/40 bg-violet-500/10 text-violet-300"
+              aria-hidden
+            >
+              <Gift className="size-4" />
+            </div>
+            <div className="min-w-0">
+              <h3 className="text-sm font-semibold text-foreground">
+                Invite friends, earn discounts
+              </h3>
+              <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+                Share your link. When a friend enrolls, you both get a{" "}
+                <span className="font-semibold text-violet-300">15% off</span>{" "}
+                coupon.
+              </p>
+            </div>
+          </div>
+
+          {/* Stats strip */}
+          <div className="grid grid-cols-3 gap-2">
+            <ReferralStat
+              icon={Users}
+              label="Referrals"
+              value={stats.total}
+              loading={isLoading}
+              tone="violet"
+            />
+            <ReferralStat
+              icon={UserCheck}
+              label="Enrolled"
+              value={stats.enrolled}
+              loading={isLoading}
+              tone="cyan"
+            />
+            <ReferralStat
+              icon={Ticket}
+              label="Rewards"
+              value={stats.rewarded}
+              loading={isLoading}
+              tone="emerald"
+            />
+          </div>
+
+          {/* Link box */}
+          {link ? (
+            <div className="space-y-2">
+              <label className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                Your referral link
+              </label>
+              <div className="flex items-stretch gap-2">
+                <div className="flex-1 min-w-0 truncate rounded-md border border-border/60 bg-background/60 px-3 py-2 font-mono text-[11px] text-foreground/90">
+                  {link}
+                </div>
+                <Button
+                  size="sm"
+                  onClick={copyLink}
+                  className="gap-1.5 font-mono text-[11px] uppercase tracking-wider bg-violet-600 hover:bg-violet-500"
+                  aria-label="Copy referral link"
+                >
+                  {copied ? (
+                    <Check className="size-3.5" aria-hidden />
+                  ) : (
+                    <Copy className="size-3.5" aria-hidden />
+                  )}
+                  {copied ? "Copied" : "Copy"}
+                </Button>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={shareOnWhatsApp}
+                className="w-full gap-2 border-violet-500/40 bg-violet-500/5 font-mono text-[11px] uppercase tracking-wider text-violet-200 hover:bg-violet-500/15"
+              >
+                <Send className="size-3.5" aria-hidden />
+                Share on WhatsApp
+              </Button>
+            </div>
+          ) : (
+            <Button
+              size="sm"
+              onClick={ensureLink}
+              disabled={generating}
+              className="w-full gap-2 font-mono text-[11px] uppercase tracking-wider bg-violet-600 hover:bg-violet-500"
+            >
+              <Sparkles className="size-3.5" aria-hidden />
+              {generating ? "Generating..." : "Get my referral link"}
+            </Button>
+          )}
+
+          {/* Latest rewarded coupon — surfaced once a referral converts. */}
+          {data?.referrals?.some((r) => r.status === "REWARDED" && r.couponCode) && (
+            <div className="flex items-center justify-between rounded-md border border-emerald-500/30 bg-emerald-500/5 px-3 py-2">
+              <div className="flex items-center gap-2">
+                <Ticket className="size-3.5 text-emerald-300" aria-hidden />
+                <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                  Your reward
+                </span>
+              </div>
+              <span className="font-mono text-xs font-semibold text-emerald-300">
+                {data.referrals.find((r) => r.status === "REWARDED" && r.couponCode)?.couponCode}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function ReferralStat({
+  icon: Icon, label, value, loading, tone,
+}: {
+  icon: typeof BookOpen
+  label: string
+  value: number
+  loading: boolean
+  tone: string
+}) {
+  const t = TONE_MAP[tone] ?? TONE_MAP.violet
+  return (
+    <div className="rounded-md border border-border/50 bg-background/40 px-2.5 py-2 text-center">
+      <Icon className={cn("mx-auto size-3.5", t.icon)} aria-hidden />
+      <div className="mt-1 font-mono text-base font-semibold tabular-nums text-foreground">
+        {loading ? <span className="text-muted-foreground/50">—</span> : value}
+      </div>
+      <div className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
+        {label}
       </div>
     </div>
   )
